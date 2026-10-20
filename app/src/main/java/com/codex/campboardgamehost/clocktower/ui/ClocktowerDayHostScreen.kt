@@ -22,8 +22,8 @@ internal fun ClocktowerDayHostScreen(
     onConfirmKlutzChoice: (String) -> Unit,
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean?) -> Unit,
-    onConfirmedNomination: (String, String, Boolean?) -> Boolean,
-    onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
+    onConfirmedNomination: (String, String, Boolean?, Int) -> Boolean,
+    onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord, Int) -> Unit,
 ) {
     val sessionGameState = sessionState.gameState
     val round = sessionState.round
@@ -98,7 +98,7 @@ internal fun ClocktowerDayHostScreen(
             onHostTools = onHostTools,
             onConfirm = { voteState ->
                 onConfirmedVote(requireNotNull(sessionGameState.playerAt(nomination.nominatorSeat)).name,
-                    requireNotNull(sessionGameState.playerAt(nomination.nomineeSeat)).name, voteState.confirmedVoteRecord())
+                    requireNotNull(sessionGameState.playerAt(nomination.nomineeSeat)).name, voteState.confirmedVoteRecord(), round)
                 nominationDraft.clear()
                 dayMode = ClocktowerDayMode.Overview
             },
@@ -180,7 +180,7 @@ internal fun ClocktowerDayHostScreen(
                 actionsEnabled = gameOutcome == null,
                 onHostTools = onHostTools,
                 onConfirm = { confirmation ->
-                    onConfirmedNomination(confirmation.nominator, confirmation.nominee, confirmation.explicitSpyRegistration)
+                    onConfirmedNomination(confirmation.nominator, confirmation.nominee, confirmation.explicitSpyRegistration, round)
                     dayMode = ClocktowerDayMode.Overview
                 },
                 onCancel = { dayMode = ClocktowerDayMode.Overview },

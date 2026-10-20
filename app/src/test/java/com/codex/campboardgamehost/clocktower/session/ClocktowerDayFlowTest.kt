@@ -45,6 +45,8 @@ class ClocktowerDayFlowTest {
         assertEquals(2, s.state.round)
         assertFalse(s.state.gameState.playerAt(2)!!.alive)
         assertEquals(1, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Execution>().size)
+        s.confirmVote(3, 2, listOf(1, 2, 3), 1)
+        assertSame(accepted, s.state)
     }
     @Test fun `tie records no execution rather than arbitrarily killing a nominee`() {
         val s = session("Imp", "Soldier", "Chef", "Saint", "Empath")
@@ -128,6 +130,9 @@ class ClocktowerDayFlowTest {
         assertTrue(s.confirmNomination(3, 2, null))
         assertFalse(s.state.gameState.playerAt(3)!!.alive)
         assertEquals(StorytellerPhase.NIGHT, s.state.phase)
+        val accepted = s.state
+        assertTrue(s.confirmNomination(3, 2, null, 1))
+        assertSame(accepted, s.state)
         assertEquals(0, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().size)
     }
     @Test fun `Spy registration is explicit and poisoned Virgin consumes first nomination without executing`() {

@@ -518,9 +518,9 @@ class ClocktowerD2UiTest {
                     refresh()
                 }, onConfirmArtistQuestion = { _, _, _ -> },
                 onSlayerShot = { _, _, _ -> },
-                onConfirmedNomination = { _, _, _ -> false }, onConfirmedVote = { a, b, vote ->
+                onConfirmedNomination = { _, _, _, _ -> false }, onConfirmedVote = { a, b, vote, expectedRound ->
                     session.confirmVote(cards.indexOfFirst { it.name == a } + 1, cards.indexOfFirst { it.name == b } + 1,
-                        vote.voters.map { v -> cards.indexOfFirst { it.name == v.playerName } + 1 })
+                        vote.voters.map { v -> cards.indexOfFirst { it.name == v.playerName } + 1 }, expectedRound)
                     refresh()
                 },
                 onAdvanceFromFirstNight = {}, onConfirmDay = { expectedRound -> session.confirmEndDay(expectedRound); refresh() }, onCompleteNight = {},

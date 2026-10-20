@@ -141,15 +141,15 @@ internal fun ClocktowerGameSession.confirmKlutzChoice(deathActionId: String, cho
     continueAfterDayResolution()
 }
 
-internal fun ClocktowerGameSession.confirmNomination(nominator: Int, nominee: Int, spyChoice: Boolean?): Boolean = confirmAtomically {
-    val id = "nomination-${state.gameId}-${state.round}-$nominator-$nominee"
+internal fun ClocktowerGameSession.confirmNomination(nominator: Int, nominee: Int, spyChoice: Boolean?, expectedRound: Int = state.round): Boolean = confirmAtomically {
+    val id = "nomination-${state.gameId}-$expectedRound-$nominator-$nominee"
     val prior = state.actionTimeline.entries.singleOrNull { it.fact.actionId == id }?.fact as? ActionFact.Nomination
     if (prior != null) {
         check(prior.nominatorRegistersAsTownsfolk == spyChoice)
         return@confirmAtomically state.actionTimeline.entries.any { it.fact.actionId == "$id:virgin-execution" }
     }
     requireOpenDay()
-    check(state.pendingVote() == null) { "Complete the current vote first." }
+    check(state.round == expectedRound && state.pendingVote() == null) { "Complete the current vote first." }
     val actor = requireNotNull(state.gameState.playerAt(nominator))
     require(actor.alive && nominator != nominee && state.gameState.playerAt(nominee) != null)
     val today = state.actionTimeline.entries.filter { it.point.phase == state.phase && it.point.round == state.round }
@@ -166,14 +166,16 @@ internal fun ClocktowerGameSession.confirmNomination(nominator: Int, nominee: In
     result.executes
 }
 
-internal fun ClocktowerGameSession.confirmVote(nominator: Int, nominee: Int, voters: List<Int>) = confirmAtomically {
-    val nomination = state.actionTimeline.entries.lastOrNull { it.fact is ActionFact.Nomination }
-    check(nomination?.point?.round == state.round && (nomination.fact as ActionFact.Nomination).let {
-        it.nominatorSeat == nominator && it.nomineeSeat == nominee })
+internal fun ClocktowerGameSession.confirmVote(nominator: Int, nominee: Int, voters: List<Int>, expectedRound: Int = state.round) = confirmAtomically {
+    val nomination = requireNotNull(state.actionTimeline.entries.lastOrNull { entry ->
+        entry.point.phase == StorytellerPhase.DAY && entry.point.round == expectedRound &&
+            (entry.fact as? ActionFact.Nomination)?.let { it.nominatorSeat == nominator && it.nomineeSeat == nominee } == true
+    })
     val id = "vote:${nomination.fact.actionId}"
     val prior = state.actionTimeline.entries.singleOrNull { it.fact.actionId == id }?.fact as? ActionFact.Vote
     if (prior != null) { check(prior.voterSeats == voters); return@confirmAtomically }
     requireOpenDay()
+    check(state.round == expectedRound && state.pendingVote()?.actionId == nomination.fact.actionId)
     require(voters.distinct().size == voters.size)
     val spent = state.actionTimeline.entries.flatMap { (it.fact as? ActionFact.Vote)?.ghostVoterSeats.orEmpty() }.toSet()
     val ghosts = voters.filter { seat ->

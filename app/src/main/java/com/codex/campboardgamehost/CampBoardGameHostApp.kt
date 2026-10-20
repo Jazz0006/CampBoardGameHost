@@ -1642,6 +1642,8 @@ internal fun CampBoardGameHostApp() {
             confirmButton = { androidx.compose.material3.TextButton(onClick = { activeGameRestoreError = false }) { Text("OK") } })
     }
 
+    val renderedPhase = storytellerPhaseFor()
+    val renderedRound = round
     CompositionLocalProvider(LocalContext provides context) {
         MaterialTheme(
             colorScheme = androidx.compose.material3.lightColorScheme(
@@ -1964,7 +1966,7 @@ internal fun CampBoardGameHostApp() {
                                 })
                                 session.confirmNightAttack(
                                     targetSeat = targetSeat,
-                                    phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
                                     successorSeat = successorName?.let(::clocktowerSeatFor),
                                 )
                                 publishClocktowerSessionView()
@@ -1979,7 +1981,7 @@ internal fun CampBoardGameHostApp() {
                                 val session = requireClocktowerGameSession()
                                 session.confirmNightPoison(
                                     targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor),
-                                    phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
                                 )
                                 publishClocktowerSessionView()
                             }
@@ -2020,7 +2022,7 @@ internal fun CampBoardGameHostApp() {
                                     ?: error("Cannot confirm Red Herring outside the Session seats.")
                                 requireClocktowerGameSession().commitRedHerringSeat(
                                     seat = seat,
-                                    phase = storytellerPhaseFor(), round = round,
+                                    phase = renderedPhase, round = renderedRound,
                                     sequence = requireClocktowerGameSession().nextInputSequence,
                                 )
                                 publishClocktowerSessionView()
@@ -2032,7 +2034,7 @@ internal fun CampBoardGameHostApp() {
                                 if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
                                     requireClocktowerGameSession().commitDemonBluffs(
                                         roles = roleNames.map(::RoleId),
-                                        phase = storytellerPhaseFor(), round = round,
+                                        phase = renderedPhase, round = renderedRound,
                                         sequence = requireClocktowerGameSession().nextInputSequence,
                                     )
                                     publishClocktowerSessionView()
@@ -2046,7 +2048,7 @@ internal fun CampBoardGameHostApp() {
                         onConfirmButlerMaster = { actorName, masterName, stepId ->
                             confirmClocktowerStep {
                                 requireClocktowerGameSession().confirmNightButlerMaster(
-                                    phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
                                     actorSeat = clocktowerSeatFor(actorName),
                                     masterSeat = clocktowerSeatFor(masterName),
                                 )
@@ -2062,7 +2064,7 @@ internal fun CampBoardGameHostApp() {
                                 val session = requireClocktowerGameSession()
                                 session.confirmNightProtection(
                                     targetSeat = clocktowerSeatFor(requireNotNull(clocktowerMonkProtectedTarget)),
-                                    phase = storytellerPhaseFor(), round = round, stepId = stepId,
+                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
                                 )
                                 publishClocktowerSessionView()
                             }
@@ -2149,16 +2151,16 @@ internal fun CampBoardGameHostApp() {
                                 publishClocktowerSessionView()
                             }
                         },
-                        onConfirmedNomination = { nominator, nominee, spyChoice ->
+                        onConfirmedNomination = { nominator, nominee, spyChoice, expectedRound ->
                             confirmClocktowerNomination {
-                                val executed = requireClocktowerGameSession().confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spyChoice)
+                                val executed = requireClocktowerGameSession().confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spyChoice, expectedRound)
                                 publishClocktowerSessionView()
                                 executed
                             }
                         },
-                        onConfirmedVote = { nominator, nominee, vote ->
+                        onConfirmedVote = { nominator, nominee, vote, expectedRound ->
                             confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { clocktowerSeatFor(it.playerName) })
+                                requireClocktowerGameSession().confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { clocktowerSeatFor(it.playerName) }, expectedRound)
                                 publishClocktowerSessionView()
                             }
                         },
