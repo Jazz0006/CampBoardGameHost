@@ -2,7 +2,20 @@
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
 
-## P1 2026-10-20 市长死亡即时结算检查点（最新）
+## P1 2026-10-20 用户最终裁定：取消黎明阶段和机械死亡公开复制（最新）
+
+- **唯一现行合同**：夜间确认的 `Death` 是即时生效的机械事实；后续夜间能力从同一 Session 的已确认存活状态计算，不维护为了玩家认知一致性而生成的第二次公开死亡事实。不额外生成 `PUBLIC AliveAt`、不设置 `DAWN` 阶段或播报确认页。首夜/后夜最后一项操作直接进入 Day，白天方桌读取本轮 Night 已确认死者并显示；讨论、提名、投票正常继续。NGJ 呆瓜在得知死亡后的实际白天选择保留，已给角色展示的私密观察及现有 AI 推荐整链保留。
+- `0e63d9c6c7f126b5a383bf5cfecb914b1489e192`：生产移除 `StorytellerPhase.DAWN`、`ClocktowerPhase.Dawn`、`ClocktowerDawnSummaryScreen`、夜→日合成 `PUBLIC AliveAt` 的代码及专用 Dawn 测试，Day Overview 显示“昨夜死亡/无人死亡”。官方剧本 JSON 内的 dawn **仅是夜序终止标记**，Host Projector 不再将其生成为游戏操作或 UI 步骤。[Android CI #39355476807](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39355476807) SUCCESS。旧 [R2 #39355476845](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39355476845) 失败仅因自动化守卫仍要求存在已删除 Dawn UI。
+- `64c57df66df527c65aeb5b9099d998fd23fa158d`：R2 守卫改为确保 Dawn UI/阶段**不得重返**；删除新恶魔身份确认时第二次写 `RoleChange` 的旧分支；`KlutzReturnToDawn` 更名并保持 Day 真正行动；`DawnCommitIdentity` 更名为 `ConfirmedNightEffectIdentity`（出于历史幂等兼容保留旧稳定 ID 值，不代表 Dawn 阶段）。[完整 Android CI #39356416753](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39356416753)/[R2 #39356416743](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39356416743) 均 SUCCESS。
+- **未完成**：白天杀手/处决仍有早期 `PUBLIC AliveAt` 重复观察，应按是否实际必要进一步删除；旧死亡预测 Adapter/多套 night flow、单 Session 持久化恢复及 TB 5–15 / NGJ 5–6 完整角色流程仍待审核。#334/#335 仍是 Draft，不能宣称项目完成。
+
+## P1 2026-10-20 夜末双轨正式删除（历史检查点）
+
+- #335 已推送 `b040fb66`：Mayor 转移杀死 Imp 的同时，若符合 Scarlet Woman 条件就在同一 Session 事务提交被动继任的 RoleChange；此前 `d38c50d` 已完成 Imp 自杀的即时 Attack + Death + RoleChange（完整 Android CI/R2 成功）。
+- #335 提交 `712d46e6`：物理删除旧夜末死者/继任者/中毒延续选择界面 `ClocktowerNightResultConfirmation.kt`、只服务该旧界面的 `commitConfirmedNightDeaths` 与 `commitDawnPoisonCarry`/`DawnPoisonCarryIntent`、重复 `NoNightDeaths` 专用事件类型及其独占旧测试；从已确定 Death 直接发布 Dawn 公告，毒保持到离开 Day 时过期。`ae0e3447` 修复动态夜间刷新后的最后一个旧 callback，同时 FIRST_NIGHT 末尾直接进入 Day。`71f54a7e` 清除旧的 `finishNightResolution` 测试残留。`ccaef940bb2de0b068b26ba8f844d1a2dc562dad` 修复 `ClocktowerNightTargets.after(PhaseAdvance)` 原有的阶段时点错误：以前是进入 Night 清理而进入 Dawn 仍残留临时目标，现在任何正式 PhaseAdvance 都清空当夜临时攻击/保护/市长选择，死亡事实与毒机械状态不受影响。[完整 Android CI #39349210480](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39349210480) / [R2 #39349210477](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39349210477) 均 SUCCESS。
+- **验收边界**：代码已提交推送，`ccaef940` 精确完整 CI/R2 已通过，但 CI 不能替代完整夜间真机对局和 P1–P5 全模块验收。双剧本条件唤醒、恶魔继任后的顺序、NGJ 呆瓜、预览适配器清理及实用中断恢复仍需下一批审计和实测。
+
+## P1 2026-10-20 市长死亡即时结算检查点（以下为历史检查点）
 
 - 实际提交 `19c7c9a1861e2d9c53be0d5a2a1dba84e3b74f68` 已推送 #335：`ClocktowerGameSession.commitConfirmedMayorRedirect` 不再仅记录 `MayorRedirectChoice`，而是在同一个 `state.copy` 原子记录选定的裁量与可能发生的私密 `Death`，即时更新唯一 GameState、死亡 Timeline、版本和已接受市长目标；自己的死亡、转移给健康玩家、转移给已死/受有效保护/有免疫的玩家均按实际状态结算。同夜重选会被拒绝。原允许独立记市长事实、多次改选的 `MayorRedirectBoundaryTest` 被新事件边界用例替代。精确 Android [CI #39340843586](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39340843586) / [R2 #39340843687](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39340843687) SUCCESS。
 - 第二批 `c178e8f31987bada5621b099ac91542e36265621` 防止已确认恶魔攻击市长、但裁量尚未完成时直接在夜末记录“无人死亡”或进入黎明，回归测试同步提交。[完整 Android CI #39341689671](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39341689671) / [R2 #39341689637](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39341689637) 均 SUCCESS。
