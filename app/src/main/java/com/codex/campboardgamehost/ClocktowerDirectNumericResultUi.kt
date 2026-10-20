@@ -61,11 +61,21 @@ internal fun clocktowerDirectNumericResult(
  * Never use a fixed answer for a drunk/poisoned ability or a different query. */
 internal fun clocktowerDeterminedNumericResult(step: ClocktowerNightStepUi, actorSeat: Int): Int? {
     if (step.informationReliability != ReliabilityState.RELIABLE) return null
+    return clocktowerMatchingNumericResult(step, actorSeat, step.displayProposition)
+}
+
+/** Restore only a typed number for the current actor and actual query. */
+internal fun clocktowerMatchingNumericResult(
+    step: ClocktowerNightStepUi,
+    actorSeat: Int,
+    proposition: InformationProposition?,
+    subjectSeats: List<Int>? = null,
+): Int? {
     val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
-    val result = step.displayProposition as? InformationProposition.NumericResult ?: return null
+    val result = proposition as? InformationProposition.NumericResult ?: return null
     return result.value.takeIf {
         it >= 0 && result.sourceSeat == actorSeat &&
-            result.metric == question.metric && result.subjectSeats == question.subjectSeats
+            result.metric == question.metric && result.subjectSeats == (subjectSeats ?: question.subjectSeats)
     }
 }
 
@@ -76,6 +86,7 @@ internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorS
 internal fun ClocktowerDirectNumericResultUi(
     title: String,
     initialValue: Int? = null,
+    lastPreviewValue: Int? = null,
     automaticOnly: Boolean = false,
     subjectSeats: List<Int>,
     actorLabel: String,
@@ -89,7 +100,7 @@ internal fun ClocktowerDirectNumericResultUi(
 ) {
     // An async recommendation must not overwrite a Storyteller's live manual draft.
     var entered by remember(draftKey, title, actorLabel, subjectSeats) {
-        mutableStateOf(initialValue?.toString().orEmpty())
+        mutableStateOf((lastPreviewValue ?: initialValue)?.toString().orEmpty())
     }
     val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
     Card(modifier = Modifier.fillMaxWidth()) {

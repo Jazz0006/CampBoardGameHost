@@ -46,6 +46,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
     val seatCount = seats.size
     val validRecommendation = remember(interactionKey, recommendedOption, scriptRoles) {
@@ -59,19 +60,25 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         lastPreviewProposition, abilityRoleEnName, seatCount, scriptRoles,
     )
     // An asynchronous AI recommendation must not erase a Storyteller's in-progress edit.
-    var selection by remember(interactionKey, lastPreviewProposition, scriptRoles, automaticOnly) {
+    var selection by remember(interactionKey, scriptRoles, automaticOnly) {
         mutableStateOf(lastPreviewSelection ?: validRecommendation ?: ClocktowerDirectPairSelection())
     }
-    var editing by remember(interactionKey, lastPreviewProposition, scriptRoles, automaticOnly) {
+    var editing by remember(interactionKey, scriptRoles, automaticOnly) {
         mutableStateOf(!automaticOnly &&
             (validRecommendation == null || (lastPreviewSelection != null &&
                 lastPreviewSelection != validRecommendation)))
     }
-    // While not editing, the newest valid recommendation remains highlighted.
-    val highlightedSelection = if (!editing && validRecommendation != null)
+    // Keep the last preview highlighted until the Storyteller edits or previews again.
+    val highlightedSelection = if (!editing && lastPreviewSelection == null && validRecommendation != null)
         validRecommendation else selection
+    fun changeSelection(next: ClocktowerDirectPairSelection) {
+        if (next != selection) {
+            selection = next
+            onDraftChanged()
+        }
+    }
     fun restoreRecommendation() {
-        selection = validRecommendation ?: ClocktowerDirectPairSelection()
+        changeSelection(validRecommendation ?: ClocktowerDirectPairSelection())
         editing = validRecommendation == null && !automaticOnly
     }
 
@@ -85,7 +92,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         interactionMode = if (editing) ClocktowerSquareTableInteractionMode.Selectable
             else ClocktowerSquareTableInteractionMode.ReadOnly,
         onSeatSelected = { seatNumber ->
-            if (editing) selection = selection.chooseSeat(seatNumber, seatCount)
+            if (editing) changeSelection(selection.chooseSeat(seatNumber, seatCount))
         },
         onBack = {
             if (editing && validRecommendation != null) restoreRecommendation()
@@ -146,7 +153,10 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         }
                     },
                     onConfirm = onConfirm,
-                    onManualSelection = if (automaticOnly) null else ({ editing = true }),
+                    onManualSelection = if (automaticOnly) null else ({
+                        selection = highlightedSelection
+                        editing = true
+                    }),
                 )
                 if (automaticOnly && validRecommendation == null) {
                     Text(
@@ -182,7 +192,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                             DropdownMenuItem(
                                 text = { Text(roleLabel(role.enName)) },
                                 onClick = {
-                                    selection = selection.chooseRole(role.enName)
+                                    changeSelection(selection.chooseRole(role.enName))
                                     expanded = false
                                 },
                             )
@@ -190,7 +200,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         DropdownMenuItem(
                             text = { Text(if (language == "en") "None" else "没有") },
                             onClick = {
-                                selection = selection.chooseNone()
+                                changeSelection(selection.chooseNone())
                                 expanded = false
                             },
                         )

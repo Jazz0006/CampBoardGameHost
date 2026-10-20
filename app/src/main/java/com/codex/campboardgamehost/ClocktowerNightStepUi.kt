@@ -92,14 +92,12 @@ internal fun ClocktowerNightStepCardLocalized(
         clocktowerHasDirectNumericInput(step, directNumericActorSeat, cards)
     ) {
         val determinedNumber = clocktowerDeterminedNumericResult(step, directNumericActorSeat)
-        val advised = (aiSuggestedInformationOption?.proposition as? InformationProposition.NumericResult)
-            ?.takeIf { it.sourceSeat == directNumericActorSeat &&
-                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric &&
-                it.subjectSeats == step.informationQuestion.subjectSeats }?.value
+        val advised = clocktowerMatchingNumericResult(step, directNumericActorSeat, aiSuggestedInformationOption?.proposition)
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
             // A genuinely Host-determined result has exactly one reveal button in all modes.
             initialValue = determinedNumber ?: advised,
+            lastPreviewValue = clocktowerMatchingNumericResult(step, directNumericActorSeat, lastPreviewProposition),
             automaticOnly = allowRuleDeterminedAutoUi || determinedNumber != null,
             subjectSeats = requireNotNull(step.informationQuestion).subjectSeats,
             actorLabel = requireNotNull(step.actor).seatLabel(cards),
@@ -144,6 +142,9 @@ internal fun ClocktowerNightStepCardLocalized(
         null
     }
     val recommendedRoleRevealOption = currentAiSuggestedOption
+    val previewedRole = (lastPreviewProposition as? InformationProposition.RoleAt)?.let { result ->
+        clocktowerDirectRoleRevealChoice(step, result.seat, cards.size, result.role.value, scriptRoles) { it }
+    }?.roleId?.value
     val ravenkeeperRecommendedChoice = if (usesRavenkeeperSquareTable) {
         clocktowerDirectRecommendedRoleReveal(
             step, ravenkeeperSelectedSeat, cards.size, scriptRoles, recommendedRoleRevealOption,
@@ -425,6 +426,7 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightFullScreenSurface.Ravenkeeper -> {
                 val candidates = cards
                 ClocktowerRavenkeeperSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     selectedSeat = ravenkeeperSelectedSeat,
@@ -434,6 +436,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    lastPreviewRoleId = previewedRole,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
@@ -447,6 +450,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRavenkeeperChoice,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -460,6 +464,10 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
                     recommendedResult = fortuneTellerRecommendedResult,
+                    lastPreviewResult = (lastPreviewProposition as? InformationProposition.BooleanResult)?.takeIf {
+                        it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
+                            it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric
+                    }?.value,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     canGoPrevious = canGoPrevious,
@@ -530,6 +538,9 @@ internal fun ClocktowerNightStepCardLocalized(
                         ClocktowerDirectNumericResultUi(
                             title = step.displayTitle,
                             initialValue = (currentChambermaidRecommendation?.proposition as? InformationProposition.NumericResult)?.value,
+                            lastPreviewValue = clocktowerMatchingNumericResult(
+                                step, structuredActorSeat, lastPreviewProposition, selectedSeats,
+                            ),
                             subjectSeats = selectedSeats,
                             actorLabel = requireNotNull(step.actor).seatLabel(cards), wakeInstruction = null,
                             language = language, onHostTools = onHostTools,
@@ -606,6 +617,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -616,12 +628,14 @@ internal fun ClocktowerNightStepCardLocalized(
                 if (!usesUndertakerSquareTable) {
                     renderPlainInformationFallback()
                 } else ClocktowerUndertakerSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    lastPreviewRoleId = previewedRole,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
@@ -632,6 +646,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showUndertakerChoice,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -643,10 +658,12 @@ internal fun ClocktowerNightStepCardLocalized(
                 if (!usesSageSquareTable) {
                     renderPlainInformationFallback()
                 } else ClocktowerSageSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     recommendedSeats = sageSuggestedOption?.presentationSubjectSeats,
+                    lastPreviewSeats = clocktowerSagePreviewSeats(lastPreviewProposition, cards.size),
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     canGoPrevious = canGoPrevious,
@@ -655,6 +672,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     onNext = onNext,
                     onConfirmRecommended = { sageSuggestedOption?.let(::showRecommendedDisplayOption) },
                     onConfirmManual = ::showSageManualPair,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 

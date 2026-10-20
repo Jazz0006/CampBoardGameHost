@@ -8,6 +8,32 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClocktowerDirectNumericResultTest {
+    @Test fun `last preview restores actual manual number only for the same actor metric and query`() {
+        val step = ClocktowerNightStepUi(
+            title = "Chambermaid", actor = PlayerCard("Alice"), isRealAction = true,
+            reason = "", storytellerAction = "", tellPlayer = "", explanation = "",
+            roleEnName = "Chambermaid",
+            informationQuestion = ClocktowerInformationQuestion.Number(
+                NumericMetric.PLAYERS_WAKING_FOR_ABILITY, listOf(2, 3),
+            ),
+        )
+        val preview = InformationProposition.NumericResult(
+            NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 1, listOf(2, 3), 2,
+        )
+        // An unrelated current AI answer does not become the value that was previewed.
+        val current = step.copy(displayProposition = preview.copy(value = 0))
+        assertEquals(2, clocktowerMatchingNumericResult(current, 1, preview))
+        assertEquals(0, clocktowerMatchingNumericResult(current, 1, current.displayProposition))
+        assertNull(clocktowerMatchingNumericResult(current, 2, preview))
+        assertNull(clocktowerMatchingNumericResult(current, 1, preview.copy(metric = NumericMetric.ADJACENT_EVIL_PAIRS)))
+        assertNull(clocktowerMatchingNumericResult(current, 1, preview, listOf(2, 4)))
+        assertNull(clocktowerMatchingNumericResult(current, 1, null))
+        // Current player-selected subjects may differ from the original prepared question.
+        assertEquals(1, clocktowerMatchingNumericResult(
+            current, 1, preview.copy(subjectSeats = listOf(2, 4), value = 1), listOf(2, 4),
+        ))
+    }
+
     @Test fun `manual number is actual published value, independent of calculated candidate set`() {
         val baseline = InformationProposition.NumericResult(
             NumericMetric.ADJACENT_EVIL_PAIRS, 1, listOf(1, 2, 3), 1,

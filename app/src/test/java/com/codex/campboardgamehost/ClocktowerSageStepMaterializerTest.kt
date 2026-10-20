@@ -4,9 +4,24 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClocktowerSageStepMaterializerTest {
+    @Test fun `Sage return restores typed preview pair and rejects incomplete or unrelated shapes`() {
+        val preview = demonClaim(1, 5)
+        assertEquals(listOf(1, 5), clocktowerSagePreviewSeats(preview, 5))
+        assertEquals(listOf(2, 4), clocktowerSagePreviewSeats(demonClaim(2, 4), 5))
+        assertNull(clocktowerSagePreviewSeats(null, 5))
+        assertNull(clocktowerSagePreviewSeats(demonClaim(1, 1), 5))
+        assertNull(clocktowerSagePreviewSeats(demonClaim(1, 6), 5))
+        assertNull(clocktowerSagePreviewSeats(InformationProposition.RoleAt(1, RoleId("Imp")), 5))
+        assertNull(clocktowerSagePreviewSeats(InformationProposition.AnyOf(listOf(
+            InformationProposition.RoleAt(1, RoleId("Imp")),
+            InformationProposition.RoleAt(5, RoleId("Chef")),
+        )), 5))
+    }
+
     @Test
     fun `Sage manually confirmed pair is recorded as typed information without rules filtering`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }

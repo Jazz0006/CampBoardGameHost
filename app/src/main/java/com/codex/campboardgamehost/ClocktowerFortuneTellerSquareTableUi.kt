@@ -49,6 +49,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     wakeInstruction: String? = null,
     redHerringSeat: Int? = null,
     recommendedResult: Boolean?,
+    lastPreviewResult: Boolean?,
     automaticOnly: Boolean = false,
     language: String,
     canGoPrevious: Boolean,
@@ -106,6 +107,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             recommendedResult = recommendedResult,
+            lastPreviewResult = lastPreviewResult,
             automaticOnly = automaticOnly,
             language = language,
             onResultSelected = onResultSelected,
@@ -118,6 +120,7 @@ private fun ClocktowerFortuneTellerCenterControls(
     wakeInstruction: String?,
     selectedSeats: List<Int>,
     recommendedResult: Boolean?,
+    lastPreviewResult: Boolean?,
     automaticOnly: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
@@ -139,7 +142,9 @@ private fun ClocktowerFortuneTellerCenterControls(
             }
             choices.forEachIndexed { index, result ->
                 Text(
-                    text = if (recommendedResult != null && result == recommendedResult) {
+                    text = if (result == lastPreviewResult) {
+                        if (language == "en") "Last preview" else "最近预览"
+                    } else if (recommendedResult != null && result == recommendedResult) {
                         if (language == "en") "Recommended" else "推荐"
                     } else {
                         if (language == "en") "Other option" else "另一个选项"
@@ -147,7 +152,7 @@ private fun ClocktowerFortuneTellerCenterControls(
                     style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                 )
-                if (recommendedResult != null && result == recommendedResult) {
+                if (result == lastPreviewResult || (lastPreviewResult == null && result == recommendedResult)) {
                     Button(
                         onClick = { onResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),
