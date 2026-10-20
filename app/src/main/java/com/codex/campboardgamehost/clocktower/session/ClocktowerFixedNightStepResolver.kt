@@ -7,10 +7,9 @@ import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 /**
  * Session-fact-backed selection of the next not-yet-performed mechanical night action.
  *
- * This is deliberately narrow: it may skip only the four fixed actions which have
- * an accepted, phase/round-scoped Session fact (or an actor who is no longer alive).
- * Other night interactions, including private information, are NOT treated as
- * completed until their own Session publication contract is migrated.
+ * Fixed mechanical actions are completed from accepted Session action facts.
+ * Private information steps are completed only from a confirmed Observation
+ * in the same phase/round/actor/ability, never from a UI preview.
  *
  * The presentation cursor only locates not-yet-migrated information steps; it must NEVER
  * skip an earlier still-uncommitted mechanical action. Completed actions come solely
@@ -20,6 +19,7 @@ internal data class ClocktowerFixedNightStepStatus(
     val kind: NightOperationKind?,
     val actorAlive: Boolean = true,
     val realAction: Boolean = true,
+    val confirmedInformation: Boolean = false,
 )
 
 /** Read accepted fixed actions from the one Session timeline, scoped to this exact night. */
@@ -55,15 +55,16 @@ internal fun clocktowerNextUnperformedFixedNightStepIndex(
     fun unperformedMechanical(step: ClocktowerFixedNightStepStatus): Boolean =
         step.kind != null && step.actorAlive && step.realAction &&
             step.kind !in acceptedFactsInCurrentNight
-    // A stale/out-of-bounds UI cursor cannot authorize skipping a player's
-    // mandatory mechanic. Session facts or confirmed death are the only skips.
+    fun eligible(step: ClocktowerFixedNightStepStatus): Boolean =
+        if (step.kind != null) unperformedMechanical(step)
+        else !step.confirmedInformation
+    // A stale/out-of-bounds UI cursor cannot skip an unconfirmed mechanic.
+    // A committed information Observation is also a true completion fact.
     for (index in 0 until cursor.coerceAtMost(steps.size)) {
         if (unperformedMechanical(steps[index])) return index
     }
     for (index in cursor.coerceAtMost(steps.size) until steps.size) {
-        val step = steps[index]
-        if (step.kind != null && !unperformedMechanical(step)) continue
-        return index
+        if (eligible(steps[index])) return index
     }
     return null
 }

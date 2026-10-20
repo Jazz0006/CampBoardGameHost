@@ -12,14 +12,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 
 @Composable
@@ -42,8 +40,6 @@ internal fun ClocktowerNightStepCardLocalized(
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
-    /** True only for a not-yet-published, player-independent, live Host step. */
-    autoPresentAiInformation: Boolean = false,
     surfacePlan: ClocktowerNightSurfacePlan,
     selectedName: String?,
     fortuneTellerFirst: String?,
@@ -82,11 +78,6 @@ internal fun ClocktowerNightStepCardLocalized(
             ?.takeIf { it.sourceSeat == directNumericActorSeat &&
                 it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric &&
                 it.subjectSeats == step.informationQuestion.subjectSeats }?.value
-        LaunchedEffect(gameId, phase, round, sequence, step.roleEnName, autoPresentAiInformation, advised) {
-            if (autoPresentAiInformation && advised != null) {
-                clocktowerDirectNumericResult(step, directNumericActorSeat, advised, cards)?.let(onShowPlayerDisplay)
-            }
-        }
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
             initialValue = advised,
@@ -201,18 +192,8 @@ internal fun ClocktowerNightStepCardLocalized(
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 
-    // AI and manual results share the original exact-once publication callback.
-    val automaticCurrentChoice = automaticDisplayOption?.takeIf {
-        autoPresentAiInformation && step.action == ClocktowerNightAction.None
-    }
-    LaunchedEffect(
-        gameId, phase, round, sequence, step.roleEnName,
-        autoPresentAiInformation,
-        automaticCurrentChoice?.let(::clocktowerInformationCandidateId),
-    ) {
-        automaticCurrentChoice?.let { chosen -> showRecommendedDisplayOption(chosen) }
-    }
-
+    // A suggestion may be preselected, but opening the player's fullscreen
+    // is always an explicit live Storyteller action, including AI_AUTOMATIC.
 
     fun showUndertakerChoice(choice: ClocktowerDirectRoleRevealChoice) {
         fun undertakerDisplay(displayStep: ClocktowerNightStepUi): ClocktowerNightStepUi =
@@ -237,48 +218,9 @@ internal fun ClocktowerNightStepCardLocalized(
             ?.let(onShowPlayerDisplay)
     }
 
-    // Use current AI advice only after the players confirmed the query subjects.
-    val automaticQueriedResult = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.FortuneTeller &&
-        structuredFortuneTellerSelectedSeats != null
-    ) {
-        val aiResult = (currentAiSuggestedOption?.proposition as?
-            InformationProposition.BooleanResult)?.takeIf { proposition ->
-                proposition.sourceSeat == structuredActorSeat &&
-                    proposition.subjectSeats == structuredFortuneTellerSelectedSeats &&
-                    proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
-            }?.value
-        aiResult
-    } else null
-    LaunchedEffect(
-        gameId, phase, round, sequence, step.roleEnName,
-        informationDecisionKey, autoPresentAiInformation, automaticQueriedResult,
-    ) {
-        automaticQueriedResult?.let(::showStructuredFortuneTellerResult)
-    }
-
-    // Query answers retain the original publication callback and actual target seats.
-    val automaticQueriedDisplayOption = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.Chambermaid &&
-        listOfNotNull(chambermaidFirst, chambermaidSecond).let {
-            it.size == 2 && it.distinct().size == 2
-        }
-    ) automaticDisplayOption else null
-    val automaticRavenkeeperChoice = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.Ravenkeeper &&
-        ravenkeeperSelectedSeat != null
-    ) ravenkeeperRecommendedChoice else null
-    LaunchedEffect(
-        informationDecisionKey, autoPresentAiInformation,
-        automaticQueriedDisplayOption?.let(::clocktowerInformationCandidateId),
-        automaticRavenkeeperChoice?.displayOption?.let(::clocktowerInformationCandidateId),
-    ) {
-        automaticQueriedDisplayOption?.let(::showRecommendedDisplayOption)
-        automaticRavenkeeperChoice?.let(::showRavenkeeperChoice)
-    }
+    // Fortune Teller, Chambermaid, and Ravenkeeper show the recommended
+    // result only after the player actually selects their query targets and
+    // the Storyteller explicitly taps a display button. No automatic reveal.
 
     val compactNightGuidance = clocktowerBeginnerNightGuidance(
         action = step.action,

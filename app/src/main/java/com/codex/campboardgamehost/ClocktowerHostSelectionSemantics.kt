@@ -161,24 +161,6 @@ internal fun clocktowerLiveQueryRevealDisposition(
     } else ClocktowerLiveQueryRevealDisposition.CONFLICT
 }
 
-/** A previously published observation never becomes a fresh auto-advance permission
- * just because its player display was manually reopened. */
-internal fun clocktowerShouldAutoAdvanceAfterFreshReveal(
-    automaticMode: Boolean,
-    phase: ClocktowerPhase,
-    currentStep: ClocktowerNightStepUi,
-    revealedStep: ClocktowerNightStepUi,
-    actorSeat: Int?,
-    alreadyPublished: Boolean,
-    handoff: ClocktowerPlayerRevealHandoff,
-): Boolean = automaticMode &&
-    phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-    currentStep.isRealAction && actorSeat != null &&
-    currentStep.actor?.name != null &&
-    currentStep.actor?.name == revealedStep.actor?.name &&
-    currentStep.roleEnName != null && currentStep.roleEnName == revealedStep.roleEnName &&
-    !alreadyPublished && handoff.openReveal && handoff.recordPublication
-
 /** Advice status may suppress only its own exact current Host decision. */
 internal fun clocktowerCurrentAiRequestBlocked(
     currentKey: String?,

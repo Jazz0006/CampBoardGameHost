@@ -14,6 +14,13 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 D2 信息全屏预览 / Next 最终事件（本批验收以 SHA/CI 为准）
+
+- **已修改生产入口**：`ClocktowerHostScreen` 中 `onShowPlayerDisplay` 仅更新当前步骤的临时 `lastInformationPreview` 和打开全屏；全屏关闭只回同一步，不记录/不推进；本步骤 Next 缺乏预览时不允许，已有预览时从最后预览的真实 typed proposition 原子提交唯一 Observation，再沿现有稳定交互 ID 走后续步骤。不再保留多次中间预览作为任何事实。
+- **已删除旧流程**：自动模式下 `ClocktowerNightStepUi` 用 `LaunchedEffect` 自动打开 Numeric/Pair/FT/Chambermaid/Ravenkeeper 信息的副作用；`autoPresentAiInformation` 参数；`pendingAutoAdvanceAfterDisplay`；生产 UI 的 `FirstNightInformationMigration` 已展示标记；`ClocktowerPlayerRevealHandoff` 的展示即发布交接文件及其独占测试，改为最小的 Session 版本确认工具。自动模式仍按现有推荐选值，但真人现场点击展示。
+- **进度与恢复**：从 Session 同期 Observation 判断信息步骤是否已 Next 确认，UI 游标归零时无需重复该角色；未 Next 的预览丢失即可重新开始。直接动作提交既有路径不改变。保留原 AI/候选显示组件，仍需后续实际安卓端到端验证三模式的全部角色按钮/高亮样式及多夜条件唤醒。
+- **尚未完成**：全夜纯 `nextStep(Session)`、`nightStepIndex` 全面退出、Mayor/Imp 动态 handoff 清理、NGJ Klutz C 与 Day B、旧 FirstNightInformationRequest/生命周期测试辅助文件的最终依赖剔除。此处代码提交后必须以对应完整 CI/R2 检查，不可把本批视为全角色验收。
+
 ## 2026-10-20 四角色机械路径收尾新批次（验收以本批最新提交/CI 为准）
 
 - 正式代码的 `ClocktowerFixedNightStepResolver.kt` 现在**直接解析唯一 Session 的 ActionFactTimeline** 并按 phase/round 取得已确认 Poison/Protect/Attack/Butler 操作；生产 UI 使用该不可写时间线，而不是 `ClocktowerNightCheckpoint.acceptedOperationKinds`。同步删除后者、`CampBoardGameHostApp` 中用于组装它的重复数据计算，夜间死亡投影仅从 Session 已确认袭击目标判断是否发生过 Attack。

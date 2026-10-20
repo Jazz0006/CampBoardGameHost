@@ -50,6 +50,22 @@ class ClocktowerFixedNightStepResolverTest {
         assertEquals(1, resolve(steps, NightOperationKind.entries.toSet()))
     }
 
+    @Test fun `private information is completed only after a real Session Observation`() {
+        val previewOnly = ClocktowerFixedNightStepStatus(kind = null)
+        val confirmed = previewOnly.copy(confirmedInformation = true)
+        val steps = listOf(actions[0], previewOnly, actions[1])
+        // Returning from the player's fullscreen is not a committed event.
+        assertEquals(1, resolve(steps, setOf(NightOperationKind.POISON), cursor = 0))
+        // The Next-created Observation removes this role from future re-entry.
+        assertEquals(2, resolve(
+            steps = listOf(actions[0], confirmed, actions[1]),
+            accepted = setOf(NightOperationKind.POISON),
+            cursor = 0,
+        ))
+        // The UI must not infer a trigger's completion from the action phase alone.
+        assertEquals(1, resolve(steps, setOf(NightOperationKind.POISON), cursor = 0))
+    }
+
     @Test fun `nonreal mechanical placeholder does not require waking a nonexistent actor`() {
         assertEquals(1, resolve(listOf(
             ClocktowerFixedNightStepStatus(NightOperationKind.POISON, actorAlive = false, realAction = false),
