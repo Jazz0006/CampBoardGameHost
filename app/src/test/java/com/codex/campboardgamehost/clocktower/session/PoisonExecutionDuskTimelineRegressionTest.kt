@@ -5,7 +5,6 @@ import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.*
 import org.junit.Test
@@ -24,7 +23,7 @@ class PoisonExecutionDuskTimelineRegressionTest {
         session.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("day", StorytellerPhase.FIRST_NIGHT,
             1, session.nextInputSequence, StorytellerPhase.DAY, 1), session.state.gameStateRevision)
         session.commitConfirmedPlayerDeath(ActionFactDraft.Execution("execution", StorytellerPhase.DAY,
-            1, session.nextInputSequence, 7), session.state.gameStateRevision, "public-execution")
+            1, session.nextInputSequence, 7), session.state.gameStateRevision)
         assertTrue(session.state.gameState.playerAt(2)!!.poisoned)
         val before = session.state
         assertTrue(session.expirePoisonAtDusk(before.gameStateRevision))
@@ -39,10 +38,9 @@ class PoisonExecutionDuskTimelineRegressionTest {
         val execution = actions.single { it.fact is ActionFact.Execution }
         val clear = actions.single { it.fact is ActionFact.Poison && (it.fact as ActionFact.Poison).targetSeat == null }
         val nextNight = actions.last()
-        val observation = session.state.epistemicObservationLog.records.single()
-        val publicationPoint = (observation.timelineBinding as ObservationTimelineBinding.Global).point
-        assertTrue(execution.point.globalSequence < publicationPoint.globalSequence)
-        assertTrue(publicationPoint.globalSequence < clear.point.globalSequence)
+        // The execution is the public event; a second AliveAt(false) observation is redundant.
+        assertTrue(session.state.epistemicObservationLog.records.isEmpty())
+        assertTrue(execution.point.globalSequence < clear.point.globalSequence)
         assertTrue(clear.point.globalSequence < nextNight.point.globalSequence)
         assertEquals(StorytellerPhase.DAY, clear.point.phase)
         assertEquals(1, clear.point.round)
