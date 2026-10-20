@@ -47,7 +47,7 @@ class ClocktowerGameSessionPhaseBoundaryTest {
         val acceptedFirst = session.state
         assertNotNull(runCatching {
             session.commitConfirmedPhaseAdvance(
-                phase("wrong-from-night", StorytellerPhase.NIGHT, 1, StorytellerPhase.DAWN, 1), 1L,
+                phase("wrong-from-night", StorytellerPhase.NIGHT, 1, StorytellerPhase.DAY, 1), 1L,
             )
         }.exceptionOrNull())
         assertEquals(acceptedFirst, session.state)
@@ -75,10 +75,10 @@ class ClocktowerGameSessionPhaseBoundaryTest {
             expectedGameStateRevision = session.state.gameStateRevision,
         )
         session.commitConfirmedPhaseAdvance(
-            phase("dawn-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAWN, 2),
+            phase("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2),
             expectedGameStateRevision = session.state.gameStateRevision,
         )
-        assertEquals(StorytellerPhase.DAWN, session.view.phase)
+        assertEquals(StorytellerPhase.DAY, session.view.phase)
         assertEquals(2, session.view.round)
         assertEquals(4L, session.state.gameStateRevision)
         assertEquals(4L, session.state.nextTimelineGlobalSequence)

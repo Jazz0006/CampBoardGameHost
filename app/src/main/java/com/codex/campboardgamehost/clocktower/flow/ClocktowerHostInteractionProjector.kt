@@ -82,9 +82,9 @@ internal class ClocktowerHostInteractionProjector {
                     NightOrderToken.System.DEMON_INFO -> add(system(phase, "demon_info",
                         ClocktowerHostInteractionKind.EVIL_INFORMATION,
                         ClocktowerInteractionCompletionPolicy.INFORMATION_DISPLAY))
-                    NightOrderToken.System.DAWN -> add(system(phase, "dawn",
-                        ClocktowerHostInteractionKind.SYSTEM_BOUNDARY,
-                        ClocktowerInteractionCompletionPolicy.SYSTEM_TRANSITION))
+                    // Script metadata includes a closing "dawn" token, but the Host
+                    // simply finishes the final real role and transitions to Day.
+                    NightOrderToken.System.DAWN -> Unit
                 }
             }
         }

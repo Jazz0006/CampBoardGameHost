@@ -53,15 +53,15 @@ class ClocktowerNightVoteOwnershipTest {
         assertEquals(accepted, s.state)
     }
 
-    @Test fun `night to Dawn clears transient attack protection and Mayor targets`() {
+    @Test fun `night to Day clears transient attack protection and Mayor targets`() {
         val s = session()
         commit(s, attack(s, 4))
         commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
         dependents(s)
         assertEquals(ClocktowerNightTargets(attackSeat = 4, monkSeat = 3, mayorRedirectSeat = 3),
             s.state.nightTargets)
-        commit(s, ActionFactDraft.PhaseAdvance("dawn", StorytellerPhase.NIGHT, 2,
-            s.nextInputSequence, StorytellerPhase.DAWN, 2))
+        commit(s, ActionFactDraft.PhaseAdvance("day", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAY, 2))
         assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
     }
 

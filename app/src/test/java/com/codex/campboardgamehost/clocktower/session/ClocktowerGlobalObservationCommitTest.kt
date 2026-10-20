@@ -75,7 +75,7 @@ class ClocktowerGlobalObservationCommitTest {
         val publicRecord = session.commitGlobalEpistemicObservation(
             EpistemicObservationDraft(
                 recordId = "public-death",
-                phase = StorytellerPhase.DAWN,
+                phase = StorytellerPhase.DAY,
                 round = 1,
                 sequence = 99,
                 sourceSeat = null,
@@ -146,7 +146,7 @@ class ClocktowerGlobalObservationCommitTest {
         val before = session.state
         val externallyBound = RecordedEpistemicObservation(
             recordId = "externally-bound",
-            phase = StorytellerPhase.DAWN,
+            phase = StorytellerPhase.DAY,
             round = 1,
             sequence = 3,
             sourceSeat = null,
@@ -156,7 +156,7 @@ class ClocktowerGlobalObservationCommitTest {
             reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
             proposition = InformationProposition.AliveAt(2, false),
             timelineBinding = ObservationTimelineBinding.Global(
-                TimelinePoint(StorytellerPhase.DAWN, 1, 3, 3L),
+                TimelinePoint(StorytellerPhase.DAY, 1, 3, 3L),
             ),
         )
 

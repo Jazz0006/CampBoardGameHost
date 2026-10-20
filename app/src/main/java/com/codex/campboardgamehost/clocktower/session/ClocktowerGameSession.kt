@@ -385,7 +385,7 @@ internal class ClocktowerGameSession private constructor(
             nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
             draft = prepared,
         )
-        // Preflight all announcements before updating Session: multiple dawn deaths are atomic.
+        // Preflight any actual information provided to players before atomically updating Session.
         var nextObservations = state.epistemicObservationLog
         var nextCursor = committed.nextTimelineGlobalSequence
         var nextInputRevision = state.playerInputRevision
@@ -449,23 +449,16 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft.PhaseAdvance,
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
-        if (draft.phase == StorytellerPhase.NIGHT &&
-            draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY)) {
+        if (draft.phase == StorytellerPhase.NIGHT) {
             check(!mayorAttackAwaitsRuling()) {
-                "The confirmed Imp attack on the Mayor must be resolved before dawn."
+                "The confirmed Imp attack on the Mayor must be resolved before Day."
             }
         }
         val legal = when (draft.phase) {
-            StorytellerPhase.FIRST_NIGHT ->
-                draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
-            StorytellerPhase.NIGHT ->
-                draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY) &&
-                    draft.nextRound == draft.round
-            StorytellerPhase.DAWN ->
+            StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT ->
                 draft.nextPhase == StorytellerPhase.DAY && draft.nextRound == draft.round
             StorytellerPhase.DAY ->
-                (draft.nextPhase == StorytellerPhase.NIGHT && draft.nextRound == draft.round + 1) ||
-                    (draft.nextPhase == StorytellerPhase.DAWN && draft.nextRound == draft.round)
+                draft.nextPhase == StorytellerPhase.NIGHT && draft.nextRound == draft.round + 1
         }
         require(legal) {
             "Illegal confirmed Clocktower phase progression: ${draft.phase}/${draft.round} " +
@@ -478,32 +471,13 @@ internal class ClocktowerGameSession private constructor(
             (previouslyAcceptedPhase.phase == draft.phase && previouslyAcceptedPhase.round == draft.round)) {
             "Phase transition must start from the last accepted PhaseAdvance in Session history."
         }
-        // Death changes the private mechanical roster during the night. Publication happens only
-        // when crossing the night-to-public boundary, in the SAME atomic Session transition as
-        // PhaseAdvance. No role identity, attack or protection information is published here.
-        val dawnAnnouncements = if (draft.phase == StorytellerPhase.NIGHT &&
-            draft.nextPhase in setOf(StorytellerPhase.DAWN, StorytellerPhase.DAY)
-        ) state.actionTimeline.entries.filter { entry ->
-            entry.point.phase == StorytellerPhase.NIGHT && entry.point.round == draft.round &&
-                entry.fact is ActionFact.Death
-        }.sortedBy { it.point.globalSequence }.mapIndexed { index, entry ->
-            val seat = (entry.fact as ActionFact.Death).targetSeat
-            EpistemicObservationDraft(
-                recordId = DawnCommitIdentity.deathObservation(state.gameId, draft.round, seat),
-                phase = draft.nextPhase, round = draft.nextRound,
-                sequence = draft.sequence + index + 1,
-                sourceSeat = null, sourceAbility = null,
-                visibility = com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PUBLIC,
-                recipientSeats = emptySet(),
-                reliability = com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.NOT_ABILITY_INFORMATION,
-                proposition = com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AliveAt(seat, false),
-            )
-        } else emptyList()
+        // All night deaths were settled at their real causes. Moving to Day never invents
+        // a duplicate PUBLIC AliveAt observation or a separate disclosure transaction.
+        // Day UI reads this round's confirmed Death facts directly from Session.
         return commitConfirmedGameAction(
             draft = draft,
             nextGameState = state.gameState,
             expectedGameStateRevision = expectedGameStateRevision,
-            publishedObservations = dawnAnnouncements,
         )
     }
 
@@ -760,7 +734,7 @@ internal class ClocktowerGameSession private constructor(
 
     /**
      * Imp Attack + actual Death + any chosen successor RoleChange form one Session transaction.
-     * These facts remain PRIVATE until Dawn announces only the Death, never its cause/role.
+     * These mechanical facts do not expose hidden causes or roles on the day table.
      */
     private fun acceptDeterministicNightAttack(
         targetSeat: Int,

@@ -350,7 +350,6 @@ internal fun CampBoardGameHostApp() {
             when (clocktowerSessionView?.phase ?: StorytellerPhase.FIRST_NIGHT) {
                 StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
                 StorytellerPhase.DAY -> ClocktowerPhase.Day
-                StorytellerPhase.DAWN -> ClocktowerPhase.Dawn
                 StorytellerPhase.NIGHT -> ClocktowerPhase.Night
             }
         }
@@ -2323,7 +2322,7 @@ internal fun CampBoardGameHostApp() {
                                     captureKlutzLearnedDeathOnPublicAnnouncement(
                                         requireNotNull(clocktowerPendingKlutzName))
                                 } else {
-                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                    // The player's current DAY session already contains the real facts.
                                     resetClocktowerNightFlow()
                                 }
                             }
@@ -2348,7 +2347,8 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerPendingKlutzName = null
                                 clocktowerKlutzChoiceName = null
                                 if (clocktowerKlutzReturnToDawn) {
-                                    commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                    // A Klutz who learns of a night death chooses during the new Day.
+                                    // Completing that real choice does not trigger another phase.
                                     clocktowerKlutzReturnToDawn = false
                                 } else {
                                     val nextRound = round + 1
@@ -2714,9 +2714,8 @@ internal fun CampBoardGameHostApp() {
                                         ?.takeIf { it.actualRole == RoleId("Klutz") }?.name
                                 }
                             } else null
-                            // Poison is already the Session's effective status. It continues
-                            // through Dawn/Day and expires at the outgoing Day boundary.
-                            // No late manual override or second death/succession decision.
+                            // Poison remains effective through Day, expiring when Day ends.
+                            // No dawn/publish transaction or second night-death decision exists.
                             if (nightKlutzName != null) {
                                 clocktowerPendingKlutzName = nightKlutzName
                                 clocktowerKlutzChoiceName = null
@@ -2725,8 +2724,9 @@ internal fun CampBoardGameHostApp() {
                                 clocktowerDayModeState.value = ClocktowerDayMode.Klutz
                                 captureKlutzLearnedDeathOnPublicAnnouncement(nightKlutzName)
                             } else {
-                                commitClocktowerPhaseAdvance(ClocktowerPhase.Dawn)
+                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 resetClocktowerNightFlow()
+                                resetClocktowerDayFlow()
                             }
                             clocktowerFortuneTellerFirst = null
                             clocktowerFortuneTellerSecond = null

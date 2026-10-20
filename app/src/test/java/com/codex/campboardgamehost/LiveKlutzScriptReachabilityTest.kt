@@ -65,7 +65,7 @@ class LiveKlutzScriptReachabilityTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         val death = session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
-            "death-at-night", StorytellerPhase.DAWN, 2, 1, 1,
+            "death-at-night", StorytellerPhase.NIGHT, 2, 1, 1,
         ), 0L)
         val deathProof = (death.fact as ActionFact.Death).klutzDeathTrigger
         assertEquals(RoleId("Klutz"), deathProof?.actualRole)
@@ -78,7 +78,7 @@ class LiveKlutzScriptReachabilityTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
-            "night-death", StorytellerPhase.DAWN, 2, 1, 1,
+            "night-death", StorytellerPhase.NIGHT, 2, 1, 1,
         ), 0L)
         val learn = requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "learn-public", 2, 2,
@@ -109,7 +109,7 @@ class LiveKlutzScriptReachabilityTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         session.commitAcceptedTestAction(ActionFactDraft.Death(
-            "legacy-no-proof", StorytellerPhase.DAWN, 2, 1, 1,
+            "legacy-no-proof", StorytellerPhase.NIGHT, 2, 1, 1,
         ))
         assertEquals(null, NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "invented-learn", 2, 2,
@@ -126,7 +126,7 @@ class LiveKlutzScriptReachabilityTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         session.commitConfirmedPlayerDeath(ActionFactDraft.Death(
-            "klutz-night", StorytellerPhase.DAWN, 2, 1, 1,
+            "klutz-night", StorytellerPhase.NIGHT, 2, 1, 1,
         ), 0L)
         session.commitAcceptedTestAction(requireNotNull(NoGreaterJoyKlutzHistoryProducerV1.learned(
             session.state, 1, "learn", 2, 2,

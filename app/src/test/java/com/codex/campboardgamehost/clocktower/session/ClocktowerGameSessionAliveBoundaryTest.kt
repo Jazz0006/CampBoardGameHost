@@ -29,7 +29,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         val before = session.state.gameState
-        val draft = ActionFactDraft.Death("night-death", StorytellerPhase.DAWN, 2, 1, targetSeat)
+        val draft = ActionFactDraft.Death("night-death", StorytellerPhase.NIGHT, 2, 1, targetSeat)
 
         val death = session.commitConfirmedPlayerDeath(
             draft = draft,
@@ -59,7 +59,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
 
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("night-death-conflict", StorytellerPhase.DAWN, 2, 1, targetSeat),
+                ActionFactDraft.Death("night-death-conflict", StorytellerPhase.NIGHT, 2, 1, targetSeat),
                 1L,
                 "another-observation",
             )
@@ -69,7 +69,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
         // An already committed public record ID cannot be reused for another death.
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("another-death", StorytellerPhase.DAWN, 2, 2, 3),
+                ActionFactDraft.Death("another-death", StorytellerPhase.NIGHT, 2, 2, 3),
                 1L,
                 "public-death-seat-2",
             )
@@ -113,7 +113,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
         val before = session.state
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("stale", StorytellerPhase.DAWN, 2, 1, 1),
+                ActionFactDraft.Death("stale", StorytellerPhase.NIGHT, 2, 1, 1),
                 8L,
                 "not-published",
             )
@@ -122,7 +122,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
 
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("unknown-seat", StorytellerPhase.DAWN, 2, 1, 100),
+                ActionFactDraft.Death("unknown-seat", StorytellerPhase.NIGHT, 2, 1, 100),
                 0L,
             )
         }.exceptionOrNull())

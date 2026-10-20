@@ -104,7 +104,7 @@ class ClocktowerGameSessionTest {
         session.recordEpistemicObservation(
             RecordedEpistemicObservation(
                 recordId = "dawn-one-dead",
-                phase = StorytellerPhase.DAWN,
+                phase = StorytellerPhase.DAY,
                 round = 1,
                 sequence = 0,
                 sourceSeat = null,
@@ -327,7 +327,7 @@ class ClocktowerGameSessionTest {
 
     private fun globalPublicDraft(recordId: String): EpistemicObservationDraft = EpistemicObservationDraft(
         recordId = recordId,
-        phase = StorytellerPhase.DAWN,
+        phase = StorytellerPhase.DAY,
         round = 1,
         sequence = 0,
         sourceSeat = null,

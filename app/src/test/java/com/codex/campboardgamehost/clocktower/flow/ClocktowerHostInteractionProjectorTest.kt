@@ -206,9 +206,10 @@ class ClocktowerHostInteractionProjectorTest {
             interactions.first().id,
         )
         assertEquals(
-            ClocktowerInteractionId("first_night:system:dawn"),
+            ClocktowerInteractionId("first_night:role:Fortune Teller"),
             interactions.last().id,
         )
+        assertTrue(interactions.none { it.id.value.endsWith(":system:dawn") })
         assertTrue(interactions.any { it.id == ClocktowerInteractionId("first_night:system:minion_info") })
         assertTrue(interactions.any { it.id == ClocktowerInteractionId("first_night:system:demon_info") })
         assertTrue(interactions.any { it.id == ClocktowerInteractionId("first_night:role:Poisoner") })

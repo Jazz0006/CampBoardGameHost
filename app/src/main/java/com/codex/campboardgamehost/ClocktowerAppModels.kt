@@ -9,7 +9,6 @@ internal enum class ClocktowerTeam {
 
 internal enum class ClocktowerPhase {
     FirstNight,
-    Dawn,
     Day,
     Night,
 }

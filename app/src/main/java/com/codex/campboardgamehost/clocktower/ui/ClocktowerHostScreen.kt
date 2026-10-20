@@ -229,17 +229,6 @@ internal fun ClocktowerJudgeScreen(
         return
     }
 
-    if (phase == ClocktowerPhase.Dawn) {
-        ClocktowerDawnSummaryScreen(
-            round = round,
-            cards = cards,
-            deathNames = confirmedNightDeathSeats.mapNotNull { sessionGameState.playerAt(it)?.name },
-            onHostTools = onHostTools,
-            onEnterDay = onAdvanceFromFirstNight,
-        )
-        return
-    }
-
     if (phase == ClocktowerPhase.Day) {
         val executionThreshold = (publicAliveCards.size + 1) / 2
         val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
@@ -272,6 +261,9 @@ internal fun ClocktowerJudgeScreen(
                     aliveCount = publicAliveCards.size,
                     executionThreshold = executionThreshold,
                     highestVoteText = highestVoteText,
+                    lastNightDeathLabels = if (round > 1) confirmedNightDeathSeats.mapNotNull { seat ->
+                        sessionGameState.playerAt(seat)?.name?.let { playerSeatLabel(cards, it) }
+                    } else null,
                     showSlayerAction = scriptHasSlayer,
                     slayerActionEnabled = cards.isNotEmpty(),
                     showArtistAction = scriptHasArtist,

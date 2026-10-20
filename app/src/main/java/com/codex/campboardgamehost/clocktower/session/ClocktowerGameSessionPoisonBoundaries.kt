@@ -73,7 +73,7 @@ private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): G
 
 /**
  * One confirmed Host poison transition: a real night choice or outgoing Day expiry.
- * Night poison persists naturally through Dawn; no separate carry/clear decision exists.
+ * Night poison persists naturally into Day; no separate carry/clear decision exists.
  * Mechanical flags, revision and globally sequenced fact commit together.
  * A semantic expiry can be a fact even if the poisoned seat was already killed.
  */

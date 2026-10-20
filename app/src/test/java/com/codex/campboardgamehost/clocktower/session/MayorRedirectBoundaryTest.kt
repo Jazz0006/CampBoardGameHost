@@ -127,24 +127,24 @@ class MayorRedirectBoundaryTest {
         assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.MayorRedirectChoice })
     }
 
-    @Test fun `Mayor attack cannot be declared no deaths or advance to dawn before ruling`() {
+    @Test fun `Mayor attack cannot advance to Day before its ruling`() {
         val s = session()
         val before = s.state
         assertThrows(IllegalStateException::class.java) {
             s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
-                "night-to-dawn", StorytellerPhase.NIGHT, 2,
-                s.nextInputSequence, StorytellerPhase.DAWN, 2,
+                "night-to-day", StorytellerPhase.NIGHT, 2,
+                s.nextInputSequence, StorytellerPhase.DAY, 2,
             ), before.gameStateRevision)
         }
         assertSame(before, s.state)
         s.commitConfirmedMayorRedirect(choice(s, 4), request(s), s.state.gameStateRevision)
         assertFalse(s.state.gameState.playerAt(4)!!.alive)
         s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
-            "night-to-dawn", StorytellerPhase.NIGHT, 2,
-            s.nextInputSequence, StorytellerPhase.DAWN, 2,
+            "night-to-day", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAY, 2,
         ), s.state.gameStateRevision)
-        assertEquals(StorytellerPhase.DAWN, s.state.phase)
-        assertEquals(1, s.state.epistemicObservationLog.records.size)
+        assertEquals(StorytellerPhase.DAY, s.state.phase)
+        assertTrue(s.state.epistemicObservationLog.records.isEmpty())
     }
 
     @Test fun `Mayor redirect can kill Imp and immediately force Scarlet Woman succession`() {

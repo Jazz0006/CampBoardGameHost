@@ -6,7 +6,7 @@ import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.*
 import org.junit.Test
 
-/** No night-end poison override exists. Poison expires at outgoing Day, not at Dawn. */
+/** Poison survives Night-to-Day and expires only when Day ends. */
 class ClocktowerPoisonSettlementTest {
     private fun session(): ClocktowerGameSession {
         val roster = TroubleBrewingFixtures.eightPlayerExample()
@@ -24,11 +24,10 @@ class ClocktowerPoisonSettlementTest {
         advance(s, StorytellerPhase.NIGHT, 2)
     }
 
-    @Test fun `confirmed poison continues through Dawn and Day and expires once at Dusk`() {
+    @Test fun `confirmed poison continues into Day and expires once at Dusk`() {
         val s = session(); night(s)
         s.confirmNightPoison(2, StorytellerPhase.NIGHT, 2, "poison-step")
         assertTrue(s.state.gameState.playerAt(2)!!.poisoned)
-        advance(s, StorytellerPhase.DAWN)
         assertTrue(s.state.gameState.playerAt(2)!!.poisoned)
         advance(s, StorytellerPhase.DAY)
         assertTrue(s.state.gameState.playerAt(2)!!.poisoned)
@@ -49,7 +48,6 @@ class ClocktowerPoisonSettlementTest {
         ), s.state.gameStateRevision)
         assertFalse(s.state.gameState.playerAt(2)!!.poisoned)
         assertEquals(2, s.state.confirmedPoisonTargetSeat(2))
-        advance(s, StorytellerPhase.DAWN)
         advance(s, StorytellerPhase.DAY)
         assertTrue(s.expirePoisonAtDusk(s.state.gameStateRevision))
         assertNull(s.state.confirmedPoisonTargetSeat(2))
@@ -58,7 +56,6 @@ class ClocktowerPoisonSettlementTest {
     @Test fun `stale revision cannot expire poison or partially edit Session`() {
         val s = session(); night(s)
         s.confirmNightPoison(2, StorytellerPhase.NIGHT, 2, "poison-step")
-        advance(s, StorytellerPhase.DAWN)
         advance(s, StorytellerPhase.DAY)
         val before = s.state
         assertThrows(IllegalStateException::class.java) {
@@ -81,7 +78,6 @@ class ClocktowerPoisonSettlementTest {
     @Test fun `poison mechanic mismatch is not silently rewritten`() {
         val s = session(); night(s)
         s.confirmNightPoison(2, StorytellerPhase.NIGHT, 2, "poison-step")
-        advance(s, StorytellerPhase.DAWN)
         advance(s, StorytellerPhase.DAY)
         s.updateGameState(s.state.gameState.copy(
             players = s.state.gameState.players.map { it.copy(poisoned = false) }))

@@ -187,7 +187,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
                     HostBottomActionBar(
                         previousLabel = text("上一步", "Previous"),
                         hostToolsLabel = text("主持工具", "Host Tools"),
-                        nextLabel = text("已告知，进入天亮", "Informed, continue to dawn"),
+                        nextLabel = text("已告知，继续游戏", "Informed, continue"),
                         onPrevious = {},
                         onHostTools = onHostTools,
                         onNext = onConfirm,
@@ -268,7 +268,7 @@ private fun ClocktowerCompactNewDemonConfirmationScreen(
                 HostBottomActionBar(
                     previousLabel = text("上一步", "Previous"),
                     hostToolsLabel = text("主持工具", "Host Tools"),
-                    nextLabel = text("完成 · 天亮", "Done · Dawn"),
+                    nextLabel = text("继续", "Continue"),
                     onPrevious = {},
                     onHostTools = onHostTools,
                     onNext = onConfirm,

@@ -66,7 +66,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
         val priorRevision = revision(session)
         val before = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(priorState, priorRevision)
         session.commitAcceptedTestAction(
-            ActionFactDraft.Death("death", StorytellerPhase.DAWN, 1, 10, 3),
+            ActionFactDraft.Death("death", StorytellerPhase.NIGHT, 1, 10, 3),
         )
         val after = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(session.state, revision(session))
 
@@ -245,7 +245,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
                 entries = listOf(
                     StorytellerProviderHistoryEntryV1.Action(
                         fact = ActionFact.Death("future", 0L, 2),
-                        point = TimelinePoint(StorytellerPhase.DAWN, 1, 0, 0L),
+                        point = TimelinePoint(StorytellerPhase.NIGHT, 1, 0, 0L),
                     ),
                 ),
             )

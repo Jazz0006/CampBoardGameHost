@@ -90,7 +90,7 @@ internal object StorytellerGlobalEventProjectionV1 {
 
     private fun dayOrNight(phase: StorytellerPhase): String = when (phase) {
         StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT -> "N"
-        StorytellerPhase.DAY, StorytellerPhase.DAWN -> "D"
+        StorytellerPhase.DAY -> "D"
     }
 
     private fun action(fact: ActionFact): JSONObject? = when (fact) {

@@ -30,6 +30,8 @@ internal fun ClocktowerDayOverviewScreen(
     aliveCount: Int,
     executionThreshold: Int,
     highestVoteText: String,
+    /** This is only a view of already confirmed night deaths, not a new publication event. */
+    lastNightDeathLabels: List<String>? = null,
     showSlayerAction: Boolean,
     slayerActionEnabled: Boolean,
     showArtistAction: Boolean,
@@ -70,6 +72,7 @@ internal fun ClocktowerDayOverviewScreen(
                     aliveCount = aliveCount,
                     executionThreshold = executionThreshold,
                     highestVoteText = highestVoteText,
+                    lastNightDeathLabels = lastNightDeathLabels,
                     showSlayerAction = showSlayerAction,
                     slayerActionEnabled = slayerActionEnabled,
                     showArtistAction = showArtistAction,
@@ -91,6 +94,7 @@ private fun ClocktowerDayOverviewCenterContent(
     aliveCount: Int,
     executionThreshold: Int,
     highestVoteText: String,
+    lastNightDeathLabels: List<String>?,
     showSlayerAction: Boolean,
     slayerActionEnabled: Boolean,
     showArtistAction: Boolean,
@@ -120,6 +124,20 @@ private fun ClocktowerDayOverviewCenterContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelMedium,
         )
+        if (lastNightDeathLabels != null) {
+            Text(
+                text = if (lastNightDeathLabels.isEmpty())
+                    text("昨夜无人死亡", "Nobody died last night")
+                else text(
+                    "昨夜死亡：${lastNightDeathLabels.joinToString("、")}",
+                    "Died last night: ${lastNightDeathLabels.joinToString(", ")}",
+                ),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+        }
         Text(
             text = highestVoteText,
             color = MaterialTheme.colorScheme.primary,
