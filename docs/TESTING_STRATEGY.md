@@ -59,3 +59,7 @@
 ## 工作流与合并
 
 GitHub Connector 默认为远端审计与变更工具，Mini MCP 仅在大文件完整上下文/本地操作时补充。所有相关 PR 保持 Draft；未授权不得擅自合并堆叠分支、强推、删除远端分支或进行收费 API 测试。
+
+## D2 Compose 交互回归（2026-10-20）
+
+`:app:testFull` 包含 `ClocktowerD2UiTest` 的真实 Compose + Robolectric 回归，当前 21 个 UI 用例；`:app:testFast` 排除这一个较重的 UI 类，保留所有原快速合同与新增查询审查回归。必须以 full 的结果接受 UI 改动，不能以 fast 代替。全部 UI 用例使用离线输入/响应 fixture，部分直接走真实 JudgeScreen 与 GLOBAL_V1 Session，组件级和整链证明范围见 [D2 验收记录](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。此记录不等于设备/真实网络/像素视觉验收。

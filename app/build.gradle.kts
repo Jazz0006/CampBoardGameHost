@@ -39,6 +39,10 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -55,9 +59,16 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    testImplementation(composeBom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
 afterEvaluate {
+    tasks.withType<Test>().configureEach {
+        systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
+    }
     val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
 
     tasks.register("testFull") {
@@ -72,5 +83,6 @@ afterEvaluate {
         val sourceTask = debugUnitTest.get()
         testClassesDirs = sourceTask.testClassesDirs
         classpath = sourceTask.classpath
+        exclude("**/ClocktowerD2UiTest*")
     }
 }

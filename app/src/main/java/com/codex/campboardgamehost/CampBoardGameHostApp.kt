@@ -881,7 +881,9 @@ internal fun CampBoardGameHostApp() {
             revision.gameStateRevision, revision.playerInputRevision,
             session.state.nextTimelineGlobalSequence, requestedOperationMode,
         )
-        if (liveAiAdviceKey == key && (liveAiAdviceBusy || liveAiAdviceText != null)) return
+        // Only coalesce an in-flight request. An explicit retry must remain possible
+        // after a failed/empty review; old explanatory text is not a result cache.
+        if (liveAiAdviceKey == key && liveAiAdviceBusy) return
         liveAiAdviceKey = key
         pendingCurrentStepAdvice = null
         liveAiAdviceText = null
@@ -987,7 +989,12 @@ internal fun CampBoardGameHostApp() {
             val review = runCatching {
                 StorytellerStrategicChangeCheckpointV2.review(
                     wholeBaseline, currentHost, wholeCursor, legalOpen,
-                    advisoryPlanContradictsConfirmedState = openingPlanConflictsWithHost)
+                    advisoryPlanContradictsConfirmedState = openingPlanConflictsWithHost,
+                    currentPlayerQuerySupplied = pendingScalar != null && step.action in setOf(
+                        ClocktowerNightAction.FortuneTeller,
+                        ClocktowerNightAction.Chambermaid,
+                        ClocktowerNightAction.Ravenkeeper,
+                    ))
             }.getOrElse {
                 liveAiAdviceError = "Host chronology changed; cannot continue older strategy."
                 return

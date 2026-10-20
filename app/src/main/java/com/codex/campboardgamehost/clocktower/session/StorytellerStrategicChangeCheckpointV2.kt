@@ -75,6 +75,9 @@ internal object StorytellerStrategicChangeCheckpointV2 {
         // A fresh confirmed setup may contradict the *advisory* initial plan
         // even before any later timeline action. This is not a fabricated fact.
         advisoryPlanContradictsConfirmedState: Boolean = false,
+        // A real player's current query precedes its information Observation.
+        // Mere UI/input counters still do not justify another provider call.
+        currentPlayerQuerySupplied: Boolean = false,
     ): Review {
         val before = previouslyReviewed.state
         val after = current.state
@@ -122,7 +125,8 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             if (before.actionTimeline != after.actionTimeline) add(ChangeKind.CONFIRMED_ACTION)
             if (before.epistemicObservationLog != after.epistemicObservationLog)
                 add(ChangeKind.PLAYER_RECEIVED_OBSERVATION)
-            if (before.storytellerPlayerContextBySeat != after.storytellerPlayerContextBySeat)
+            if (before.storytellerPlayerContextBySeat != after.storytellerPlayerContextBySeat ||
+                (currentPlayerQuerySupplied && after.playerInputRevision > before.playerInputRevision))
                 add(ChangeKind.PLAYER_CONTEXT_OR_CLAIMS)
             if (previouslyReviewed.position != current.position)
                 add(ChangeKind.GAME_POSITION)

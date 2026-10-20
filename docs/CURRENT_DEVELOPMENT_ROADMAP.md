@@ -1,5 +1,7 @@
 # 当前开发路线 — Minimal Host（2026-10-20）
 
+> **D2 本轮进度（新 SHA 的 CI 待核）**：本地 fast 671 / full 692 tests + APK 通过，包括 21 项真实 Compose 操作回归；已修复系统返回、Next 可用性、显式 AI 重试、真实查询输入的战略审查和信息指标绑定。细节见 [验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。代码/自动交互检查点已建立，D2 最终设备及真实网络验收仍待完成，暂不推进全夜调度改造。
+
 > **最新代码验收（2026-10-20）**：`b5a955e92e45a9ea4c03fff122c165de3bf8a929` 的 [完整 Android CI #4482](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336436) 与 [R2 #4058](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39408336439) 均 SUCCESS；Android 全回归/APK、ASP、Clingo 和总门禁通过。本地完整回归 162 suites / 670 tests、0 failure/error/skipped，调试 APK 构建成功。双人/送葬者/守鸦人/贤者的草稿改选失效、步骤隔离和手动输入不被 AI 重置，数字预览输入恢复与占卜师最后预览标记已落地；未作真机或付费 API 验收。
 
 以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准。当前在 Codex 本地 Windows 环境直接读写仓库；不使用 MiniMCP。

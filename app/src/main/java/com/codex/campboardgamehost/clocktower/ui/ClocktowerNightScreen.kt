@@ -298,7 +298,10 @@ internal fun ClocktowerNightActiveScreen(
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
-        CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
+        CompositionLocalProvider(
+            LocalClocktowerNightProgress provides progress,
+            LocalClocktowerNightNextEnabled provides nextEnabled,
+        ) {
             if (contentOwnsFullScreen) {
                 // A full-screen role surface bypasses the ordinary scaffold.
                 // Own its opaque canvas and foreground explicitly so text never

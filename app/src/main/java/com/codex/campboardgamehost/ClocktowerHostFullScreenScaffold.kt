@@ -63,7 +63,7 @@ internal fun ClocktowerHostFullScreenScaffold(
                     nextLabel = nextLabel,
                     previousEnabled = previousEnabled,
                     previousVisible = previousVisible,
-                    nextEnabled = nextEnabled,
+                    nextEnabled = nextEnabled && LocalClocktowerNightNextEnabled.current,
                     nextVisible = nextVisible,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,

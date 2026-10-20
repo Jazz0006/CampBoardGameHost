@@ -56,8 +56,8 @@ class StorytellerStrategicChangeCheckpointV2Test {
         uncertainties = emptyList(),
     )
 
-    private fun session(): ClocktowerGameSession {
-        val identities = listOf("Chef", "Empath", "Monk", "Poisoner", "Imp")
+    private fun session(secondRole: String = "Empath"): ClocktowerGameSession {
+        val identities = listOf("Chef", secondRole, "Monk", "Poisoner", "Imp")
         val players = identities.mapIndexed { index, name ->
             val category = when (name) {
                 "Poisoner" -> CharacterType.MINION
@@ -143,6 +143,30 @@ class StorytellerStrategicChangeCheckpointV2Test {
         assertEquals(
             StorytellerStrategicChangeCheckpointV2.Readiness.HOST_REVISION_REQUIRED,
             noAuthority.readiness)
+    }
+
+    @Test fun actualCurrentPlayerQueryCanRequestBeforeItsObservationWithoutInventingFacts() {
+        val host = session("Fortune Teller")
+        val before = baseline(host)
+        host.recordPlayerInput()
+        val query = listOf(StorytellerStrategicContinuationV2.OpenDecision(
+            "ft-2-query-3-5", 2, "NIGHT_INFORMATION", "Fortune Teller",
+            StorytellerProviderDecisionContextV1.ScalarInformation(2, RoleId("Fortune Teller"),
+                ReliabilityState.RELIABLE, StorytellerProviderScalarKindV1.BOOLEAN,
+                "DEMON_OR_RED_HERRING_PRESENT", listOf(3, 5)),
+        ))
+        val review = StorytellerStrategicChangeCheckpointV2.review(
+            before, baseline(host), cursor(), query, currentPlayerQuerySupplied = true,
+        )
+        assertTrue(review.needsReview)
+        assertTrue(StorytellerStrategicChangeCheckpointV2.ChangeKind.PLAYER_CONTEXT_OR_CLAIMS in review.changeKinds)
+        assertTrue(host.state.actionTimeline.entries.isEmpty())
+        assertTrue(host.state.epistemicObservationLog.records.isEmpty())
+        assertEquals(0L, host.state.gameStateRevision)
+        val unchanged = baseline(host)
+        assertFalse(StorytellerStrategicChangeCheckpointV2.review(
+            unchanged, unchanged, cursor(), query, currentPlayerQuerySupplied = true,
+        ).needsReview)
     }
 
     @Test fun confirmedActionsPlayerClaimsDeathAndObservationsUseTheSameGate() {

@@ -29,6 +29,8 @@ internal fun clocktowerSingleTargetSeatState(
 }
 
 internal val LocalClocktowerNightProgress = compositionLocalOf<String?> { null }
+// Read-only presentation of the current Host confirmation gate, including full-screen roles.
+internal val LocalClocktowerNightNextEnabled = compositionLocalOf { true }
 
 internal data class ClocktowerNightActionSeatPresentation(
     val targetState: ClocktowerSquareTableSeatState,

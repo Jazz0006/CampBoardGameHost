@@ -33,5 +33,9 @@ class ClocktowerChambermaidAiChoiceBindingTest {
         assertNull(clocktowerCurrentChambermaidRecommendation(suggestion, 2, listOf(3)))
         assertNull(clocktowerCurrentChambermaidRecommendation(suggestion, 2, listOf(3, 3)))
         assertNull(clocktowerCurrentChambermaidRecommendation(null, 2, listOf(3, 5)))
+        assertNull(clocktowerCurrentChambermaidRecommendation(suggestion.copy(
+            proposition = (suggestion.proposition as InformationProposition.NumericResult)
+                .copy(metric = NumericMetric.ADJACENT_EVIL_PAIRS),
+        ), 2, listOf(3, 5)))
     }
 }

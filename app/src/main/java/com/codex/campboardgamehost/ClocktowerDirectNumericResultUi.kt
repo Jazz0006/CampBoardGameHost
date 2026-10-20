@@ -155,7 +155,7 @@ internal fun ClocktowerDirectNumericResultUi(
                 OutlinedButton(onClick = onHostTools) {
                     Text(if (language == "en") "Host" else "魔典")
                 }
-                OutlinedButton(onClick = onNext) {
+                OutlinedButton(onClick = onNext, enabled = LocalClocktowerNightNextEnabled.current) {
                     Text(if (language == "en") "Next" else "下一步")
                 }
             }

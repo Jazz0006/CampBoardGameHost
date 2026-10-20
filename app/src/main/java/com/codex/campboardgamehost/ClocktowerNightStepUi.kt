@@ -30,7 +30,9 @@ internal fun clocktowerCurrentChambermaidRecommendation(
     selectedSeats: List<Int>,
 ): ClocktowerDisplayOption? = option?.takeIf { candidate ->
     val answer = candidate.proposition as? InformationProposition.NumericResult
-    answer != null && answer.sourceSeat == actorSeat &&
+    candidate.displayKind == ClocktowerDisplayKind.Number && answer != null &&
+        answer.metric == com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY &&
+        answer.sourceSeat == actorSeat &&
         selectedSeats.size == 2 && selectedSeats.distinct().size == 2 &&
         answer.subjectSeats.size == 2 && answer.subjectSeats.toSet() == selectedSeats.toSet()
 }
@@ -167,7 +169,8 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val fortuneTellerRecommendedResult = (currentAiSuggestedOption?.proposition as?
         InformationProposition.BooleanResult)?.takeIf {
-            it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats
+            it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
+                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric
         }?.value
 
     fun showRecommendedDisplayOption(
