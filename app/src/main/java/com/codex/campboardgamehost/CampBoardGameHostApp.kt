@@ -2274,6 +2274,8 @@ internal fun CampBoardGameHostApp() {
                                             ), session.state,
                                         ),
                                     )
+                                    val redirectedToImp = session.state.gameState.playerAt(targetSeat)
+                                        ?.actualRole == RoleId("Imp")
                                     session.commitConfirmedMayorRedirect(
                                         draft = ActionFactDraft.MayorRedirectChoice(
                                             actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
@@ -2284,6 +2286,19 @@ internal fun CampBoardGameHostApp() {
                                         request = request, expectedGameStateRevision = session.state.gameStateRevision,
                                     )
                                     publishClocktowerSessionView()
+                                    if (redirectedToImp &&
+                                        session.state.gameState.playerAt(targetSeat)?.alive == false
+                                    ) {
+                                        val newImp = session.state.gameState.players.singleOrNull {
+                                            it.alive && it.actualRole == RoleId("Imp")
+                                        }
+                                        if (newImp != null) {
+                                            clocktowerPendingNewDemonName = newImp.name
+                                        } else {
+                                            gameOutcome = evaluateGameOutcome(context, cards)
+                                            showResults = gameOutcome != null
+                                        }
+                                    }
                                 }
                             }
                         },

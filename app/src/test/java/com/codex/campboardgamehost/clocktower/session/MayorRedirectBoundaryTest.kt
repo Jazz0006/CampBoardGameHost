@@ -146,6 +146,25 @@ class MayorRedirectBoundaryTest {
         assertFalse(s.state.gameState.playerAt(4)!!.alive)
     }
 
+    @Test fun `Mayor redirect can kill Imp and immediately force Scarlet Woman succession`() {
+        val withScarlet = players.map {
+            if (it.seat == 2) it.copy(actualRole = RoleId("Scarlet Woman"),
+                shownRole = RoleId("Scarlet Woman")) else it
+        }
+        val s = session(withScarlet)
+        val before = s.state
+        s.commitConfirmedMayorRedirect(choice(s, 3), request(s), s.state.gameStateRevision)
+        assertFalse(s.state.gameState.playerAt(3)!!.alive)
+        assertEquals(RoleId("Imp"), s.state.gameState.playerAt(2)!!.actualRole)
+        assertEquals(before.gameStateRevision + 3, s.state.gameStateRevision)
+        assertEquals(listOf(3), s.state.actionTimeline.entries.mapNotNull {
+            (it.fact as? ActionFact.Death)?.targetSeat
+        })
+        assertEquals(listOf(2), s.state.actionTimeline.entries.mapNotNull {
+            (it.fact as? ActionFact.RoleChange)?.targetSeat
+        })
+    }
+
     @Test fun `ruling refuses stale revision or unrelated source`() {
         val s = session()
         val request = request(s)

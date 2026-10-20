@@ -551,6 +551,20 @@ internal class ClocktowerGameSession private constructor(
         val noDeath = !target.alive || effectiveMonkProtection ||
             (target.actualRole == RoleId("Soldier") && !target.poisoned)
         val deathSeat = draft.targetSeat.takeUnless { noDeath }
+        val inheritedImpSeat = if (deathSeat != null && target.actualRole == RoleId("Imp")) {
+            val roster = state.gameState.players
+            (DemonSuccessionSemantics.resolve(DemonSuccessionContext(
+                demonActuallyDied = true,
+                demonDeathWasImpSelfKill = false,
+                aliveCountBeforeDemonDeath = roster.count { it.alive },
+                functioningScarletWomanSeat = roster.singleOrNull {
+                    it.alive && !it.poisoned && it.actualRole == RoleId("Scarlet Woman")
+                }?.seat,
+                livingMinionSeats = roster.filter {
+                    it.alive && it.actualType == CharacterType.MINION
+                }.mapTo(linkedSetOf()) { it.seat },
+            )) as? DemonSuccessionResolution.Forced)?.targetSeat
+        } else null
         val ruling = commitGlobalActionFact(
             state.semanticHistoryMode, state.actionTimeline, state.epistemicObservationLog,
             state.nextTimelineGlobalSequence, prepareGlobalActionDraft(draft),
@@ -567,16 +581,37 @@ internal class ClocktowerGameSession private constructor(
                 )),
             )
         }
-        val facts = if (death == null) 1L else 2L
+        val identity = inheritedImpSeat?.let { seat ->
+            val predecessor = requireNotNull(death)
+            check(predecessor.nextTimelineGlobalSequence < Int.MAX_VALUE)
+            commitGlobalActionFact(
+                state.semanticHistoryMode, predecessor.actionTimeline, state.epistemicObservationLog,
+                predecessor.nextTimelineGlobalSequence,
+                prepareGlobalActionDraft(ActionFactDraft.RoleChange(
+                    DawnCommitIdentity.roleChange(state.gameId, draft.round, seat, RoleId("Imp")),
+                    StorytellerPhase.NIGHT, draft.round,
+                    predecessor.nextTimelineGlobalSequence.toInt() + 1,
+                    seat, RoleId("Imp"), Alignment.EVIL, CharacterType.DEMON,
+                )),
+            )
+        }
+        val facts = 1L + (if (death != null) 1L else 0L) +
+            (if (identity != null) 1L else 0L)
         check(state.gameStateRevision <= Long.MAX_VALUE - facts)
         updateState(state.copy(
             gameStateRevision = state.gameStateRevision + facts,
-            gameState = if (deathSeat == null) state.gameState else state.gameState.copy(
-                players = playersAfterConfirmedNightDeath(deathSeat),
-            ),
-            actionTimeline = death?.actionTimeline ?: ruling.actionTimeline,
-            nextTimelineGlobalSequence = death?.nextTimelineGlobalSequence ?:
-                ruling.nextTimelineGlobalSequence,
+            gameState = state.gameState.copy(players = state.gameState.players.map { player ->
+                val afterDeath = if (player.seat == deathSeat)
+                    player.copy(alive = false, poisoned = false) else player
+                if (player.seat == inheritedImpSeat) afterDeath.copy(
+                    actualRole = RoleId("Imp"),
+                    actualAlignment = Alignment.EVIL,
+                    actualType = CharacterType.DEMON,
+                ) else afterDeath
+            }),
+            actionTimeline = identity?.actionTimeline ?: death?.actionTimeline ?: ruling.actionTimeline,
+            nextTimelineGlobalSequence = identity?.nextTimelineGlobalSequence ?:
+                death?.nextTimelineGlobalSequence ?: ruling.nextTimelineGlobalSequence,
             nightTargets = state.nightTargets.copy(mayorRedirectSeat = draft.targetSeat),
         ))
         return ruling.entry
