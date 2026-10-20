@@ -86,42 +86,6 @@ internal fun revalidateTwoPlayerSelection(
 }
 
 /**
- * Only a genuinely current, Host-resolved information result may enter the
- * normal reveal flow without a human information-choice click. For player-query
- * steps, the player-selected subjects MUST exist first; choosing those subjects
- * is never an AI decision. Already published results never auto-reveal again.
- * No parallel execution state: the Session history is authority.
- */
-internal fun clocktowerShouldAutoPresentCurrentInformation(
-    automaticMode: Boolean,
-    step: ClocktowerNightStepUi,
-    phase: ClocktowerPhase,
-    round: Int,
-    actorSeat: Int?,
-    hasCurrentLegalResult: Boolean,
-    playerQueryResolved: Boolean = false,
-    confirmedObservations: List<RecordedEpistemicObservation>,
-): Boolean = automaticMode &&
-    step.isRealAction &&
-    (step.action == ClocktowerNightAction.None ||
-        (step.action in setOf(
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.Ravenkeeper,
-        ) && playerQueryResolved)) &&
-    step.actor != null &&
-    actorSeat != null &&
-    step.roleEnName != null &&
-    hasCurrentLegalResult &&
-    confirmedObservations.none { received ->
-        received.phase == phase.toStorytellerPhase() &&
-            received.round == round &&
-            received.visibility == ObservationVisibility.PRIVATE &&
-            received.sourceSeat == actorSeat &&
-            received.sourceAbility?.value == step.roleEnName
-    }
-
-/**
  * Player-chosen targets are drafts until their information is actually shown.
  * Once one result has been published in the Session, it may only be reopened
  * with the identical typed result. A new target/result must not silently add a
