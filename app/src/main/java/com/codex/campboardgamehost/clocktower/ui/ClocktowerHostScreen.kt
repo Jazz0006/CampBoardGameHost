@@ -573,7 +573,7 @@ internal fun ClocktowerJudgeScreen(
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         ) != null
     }
-    fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi): Boolean {
+    fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi, stepId: String): Boolean {
         val actor = displayStep.actor ?: return false
         val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return false
         if (!informationDecisionPublicationAllowed(displayStep)) return false
@@ -602,7 +602,7 @@ internal fun ClocktowerJudgeScreen(
                 round = round,
                 roleEnName = requireNotNull(displayStep.roleEnName),
                 actorSeat = actorSeat,
-                proposition = proposition,
+                stepId = stepId,
             ),
             phase = phase.toStorytellerPhase(),
             round = round, sequence = nightStepIndex, sourceSeat = actorSeat,
@@ -1290,7 +1290,7 @@ internal fun ClocktowerJudgeScreen(
                 }
                 // Only the final preview is recorded. The previous previews
                 // have no Session footprint and may be discarded on interruption.
-                if (!recordReliablePrivateInformation(preview)) {
+                if (!recordReliablePrivateInformation(preview, currentStep.interactionId.toString())) {
                     Toast.makeText(context, text(
                         "当前展示信息无效或已经过期，请重新选择并展示。",
                         "The preview is invalid or stale; select and preview again.",

@@ -18,7 +18,7 @@
 
 - **已修改生产入口**：`ClocktowerHostScreen` 中 `onShowPlayerDisplay` 仅更新当前步骤的临时 `lastInformationPreview` 和打开全屏；全屏关闭只回同一步，不记录/不推进；本步骤 Next 缺乏预览时不允许，已有预览时从最后预览的真实 typed proposition 原子提交唯一 Observation，再沿现有稳定交互 ID 走后续步骤。不再保留多次中间预览作为任何事实。
 - **已删除旧流程**：自动模式下 `ClocktowerNightStepUi` 用 `LaunchedEffect` 自动打开 Numeric/Pair/FT/Chambermaid/Ravenkeeper 信息的副作用；`autoPresentAiInformation` 参数；`pendingAutoAdvanceAfterDisplay`；生产 UI 的 `FirstNightInformationMigration` 已展示标记；`ClocktowerPlayerRevealHandoff` 的展示即发布交接文件及其独占测试，改为最小的 Session 版本确认工具。自动模式仍按现有推荐选值，但真人现场点击展示。
-- **进度与恢复**：从 Session 同期 Observation 判断信息步骤是否已 Next 确认，UI 游标归零时无需重复该角色；未 Next 的预览丢失即可重新开始。直接动作提交既有路径不改变。保留原 AI/候选显示组件，仍需后续实际安卓端到端验证三模式的全部角色按钮/高亮样式及多夜条件唤醒。
+- **进度与恢复**：从 Session 同期 Observation 判断信息步骤是否已 Next 确认，UI 游标归零时无需重复该角色；未 Next 的预览丢失即可重新开始。正式 Observation 的 recordId 由 game/phase/round/role/seat/稳定 interaction stepId 生成，**不含预览结果值**：已经 Next 后再尝试不同结果会因同一事件身份冲突而拒绝，不会另记第二条。直接动作提交既有路径不改变。保留原 AI/候选显示组件，仍需后续实际安卓端到端验证三模式的全部角色按钮/高亮样式及多夜条件唤醒。
 - **尚未完成**：全夜纯 `nextStep(Session)`、`nightStepIndex` 全面退出、Mayor/Imp 动态 handoff 清理、NGJ Klutz C 与 Day B、旧 FirstNightInformationRequest/生命周期测试辅助文件的最终依赖剔除。此处代码提交后必须以对应完整 CI/R2 检查，不可把本批视为全角色验收。
 
 ## 2026-10-20 四角色机械路径收尾新批次（验收以本批最新提交/CI 为准）
