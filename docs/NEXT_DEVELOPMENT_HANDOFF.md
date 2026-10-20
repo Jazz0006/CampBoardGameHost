@@ -14,6 +14,13 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 四角色机械路径收尾新批次（验收以本批最新提交/CI 为准）
+
+- 正式代码的 `ClocktowerFixedNightStepResolver.kt` 现在**直接解析唯一 Session 的 ActionFactTimeline** 并按 phase/round 取得已确认 Poison/Protect/Attack/Butler 操作；生产 UI 使用该不可写时间线，而不是 `ClocktowerNightCheckpoint.acceptedOperationKinds`。同步删除后者、`CampBoardGameHostApp` 中用于组装它的重复数据计算，夜间死亡投影仅从 Session 已确认袭击目标判断是否发生过 Attack。
+- 为四角色增加**阻止跳过未确认机械行动**的最小保证：如果临时 UI 游标误越过投毒者/僧侣/Imp/管家任一尚未由 Session 确认且仍活着的实际行动，Host 的步骤解析会返回更早的那个强制行动，不能凭 UI 光标跳过；依赖 UI 的还只是尚未迁移的信息角色展示，不能据此宣称全夜已 Host-only。
+- 投毒者、僧侣、管家的 Next 正式提交后不再建立 `ClocktowerConfirmedNightAdvance` 暂存 UI 跳转：由 Session 事实驱动下一可执行步骤；对 Imp Attack、Mayor 转移等可能动态重排夜序的场景，仍保留稳定 stepId 的临时重排衔接，以防漏掉死亡触发角色；其替代/删除待全夜统一 `nextStep(Session)`。
+- 新增/更新回归：UI 游标越过强制行动也不能漏掉、阶段轮次严格隔离、真实 Session 的 Poisoner→Monk→Imp→Butler 事实递进、信息角色 barrier 不能伪造完成。**未完成**：信息角色 D2（按用户最新批准规范单独实施）、所有夜间步骤可恢复的 `nextStep(Session)`、其余 UI 游标与动态 handoff 全清、白天 B/C、全部角色真实完整对局。此批按具体 Android CI/R2 验收，勿把纯函数回归等同真机端到端验收。
+
 ## 2026-10-20 最小流程第 3 批：机械行动由 Session 事实恢复当前步骤（验收以当前 SHA/CI 为准）
 
 - 范围仅含 TB/NGJ 夜晚现有脚本流中的 **Poisoner、Monk、Imp、Butler**。使用已按 phase+round 从唯一 Session 事件时间线派生的 `acceptedOperationKinds` 和唯一 GameState 的实际存活信息，识别这四类已执行/不应唤醒的机械步骤；UI 不能因为 `nightStepIndex` 重新初始化而重复执行这些步骤。步骤完成仍即时提交，不添加独立持久化标志。

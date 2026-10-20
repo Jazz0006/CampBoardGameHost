@@ -18,7 +18,6 @@ import com.codex.campboardgamehost.clocktower.rules.ClocktowerInteractionBoundar
 import com.codex.campboardgamehost.clocktower.rules.ClocktowerOptionalNightSourceChronology
 import com.codex.campboardgamehost.clocktower.rules.PoisonEffectLifecycle
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 
 /**
  * Immutable, non-Compose projection of the mechanical state consumed by the Clocktower host UI.
@@ -158,7 +157,8 @@ internal object ClocktowerNightHostProjectionFactory {
         val mayorRedirectTargetCards = cards.filter { card ->
             card.name != mayorTarget?.name
         }
-        val attackAlreadyAccepted = NightOperationKind.ATTACK in checkpoint.acceptedOperationKinds
+        // The confirmed attack target comes from Session.nightTargets, not a cached UI action set.
+        val attackAlreadyAccepted = checkpoint.confirmedAttackTarget != null
         val committedDeathSeat = confirmedNightDeathSeats.firstOrNull()
         // No forecast may wake a death-trigger role or suppress a player before the
         // accepted attack/death is present in the one authoritative Session.

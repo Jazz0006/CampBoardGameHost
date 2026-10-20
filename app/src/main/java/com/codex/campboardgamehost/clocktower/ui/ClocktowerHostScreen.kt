@@ -37,6 +37,8 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 import com.codex.campboardgamehost.clocktower.session.ClocktowerFixedNightStepStatus
 import com.codex.campboardgamehost.clocktower.session.clocktowerNextUnperformedFixedNightStepIndex
+import com.codex.campboardgamehost.clocktower.session.clocktowerAcceptedFixedNightKinds
+import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
 import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
@@ -54,6 +56,7 @@ internal fun ClocktowerJudgeScreen(
     cards: List<PlayerCard>,
     // Confirmed mechanical facts come from the one Session, never rebuilt from UI cards.
     sessionGameState: GameState,
+    sessionActionTimeline: ActionFactTimeline,
     actualInformationHistory: List<RecordedEpistemicObservation>,
     confirmedNightDeathSeats: List<Int>,
     script: ClocktowerScript,
@@ -1074,6 +1077,11 @@ internal fun ClocktowerJudgeScreen(
         // This four-role slice is selected from SAME-NIGHT accepted Session facts,
         // not a cached UI action completion flag. Other information roles retain
         // their actual display/publication lifecycle until their migration.
+        val acceptedFixedKinds = clocktowerAcceptedFixedNightKinds(
+            timeline = sessionActionTimeline,
+            phase = phase.toStorytellerPhase(),
+            round = round,
+        )
         val fixedNightStepStatuses = nightSteps.map { step ->
             val kind = when (step.action) {
                 ClocktowerNightAction.Poison -> NightOperationKind.POISON
@@ -1098,7 +1106,7 @@ internal fun ClocktowerJudgeScreen(
             clocktowerNextUnperformedFixedNightStepIndex(
                 cursor = nightStepIndex.coerceIn(0, nightSteps.lastIndex),
                 steps = fixedNightStepStatuses,
-                acceptedFactsInCurrentNight = nightCheckpoint.acceptedOperationKinds,
+                acceptedFactsInCurrentNight = acceptedFixedKinds,
             )
         }
         // If the last confirmed action also removes the final wakeup, a pending
@@ -1324,6 +1332,16 @@ internal fun ClocktowerJudgeScreen(
                     currentStep.interactionId.toString(),
                 )
             }
+            // Poisoner, Monk and Butler never require a UI-driven second advance:
+            // their accepted Session action facts immediately determine which
+            // fixed role remains. Keep the identity handoff only for actual
+            // dynamic outcomes such as an Imp attack inserting death triggers.
+            if (currentStep.isRealAction && currentStep.action in setOf(
+                    ClocktowerNightAction.Poison,
+                    ClocktowerNightAction.MonkProtect,
+                    ClocktowerNightAction.ButlerMaster,
+                )
+            ) return@advance
             val awaitCommittedRevision = currentStep.action in setOf(
                 ClocktowerNightAction.DemonKill,
                 ClocktowerNightAction.MayorRedirect,
@@ -1563,7 +1581,7 @@ internal fun ClocktowerJudgeScreen(
                         else -> null
                     }
                     if (committedKind != null &&
-                        committedKind in nightCheckpoint.acceptedOperationKinds
+                        committedKind in acceptedFixedKinds
                     ) {
                         freshAutomaticPlayerTarget = null
                         Toast.makeText(context, text(

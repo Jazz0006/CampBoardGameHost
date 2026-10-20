@@ -57,8 +57,24 @@ class ClocktowerFixedNightStepResolverTest {
         )))
     }
 
-    @Test fun `stale presentation cursor is not a second business-state value`() {
-        assertNull(resolve(cursor = actions.size))
+    @Test fun `stale presentation cursor cannot skip still uncommitted mechanical actions`() {
+        assertEquals(0, resolve(cursor = actions.size))
+        assertEquals(2, resolve(
+            accepted = setOf(NightOperationKind.POISON, NightOperationKind.PROTECT),
+            cursor = actions.size,
+        ))
+        assertNull(resolve(accepted = NightOperationKind.entries.toSet(), cursor = actions.size))
         assertThrows(IllegalArgumentException::class.java) { resolve(cursor = -1) }
+    }
+
+    @Test fun `mixed night preserves uncommitted information barrier while preventing mechanic skip`() {
+        val steps = listOf(actions[0], ClocktowerFixedNightStepStatus(kind = null), actions[1], actions[2], actions[3])
+        // The information role is not inferred completed after Poisoner.
+        assertEquals(1, resolve(steps, setOf(NightOperationKind.POISON), cursor = 0))
+        // The UI may advance past the information screen, but it cannot bypass Monk.
+        assertEquals(2, resolve(steps, setOf(NightOperationKind.POISON), cursor = 4))
+        assertEquals(3, resolve(steps, setOf(
+            NightOperationKind.POISON, NightOperationKind.PROTECT,
+        ), cursor = 4))
     }
 }

@@ -22,8 +22,6 @@ internal data class ClocktowerNightCheckpoint(
     val pendingNewDemonName: String?,
     val pendingNightNewDemonIdentityName: String? = null,
     val nextTimelineGlobalSequence: Long = 0L,
-    /** Derived from accepted facts only; prevents back-navigation from editing a committed choice. */
-    val acceptedOperationKinds: Set<NightOperationKind> = emptySet(),
 ) {
     init {
         require(round > 0)

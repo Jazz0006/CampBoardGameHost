@@ -50,7 +50,6 @@ import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
-import com.codex.campboardgamehost.clocktower.session.NightOperationKind
 import com.codex.campboardgamehost.clocktower.session.NoGreaterJoyKlutzHistoryProducerV1
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionView
@@ -537,17 +536,6 @@ internal fun CampBoardGameHostApp() {
             ?: error("Unknown Clocktower player '$playerName'.")
 
     fun currentClocktowerNightCheckpoint(): ClocktowerNightCheckpoint {
-        val acceptedKinds = clocktowerGameSession?.state?.actionTimeline?.entries
-            ?.filter { it.point.phase == storytellerPhaseFor() && it.point.round == round }
-            ?.mapNotNull { entry ->
-                when (entry.fact) {
-                    is ActionFact.Attack -> NightOperationKind.ATTACK
-                    is ActionFact.Poison -> NightOperationKind.POISON
-                    is ActionFact.Protect -> NightOperationKind.PROTECT
-                    is ActionFact.ButlerMasterChoice -> NightOperationKind.BUTLER
-                    else -> null
-                }
-            }?.toSet().orEmpty()
         return ClocktowerNightCheckpoint(
             phaseName = clocktowerPhase.name,
             round = round,
@@ -564,7 +552,6 @@ internal fun CampBoardGameHostApp() {
             pendingNewDemonName = clocktowerPendingNewDemonName,
             pendingNightNewDemonIdentityName = clocktowerPendingNightNewDemonIdentityName,
             nextTimelineGlobalSequence = clocktowerNextTimelineGlobalSequence,
-            acceptedOperationKinds = acceptedKinds,
         )
     }
 
@@ -2003,6 +1990,7 @@ internal fun CampBoardGameHostApp() {
                         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                         cards = cards,
                         sessionGameState = requireClocktowerGameSession().state.gameState,
+                        sessionActionTimeline = requireClocktowerGameSession().state.actionTimeline,
                         confirmedNightDeathSeats = requireClocktowerGameSession().state.actionTimeline.entries
                             .filter { it.point.round == round && it.point.phase == StorytellerPhase.NIGHT }
                             .mapNotNull { (it.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.Death)?.targetSeat },

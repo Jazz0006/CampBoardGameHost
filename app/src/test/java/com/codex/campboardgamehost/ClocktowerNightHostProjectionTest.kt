@@ -75,9 +75,7 @@ class ClocktowerNightHostProjectionTest {
             ruleset = builtInRuleset(),
             phase = ClocktowerPhase.Night,
             poisonTarget = null,
-            checkpoint = checkpoint("Ravenkeeper").copy(
-                acceptedOperationKinds = setOf(com.codex.campboardgamehost.clocktower.session.NightOperationKind.ATTACK),
-            ),
+            checkpoint = checkpoint("Ravenkeeper"),
             pendingNightNewDemonIdentityName = null,
             lastExecutedName = null,
             confirmedNightDeathSeats = listOf(3),

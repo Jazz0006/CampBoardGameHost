@@ -128,13 +128,39 @@ class ConfirmedNightOperationTest {
             s.nextInputSequence, StorytellerPhase.NIGHT, 2,
         ), s.state.gameStateRevision)
 
+        val orderedSteps = listOf(
+            ClocktowerFixedNightStepStatus(NightOperationKind.POISON),
+            ClocktowerFixedNightStepStatus(NightOperationKind.PROTECT),
+            ClocktowerFixedNightStepStatus(NightOperationKind.ATTACK),
+            ClocktowerFixedNightStepStatus(NightOperationKind.BUTLER),
+        )
+        fun currentFixedStepIndex(staleCursor: Int = 0): Int? =
+            clocktowerNextUnperformedFixedNightStepIndex(
+                cursor = staleCursor,
+                steps = orderedSteps,
+                acceptedFactsInCurrentNight = clocktowerAcceptedFixedNightKinds(
+                    s.state.actionTimeline, StorytellerPhase.NIGHT, 2,
+                ),
+            )
+        assertEquals(0, currentFixedStepIndex(staleCursor = 3))
         s.confirmNightPoison(3, StorytellerPhase.NIGHT, 2, "slice-poison")
+        assertEquals(1, currentFixedStepIndex(staleCursor = 3))
         assertTrue(s.state.gameState.playerAt(3)!!.poisoned)
         s.confirmNightProtection(5, StorytellerPhase.NIGHT, 2, "slice-monk")
+        assertEquals(2, currentFixedStepIndex(staleCursor = 3))
         assertEquals(5, s.state.nightTargets.monkSeat)
         s.confirmNightAttack(5, StorytellerPhase.NIGHT, 2, "slice-imp")
+        assertEquals(3, currentFixedStepIndex(staleCursor = 3))
         assertFalse(s.state.gameState.playerAt(5)!!.alive)
         s.confirmNightButlerMaster(4, 1, StorytellerPhase.NIGHT, 2, "slice-butler")
+        assertEquals(null, currentFixedStepIndex(staleCursor = 0))
+        assertEquals(null, currentFixedStepIndex(staleCursor = 4))
+        assertEquals(
+            emptySet<NightOperationKind>(),
+            clocktowerAcceptedFixedNightKinds(
+                s.state.actionTimeline, StorytellerPhase.FIRST_NIGHT, 1,
+            ),
+        )
 
         val facts = s.state.actionTimeline.entries.map { it.fact }.filter {
             it is ActionFact.Poison || it is ActionFact.Protect ||
