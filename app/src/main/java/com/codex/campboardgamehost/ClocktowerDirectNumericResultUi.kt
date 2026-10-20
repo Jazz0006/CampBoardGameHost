@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 
 /**
  * A numeric result is an actual Storyteller choice, not one of the Host's calculated
@@ -54,6 +55,18 @@ internal fun clocktowerDirectNumericResult(
         // The Storyteller confirmed what was shown, not whether Host rules say it is true.
         selectedInformationTruthful = null,
     )
+}
+
+/** A Host-authored unambiguous number needs no AI selection or manual input.
+ * Never use a fixed answer for a drunk/poisoned ability or a different query. */
+internal fun clocktowerDeterminedNumericResult(step: ClocktowerNightStepUi, actorSeat: Int): Int? {
+    if (step.informationReliability != ReliabilityState.RELIABLE) return null
+    val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
+    val result = step.displayProposition as? InformationProposition.NumericResult ?: return null
+    return result.value.takeIf {
+        it >= 0 && result.sourceSeat == actorSeat &&
+            result.metric == question.metric && result.subjectSeats == question.subjectSeats
+    }
 }
 
 internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorSeat: Int, cards: List<PlayerCard>): Boolean =

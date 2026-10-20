@@ -90,14 +90,16 @@ internal fun ClocktowerNightStepCardLocalized(
         directNumericActorSeat != null &&
         clocktowerHasDirectNumericInput(step, directNumericActorSeat, cards)
     ) {
+        val determinedNumber = clocktowerDeterminedNumericResult(step, directNumericActorSeat)
         val advised = (aiSuggestedInformationOption?.proposition as? InformationProposition.NumericResult)
             ?.takeIf { it.sourceSeat == directNumericActorSeat &&
                 it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric &&
                 it.subjectSeats == step.informationQuestion.subjectSeats }?.value
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
-            initialValue = advised,
-            automaticOnly = allowRuleDeterminedAutoUi,
+            // A genuinely Host-determined result has exactly one reveal button in all modes.
+            initialValue = determinedNumber ?: advised,
+            automaticOnly = allowRuleDeterminedAutoUi || determinedNumber != null,
             subjectSeats = requireNotNull(step.informationQuestion).subjectSeats,
             actorLabel = requireNotNull(step.actor).seatLabel(cards),
             wakeInstruction = step.storytellerAction,

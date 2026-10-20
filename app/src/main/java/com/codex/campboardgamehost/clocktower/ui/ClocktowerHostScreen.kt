@@ -1098,7 +1098,7 @@ internal fun ClocktowerJudgeScreen(
         // A fullscreen preview temporarily replaces this role's composable subtree.
         // Only a draft for this exact Host interaction can enable final Next.
         val currentInformationPreview = lastInformationPreview?.takeIf {
-            it.interactionId == currentStep.interactionId
+            it.interactionId == currentStep.interactionId && informationDecisionPublicationAllowed(it)
         }
         val isPrivateInformationStep = currentStep.isRealAction &&
             currentStep.actor != null && currentStep.roleEnName != null &&
@@ -1108,7 +1108,8 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.Chambermaid,
                 ClocktowerNightAction.Ravenkeeper,
             ) && currentStep.roleEnName != "Spy"
-        val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {
+        val globalAiPending = if (globalAiAssisted && currentStep.displayProposition == null &&
+            phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
                 currentStep, phase, round, cards, sessionGameState, gameId,
                 com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
@@ -1116,6 +1117,7 @@ internal fun ClocktowerJudgeScreen(
             )
         } else null
         val globalAiScalarPending = if (globalAiAssisted &&
+            currentStep.displayProposition == null &&
             phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
             globalAiPending == null
         ) pendingGlobalNightScalarDecision(
@@ -1189,8 +1191,10 @@ internal fun ClocktowerJudgeScreen(
                 currentSeats = eligibleSeats,
             )?.let { seat -> cards.getOrNull(seat - 1)?.name }
         }
-        val approvedOpeningOption = if (globalAiAutomatic &&
-            currentAiRequestBlocked) null else
+        // MANUAL never consumes an AI opening plan; a failed current automatic request
+        // may not silently reuse an old recommendation.
+        val approvedOpeningOption = if (!globalAiAssisted ||
+            (globalAiAutomatic && currentAiRequestBlocked)) null else
             residualRecommendedOption ?: preplannedSeat?.takeIf {
                 phase == ClocktowerPhase.FirstNight
             }?.let { seat ->
