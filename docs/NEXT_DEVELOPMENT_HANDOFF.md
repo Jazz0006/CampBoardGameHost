@@ -14,12 +14,17 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
-## 2026-10-20 D2 生产界面生命周期与查询绑定修复（本批待完整 CI/R2 验证）
+## 2026-10-20 D2 生产界面生命周期与查询绑定修复（首批已通过完整 CI/R2）
 
-- 当前基线 `bf4a146` Clean/equal，对应 Android CI #4472 与 R2 #4048 均 SUCCESS；本批修复需**另以新的代码提交 SHA**验收，不得沿用基线通过状态。
+- 提交 `0d92b85cba2b4f3e5a506ac6e524bfd6a94dedbe` 已推送 PR #335；真实 Android CI #4473 与 R2 #4049 均 SUCCESS，包含完整 JVM 单测和 Debug APK。之前 `bf4a146` CI #4472/R2 #4048 是基线，不能代替新的代码验收。
 - `ClocktowerHostScreen` 的最后预览草稿提升到全屏提前返回路径之上，只是当前 game/phase/round 的 UI 临时内存，并按稳定 `interactionId` 匹配当前角色；全屏 Back 回到同角色仍可 Next，不创建 Observation。真人改变占卜师、侍女、守鸦人查询目标时清空旧预览、需再次预览。
 - 点击 Next 先检查当前操作目标，再写入最后预览一条 Observation；无效的/旧角色预览不能提交。自动模式没有本次推荐时允许明确重新请求 AI，不默默转手动。侍女手动数字的结构化 `subjectSeats` 使用玩家当前选中的两人，不沿用旧问题的查询目标。
 - **尚未完成：** 所有专用方桌的选项内高亮/真机可视验收、唯一结果由 Host 直接计算免 AI、所有角色与跨人数的完整 D2 回归；因此**不可宣称 D2 完全收尾**。下一核心任务仍是全夜 `nextStep(Session)`，清掉 `nightStepIndex`/`pendingNightAdvance`/旧步骤解析。此批未删除任何尚有活跃消费者的旧步进组件。
+
+## 2026-10-20 D2 方桌预览确认提示与无上一角色入口清理（第二批，CI 待验收）
+
+- 共享 `ClocktowerNightActiveScreen` 直接在角色方桌的表面显示高对比度最后预览信息提示，正常布局嵌入滚动容器，全屏角色 UI 采用不更改 Session 的临时叠层。替代原先放在角色内容之后、全屏模式可能不可见的文字。此提示只代表预览，不代表已向 Session 提交事实。
+- 直接数字信息 UI 已完全删除失效的“上一角色”按钮和 `onPrevious`/`canGoPrevious` 参数；两个生产调用同步迁移。没有新增第二份游戏流程状态，也没有提前改造下一步 Host 调度。仍需真机确认方桌不同角色上的视觉位置和按钮可用性。
 
 ## 2026-10-20 D2 角色界面三模式收敛（按本批提交及 CI 验收）
 

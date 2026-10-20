@@ -293,6 +293,7 @@ internal fun ClocktowerNightActiveScreen(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     contentOwnsFullScreen: Boolean = false,
+    lastPreviewLabel: String? = null,
     content: @Composable () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
@@ -307,7 +308,23 @@ internal fun ClocktowerNightActiveScreen(
                     color = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.onBackground,
                 ) {
-                    content()
+                    Box(Modifier.fillMaxSize()) {
+                        content()
+                        lastPreviewLabel?.let { label ->
+                            Surface(
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                                    .padding(horizontal = 18.dp, vertical = 90.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                )
+                            }
+                        }
+                    }
                 }
             } else {
                 ClocktowerHostFullScreenScaffold(
@@ -326,6 +343,17 @@ internal fun ClocktowerNightActiveScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        lastPreviewLabel?.let { label ->
+                            item {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(12.dp),
+                                ) {
+                                    Text(label, modifier = Modifier.padding(12.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
                         item { content() }
                     }
                 }

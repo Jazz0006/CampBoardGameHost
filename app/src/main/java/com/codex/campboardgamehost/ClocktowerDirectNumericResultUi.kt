@@ -68,8 +68,6 @@ internal fun ClocktowerDirectNumericResultUi(
     actorLabel: String,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
@@ -119,9 +117,6 @@ internal fun ClocktowerDirectNumericResultUi(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onPrevious, enabled = canGoPrevious) {
-                    Text(if (language == "en") "Previous" else "上一步")
-                }
                 OutlinedButton(onClick = onHostTools) {
                     Text(if (language == "en") "Host" else "魔典")
                 }

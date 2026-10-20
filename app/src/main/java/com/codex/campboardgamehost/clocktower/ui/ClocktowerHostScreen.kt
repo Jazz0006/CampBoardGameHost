@@ -1493,6 +1493,11 @@ internal fun ClocktowerJudgeScreen(
             onHostTools = onHostTools,
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
+            lastPreviewLabel = currentInformationPreview?.takeIf { isPrivateInformationStep }?.let { preview ->
+                text("✓ 上次预览（下一步确认）", "✓ Last preview (confirm with Next)") + " · " +
+                    listOfNotNull(preview.displayPrimary, preview.displaySecondary)
+                        .filter(String::isNotBlank).joinToString(" · ")
+            },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (globalAiAssisted && globalAiDecisionIdentity != null &&
@@ -1640,15 +1645,6 @@ internal fun ClocktowerJudgeScreen(
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )
-                if (isPrivateInformationStep && currentInformationPreview != null) {
-                    Text(
-                        text = text("✓ 上次预览（下一步确认后记录）", "✓ Last preview (saved on Next)") +
-                            " · " + (currentInformationPreview.displayPrimary.orEmpty()) +
-                            listOfNotNull(currentInformationPreview.displaySecondary)
-                                .joinToString(prefix = " ", separator = " "),
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
                 if (isSelfKillChoice && eligibleSuccessors.size > 1 &&
                     !successorReady) {
                     AlertDialog(

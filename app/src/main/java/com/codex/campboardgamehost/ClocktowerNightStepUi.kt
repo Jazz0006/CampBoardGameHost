@@ -101,8 +101,6 @@ internal fun ClocktowerNightStepCardLocalized(
             actorLabel = requireNotNull(step.actor).seatLabel(cards),
             wakeInstruction = step.storytellerAction,
             language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
             onHostTools = onHostTools,
             onNext = onNext,
             onConfirm = { value ->
@@ -528,7 +526,7 @@ internal fun ClocktowerNightStepCardLocalized(
                             initialValue = (currentChambermaidRecommendation?.proposition as? InformationProposition.NumericResult)?.value,
                             subjectSeats = selectedSeats,
                             actorLabel = requireNotNull(step.actor).seatLabel(cards), wakeInstruction = null,
-                            language = language, canGoPrevious = false, onPrevious = {}, onHostTools = onHostTools,
+                            language = language, onHostTools = onHostTools,
                             onNext = onNext, onConfirm = { value ->
                                 clocktowerDirectNumericResult(
                                     step, structuredActorSeat, value, cards, subjectSeats = selectedSeats,
