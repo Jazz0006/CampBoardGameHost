@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 internal fun ClocktowerPairInformationSquareTableDialog(
     interactionKey: String,
     recommendedOption: ClocktowerDisplayOption?,
+    automaticOnly: Boolean = false,
     scriptRoles: List<ClocktowerRole>,
     abilityRoleEnName: String,
     seats: List<HostSeatPresentation>,
@@ -51,15 +52,15 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             recommendedOption, abilityRoleEnName, seatCount, scriptRoles,
         )
     }
-    var selection by remember(interactionKey, recommendedOption, scriptRoles) {
+    var selection by remember(interactionKey, recommendedOption, scriptRoles, automaticOnly) {
         mutableStateOf(validRecommendation ?: ClocktowerDirectPairSelection())
     }
-    var editing by remember(interactionKey, recommendedOption, scriptRoles) {
-        mutableStateOf(validRecommendation == null)
+    var editing by remember(interactionKey, recommendedOption, scriptRoles, automaticOnly) {
+        mutableStateOf(validRecommendation == null && !automaticOnly)
     }
     fun restoreRecommendation() {
         selection = validRecommendation ?: ClocktowerDirectPairSelection()
-        editing = validRecommendation == null
+        editing = validRecommendation == null && !automaticOnly
     }
 
     ClocktowerHostSquareTableScaffold(
@@ -132,8 +133,14 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         }
                     },
                     onConfirm = onConfirm,
-                    onManualSelection = { editing = true },
+                    onManualSelection = if (automaticOnly) null else ({ editing = true }),
                 )
+                if (automaticOnly && validRecommendation == null) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI recommendation" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         } else {
             var expanded by remember { mutableStateOf(false) }

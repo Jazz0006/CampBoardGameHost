@@ -20,6 +20,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 
+/**
+ * A prior AI result cannot be rebound to different Chambermaid query subjects.
+ * Query seats come from live player input, not AI; AI owns only the result value.
+ */
+internal fun clocktowerCurrentChambermaidRecommendation(
+    option: ClocktowerDisplayOption?,
+    actorSeat: Int?,
+    selectedSeats: List<Int>,
+): ClocktowerDisplayOption? = option?.takeIf { candidate ->
+    val answer = candidate.proposition as? InformationProposition.NumericResult
+    answer != null && answer.sourceSeat == actorSeat &&
+        selectedSeats.size == 2 && selectedSeats.distinct().size == 2 &&
+        answer.subjectSeats.size == 2 && answer.subjectSeats.toSet() == selectedSeats.toSet()
+}
+
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
     scriptRoles: List<ClocktowerRole>,
@@ -81,6 +96,7 @@ internal fun ClocktowerNightStepCardLocalized(
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
             initialValue = advised,
+            automaticOnly = allowRuleDeterminedAutoUi,
             subjectSeats = requireNotNull(step.informationQuestion).subjectSeats,
             actorLabel = requireNotNull(step.actor).seatLabel(cards),
             wakeInstruction = step.storytellerAction,
@@ -96,45 +112,10 @@ internal fun ClocktowerNightStepCardLocalized(
         )
         return
     }
-    fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     val currentAiSuggestedOption = aiSuggestedInformationOption
-    val automaticAuthorityDomain = step.manualInformationCandidates.ifEmpty {
-        step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
-    }.distinctBy(::clocktowerInformationCandidateId)
-    val displayedInformationOptions = listOfNotNull(currentAiSuggestedOption)
-
+    // AI_AUTOMATIC can only display a present, current AI result. Do not
+    // silently substitute an arbitrary manual option when its advice is absent.
     val automaticDisplayOption = currentAiSuggestedOption.takeIf { allowRuleDeterminedAutoUi }
-    val manualInformationFallback = allowRuleDeterminedAutoUi &&
-        step.isRealAction &&
-        automaticDisplayOption == null
-    val effectiveAutomaticInformation = allowRuleDeterminedAutoUi && !manualInformationFallback
-    val manualFallbackStep = if (manualInformationFallback && automaticAuthorityDomain.isNotEmpty()) {
-        step.copy(
-            displayOptions = clocktowerManualInformationDomain(automaticAuthorityDomain),
-            recommendedDisplayOptions = emptyList(),
-        )
-    } else {
-        step
-    }
-    val effectiveRecommendedOptionIds = when {
-        manualInformationFallback -> setOf("__manual_required__")
-        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-            .mapTo(linkedSetOf(), ::optionId)
-        currentAiSuggestedOption != null -> setOf(optionId(currentAiSuggestedOption))
-        else -> emptySet()
-    }
-    val effectiveRecommendedNumericValues = when {
-        manualInformationFallback -> setOf(Int.MIN_VALUE)
-        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption).mapNotNull { option ->
-            (option.proposition as? InformationProposition.NumericResult)?.value
-                ?: option.displayPrimary?.toIntOrNull()
-        }.toSet()
-        currentAiSuggestedOption != null -> listOfNotNull(
-            (currentAiSuggestedOption.proposition as? InformationProposition.NumericResult)?.value
-                ?: currentAiSuggestedOption.displayPrimary?.toIntOrNull()
-        ).toSet()
-        else -> emptySet()
-    }
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1) }
     val undertakerTargetSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)
@@ -158,8 +139,7 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    val recommendedRoleRevealOption =
-        if (manualInformationFallback) null else currentAiSuggestedOption
+    val recommendedRoleRevealOption = currentAiSuggestedOption
     val ravenkeeperRecommendedChoice = if (usesRavenkeeperSquareTable) {
         clocktowerDirectRecommendedRoleReveal(
             step, ravenkeeperSelectedSeat, cards.size, scriptRoles, recommendedRoleRevealOption,
@@ -449,6 +429,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
@@ -474,6 +455,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
                     recommendedResult = fortuneTellerRecommendedResult,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -502,18 +484,20 @@ internal fun ClocktowerNightStepCardLocalized(
                     1 -> candidateSeats - selectedSeats.first()
                     else -> emptySet()
                 }
-                val resultOptions = when {
-                    manualFallbackStep.displayOptions.isEmpty() -> emptyList()
-                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    else -> manualFallbackStep.displayOptions
+                // Chambermaid's actual query targets belong to the live player.
+                // Advice prepared for a different pair must not be displayed
+                // as though it answered the newly selected pair.
+                val currentChambermaidRecommendation = clocktowerCurrentChambermaidRecommendation(
+                    option = currentAiSuggestedOption,
+                    actorSeat = structuredActorSeat,
+                    selectedSeats = selectedSeats,
+                )
+                val resultOptions = if (allowRuleDeterminedAutoUi) {
+                    listOfNotNull(currentChambermaidRecommendation)
+                } else {
+                    step.displayOptions
                 }
-                val recommendedResultOptions = when {
-                    manualInformationFallback -> emptyList()
-                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    // Assisted mode highlights the one current, Host-rebound AI
-                    // suggestion but retains every legal manual result option.
-                    else -> listOfNotNull(currentAiSuggestedOption)
-                }
+                val recommendedResultOptions = listOfNotNull(currentChambermaidRecommendation)
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
                     selectedSeats = selectedSeats,
@@ -523,6 +507,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     recommendedResultOptions = recommendedResultOptions,
                     resultOptions = resultOptions,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onSeatSelected = { seatNumber ->
@@ -536,10 +521,11 @@ internal fun ClocktowerNightStepCardLocalized(
                     },
                     onShowDeterminedResult = { onShowPlayerDisplay(step) },
                     onResultSelected = ::showRecommendedDisplayOption,
-                    numericInput = if (selectedSeats.size == 2 && structuredActorSeat != null) ({
+                    numericInput = if (!allowRuleDeterminedAutoUi &&
+                        selectedSeats.size == 2 && structuredActorSeat != null) ({
                         ClocktowerDirectNumericResultUi(
                             title = step.displayTitle,
-                            initialValue = (currentAiSuggestedOption?.proposition as? InformationProposition.NumericResult)?.value,
+                            initialValue = (currentChambermaidRecommendation?.proposition as? InformationProposition.NumericResult)?.value,
                             subjectSeats = selectedSeats,
                             actorLabel = requireNotNull(step.actor).seatLabel(cards), wakeInstruction = null,
                             language = language, canGoPrevious = false, onPrevious = {}, onHostTools = onHostTools,
@@ -592,11 +578,8 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightFullScreenSurface.PairInformation -> {
                 ClocktowerPairInformationSquareTableDialog(
                     interactionKey = informationDecisionKey,
-                    recommendedOption = when {
-                        manualInformationFallback -> null
-                        effectiveAutomaticInformation -> automaticDisplayOption
-                        else -> currentAiSuggestedOption
-                    },
+                    recommendedOption = currentAiSuggestedOption,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     scriptRoles = scriptRoles,
                     abilityRoleEnName = requireNotNull(presentationRoleEnName),
                     seats = nightActionSeats,
@@ -630,6 +613,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
@@ -654,6 +638,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     recommendedSeats = sageSuggestedOption?.presentationSubjectSeats,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     canGoPrevious = canGoPrevious,
                     onPrevious = onPrevious,

@@ -62,6 +62,7 @@ internal fun ClocktowerSageSquareTableDialog(
     actorSeat: Int?,
     wakeInstruction: String?,
     recommendedSeats: List<Int>?,
+    automaticOnly: Boolean = false,
     language: String,
     canGoPrevious: Boolean,
     onPrevious: () -> Unit,
@@ -71,7 +72,9 @@ internal fun ClocktowerSageSquareTableDialog(
     onConfirmManual: (List<Int>) -> Unit,
 ) {
     val hasRecommendation = recommendedSeats?.let { clocktowerSageValidPair(it, seats.size) } == true
-    var manualSelection by remember(actorSeat, recommendedSeats, seats.size) { mutableStateOf(!hasRecommendation) }
+    var manualSelection by remember(actorSeat, recommendedSeats, seats.size, automaticOnly) {
+        mutableStateOf(!hasRecommendation && !automaticOnly)
+    }
     var manualSeats by remember(actorSeat, recommendedSeats, seats.size) { mutableStateOf(emptyList<Int>()) }
     val shownSeats = if (manualSelection) manualSeats else recommendedSeats.orEmpty()
     ClocktowerNightActionSquareTableDialog(
@@ -116,7 +119,12 @@ internal fun ClocktowerSageSquareTableDialog(
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(8.dp))
-            if (manualSelection) {
+            if (automaticOnly && !hasRecommendation) {
+                Text(
+                    if (language == "en") "Waiting for a current AI suggestion" else "等待 AI 确定当前信息",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else if (manualSelection) {
                 Button(
                     enabled = clocktowerSageValidPair(manualSeats, seats.size),
                     onClick = { onConfirmManual(manualSeats.sorted()) },
@@ -129,10 +137,12 @@ internal fun ClocktowerSageSquareTableDialog(
                 }
             } else {
                 Button(onClick = onConfirmRecommended, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (language == "en") "Use AI suggestion" else "采纳 AI 推荐")
+                    Text(if (language == "en") "Show AI-selected pair" else "向玩家展示推荐信息")
                 }
-                OutlinedButton(onClick = { manualSelection = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (language == "en") "Choose seats manually" else "手动选择座位")
+                if (!automaticOnly) {
+                    OutlinedButton(onClick = { manualSelection = true }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Choose seats manually" else "手动选择座位")
+                    }
                 }
             }
         }

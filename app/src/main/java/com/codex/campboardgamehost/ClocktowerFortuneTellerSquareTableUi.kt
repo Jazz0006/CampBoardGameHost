@@ -32,6 +32,13 @@ internal fun clocktowerFortuneTellerSeatState(
 internal fun clocktowerFortuneTellerResultActions(recommendedResult: Boolean?): List<Boolean> =
     if (recommendedResult == null) listOf(true, false) else listOf(recommendedResult, !recommendedResult)
 
+/** Automatic mode cannot display an answer that AI has not chosen. */
+internal fun clocktowerFortuneTellerVisibleResults(
+    recommendedResult: Boolean?,
+    automaticOnly: Boolean,
+): List<Boolean> = if (automaticOnly) listOfNotNull(recommendedResult)
+else clocktowerFortuneTellerResultActions(recommendedResult)
+
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
     seats: List<HostSeatPresentation>,
@@ -42,6 +49,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     wakeInstruction: String? = null,
     redHerringSeat: Int? = null,
     recommendedResult: Boolean?,
+    automaticOnly: Boolean = false,
     language: String,
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
@@ -98,6 +106,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             recommendedResult = recommendedResult,
+            automaticOnly = automaticOnly,
             language = language,
             onResultSelected = onResultSelected,
         )
@@ -109,10 +118,11 @@ private fun ClocktowerFortuneTellerCenterControls(
     wakeInstruction: String?,
     selectedSeats: List<Int>,
     recommendedResult: Boolean?,
+    automaticOnly: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
 ) {
-    val choices = clocktowerFortuneTellerResultActions(recommendedResult)
+    val choices = clocktowerFortuneTellerVisibleResults(recommendedResult, automaticOnly)
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
     Column(
         modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -121,6 +131,12 @@ private fun ClocktowerFortuneTellerCenterControls(
     ) {
         ClocktowerNightActionWakeInstruction(wakeInstruction)
         if (completePair) {
+            if (automaticOnly && choices.isEmpty()) {
+                Text(
+                    if (language == "en") "Waiting for AI result" else "等待 AI 确定当前信息",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             choices.forEachIndexed { index, result ->
                 Text(
                     text = if (recommendedResult != null && result == recommendedResult) {

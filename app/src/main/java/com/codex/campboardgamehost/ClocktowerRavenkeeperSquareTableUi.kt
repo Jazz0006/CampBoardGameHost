@@ -55,6 +55,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     wakeInstruction: String?,
     scriptRoles: List<ClocktowerRole>,
     recommendedOption: ClocktowerDisplayOption?,
+    automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
     language: String,
     canGoPrevious: Boolean,
@@ -72,7 +73,9 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     val advised = clocktowerDirectRecommendedRoleReveal(
         step, selectedSeat, seats.size, scriptRoles, recommendedOption,
     )
-    var editing by remember(selectedSeat, advised) { mutableStateOf(advised == null) }
+    var editing by remember(selectedSeat, advised, automaticOnly) {
+        mutableStateOf(advised == null && !automaticOnly)
+    }
     var selectedRole by remember(selectedSeat, advised) { mutableStateOf(advised?.roleId?.value) }
     var roleMenuExpanded by remember(selectedSeat) { mutableStateOf(false) }
 
@@ -116,7 +119,12 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                             if (language == "en") "Show: ${choice.displayLabel}" else "展示：${choice.displayLabel}"
                         },
                         onConfirm = onConfirm,
-                        onManualSelection = { editing = true },
+                        onManualSelection = if (automaticOnly) null else ({ editing = true }),
+                    )
+                } else if (automaticOnly) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI result" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 } else {
                     Box(Modifier.fillMaxWidth()) {

@@ -61,6 +61,7 @@ internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorS
 internal fun ClocktowerDirectNumericResultUi(
     title: String,
     initialValue: Int? = null,
+    automaticOnly: Boolean = false,
     subjectSeats: List<Int>,
     actorLabel: String,
     wakeInstruction: String?,
@@ -83,25 +84,37 @@ internal fun ClocktowerDirectNumericResultUi(
             wakeInstruction?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium)
             }
-            OutlinedTextField(
-                value = entered,
-                onValueChange = { value -> if (value.length <= 11) entered = value },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(if (language == "en") "Information shown (number)" else "向玩家展示的数字") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-            )
-            Text(
-                if (language == "en") "Enter the actual chosen result. The Host does not calculate or verify its game-rule truth."
-                else "直接填写说书人决定展示的数字；Host 不计算或校验规则上的真假。",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Button(
-                enabled = selected != null,
-                onClick = { selected?.let(onConfirm) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Confirm and show to player" else "确认并向玩家展示")
+            if (initialValue != null) {
+                Button(
+                    onClick = { onConfirm(initialValue) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show recommended: $initialValue" else "展示推荐信息：$initialValue")
+                }
+            }
+            if (automaticOnly && initialValue == null) {
+                Text(
+                    if (language == "en") "Waiting for a current AI decision. No manual substitution in automatic mode."
+                    else "正在等待当前 AI 信息；全自动模式不能用人工结果替代。",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            if (!automaticOnly) {
+                OutlinedTextField(
+                    value = entered,
+                    onValueChange = { value -> if (value.length <= 11) entered = value },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(if (language == "en") "Manual information (number)" else "手动选择信息数字") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+                Button(
+                    enabled = selected != null,
+                    onClick = { selected?.let(onConfirm) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show manually selected result" else "展示手动选择的信息")
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = onPrevious, enabled = canGoPrevious) {

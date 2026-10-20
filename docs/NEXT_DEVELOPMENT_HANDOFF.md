@@ -2,11 +2,11 @@
 
 > **最新决定：D2 信息展示（正式设计，延后实施）**：说书人进入洗衣妇、厨师、共情者、送葬者等信息角色时，UI 展示选择按钮（自动模式：唯一 AI 已决定内容的一键全屏展示；辅助模式：当前一条、未来可三条推荐+手选；手动模式：仅手选；确定唯一则只有一个展示按钮）。点击展示进入全屏；返回只回到同一角色的方桌，保留并高亮最后预览信息，允许重新挑选并预览；**该过程完全不写 Session 正式事件、不自动进入下一角色**。点击本角色 **“下一步”** 才原子提交**最后确认的一条** Observation，由 Host 进入下一角色；中间预览均不记日志，Next 后无 Previous。若 Next 之前意外中断，只需重新进入原角色重新展示，不保证恢复草稿、预览/高亮；Next 之后唯一事件幂等。不得新增 Pending 缓存/第二状态，AI 不可替玩家做真实玩家决定，也不能自动视为已经展示。此前所有“打开即写 Observation/关闭即推进/不需 Next”的 D 文案已被撤销，详情见 `MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md` 与 `AGENTS.md`。
 
-> **当前明确优先序**：① 先完成投毒者→僧侣→小恶魔→管家机械流程的 Host-owned 当前步骤（删除被取代的 UI 索引业务控制）；② 后续单独实施 D2 全体信息角色；③ 再完成全夜统一 nextStep(Session)，④ 白天 B/C，⑤ 全角色与跨人数验证。**此刻只记录 D2，不修改信息角色生产流程**。
+> **当前实施顺序与状态（2026-10-20）**：① 四角色机械步骤的 Session 事实推进已在 `2a92181` 验收；② D2 展示/Next 事务已在 `a9d2bf0` 验收，当前批次继续统一具体角色三模式展示按钮；③ 随后重建全夜 `nextStep(Session)` 并删除剩余 UI 业务游标，④ 白天 B/C，⑤ 全角色/跨人数与恢复验收。上述阶段完成状况仅按实际提交与 CI 判断，旧“此刻只记录 D2”说明已过时。
 
 
 
-> **本条优先于下方全部历史步骤和阶段文本：** 用户在 2026-10-20 审核最小 Host 全流程后明确批准 A–D，参见 [专项审计与实施边界](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。**A** 删除首夜/后夜通用“开始夜晚/准备”页，直接呈现第一个实际可执行步骤；**B** 白天同一方桌一次确认当日结束/处决/胜负，删除 EndConfirm 路由；**C** NGJ Klutz 只由已确认 Death/Execution 与实际角色触发待处理真实玩家选择，删除独立 Learned/得知死亡事件、ReturnToDawn 状态/无用日志；**D** 玩家信息实际展示时立即记录 Observation，关闭展示直接完成当前步骤、经 Host 自动进入下一步，无关闭后的额外 Next。夜间无 Previous/pending，Night→Day 无 Dawn 或二次公开死亡事务。
+> **本条优先于下方全部历史步骤和阶段文本：** 用户在 2026-10-20 审核最小 Host 全流程后明确批准 A–D，参见 [专项审计与实施边界](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)。**A** 删除首夜/后夜通用“开始夜晚/准备”页，直接呈现第一个实际可执行步骤；**B** 白天同一方桌一次确认当日结束/处决/胜负，删除 EndConfirm 路由；**C** NGJ Klutz 只由已确认 Death/Execution 与实际角色触发待处理真实玩家选择，删除独立 Learned/得知死亡事件、ReturnToDawn 状态/无用日志；**D2（覆盖旧 D）** 信息按钮仅进入全屏预览，关闭回到当前角色可修改；唯一“下一步”确认最后预览的一条 Observation，并由 Host 推进。夜间无 Previous/pending，Night→Day 无 Dawn 或二次公开死亡事务。
 >
 > **立即实施边界**：优先比对现行代码而非从旧设计增删；完成剩余全树职责/消费者审计，按照完整业务链把流程/确定性结算统一到 `nextStep(Session)` / 唯一 Session；完成替代和行为验证的**同一批**物理删除旧页面、UI 游标/流程状态、预测和候选的多余包装、producer/consumer、独占测试与失效 CI 门禁。生产仍有调用不是保留理由；AI 首夜/后夜全链、TB 5–15/NGJ 5–6、两类跨局防重复、真实信息/私密与 Session 安全必须保留。**未完成**：彻底撤出旧投影/多层流转、白天由 UI 规则判断、活跃 Session 安全持久化恢复、全源码/角色验证。此条仅文档定稿，**不得报告为已删除 A–D 代码**。
 
@@ -14,7 +14,13 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
-## 2026-10-20 D2 信息全屏预览 / Next 最终事件（本批验收以 SHA/CI 为准）
+## 2026-10-20 D2 角色界面三模式收敛（按本批提交及 CI 验收）
+
+- 对双人线索（洗衣妇/图书管理员/调查员）、数字线索（厨师/共情者/钟表匠）、占卜师、侍女、送葬者、守鸦人、贤者等角色的实际 UI 补全 `AI_AUTOMATIC` **只能按当前已绑定推荐展示**的约束：没有推荐时显示等待信息，不能悄悄转成手选或提供多个结果按钮。仍允许占卜师/侍女/守鸦人的**真人玩家选择查询目标**；AI 结果必须重新对应实际目标座位，尤其侍女换查询对象后旧推荐不可沿用。
+- `AI_ASSISTED` 保留现阶段一条推荐和手动输入，`MANUAL` 保留手动输入；数字结果提供显式推荐展示按钮，且不因展示按钮被点击而在 Next 前提交 Session。专用 UI 的 `automaticOnly` 只是派生的只读显示模式，不是新增可写流程状态。
+- 增加占卜师结果模式和侍女真人查询绑定回归测试。**仍待验证**：各专用界面的真机可见性/预览高亮位置、AI 错误及重试入口、唯一确定信息直接显示的 Host 计算、全夜无 UI `nightStepIndex`、白天 B/C。不要以 CI 代替现场可用性验收。
+
+## 2026-10-20 D2 信息全屏预览 / Next 最终事件（已提交，历史批次）
 
 - **已修改生产入口**：`ClocktowerHostScreen` 中 `onShowPlayerDisplay` 仅更新当前步骤的临时 `lastInformationPreview` 和打开全屏；全屏关闭只回同一步，不记录/不推进；本步骤 Next 缺乏预览时不允许，已有预览时从最后预览的真实 typed proposition 原子提交唯一 Observation，再沿现有稳定交互 ID 走后续步骤。不再保留多次中间预览作为任何事实。
 - **已删除旧流程**：自动模式下 `ClocktowerNightStepUi` 用 `LaunchedEffect` 自动打开 Numeric/Pair/FT/Chambermaid/Ravenkeeper 信息的副作用；`autoPresentAiInformation` 参数；`pendingAutoAdvanceAfterDisplay`；生产 UI 的 `FirstNightInformationMigration` 已展示标记；`ClocktowerPlayerRevealHandoff` 的展示即发布交接文件及其独占测试，改为最小的 Session 版本确认工具。自动模式仍按现有推荐选值，但真人现场点击展示。

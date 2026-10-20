@@ -28,6 +28,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     wakeInstruction: String? = null,
     recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
+    automaticOnly: Boolean = false,
     language: String,
     canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
@@ -38,7 +39,8 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    if (numericInput == null && clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+    if (!automaticOnly && numericInput == null &&
+        clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
         resultOptions.distinctBy(::clocktowerInformationCandidateId).size <= 1
     ) {
         val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
@@ -88,6 +90,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             selectedSeats = selectedSeats,
             recommendedResultOptions = recommendedResultOptions,
             resultOptions = resultOptions,
+            automaticOnly = automaticOnly,
             language = language,
             onShowDeterminedResult = onShowDeterminedResult,
             onResultSelected = onResultSelected,
@@ -101,6 +104,7 @@ private fun ClocktowerChambermaidCenterControls(
     selectedSeats: List<Int>,
     recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
+    automaticOnly: Boolean,
     language: String,
     onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
@@ -155,11 +159,18 @@ private fun ClocktowerChambermaidCenterControls(
             Spacer(Modifier.height(6.dp))
 
             if (recommendations.isEmpty() && manualOptions.isEmpty()) {
-                Button(
-                    onClick = onShowDeterminedResult,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(if (language == "en") "Check and show" else "查询并展示")
+                if (automaticOnly) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI result" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Button(
+                        onClick = onShowDeterminedResult,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(if (language == "en") "Check and show" else "查询并展示")
+                    }
                 }
             } else {
                 if (recommendations.isNotEmpty()) {
