@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost.clocktower.domain
 
+enum class GameEndReason { NO_DEMON, TWO_ALIVE, SAINT, MAYOR, KLUTZ }
+
 /**
  * A committed, replayable mechanical fact. These facts intentionally contain no
  * localized text or UI callbacks: the ordered list is the persisted timeline.
@@ -100,25 +102,12 @@ sealed interface ActionFact {
         val ghostVoterSeats: List<Int>,
     ) : ActionFact
 
-    /**
-     * The actual dead Klutz has been informed of death. This is NOT the death
-     * action itself, and never publishes the Klutz's hidden role or impairment.
-     */
-    data class KlutzLearnedDeath(
-        override val actionId: String,
-        override val sequence: Long,
-        val klutzSeat: Int,
-        val deathActionId: String,
-        val functioningWhenLearned: Boolean,
-    ) : ActionFact
-
-    /** Public player choice; the Storyteller neither selects the seat nor registers a role. */
     data class KlutzChoice(
         override val actionId: String,
         override val sequence: Long,
         val klutzSeat: Int,
         val chosenSeat: Int,
-        val learnedActionId: String,
+        val deathActionId: String,
     ) : ActionFact
 
     data class RoleChange(
@@ -167,6 +156,22 @@ sealed interface ActionFact {
         val actorSeat: Int,
         val role: RoleId,
         val stepId: String,
+    ) : ActionFact
+
+    data class ArtistAnswer(
+        override val actionId: String,
+        override val sequence: Long,
+        val claimantSeat: Int,
+        val shownAnswer: Boolean,
+        val abilityConsumed: Boolean,
+    ) : ActionFact
+
+    /** One terminal fact; UI only localizes its reason. */
+    data class GameEnded(
+        override val actionId: String,
+        override val sequence: Long,
+        val reason: GameEndReason,
+        val subjectSeat: Int? = null,
     ) : ActionFact
 
     data class PhaseAdvance(
@@ -256,15 +261,11 @@ object DynamicActionReducer {
                     require(fact.ghostVoterSeats.all { it in fact.voterSeats })
                     fact.voterSeats.forEach(::requireSeat)
                 }
-                is ActionFact.KlutzLearnedDeath -> {
-                    requireSeat(fact.klutzSeat)
-                    require(fact.deathActionId.isNotBlank())
-                }
                 is ActionFact.KlutzChoice -> {
                     requireSeat(fact.klutzSeat)
                     requireSeat(fact.chosenSeat)
                     require(fact.klutzSeat != fact.chosenSeat)
-                    require(fact.learnedActionId.isNotBlank())
+                    require(fact.deathActionId.isNotBlank())
                 }
                 is ActionFact.RoleChange -> updatePlayer(fact.targetSeat) {
                     it.copy(actualRole = fact.role, actualAlignment = fact.alignment, actualType = fact.type)
@@ -286,6 +287,8 @@ object DynamicActionReducer {
                     requireSeat(fact.actorSeat)
                     require(fact.role == RoleId("Spy") && fact.stepId.isNotBlank())
                 }
+                is ActionFact.ArtistAnswer -> requireSeat(fact.claimantSeat)
+                is ActionFact.GameEnded -> fact.subjectSeat?.let(::requireSeat)
                 is ActionFact.PhaseAdvance -> {
                     require(fact.round > 0)
                     phase = fact.phase

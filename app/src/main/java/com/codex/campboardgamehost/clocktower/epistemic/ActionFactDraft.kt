@@ -155,22 +155,6 @@ sealed interface ActionFactDraft {
         }
     }
 
-    data class KlutzLearnedDeath(
-        override val actionId: String,
-        override val phase: StorytellerPhase,
-        override val round: Int,
-        override val sequence: Int,
-        val klutzSeat: Int,
-        val deathActionId: String,
-        val functioningWhenLearned: Boolean,
-    ) : ActionFactDraft {
-        init {
-            requireIdentity(actionId, round, sequence)
-            requireSeat(klutzSeat)
-            require(deathActionId.isNotBlank())
-        }
-    }
-
     data class KlutzChoice(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -178,14 +162,14 @@ sealed interface ActionFactDraft {
         override val sequence: Int,
         val klutzSeat: Int,
         val chosenSeat: Int,
-        val learnedActionId: String,
+        val deathActionId: String,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
             requireSeat(klutzSeat)
             requireSeat(chosenSeat)
             require(klutzSeat != chosenSeat)
-            require(learnedActionId.isNotBlank())
+            require(deathActionId.isNotBlank())
         }
     }
 
@@ -279,6 +263,25 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class ArtistAnswer(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val claimantSeat: Int,
+        val shownAnswer: Boolean,
+        val abilityConsumed: Boolean,
+    ) : ActionFactDraft
+
+    data class GameEnded(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val reason: com.codex.campboardgamehost.clocktower.domain.GameEndReason,
+        val subjectSeat: Int? = null,
+    ) : ActionFactDraft
+
     data class PhaseAdvance(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -338,11 +341,8 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Vote -> ActionFact.Vote(
         actionId, globalSequence, nominatorSeat, nomineeSeat, voterSeats.toList(), ghostVoterSeats.toList(),
     )
-    is ActionFactDraft.KlutzLearnedDeath -> ActionFact.KlutzLearnedDeath(
-        actionId, globalSequence, klutzSeat, deathActionId, functioningWhenLearned,
-    )
     is ActionFactDraft.KlutzChoice -> ActionFact.KlutzChoice(
-        actionId, globalSequence, klutzSeat, chosenSeat, learnedActionId,
+        actionId, globalSequence, klutzSeat, chosenSeat, deathActionId,
     )
     is ActionFactDraft.RoleChange -> ActionFact.RoleChange(
         actionId = actionId,
@@ -365,6 +365,8 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
         actionId, globalSequence, roles.toList(),
     )
     is ActionFactDraft.NightWake -> ActionFact.NightWake(actionId, globalSequence, actorSeat, role, stepId)
+    is ActionFactDraft.ArtistAnswer -> ActionFact.ArtistAnswer(actionId, globalSequence, claimantSeat, shownAnswer, abilityConsumed)
+    is ActionFactDraft.GameEnded -> ActionFact.GameEnded(actionId, globalSequence, reason, subjectSeat)
     is ActionFactDraft.PhaseAdvance -> ActionFact.PhaseAdvance(
         actionId = actionId,
         sequence = globalSequence,

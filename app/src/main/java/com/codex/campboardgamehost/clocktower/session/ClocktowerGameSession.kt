@@ -6,17 +6,14 @@ import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
 import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
-import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
-import com.codex.campboardgamehost.clocktower.domain.TruthRelation
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.KlutzDeathTriggerEvidenceV1
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
@@ -30,106 +27,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.TimelinePoint
 import com.codex.campboardgamehost.clocktower.epistemic.bindGlobal
 import com.codex.campboardgamehost.clocktower.epistemic.matches
-
-/** Transient result of one session-owned Global observation transition; never persisted as a second state model. */
-internal data class GlobalEpistemicObservationCommit(
-    val record: RecordedEpistemicObservation,
-    val observationLog: EpistemicObservationLog,
-    val nextTimelineGlobalSequence: Long,
-    val playerInputRevision: Long,
-)
-
-/** Transient result of one session-owned Global action transition; never persisted as a second state model. */
-internal data class GlobalActionFactCommit(
-    val entry: TimelineBoundActionFact,
-    val actionTimeline: ActionFactTimeline,
-    val nextTimelineGlobalSequence: Long,
-)
-
-/**
- * Immutable Compose-facing read model for session identity, revision, and semantic chronology.
- *
- * [GameState] is canonical inside [ClocktowerGameSession], but remains intentionally absent here:
- * production UI still owns [PlayerCard]-style presentation metadata and uses derived GameState
- * projections for pre-session, recommendation, and screen-local reads. Excluding GameState keeps this
- * view narrow and prevents a second broad mechanical read API while preserving the single session writer.
- */
-internal data class ClocktowerSessionView(
-    val gameId: String,
-    val scriptId: ScriptId,
-    val gameStateRevision: Long,
-    val playerInputRevision: Long,
-    val gameSeed: Long,
-    val actionTimeline: ActionFactTimeline,
-    val epistemicObservationLog: EpistemicObservationLog,
-    val semanticHistoryMode: ClocktowerSemanticHistoryMode,
-    val nextTimelineGlobalSequence: Long,
-    val phase: StorytellerPhase,
-    val round: Int,
-    val nightTargets: ClocktowerNightTargets,
-    val voteStanding: ClocktowerVoteStanding,
-    val redHerringSeat: Int?,
-    val demonBluffRoleIds: List<RoleId>,
-)
-
-/**
- * Ruleset-independent canonical state owned by one production Clocktower session.
- *
- * Scripts without an advanced ruleset still need one identity/revision/history owner.
- * [GameSnapshot] remains the stricter projection for consumers that have a resolved [RulesetRef].
- */
-internal data class ClocktowerSessionState(
-    val gameId: String,
-    val gameStateRevision: Long,
-    val playerInputRevision: Long,
-    val gameSeed: Long,
-    val gameState: GameState,
-    val actionTimeline: ActionFactTimeline = ActionFactTimeline(),
-    val epistemicObservationLog: EpistemicObservationLog = EpistemicObservationLog(),
-    val semanticHistoryMode: ClocktowerSemanticHistoryMode = ClocktowerSemanticHistoryMode.LEGACY_LOCAL,
-    val nextTimelineGlobalSequence: Long = 0L,
-    val storytellerPlayerContextBySeat: Map<Int, StorytellerPlayerContextInputV1> = emptyMap(),
-    /** Accepted current choices are stored once here, not in Compose draft state. */
-    val nightTargets: ClocktowerNightTargets = ClocktowerNightTargets(),
-    val voteStanding: ClocktowerVoteStanding = ClocktowerVoteStanding(),
-    val redHerringSeat: Int? = null,
-    val demonBluffRoleIds: List<RoleId> = emptyList(),
-) {
-    private val lastPhaseAdvance: ActionFact.PhaseAdvance?
-        get() = actionTimeline.entries.asReversed().firstNotNullOfOrNull { it.fact as? ActionFact.PhaseAdvance }
-    val phase: StorytellerPhase get() = lastPhaseAdvance?.phase ?: StorytellerPhase.FIRST_NIGHT
-    val round: Int get() = lastPhaseAdvance?.round ?: 1
-
-    init {
-        require(gameId.isNotBlank()) { "gameId cannot be blank." }
-        require(gameStateRevision >= 0L) { "gameStateRevision cannot be negative." }
-        require(playerInputRevision >= 0L) { "playerInputRevision cannot be negative." }
-        require(nextTimelineGlobalSequence >= 0L) { "nextTimelineGlobalSequence cannot be negative." }
-        require(gameSeed == gameState.seed) {
-            "The session gameSeed must match the GameState seed."
-        }
-        val currentSeats = gameState.players.map { it.seat }.toSet()
-        require(storytellerPlayerContextBySeat.keys.all { it in currentSeats }) {
-            "Storyteller player-context overrides must reference current GameState seats."
-        }
-        redHerringSeat?.let { seat ->
-            require(gameState.playerAt(seat) != null) {
-                "Committed Red Herring must reference a current Session seat."
-            }
-        }
-        require(demonBluffRoleIds.distinct() == demonBluffRoleIds) {
-            "Committed Demon bluff roles must be distinct."
-        }
-        semanticHistoryMode.requireCompatible(
-            actionTimeline = actionTimeline,
-            observationLog = epistemicObservationLog,
-            nextTimelineGlobalSequence = nextTimelineGlobalSequence,
-        )
-    }
-}
-
-/** Action categories for reading accepted night facts; no pending state is retained. */
-internal enum class NightOperationKind { ATTACK, POISON, PROTECT, BUTLER }
 
 internal class ClocktowerGameSession private constructor(
     initialState: ClocktowerSessionState,
@@ -490,7 +387,7 @@ internal class ClocktowerGameSession private constructor(
         draft: ActionFactDraft.MayorRedirectChoice,
         request: StorytellerProviderRequestV1,
         expectedGameStateRevision: Long,
-    ): TimelineBoundActionFact {
+    ): TimelineBoundActionFact = confirmAtomically {
         require(draft.phase == StorytellerPhase.NIGHT && state.phase == draft.phase &&
             draft.round == state.round)
         state.actionTimeline.entries.firstOrNull {
@@ -500,7 +397,7 @@ internal class ClocktowerGameSession private constructor(
             check(accepted.fact.actionId == draft.actionId && draft.matches(accepted)) {
                 "The Mayor ruling is already committed; it cannot be amended."
             }
-            return accepted
+            return@confirmAtomically accepted
         }
         check(state.gameStateRevision == expectedGameStateRevision) { "Stale Mayor confirmation." }
         require(request.identity.gameId == state.gameId)
@@ -588,7 +485,8 @@ internal class ClocktowerGameSession private constructor(
                 death?.nextTimelineGlobalSequence ?: ruling.nextTimelineGlobalSequence,
             nightTargets = state.nightTargets.copy(mayorRedirectSeat = draft.targetSeat),
         ))
-        return ruling.entry
+        finishIfDecided()
+        ruling.entry
     }
 
     /** Non-mutating validation/projection for production flows that must persist before commit. */
@@ -853,7 +751,7 @@ internal class ClocktowerGameSession private constructor(
         round: Int,
         stepId: String,
         successorSeat: Int? = null,
-    ): TimelineBoundActionFact {
+    ): TimelineBoundActionFact = confirmAtomically {
         require(phase == StorytellerPhase.NIGHT && phase == state.phase && round == state.round)
         require(stepId.isNotBlank())
         requireNotNull(state.gameState.playerAt(targetSeat)) { "Unknown Imp target $targetSeat." }
@@ -872,13 +770,41 @@ internal class ClocktowerGameSession private constructor(
             check(previous.fact.actionId == actionId && previouslyPromoted == successorSeat) {
                 "The Imp attack and its successor are already committed and cannot change."
             }
-            return previous
+            return@confirmAtomically previous
         }
-        return acceptDeterministicNightAttack(targetSeat, phase, round, actionId, successorSeat)
+        val accepted = acceptDeterministicNightAttack(targetSeat, phase, round, actionId, successorSeat)
+        finishIfDecided()
+        accepted
+    }
+
+    private var persist: ((ClocktowerSessionState) -> Unit)? = null
+    private var confirmingBatch = false
+
+    fun persistWith(save: (ClocktowerSessionState) -> Unit) {
+        save(state)
+        persist = save
+    }
+
+    /** Main-thread confirmation boundary: persist the entire accepted responsibility once. */
+    internal fun <T> confirmAtomically(confirm: () -> T): T {
+        check(!confirmingBatch)
+        val before = state
+        confirmingBatch = true
+        try {
+            val result = confirm()
+            if (state != before) persist?.invoke(state)
+            return result
+        } catch (failure: Throwable) {
+            state = before
+            throw failure
+        } finally {
+            confirmingBatch = false
+        }
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
         if (nextState == state) return state
+        if (!confirmingBatch) persist?.invoke(nextState)
         state = nextState
         return state
     }
@@ -1021,6 +947,9 @@ internal class ClocktowerGameSession private constructor(
                 defaultRulesetRef = rulesetRef,
             )
         }
+
+        fun restore(confirmed: ClocktowerSessionState): ClocktowerGameSession =
+            ClocktowerGameSession(confirmed, null)
 
         fun createProduction(
             gameId: String,

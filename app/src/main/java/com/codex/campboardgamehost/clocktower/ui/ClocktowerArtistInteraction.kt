@@ -8,6 +8,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import com.codex.campboardgamehost.clocktower.session.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,11 +40,11 @@ internal class ClocktowerArtistDraft {
     fun selectShownAnswer(next: Boolean?) {
         shownAnswer = next
     }
-    fun confirm(onConfirm: (String) -> Unit) {
+    fun confirm(onConfirm: (String, Boolean, Boolean) -> Unit) {
         val claimant = requireNotNull(claimantName) { "Artist confirmation requires a claimant." }
         requireNotNull(truthfulAnswer) { "Artist confirmation requires a truthful answer." }
         requireNotNull(shownAnswer) { "Artist confirmation requires a shown answer." }
-        onConfirm(claimant)
+        onConfirm(claimant, requireNotNull(truthfulAnswer), requireNotNull(shownAnswer))
         selectClaimant(null)
     }
 }
@@ -55,20 +56,19 @@ internal fun ClocktowerArtistInteraction(
     seats: List<HostSeatPresentation>,
     claimantCandidateNames: Set<String>,
     round: Int,
-    poisonTarget: String?,
+    sessionState: ClocktowerSessionState,
     allowRuleDeterminedAutoUi: Boolean,
     actionsEnabled: Boolean,
     onHostTools: () -> Unit,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Boolean, Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val artistClaimant = cards.firstOrNull { it.name == draft.claimantName }
     val currentArtistTruthfulAnswer = draft.truthfulAnswer
-    val artistReliable = artistClaimant?.let {
-        it.clocktowerRole?.enName == "Artist" && it.name != poisonTarget
-    } == true
+    val artistReliable = sessionState.gameState.players.firstOrNull { it.name == draft.claimantName }
+        ?.let { sessionState.artistHasFunctioningAbility(it.seat) } == true
     val artistAnswerOptions = if (artistClaimant != null && currentArtistTruthfulAnswer != null) {
         if (artistReliable) listOf(currentArtistTruthfulAnswer) else listOf(true, false)
     } else {

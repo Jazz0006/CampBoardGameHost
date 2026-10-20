@@ -211,4 +211,64 @@ class ClocktowerNightFlowTest {
         assertTrue(s.state.epistemicObservationLog.records.isEmpty())
     }
 
+    @Test fun `supported table sizes complete two nights with no UI cursor or duplicate role confirmations`() {
+        fun complete(s: ClocktowerGameSession, script: ClocktowerScript) {
+            val rules = catalog.ruleset(script)
+            val completed = mutableSetOf<String>()
+            repeat(32) {
+                val step = s.state.nextNightInteraction(rules) ?: return
+                val id = step.id.value
+                assertTrue("Duplicate step $id", completed.add(id))
+                assertEquals(id, ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(s.state)).nextNightInteraction(rules)?.id?.value)
+                when {
+                    id.endsWith("red_herring") -> s.commitRedHerringSeat(2, s.state.phase, s.state.round, s.nextInputSequence)
+                    step.kind == com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteractionKind.EVIL_INFORMATION -> s.confirmEvilInformation(rules, id)
+                    step.roleId?.value == "Poisoner" -> s.confirmNightPoison(1, s.state.phase, s.state.round, id)
+                    step.roleId?.value == "Monk" -> s.confirmNightProtection(1, s.state.phase, s.state.round, id)
+                    step.roleId?.value == "Imp" -> s.confirmNightAttack(s.state.gameState.players.firstOrNull { it.actualRole.value == "Soldier" }?.seat ?: 2,
+                        s.state.phase, s.state.round, id)
+                    step.roleId?.value == "Butler" -> {
+                        val actor = s.state.gameState.players.single { it.wakingRole().value == "Butler" }
+                        s.confirmNightButlerMaster(actor.seat, 1, s.state.phase, s.state.round, id)
+                    }
+                    step.roleId?.value == "Spy" -> s.confirmSpyWake(rules, id)
+                    else -> {
+                        val role = requireNotNull(step.roleId).value
+                        val actor = s.state.gameState.players.single { it.wakingRole().value == role }
+                        information(s, role, actor.seat)
+                    }
+                }
+            }
+            fail("Night never reached its confirmed end")
+        }
+        val tbRoles = listOf("Imp", "Chef", "Empath", "Fortune Teller", "Soldier", "Butler", "Poisoner", "Monk",
+            "Washerwoman", "Librarian", "Investigator", "Spy", "Undertaker", "Ravenkeeper", "Saint")
+        for(count in 5..15) {
+            val s = session(*tbRoles.take(count).toTypedArray())
+            if(count >= 7) s.commitDemonBluffs(listOf(RoleId("Slayer"), RoleId("Mayor"), RoleId("Virgin")),
+                s.state.phase, 1, s.nextInputSequence)
+            complete(s, ClocktowerScript.TroubleBrewing)
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("trace-day", s.state.phase, 1, s.nextInputSequence,
+                StorytellerPhase.DAY, 1), s.state.gameStateRevision)
+            // A real qualifying vote supplies an Execution so Undertaker must wake on night two.
+            s.confirmNomination(2, 3, null)
+            val voters = s.state.gameState.players.map { it.seat }.filter { it != 6 }
+            s.confirmVote(2, 3, voters)
+            s.confirmEndDay(1)
+            complete(s, ClocktowerScript.TroubleBrewing)
+            assertNull(s.state.nextNightInteraction(tb))
+            assertEquals(s.state.actionTimeline.entries.map { it.point.globalSequence }.distinct().size, s.state.actionTimeline.entries.size)
+        }
+        for(count in 5..6) {
+            val roles = listOf("Imp", "Soldier", "Empath", "Chambermaid", "Clockmaker", "Artist").take(count)
+            val s = session(*roles.map { if(it == "Soldier") "Investigator" else it }.toTypedArray(), script = "no_greater_joy")
+            complete(s, ClocktowerScript.NoGreaterJoy)
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("ngj-trace-day", s.state.phase, 1,
+                s.nextInputSequence, StorytellerPhase.DAY, 1), s.state.gameStateRevision)
+            s.confirmEndDay(1)
+            complete(s, ClocktowerScript.NoGreaterJoy)
+            assertNull(s.state.nextNightInteraction(ngj))
+        }
+    }
+
 }

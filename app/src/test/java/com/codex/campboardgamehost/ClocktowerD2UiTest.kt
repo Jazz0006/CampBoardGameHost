@@ -23,6 +23,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import androidx.compose.ui.test.onAllNodesWithText
+import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2
@@ -347,8 +348,70 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun dayTableSingleClickRecordsNoExecutionAndEntersNight() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("End day").performClick()
+        ui.runOnIdle {
+            assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
+            assertEquals(2, host.session.state.round)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.NoExecution>().size)
+        }
+    }
+
+    @Test fun dayTableSingleClickExecutesConfirmedHighestVoteWithoutAnotherScreen() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        host.session.confirmNomination(3, 2, null)
+        host.session.confirmVote(3, 2, listOf(1, 2, 3))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("End day").performClick()
+        ui.runOnIdle {
+            assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
+            assertEquals(false, host.session.state.gameState.playerAt(2)!!.alive)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Execution>().size)
+        }
+    }
+
+    @Test fun restoredConfirmedNominationOpensItsRealVoteWithoutTransientDraft() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        host.session.confirmNomination(3, 2, null)
+        host.reload()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Confirm vote").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().single().voterSeats.size)
+            assertEquals(null, host.session.state.pendingVote())
+        }
+        ui.onNodeWithText("End day").assertIsEnabled()
+    }
+
+    @Test fun realDeathDirectlyOpensKlutzChoiceAndOnlyConfirmCommitsIt() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, ClocktowerScript.NoGreaterJoy,
+            listOf("Imp", "Klutz", "Artist", "Empath", "Clockmaker"))
+        host.enterDay()
+        host.session.commitConfirmedPlayerDeath(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Death(
+            "ui-klutz-death", StorytellerPhase.DAY, 1, host.session.nextInputSequence, 2), host.session.state.gameStateRevision)
+        host.reload()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Confirm Klutz choice").assertIsNotEnabled()
+        ui.onNodeWithText("P3").performClick()
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().size) }
+        ui.onNodeWithText("Confirm Klutz choice").performClick()
+        ui.runOnIdle {
+            val choice = host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().single()
+            assertEquals("ui-klutz-death", choice.deathActionId)
+            assertEquals(3, choice.chosenSeat)
+            assertEquals(StorytellerPhase.DAY, host.session.state.phase)
+        }
+    }
+
     /** Uses the production JudgeScreen and real Session; only external input/provider callbacks are fixtures. */
-    private class Host(role: String, val mode: StorytellerOperationMode) {
+    private class Host(role: String, val mode: StorytellerOperationMode,
+        private val script: ClocktowerScript = ClocktowerScript.TroubleBrewing,
+        roles: List<String> = listOf(role, "Soldier", "Mayor", "Saint", "Recluse")) {
         val openingEnabled = mutableStateOf(true)
         val pairRole = mutableStateOf("Chef")
         val adviceKey = mutableStateOf<String?>(null)
@@ -356,21 +419,34 @@ class ClocktowerD2UiTest {
         private val choices = mutableStateOf<Map<String, SemanticResult>>(emptyMap())
         var requests = 0
         var requestId: String? = null
-        val cards = listOf(role, "Soldier", "Mayor", "Saint", "Recluse").mapIndexed { index, name ->
+        val cards = roles.mapIndexed { index, name ->
             val identity = requireNotNull(clocktowerRoleByName(name))
             PlayerCard("P${index + 1}", clocktowerRole = identity, clocktowerShownRole = identity,
                 clocktowerTeam = identity.team)
         }
-        private val game = GameState(ScriptId("trouble_brewing"), cards.mapIndexed { index, card ->
+        private val game = GameState(script.toRecommendationScriptId(), cards.mapIndexed { index, card ->
             PlayerState(index + 1, card.name, RoleId(requireNotNull(card.clocktowerRole).enName),
-                Alignment.GOOD, if (card.clocktowerTeam == ClocktowerTeam.Outsider) CharacterType.OUTSIDER
-                else CharacterType.TOWNSFOLK)
+                if(card.clocktowerTeam in setOf(ClocktowerTeam.Demon, ClocktowerTeam.Minion)) Alignment.EVIL else Alignment.GOOD,
+                when(card.clocktowerTeam) {
+                    ClocktowerTeam.Demon -> CharacterType.DEMON
+                    ClocktowerTeam.Minion -> CharacterType.MINION
+                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                    else -> CharacterType.TOWNSFOLK
+                })
         }, 19L)
-        val session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
+        var session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
         private val tick = mutableStateOf(0)
         private val target = mutableStateOf<String?>(null)
-        private val dayMode = mutableStateOf(ClocktowerDayMode.Overview)
         fun refresh() { tick.value++ }
+        fun enterDay() {
+            session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
+                "ui-day", session.state.phase, session.state.round, session.nextInputSequence, StorytellerPhase.DAY, session.state.round), session.state.gameStateRevision)
+            refresh()
+        }
+        fun reload() {
+            session = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(session.state)))
+            refresh()
+        }
         fun deliver(key: String?, id: String, value: String) {
             adviceKey.value = key
             adviceError.value = null
@@ -394,8 +470,8 @@ class ClocktowerD2UiTest {
             val state = session.state
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                cards = cards, sessionState = state,
-                script = ClocktowerScript.TroubleBrewing, gameId = state.gameId, gameSeed = state.gameSeed,
+                cards = ClocktowerSessionPlayerCards(cards, { session.state }, "en"), sessionState = state,
+                script = script, gameId = state.gameId, gameSeed = state.gameSeed,
                 globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
                 globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
                 globalAiAdviceKey = adviceKey.value, globalAiAdviceError = adviceError.value,
@@ -406,22 +482,24 @@ class ClocktowerD2UiTest {
                             "FUNCTIONING", "EVIDENCE_PAIR", listOf(2, 3), "ROLE", roleId = pairRole.value)
                     else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
                         "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
-                phase = ClocktowerPhase.FirstNight, round = 1,
-                nightCheckpoint = ClocktowerNightCheckpoint("FIRST_NIGHT", 1, state.gameStateRevision, state.playerInputRevision,
+                phase = when(state.phase) {
+                    StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
+                    StorytellerPhase.DAY -> ClocktowerPhase.Day
+                    StorytellerPhase.NIGHT -> ClocktowerPhase.Night
+                }, round = state.round,
+                nightCheckpoint = ClocktowerNightCheckpoint(state.phase.name, state.round, state.gameStateRevision, state.playerInputRevision,
                     null, null, null, target.value, null, null, null, null, null, nextTimelineGlobalSequence = state.nextTimelineGlobalSequence),
-                selectedExecution = null, fortuneTellerFirst = null, fortuneTellerSecond = null,
+                fortuneTellerFirst = null, fortuneTellerSecond = null,
                 chambermaidFirst = null, chambermaidSecond = null, ravenkeeperTarget = null, redHerring = null,
                 recommendedDemonBluffRoleNames = emptyList(), butlerMaster = target.value,
-                virginUsed = false, artistUsed = false, artistClaimedNames = emptyList(), lastExecutedName = null,
-                pendingKlutzName = null, klutzChoiceName = null,
-                dayModeState = dayMode, ghostVoteAuthority = ClocktowerGhostVoteAuthority(), highestVoteName = null,
-                highestVoteCount = 0, gameOutcome = null,
+                lastExecutedName = null,
+                ghostVoteAuthority = ClocktowerGhostVoteAuthority(), gameOutcome = null,
                 onCommitConfirmedPrivateInformationPublication = { draft, revision ->
                     session.commitGlobalEpistemicObservation(draft, revision)
                     tick.value++
                 },
                 onHostTools = {}, onSelectNightDeath = {}, onConfirmDemonAttack = { _, _ -> },
-                onSelectExecution = {}, onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
+                onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
                     session.confirmNightPoison(cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
                     refresh()
                 },
@@ -434,10 +512,18 @@ class ClocktowerD2UiTest {
                 },
                 onSelectMonkProtectedTarget = {}, onConfirmMonkProtectedTarget = {},
                 onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = {}, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
-                onSelectKlutzChoice = {}, onConfirmKlutzChoice = {}, onConfirmArtistQuestion = {},
-                onSlayerShot = { _, _, _ -> }, onVirginNomination = { _, _, _ -> },
-                onConfirmedNomination = { _, _, _ -> }, onConfirmedVote = { _, _, _ -> },
-                onAdvanceFromFirstNight = {}, onConfirmDay = {}, onCompleteNight = {},
+                onConfirmKlutzChoice = { chosenName ->
+                    session.confirmKlutzChoice(requireNotNull(session.state.pendingKlutzDeath()).actionId,
+                        cards.indexOfFirst { it.name == chosenName } + 1)
+                    refresh()
+                }, onConfirmArtistQuestion = { _, _, _ -> },
+                onSlayerShot = { _, _, _ -> },
+                onConfirmedNomination = { _, _, _ -> false }, onConfirmedVote = { a, b, vote ->
+                    session.confirmVote(cards.indexOfFirst { it.name == a } + 1, cards.indexOfFirst { it.name == b } + 1,
+                        vote.voters.map { v -> cards.indexOfFirst { it.name == v.playerName } + 1 })
+                    refresh()
+                },
+                onAdvanceFromFirstNight = {}, onConfirmDay = { expectedRound -> session.confirmEndDay(expectedRound); refresh() }, onCompleteNight = {},
             )
         }
     }

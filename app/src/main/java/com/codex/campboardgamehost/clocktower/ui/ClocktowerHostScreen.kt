@@ -15,34 +15,25 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.clocktowerRoleDefinitionsForScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
-import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -69,7 +60,6 @@ internal fun ClocktowerJudgeScreen(
     phase: ClocktowerPhase,
     round: Int,
     nightCheckpoint: ClocktowerNightCheckpoint,
-    selectedExecution: String?,
     fortuneTellerFirst: String?,
     fortuneTellerSecond: String?,
     chambermaidFirst: String?,
@@ -79,22 +69,13 @@ internal fun ClocktowerJudgeScreen(
     openingRecommendedRedHerring: String? = null,
     recommendedDemonBluffRoleNames: List<String>,
     butlerMaster: String?,
-    virginUsed: Boolean,
-    artistUsed: Boolean,
-    artistClaimedNames: List<String>,
     lastExecutedName: String?,
-    pendingKlutzName: String?,
-    klutzChoiceName: String?,
-    dayModeState: MutableState<ClocktowerDayMode>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
-    highestVoteName: String?,
-    highestVoteCount: Int,
     gameOutcome: GameOutcome?,
     onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
     onConfirmDemonAttack: (String, String?) -> Unit,
-    onSelectExecution: (String?) -> Unit,
     onSelectPoisonTarget: (String?) -> Unit,
     onConfirmPoisonTarget: (String) -> Unit,
     onSelectFortuneTellerFirst: (String?) -> Unit,
@@ -114,21 +95,17 @@ internal fun ClocktowerJudgeScreen(
     onConfirmNewDemon: () -> Unit,
     onConfirmSpyWake: (String) -> Unit,
     onConfirmEvilInformation: (String, StorytellerDecisionRevision) -> Unit,
-    onSelectKlutzChoice: (String?) -> Unit,
-    onConfirmKlutzChoice: () -> Unit,
-    onConfirmArtistQuestion: (String) -> Unit,
-    onSlayerShot: (String, String, Boolean) -> Unit,
-    onVirginNomination: (String, String, Boolean) -> Unit,
-    onConfirmedNomination: (String, String, Boolean?) -> Unit,
+    onConfirmKlutzChoice: (String) -> Unit,
+    onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
+    onSlayerShot: (String, String, Boolean?) -> Unit,
+    onConfirmedNomination: (String, String, Boolean?) -> Boolean,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord) -> Unit,
     onAdvanceFromFirstNight: () -> Unit,
-    onConfirmDay: () -> Unit,
+    onConfirmDay: (Int) -> Unit,
     onCompleteNight: () -> Unit,
 ) {
+    if (sessionState.outcome != null) return
     val actualInformationHistory = sessionState.epistemicObservationLog.records
-    val confirmedNightDeathSeats = sessionState.actionTimeline.entries.filter {
-        it.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT && it.point.round == sessionState.round
-    }.mapNotNull { (it.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.Death)?.targetSeat }
     val sessionGameState = sessionState.gameState
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
@@ -145,12 +122,7 @@ internal fun ClocktowerJudgeScreen(
     val pendingNewDemonName = nightCheckpoint.pendingNewDemonName
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
-    val registrationState = remember { ClocktowerRegistrationInteractionState() }
 
-    var dayMode by dayModeState
-    val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
-    val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
-    val artistDraft = remember(gameId) { ClocktowerArtistDraft() }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // UI-only D2 draft must outlive the fullscreen early return below.
     // Match the interaction identity before reuse: no persisted night cursor or Session event.
@@ -212,216 +184,8 @@ internal fun ClocktowerJudgeScreen(
     }
 
     if (phase == ClocktowerPhase.Day) {
-        val executionThreshold = (publicAliveCards.size + 1) / 2
-        val scriptRoleNames = clocktowerRolesForScript(script).map { it.enName }.toSet()
-        val scriptHasSlayer = "Slayer" in scriptRoleNames
-        val scriptHasArtist = "Artist" in scriptRoleNames
-        val artistClaimantCandidates = publicAliveCards.filter { card ->
-            card.name !in artistClaimedNames && !(artistUsed && card.clocktowerRole?.enName == "Artist")
-        }
-        when (dayMode) {
-            ClocktowerDayMode.Overview -> {
-                val highestVoteText = when {
-                    highestVoteName != null -> text(
-                        "最高票 · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount 票",
-                        "Highest · ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount",
-                    )
-                    highestVoteCount >= executionThreshold -> text(
-                        "最高票 · 平票 $highestVoteCount 票",
-                        "Highest · tie at $highestVoteCount",
-                    )
-                    else -> text("最高票 · 无", "Highest · none")
-                }
-                val dayTableState = clocktowerDayOverviewTableState(
-                    sessionGameState,
-                    roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                    ghostVoteAuthority = ghostVoteAuthority,
-                )
-                ClocktowerDayOverviewScreen(
-                    round = round,
-                    tableState = dayTableState,
-                    aliveCount = publicAliveCards.size,
-                    executionThreshold = executionThreshold,
-                    highestVoteText = highestVoteText,
-                    lastNightDeathLabels = if (round > 1) confirmedNightDeathSeats.mapNotNull { seat ->
-                        sessionGameState.playerAt(seat)?.name?.let { playerSeatLabel(cards, it) }
-                    } else null,
-                    showSlayerAction = scriptHasSlayer,
-                    slayerActionEnabled = cards.isNotEmpty(),
-                    showArtistAction = scriptHasArtist,
-                    artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
-                    actionsEnabled = gameOutcome == null,
-                    diagnosticContent = null,
-                    onHostTools = onHostTools,
-                    onNominationGesture = { sourceSeatId, targetSeatId ->
-                        val sourceName = dayTableState.seats
-                            .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
-                            ?.playerName
-                        val targetName = dayTableState.seats
-                            .firstOrNull { seat -> seat.seatId == targetSeatId && seat.isAlive }
-                            ?.playerName
-                        if (sourceName != null && targetName != null && sourceName != targetName) {
-                            nominationDraft.select(sourceName, targetName)
-                            dayMode = ClocktowerDayMode.Nomination
-                        }
-                    },
-                    onOpenSlayer = {
-                        slayerDraft.clear()
-                        dayMode = ClocktowerDayMode.Slayer
-                    },
-                    onOpenArtist = {
-                        artistDraft.selectClaimant(null)
-                        dayMode = ClocktowerDayMode.Artist
-                    },
-                    onEndDay = {
-                        onSelectExecution(highestVoteName?.takeIf { highestVoteCount >= executionThreshold })
-                        dayMode = ClocktowerDayMode.EndConfirm
-                    },
-                )
-            }
-
-            ClocktowerDayMode.Nomination -> {
-                ClocktowerNominationInteraction(
-                    draft = nominationDraft,
-                    cards = cards,
-                    tableState = clocktowerDayOverviewTableState(
-                        sessionGameState,
-                        roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                        ghostVoteAuthority = ghostVoteAuthority,
-                    ),
-                    registrationState = registrationState,
-                    round = round,
-                    executionThreshold = executionThreshold,
-                    poisonTarget = poisonTarget,
-                    virginUsed = virginUsed,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onConfirm = { confirmation ->
-                        onConfirmedNomination(
-                            confirmation.nominator, confirmation.nominee, confirmation.explicitSpyRegistration,
-                        )
-                        if (confirmation.firstVirginNomination) {
-                            onVirginNomination(
-                                confirmation.nominator, confirmation.nominee, confirmation.virginExecutes,
-                            )
-                        }
-                        if (!confirmation.virginExecutes) dayMode = ClocktowerDayMode.Vote
-                    },
-                    onCancel = { dayMode = ClocktowerDayMode.Overview },
-                )
-            }
-
-            ClocktowerDayMode.Vote -> {
-                val highestVoteText = when {
-                    highestVoteName != null -> text(
-                        "当前最高：${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount 票",
-                        "Current highest: ${playerSeatLabel(cards, highestVoteName)} · $highestVoteCount",
-                    )
-                    highestVoteCount >= executionThreshold -> text(
-                        "当前最高为平票：$highestVoteCount 票；暂时无人被处决。",
-                        "Current high vote is tied at $highestVoteCount; nobody is set for execution.",
-                    )
-                    else -> text("当前还没有达到门槛的最高票。", "No qualifying high vote has been recorded yet.")
-                }
-                ClocktowerVoteTableScreen(
-                    round = round,
-                    cards = cards,
-                    ghostVoteAuthority = ghostVoteAuthority,
-                    tableState = clocktowerDayOverviewTableState(
-                        sessionGameState,
-                        roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                        ghostVoteAuthority = ghostVoteAuthority,
-                    ),
-                    executionThreshold = executionThreshold,
-                    nominatorName = nominationDraft.nominatorName,
-                    nomineeName = nominationDraft.nomineeName,
-                    highestVoteText = highestVoteText,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onConfirm = { voteState ->
-                        nominationDraft.confirmVote(voteState.confirmedVoteRecord(), onConfirmedVote)
-                        dayMode = ClocktowerDayMode.Overview
-                    },
-                    onCancel = {
-                        dayMode = ClocktowerDayMode.Nomination
-                    },
-                )
-            }
-
-            ClocktowerDayMode.EndConfirm -> {
-                ClocktowerExecutionConfirmScreen(
-                    round = round,
-                    cards = cards,
-                    executionThreshold = executionThreshold,
-                    selectedExecution = selectedExecution,
-                    highestVoteCount = highestVoteCount,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onConfirm = onConfirmDay,
-                    onBack = { dayMode = ClocktowerDayMode.Overview },
-                )
-            }
-
-            ClocktowerDayMode.Slayer -> {
-                ClocktowerSlayerInteraction(
-                    draft = slayerDraft,
-                    seats = clocktowerDayOverviewTableState(
-                        sessionGameState,
-                        roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                        ghostVoteAuthority = ghostVoteAuthority,
-                    ).seats,
-                    round = round,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onSlayerShot = onSlayerShot,
-                    onBack = { dayMode = ClocktowerDayMode.Overview },
-                )
-            }
-
-            ClocktowerDayMode.Artist -> {
-                ClocktowerArtistInteraction(
-                    draft = artistDraft,
-                    cards = cards,
-                    seats = clocktowerDayOverviewTableState(
-                        sessionGameState,
-                        roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                        ghostVoteAuthority = ghostVoteAuthority,
-                    ).seats,
-                    claimantCandidateNames = artistClaimantCandidates.mapTo(mutableSetOf()) { it.name },
-                    round = round,
-                    poisonTarget = poisonTarget,
-                    allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onConfirm = onConfirmArtistQuestion,
-                    onBack = { dayMode = ClocktowerDayMode.Overview },
-                )
-            }
-
-            ClocktowerDayMode.Klutz -> {
-                val klutzTableState = clocktowerKlutzTableState(
-                    seats = clocktowerDayOverviewTableState(
-                        sessionGameState,
-                        roleDisplayName = { roleId -> clocktowerRoleLabel(roleId, language) },
-                        ghostVoteAuthority = ghostVoteAuthority,
-                    ).seats,
-                    klutzName = pendingKlutzName,
-                    alivePlayerNames = publicAliveCards.mapTo(mutableSetOf()) { it.name },
-                    choiceName = klutzChoiceName,
-                )
-                ClocktowerKlutzTableScreen(
-                    round = round,
-                    tableState = klutzTableState,
-                    actionsEnabled = gameOutcome == null,
-                    onHostTools = onHostTools,
-                    onSeatClick = { seatId ->
-                        val playerName = klutzTableState.playerNameForSeat(seatId)
-                        onSelectKlutzChoice(if (klutzChoiceName == playerName) null else playerName)
-                    },
-                    onConfirm = onConfirmKlutzChoice,
-                )
-            }
-        }
+        ClocktowerDayHostScreen(sessionState, cards, script, allowRuleDeterminedAutoUi, onHostTools, onConfirmDay, onConfirmKlutzChoice,
+            onConfirmArtistQuestion, onSlayerShot, onConfirmedNomination, onConfirmedVote)
         return
     }
 
@@ -614,7 +378,6 @@ internal fun ClocktowerJudgeScreen(
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
     val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
-    fun seatNumberText(card: PlayerCard): String = ((cards.indexOf(card) + 1).takeIf { it > 0 } ?: 0).toString()
     val shouldGiveFirstNightEvilInfo = cards.size >= 7
     val manualDemonBluffsRequired = shouldGiveFirstNightEvilInfo && demonCard != null
     val manualDemonBluffsReady = !manualDemonBluffsRequired ||
@@ -975,7 +738,7 @@ internal fun ClocktowerJudgeScreen(
     if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
         val currentStepIndex = nightSteps.indexOfFirst { it.interactionId == nextNightInteraction?.id }
         LaunchedEffect(gameId, phase, round, nextNightInteraction?.id, gameStateRevision, playerInputRevision) {
-            if (nextNightInteraction == null) {
+            if (nextNightInteraction == null && sessionState.outcome == null) {
                 if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight() else onCompleteNight()
             }
         }

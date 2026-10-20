@@ -17,10 +17,7 @@ internal enum class ClocktowerDayMode {
     Overview,
     Slayer,
     Artist,
-    Klutz,
     Nomination,
-    Vote,
-    EndConfirm,
 }
 
 internal enum class ClocktowerNightAction {
