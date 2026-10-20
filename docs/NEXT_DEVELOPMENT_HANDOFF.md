@@ -5,6 +5,8 @@
 > **立即实施边界**：优先比对现行代码而非从旧设计增删；完成剩余全树职责/消费者审计，按照完整业务链把流程/确定性结算统一到 `nextStep(Session)` / 唯一 Session；完成替代和行为验证的**同一批**物理删除旧页面、UI 游标/流程状态、预测和候选的多余包装、producer/consumer、独占测试与失效 CI 门禁。生产仍有调用不是保留理由；AI 首夜/后夜全链、TB 5–15/NGJ 5–6、两类跨局防重复、真实信息/私密与 Session 安全必须保留。**未完成**：彻底撤出旧投影/多层流转、白天由 UI 规则判断、活跃 Session 安全持久化恢复、全源码/角色验证。此条仅文档定稿，**不得报告为已删除 A–D 代码**。
 
 > **唯一现行实施合同**：[MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)。以下早期“最新” F12、局部夜间和重新追查已删规则的历史记录不可作为新一轮执行命令。
+>
+> **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
 ## P1 2026-10-20 用户最终裁定：取消黎明阶段和机械死亡公开复制（最新）
 

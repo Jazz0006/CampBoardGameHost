@@ -1026,73 +1026,53 @@ internal fun ClocktowerJudgeScreen(
         )
     }
 
-    if (phase == ClocktowerPhase.FirstNight && !nightStarted) {
-        // Automatic mode confirms ONLY this currently executable setup step.
-        // Do not fast-forward any unshown player information.
+    // The first night has no generic preparation page. The only possible interruption
+    // before its first actionable role is a REAL uncommitted Demon-bluff decision.
+    if (phase == ClocktowerPhase.FirstNight && !nightStarted && manualDemonBluffsRequired) {
+        // Automatic mode may accept an already verified joint-opening recommendation.
+        // It must not fast-forward any player information display.
         LaunchedEffect(
             globalAiAutomatic, jointOpeningAvailable, manualDemonBluffsReady,
             manualDemonBluffDraft,
         ) {
-            if (globalAiAutomatic && jointOpeningAvailable && manualDemonBluffsReady && !nightStarted
-            ) {
-                if (manualDemonBluffsRequired) onCommitDemonBluffs(manualDemonBluffDraft)
+            if (globalAiAutomatic && jointOpeningAvailable && manualDemonBluffsReady && !nightStarted) {
+                onCommitDemonBluffs(manualDemonBluffDraft)
                 nightStarted = true
             }
         }
         ClocktowerStorytellerRecommendationScreen(
-            title = text("身份展示完成", "IDENTITY DISPLAY COMPLETE"),
-            subtitle = text("准备进入首夜", "Prepare for the first night"),
+            title = text("恶魔伪装身份", "DEMON BLUFFS"),
+            subtitle = text("确认实际恶魔伪装", "Confirm the actual Demon bluffs"),
             description = text(
-                "这是说书人私密页面。确认首夜裁定后开始夜晚；开始后只向前推进。",
-                "This is a private Storyteller screen. Confirm the first-night rulings and begin; night steps only move forward.",
+                "请确认本局恶魔实际获得的三项伪装身份。这个真实配置决定确认后，直接进入首夜角色。",
+                "Confirm the three actual Demon bluffs. This is a real setup decision; the first night starts directly afterward.",
             ),
-            buttonLabel = text("确认首夜设置，开始夜晚", "Confirm first-night setup and begin"),
+            buttonLabel = text("确认恶魔伪装", "Confirm Demon bluffs"),
             onHostTools = onHostTools,
             startEnabled = manualDemonBluffsReady,
             onStartNight = {
-                if (manualDemonBluffsRequired && manualDemonBluffsReady) {
+                if (manualDemonBluffsReady) {
                     onCommitDemonBluffs(manualDemonBluffDraft)
+                    nightStarted = true
                 }
-                nightStarted = true
             },
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ClocktowerNightReadyCard()
-                if (manualDemonBluffsRequired) {
-                    ClocktowerDemonBluffManualPicker(
-                        legalRoles = legalDemonBluffs,
-                        selectedRoleNames = manualDemonBluffDraft,
-                        language = language,
-                        onSelectionChange = { nextSelection ->
-                            // This is an editable preview; only Start Night confirms.
-                            manualDemonBluffDraft = nextSelection
-                        },
-                    )
-                }
-            }
+            ClocktowerDemonBluffManualPicker(
+                legalRoles = legalDemonBluffs,
+                selectedRoleNames = manualDemonBluffDraft,
+                language = language,
+                onSelectionChange = { nextSelection ->
+                    manualDemonBluffDraft = nextSelection
+                },
+            )
         }
         return
     }
 
-    if (phase == ClocktowerPhase.Night && !nightStarted) {
-        ClocktowerStorytellerRecommendationScreen(
-            title = text("说书人", "STORYTELLER"),
-            subtitle = text("第 $round 夜即将开始", "Night $round is about to begin"),
-            description = text(
-                "这是说书人私密页面。准备好后开始夜晚流程。",
-                "This is a private Storyteller screen. Begin the night flow when ready.",
-            ),
-            buttonLabel = text("开始第 $round 夜流程", "Begin night $round"),
-            onHostTools = onHostTools,
-            onStartNight = { nightStarted = true },
-        ) {
-            ClocktowerNightReadyCard()
-        }
-        return
-    }
-
-    if ((phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) && nightStarted) {
-        require(nightSteps.isNotEmpty()) { "A started night must contain an actionable step." }
+    // Later nights and first nights without an outstanding real setup decision
+    // enter their first actionable step directly, regardless of the old UI start flag.
+    if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
+        require(nightSteps.isNotEmpty()) { "Night flow must contain an actionable step." }
         val currentStepIndex = nightStepIndex.coerceIn(0, nightSteps.lastIndex)
         val currentStep = nightSteps[currentStepIndex]
         val globalAiPending = if (globalAiAssisted && phase == ClocktowerPhase.FirstNight) {

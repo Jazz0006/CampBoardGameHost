@@ -94,4 +94,65 @@ class ConfirmedNightOperationTest {
             (it.fact as? ActionFact.ButlerMasterChoice)?.masterSeat
         })
     }
+
+    @Test fun `Poisoner Monk Imp Butler commit in order with one authoritative Session`() {
+        // Built-in other-night ordering is Poisoner -> Monk -> Imp -> Butler;
+        // the poisoned Monk still chooses a target but cannot prevent the death.
+        val base = TroubleBrewingFixtures.eightPlayerExample()
+        val game = base.copy(players = base.players.map { player ->
+            when (player.seat) {
+                3 -> player.copy(
+                    actualRole = RoleId("Monk"), shownRole = RoleId("Monk"),
+                    actualType = CharacterType.TOWNSFOLK,
+                )
+                4 -> player.copy(
+                    actualRole = RoleId("Butler"), shownRole = RoleId("Butler"),
+                    actualType = CharacterType.OUTSIDER,
+                )
+                7 -> player.copy(
+                    actualRole = RoleId("Poisoner"), shownRole = RoleId("Poisoner"),
+                    actualType = CharacterType.MINION,
+                )
+                else -> player
+            }
+        })
+        val s = ClocktowerGameSession.createProduction(
+            "night-vertical-slice", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1,
+        )
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "night-slice-first-day", StorytellerPhase.FIRST_NIGHT, 1,
+            s.nextInputSequence, StorytellerPhase.DAY, 1,
+        ), s.state.gameStateRevision)
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance(
+            "night-slice-day-night", StorytellerPhase.DAY, 1,
+            s.nextInputSequence, StorytellerPhase.NIGHT, 2,
+        ), s.state.gameStateRevision)
+
+        s.confirmNightPoison(3, StorytellerPhase.NIGHT, 2, "slice-poison")
+        assertTrue(s.state.gameState.playerAt(3)!!.poisoned)
+        s.confirmNightProtection(5, StorytellerPhase.NIGHT, 2, "slice-monk")
+        assertEquals(5, s.state.nightTargets.monkSeat)
+        s.confirmNightAttack(5, StorytellerPhase.NIGHT, 2, "slice-imp")
+        assertFalse(s.state.gameState.playerAt(5)!!.alive)
+        s.confirmNightButlerMaster(4, 1, StorytellerPhase.NIGHT, 2, "slice-butler")
+
+        val facts = s.state.actionTimeline.entries.map { it.fact }.filter {
+            it is ActionFact.Poison || it is ActionFact.Protect ||
+                it is ActionFact.Attack || it is ActionFact.Death ||
+                it is ActionFact.ButlerMasterChoice
+        }
+        assertEquals(5, facts.size)
+        assertTrue(facts[0] is ActionFact.Poison)
+        assertTrue(facts[1] is ActionFact.Protect)
+        assertTrue(facts[2] is ActionFact.Attack)
+        assertTrue(facts[3] is ActionFact.Death)
+        assertTrue(facts[4] is ActionFact.ButlerMasterChoice)
+
+        val after = s.state
+        s.confirmNightButlerMaster(4, 1, StorytellerPhase.NIGHT, 2, "slice-butler")
+        assertSame(after, s.state)
+        assertThrows(IllegalStateException::class.java) {
+            s.confirmNightButlerMaster(4, 2, StorytellerPhase.NIGHT, 2, "slice-butler")
+        }
+    }
 }
