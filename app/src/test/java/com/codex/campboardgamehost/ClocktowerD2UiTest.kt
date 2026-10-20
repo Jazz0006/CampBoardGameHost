@@ -289,7 +289,7 @@ class ClocktowerD2UiTest {
                         onSelectChambermaidSecond = { second.value = it.takeUnless { it == second.value }; preview.value = null },
                         onShowPlayerDisplay = { preview.value = it; fullscreen.value = true },
                         onInformationDraftChanged = { preview.value = null }, lastPreviewProposition = preview.value?.displayProposition,
-                        canGoPrevious = false, onPrevious = {}, onHostTools = {},
+                        onHostTools = {},
                         onNext = { preview.value?.displayProposition?.let(confirmed::add) },
                     )
                 }
@@ -330,6 +330,23 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun automaticButlerTargetRequiresExplicitNext() = playerTargetRequiresNext("Butler")
+    @Test fun automaticPoisonerTargetRequiresExplicitNext() = playerTargetRequiresNext("Poisoner")
+
+    private fun playerTargetRequiresNext(role: String) {
+        val host = Host(role, StorytellerOperationMode.AI_AUTOMATIC)
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P2").performClick()
+        ui.runOnIdle { org.junit.Assert.assertTrue(host.session.state.actionTimeline.entries.isEmpty()) }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            assertEquals(1, host.session.state.actionTimeline.entries.size)
+            val fact = host.session.state.actionTimeline.entries.single().fact
+            if (role == "Butler") assertEquals(2, (fact as com.codex.campboardgamehost.clocktower.domain.ActionFact.ButlerMasterChoice).masterSeat)
+            else assertEquals(2, (fact as com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison).targetSeat)
+        }
+    }
+
     /** Uses the production JudgeScreen and real Session; only external input/provider callbacks are fixtures. */
     private class Host(role: String, val mode: StorytellerOperationMode) {
         val openingEnabled = mutableStateOf(true)
@@ -351,8 +368,7 @@ class ClocktowerD2UiTest {
         }, 19L)
         val session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
         private val tick = mutableStateOf(0)
-        private val started = mutableStateOf(false)
-        private val index = mutableStateOf(0)
+        private val target = mutableStateOf<String?>(null)
         private val dayMode = mutableStateOf(ClocktowerDayMode.Overview)
         fun refresh() { tick.value++ }
         fun deliver(key: String?, id: String, value: String) {
@@ -378,8 +394,7 @@ class ClocktowerD2UiTest {
             val state = session.state
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                cards = cards, sessionGameState = state.gameState, sessionActionTimeline = state.actionTimeline,
-                actualInformationHistory = state.epistemicObservationLog.records, confirmedNightDeathSeats = emptyList(),
+                cards = cards, sessionState = state,
                 script = ClocktowerScript.TroubleBrewing, gameId = state.gameId, gameSeed = state.gameSeed,
                 globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
                 globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
@@ -393,12 +408,12 @@ class ClocktowerD2UiTest {
                         "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
                 phase = ClocktowerPhase.FirstNight, round = 1,
                 nightCheckpoint = ClocktowerNightCheckpoint("FIRST_NIGHT", 1, state.gameStateRevision, state.playerInputRevision,
-                    null, null, null, null, null, null, null, null, null, nextTimelineGlobalSequence = state.nextTimelineGlobalSequence),
+                    null, null, null, target.value, null, null, null, null, null, nextTimelineGlobalSequence = state.nextTimelineGlobalSequence),
                 selectedExecution = null, fortuneTellerFirst = null, fortuneTellerSecond = null,
                 chambermaidFirst = null, chambermaidSecond = null, ravenkeeperTarget = null, redHerring = null,
-                recommendedDemonBluffRoleNames = emptyList(), butlerMaster = null,
+                recommendedDemonBluffRoleNames = emptyList(), butlerMaster = target.value,
                 virginUsed = false, artistUsed = false, artistClaimedNames = emptyList(), lastExecutedName = null,
-                pendingKlutzName = null, klutzChoiceName = null, nightStartedState = started, nightStepIndexState = index,
+                pendingKlutzName = null, klutzChoiceName = null,
                 dayModeState = dayMode, ghostVoteAuthority = ClocktowerGhostVoteAuthority(), highestVoteName = null,
                 highestVoteCount = 0, gameOutcome = null,
                 onCommitConfirmedPrivateInformationPublication = { draft, revision ->
@@ -406,13 +421,19 @@ class ClocktowerD2UiTest {
                     tick.value++
                 },
                 onHostTools = {}, onSelectNightDeath = {}, onConfirmDemonAttack = { _, _ -> },
-                onSelectExecution = {}, onSelectPoisonTarget = {}, onConfirmPoisonTarget = {},
+                onSelectExecution = {}, onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
+                    session.confirmNightPoison(cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
+                    refresh()
+                },
                 onSelectFortuneTellerFirst = {}, onSelectFortuneTellerSecond = {},
                 onSelectChambermaidFirst = {}, onSelectChambermaidSecond = {}, onSelectRavenkeeperTarget = {},
                 onSelectRedHerring = {}, onConfirmRedHerring = {}, onCommitDemonBluffs = {},
-                onSelectButlerMaster = {}, onConfirmButlerMaster = { _, _, _ -> },
+                onSelectButlerMaster = { target.value = it }, onConfirmButlerMaster = { _, _, step ->
+                    session.confirmNightButlerMaster(1, cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
+                    refresh()
+                },
                 onSelectMonkProtectedTarget = {}, onConfirmMonkProtectedTarget = {},
-                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = {},
+                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = {}, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
                 onSelectKlutzChoice = {}, onConfirmKlutzChoice = {}, onConfirmArtistQuestion = {},
                 onSlayerShot = { _, _, _ -> }, onVirginNomination = { _, _, _ -> },
                 onConfirmedNomination = { _, _, _ -> }, onConfirmedVote = { _, _, _ -> },

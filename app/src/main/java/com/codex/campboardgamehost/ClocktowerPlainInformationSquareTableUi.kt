@@ -53,8 +53,6 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerPlainInformationSquareTablePresentation,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
@@ -67,8 +65,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             actorSeat = presentation.actorSeat,
             wakeInstruction = presentation.wakeInstruction,
             language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
+
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = onShowPlayerDisplay,
@@ -86,8 +83,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             )
         },
         onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

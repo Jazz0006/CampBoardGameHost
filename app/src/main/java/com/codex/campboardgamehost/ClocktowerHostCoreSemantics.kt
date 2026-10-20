@@ -21,6 +21,7 @@ internal fun clocktowerDisplayedInformationIsUnreliable(
     step: ClocktowerNightStepUi,
     actorIsUnreliable: (String, PlayerCard?) -> Boolean,
 ): Boolean =
+    step.informationReliability != com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE ||
     step.actor?.clocktowerRole?.enName == "Drunk" ||
         step.roleEnName?.let { roleEnName -> actorIsUnreliable(roleEnName, step.actor) } == true
 

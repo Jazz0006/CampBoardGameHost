@@ -30,11 +30,9 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     resultOptions: List<ClocktowerDisplayOption>,
     automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
     numericInput: (@Composable () -> Unit)? = null,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -57,9 +55,9 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             enabled = enabled,
             wakeInstruction = wakeInstruction,
             language = language,
-            canGoPrevious = canGoPrevious,
+
             onSeatSelected = onSeatSelected,
-            onPrevious = onPrevious,
+
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = reveal,
@@ -79,8 +77,7 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

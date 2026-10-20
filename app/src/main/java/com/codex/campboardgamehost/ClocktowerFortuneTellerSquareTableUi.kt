@@ -52,18 +52,16 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     lastPreviewResult: Boolean?,
     automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onResultSelected: (Boolean) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = if (enabled) {

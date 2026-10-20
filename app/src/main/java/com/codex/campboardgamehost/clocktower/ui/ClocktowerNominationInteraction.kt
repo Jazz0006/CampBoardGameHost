@@ -104,12 +104,10 @@ internal fun ClocktowerNominationInteraction(
             val chosenNominator = nominatorName
             val chosenNominee = nomineeName
             if (chosenNominator != null && chosenNominee != null) {
-                val explicitSpyRuling = registrationState.explicitChoice(
-                    ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
-                )
+                val explicitSpyRuling = registrationState.explicitChoice(virginRegistrationKey)
                 onConfirm(ClocktowerNominationConfirmation(
                     chosenNominator, chosenNominee, virginFirstNomination, virginExecutes,
-                    explicitSpyRuling?.usesSpecialRegistration,
+                    explicitSpyRuling,
                 ))
             }
         },

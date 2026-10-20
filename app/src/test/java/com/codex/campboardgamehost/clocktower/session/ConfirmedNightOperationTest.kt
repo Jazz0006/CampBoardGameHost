@@ -128,39 +128,30 @@ class ConfirmedNightOperationTest {
             s.nextInputSequence, StorytellerPhase.NIGHT, 2,
         ), s.state.gameStateRevision)
 
-        val orderedSteps = listOf(
-            ClocktowerFixedNightStepStatus(NightOperationKind.POISON),
-            ClocktowerFixedNightStepStatus(NightOperationKind.PROTECT),
-            ClocktowerFixedNightStepStatus(NightOperationKind.ATTACK),
-            ClocktowerFixedNightStepStatus(NightOperationKind.BUTLER),
-        )
-        fun currentFixedStepIndex(staleCursor: Int = 0): Int? =
-            clocktowerNextUnperformedFixedNightStepIndex(
-                cursor = staleCursor,
-                steps = orderedSteps,
-                acceptedFactsInCurrentNight = clocktowerAcceptedFixedNightKinds(
-                    s.state.actionTimeline, StorytellerPhase.NIGHT, 2,
-                ),
-            )
-        assertEquals(0, currentFixedStepIndex(staleCursor = 3))
+        val ruleset = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog {
+            java.io.File("src/main/assets/$it").readText(Charsets.UTF_8)
+        }.ruleset(com.codex.campboardgamehost.ClocktowerScript.TroubleBrewing)
+        fun nextRole() = s.state.nextNightInteraction(ruleset)?.roleId?.value
+        assertEquals("Poisoner", nextRole())
         s.confirmNightPoison(3, StorytellerPhase.NIGHT, 2, "slice-poison")
-        assertEquals(1, currentFixedStepIndex(staleCursor = 3))
+        assertEquals("Monk", nextRole())
         assertTrue(s.state.gameState.playerAt(3)!!.poisoned)
         s.confirmNightProtection(5, StorytellerPhase.NIGHT, 2, "slice-monk")
-        assertEquals(2, currentFixedStepIndex(staleCursor = 3))
+        assertEquals("Imp", nextRole())
         assertEquals(5, s.state.nightTargets.monkSeat)
         s.confirmNightAttack(5, StorytellerPhase.NIGHT, 2, "slice-imp")
-        assertEquals(3, currentFixedStepIndex(staleCursor = 3))
+        assertEquals("Empath", nextRole())
+        s.commitGlobalEpistemicObservation(com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft(
+            "slice-empath", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 2, RoleId("Empath"),
+            com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility.PRIVATE, setOf(2),
+            com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult(
+                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, emptyList(), 0),
+        ))
+        assertEquals("Butler", nextRole())
         assertFalse(s.state.gameState.playerAt(5)!!.alive)
         s.confirmNightButlerMaster(4, 1, StorytellerPhase.NIGHT, 2, "slice-butler")
-        assertEquals(null, currentFixedStepIndex(staleCursor = 0))
-        assertEquals(null, currentFixedStepIndex(staleCursor = 4))
-        assertEquals(
-            emptySet<NightOperationKind>(),
-            clocktowerAcceptedFixedNightKinds(
-                s.state.actionTimeline, StorytellerPhase.FIRST_NIGHT, 1,
-            ),
-        )
+        assertEquals(null, nextRole())
 
         val facts = s.state.actionTimeline.entries.map { it.fact }.filter {
             it is ActionFact.Poison || it is ActionFact.Protect ||

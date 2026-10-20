@@ -41,8 +41,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     abilityLabel: String,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
@@ -85,8 +83,8 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = if (editing) ClocktowerSquareTableInteractionMode.Selectable
@@ -96,7 +94,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         },
         onBack = {
             if (editing && validRecommendation != null) restoreRecommendation()
-            else if (canGoPrevious) onPrevious()
         },
         seatUiModel = { seat ->
             val seatNumber = seat.seatId.number

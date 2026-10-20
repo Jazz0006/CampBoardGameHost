@@ -160,6 +160,15 @@ sealed interface ActionFact {
         val roles: List<RoleId>,
     ) : ActionFact
 
+    /** Actual Spy wake/table handoff, without a duplicate Grimoire snapshot. */
+    data class NightWake(
+        override val actionId: String,
+        override val sequence: Long,
+        val actorSeat: Int,
+        val role: RoleId,
+        val stepId: String,
+    ) : ActionFact
+
     data class PhaseAdvance(
         override val actionId: String,
         override val sequence: Long,
@@ -272,6 +281,10 @@ object DynamicActionReducer {
                 is ActionFact.DemonBluffChoice -> {
                     require(fact.roles.distinct() == fact.roles)
                     demonBluffRoles = fact.roles.toList()
+                }
+                is ActionFact.NightWake -> {
+                    requireSeat(fact.actorSeat)
+                    require(fact.role == RoleId("Spy") && fact.stepId.isNotBlank())
                 }
                 is ActionFact.PhaseAdvance -> {
                     require(fact.round > 0)

@@ -101,8 +101,6 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDirectRoleRevealChoice) -> Unit,
@@ -130,8 +128,8 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,

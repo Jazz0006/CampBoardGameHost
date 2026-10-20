@@ -13,7 +13,7 @@ internal fun ClocktowerHostSquareTableScaffold(
     seats: List<HostSeatPresentation>,
     language: String,
     previousEnabled: Boolean,
-    onPrevious: () -> Unit,
+    onPrevious: () -> Unit = {},
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     interactionMode: ClocktowerSquareTableInteractionMode,

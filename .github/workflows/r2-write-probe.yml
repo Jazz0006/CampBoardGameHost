@@ -263,8 +263,11 @@ jobs:
               exit 1
             fi
           done
-          grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
-          grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
+          if grep -qE "fun Clocktower(Spy|Recluse)RegistrationDecisionControls" "$registration_controls"; then
+            echo "Retired full-role registration controls resurfaced" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerSpyTownsfolkTypeDecisionControls" "$registration_controls"
           # TB Virgin retains Spy-as-Townsfolk TYPE registration in its interaction owner.
           nomination=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
           grep -q "ClocktowerNominationInteraction(" "$host"

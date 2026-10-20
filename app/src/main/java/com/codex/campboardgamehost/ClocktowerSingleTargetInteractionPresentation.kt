@@ -19,7 +19,6 @@ internal fun clocktowerSingleTargetConfirmationEnabled(
 internal sealed interface ClocktowerSingleTargetEvent {
     data class SelectSeat(val seat: Int) : ClocktowerSingleTargetEvent
     data object ShowResult : ClocktowerSingleTargetEvent
-    data object Previous : ClocktowerSingleTargetEvent
     data object Next : ClocktowerSingleTargetEvent
 }
 

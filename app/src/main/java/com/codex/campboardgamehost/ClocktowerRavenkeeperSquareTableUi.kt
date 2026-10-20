@@ -61,9 +61,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDirectRoleRevealChoice) -> Unit,
@@ -105,8 +103,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
         nextEnabled = confirmationEnabled,

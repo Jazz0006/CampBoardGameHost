@@ -9,12 +9,9 @@ internal enum class ClocktowerScriptValidationCode {
     INVALID_CHARACTER_ID,
     UNKNOWN_CHARACTER_ID,
     DUPLICATE_CHARACTER_ID,
-    CUSTOM_ID_COLLISION,
-    UNKNOWN_CHARACTER_TEAM,
     DUPLICATE_NIGHT_TOKEN,
     INVALID_NIGHT_TOKEN,
     INVALID_NIGHT_SYSTEM_TOKEN,
-    INVALID_JINX_TARGET,
 }
 
 internal class ClocktowerScriptValidationException(

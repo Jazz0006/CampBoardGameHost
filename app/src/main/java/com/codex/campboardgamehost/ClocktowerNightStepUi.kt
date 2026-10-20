@@ -72,8 +72,6 @@ internal fun ClocktowerNightStepCardLocalized(
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     onInformationDraftChanged: () -> Unit = {},
     lastPreviewProposition: InformationProposition? = null,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -380,7 +378,6 @@ internal fun ClocktowerNightStepCardLocalized(
             when (event) {
                 is ClocktowerSingleTargetEvent.SelectSeat -> cards.getOrNull(event.seat - 1)?.name?.let(onSelectName)
                 ClocktowerSingleTargetEvent.ShowResult -> onShowPlayerDisplay(step)
-                ClocktowerSingleTargetEvent.Previous -> onPrevious()
                 ClocktowerSingleTargetEvent.Next -> onNext()
             }
         }
@@ -393,8 +390,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 seats = nightActionSeats,
                 presentation = presentation,
                 language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
+
                 onHostTools = onHostTools,
                 onNext = onNext,
                 onShowPlayerDisplay = { onShowPlayerDisplay(presentation.displayStep) },
@@ -422,7 +418,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                 ) { "SingleTarget surface plan requires a supported real target action." }
                 key(step.action) {
-                    ClocktowerSingleTargetAbilitySection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
+                    ClocktowerSingleTargetAbilitySection(nightActionSeats, presentation, language, onHostTools, onSingleTargetEvent)
                 }
             }
 
@@ -445,11 +441,11 @@ internal fun ClocktowerNightStepCardLocalized(
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
                     },
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRavenkeeperChoice,
@@ -473,7 +469,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     }?.value,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
@@ -484,7 +480,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         }
                     },
                     onResultSelected = ::showStructuredFortuneTellerResult,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 )
@@ -525,7 +521,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     resultOptions = resultOptions,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(chambermaidFirst, chambermaidSecond, name)) {
@@ -556,7 +552,7 @@ internal fun ClocktowerNightStepCardLocalized(
                             draftKey = informationDecisionKey,
                         )
                     }) else null,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 )
@@ -575,7 +571,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                 ) { "Ruling surface plan requires Mayor redirect or Demon succession." }
                 key(step.action) {
-                    ClocktowerNightRulingSection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
+                    ClocktowerNightRulingSection(nightActionSeats, presentation, language, onHostTools, onSingleTargetEvent)
                 }
             }
 
@@ -588,8 +584,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         seats = nightActionSeats,
                         presentation = presentation,
                         language = language,
-                        canGoPrevious = canGoPrevious,
-                        onPrevious = onPrevious,
+
                         onHostTools = onHostTools,
                         onNext = onNext,
                         onShowPlayerDisplay = { onShowPlayerDisplay(step) },
@@ -615,8 +610,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,
@@ -644,8 +638,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showUndertakerChoice,
@@ -669,8 +662,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     lastPreviewSeats = clocktowerSagePreviewSeats(lastPreviewProposition, cards.size),
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirmRecommended = { sageSuggestedOption?.let(::showRecommendedDisplayOption) },

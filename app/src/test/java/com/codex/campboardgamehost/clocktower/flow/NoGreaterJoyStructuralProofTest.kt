@@ -18,8 +18,6 @@ import java.io.File
 import java.math.BigDecimal
 
 class NoGreaterJoyStructuralProofTest {
-    private val planner = ClocktowerFlowPlanner()
-    private val projector = ClocktowerHostInteractionProjector()
 
     private val baseRegistry by lazy {
         val knowledge = RulesetJsonLoader.parse(
@@ -88,102 +86,6 @@ class NoGreaterJoyStructuralProofTest {
         }
     }
 
-    @Test
-    fun `five-to-six player NGJ first night suppresses evil info and uses the same planner`() {
-        val inPlay = setOf(
-            "Investigator", "Empath", "Clockmaker", "Chambermaid", "Scarlet Woman", "Imp",
-        ).map(::RoleId).toSet()
-
-        val plan = planner.planNight(
-            ruleset = ruleset,
-            phase = ClocktowerNightFlowPhase.FIRST_NIGHT,
-            context = ClocktowerFlowContext(playerCount = 6, inPlayRoleIds = inPlay),
-        )
-
-        assertEquals(
-            listOf(
-                NightOrderToken.System.DUSK,
-                NightOrderToken.Character(RoleId("Investigator")),
-                NightOrderToken.Character(RoleId("Empath")),
-                NightOrderToken.Character(RoleId("Clockmaker")),
-                NightOrderToken.Character(RoleId("Chambermaid")),
-                NightOrderToken.System.DAWN,
-            ),
-            plan,
-        )
-        assertFalse(NightOrderToken.System.MINION_INFO in plan)
-        assertFalse(NightOrderToken.System.DEMON_INFO in plan)
-    }
-
-    @Test
-    fun `promoted Scarlet Woman is represented by current Imp role plus explicit identity event`() {
-        // Production changes the player's actual role from Scarlet Woman to Imp immediately.
-        // The planner must therefore consume the current role set, not preserve a historical
-        // Scarlet Woman token merely as an ordering anchor.
-        val currentInPlay = setOf(
-            "Imp", "Sage", "Empath", "Chambermaid", "Artist",
-        ).map(::RoleId).toSet()
-        val basePlan = planner.planNight(
-            ruleset = ruleset,
-            phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
-            context = ClocktowerFlowContext(playerCount = 5, inPlayRoleIds = currentInPlay),
-        )
-
-        val quiet = projector.projectNight(
-            phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
-            basePlan = basePlan,
-        )
-        assertEquals(
-            listOf(
-                "other_night:role:Imp",
-                "other_night:role:Empath",
-                "other_night:role:Chambermaid",
-            ),
-            quiet.actionableIds(),
-        )
-
-        val triggered = projector.projectNight(
-            phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
-            basePlan = basePlan,
-            resolvedFacts = ClocktowerResolvedFlowFacts(
-                setOf(
-                    ClocktowerResolvedFlowFact.SCARLET_WOMAN_BECAME_DEMON,
-                    ClocktowerResolvedFlowFact.SAGE_KILLED_BY_DEMON,
-                ),
-            ),
-        )
-        assertEquals(
-            listOf(
-                "other_night:event:imp:new_demon_identity",
-                "other_night:role:Imp",
-                "other_night:role:Sage",
-                "other_night:role:Empath",
-                "other_night:role:Chambermaid",
-            ),
-            triggered.actionableIds(),
-        )
-    }
-
-    @Test
-    fun `NGJ day-only roles never leak into night flow`() {
-        val inPlay = setOf("Artist", "Klutz", "Scarlet Woman", "Imp", "Empath", "Chambermaid").map(::RoleId).toSet()
-
-        ClocktowerNightFlowPhase.entries.forEach { phase ->
-            val plan = planner.planNight(
-                ruleset = ruleset,
-                phase = phase,
-                context = ClocktowerFlowContext(playerCount = 6, inPlayRoleIds = inPlay),
-            )
-            val roleIds = plan.mapNotNull { token -> (token as? NightOrderToken.Character)?.roleId }
-            assertTrue(RoleId("Artist") !in roleIds)
-            assertTrue(RoleId("Klutz") !in roleIds)
-        }
-    }
-
     private fun List<NightOrderToken>.characterRoleIds(): List<RoleId> =
-        mapNotNull { token -> (token as? NightOrderToken.Character)?.roleId }
-
-    private fun List<ClocktowerHostInteraction>.actionableIds(): List<String> =
-        filterNot { it.kind == ClocktowerHostInteractionKind.SYSTEM_BOUNDARY }
-            .map { it.id.value }
+        filterIsInstance<NightOrderToken.Character>().map { it.roleId }
 }

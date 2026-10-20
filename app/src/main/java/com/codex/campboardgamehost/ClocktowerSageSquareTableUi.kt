@@ -66,8 +66,6 @@ internal fun ClocktowerSageSquareTableDialog(
     lastPreviewSeats: List<Int>?,
     automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirmRecommended: () -> Unit,
@@ -99,8 +97,7 @@ internal fun ClocktowerSageSquareTableDialog(
                 }
             }
         },
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

@@ -116,7 +116,7 @@ internal object StorytellerGlobalEventProjectionV1 {
             .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
             .put("voters", JSONArray(fact.voterSeats))
         // Private ability-trigger bookkeeping is not a second public/player event.
-        is ActionFact.KlutzLearnedDeath -> null
+        is ActionFact.KlutzLearnedDeath, is ActionFact.NightWake -> null
         is ActionFact.KlutzChoice -> JSONObject().put("type", "klutz_choice")
             .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
         is ActionFact.RoleChange -> JSONObject().put("type", "role_change")

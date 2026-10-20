@@ -263,6 +263,22 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class NightWake(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val actorSeat: Int,
+        val role: RoleId,
+        val stepId: String,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(actorSeat)
+            require(role == RoleId("Spy") && stepId.isNotBlank())
+        }
+    }
+
     data class PhaseAdvance(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -348,6 +364,7 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.DemonBluffChoice -> ActionFact.DemonBluffChoice(
         actionId, globalSequence, roles.toList(),
     )
+    is ActionFactDraft.NightWake -> ActionFact.NightWake(actionId, globalSequence, actorSeat, role, stepId)
     is ActionFactDraft.PhaseAdvance -> ActionFact.PhaseAdvance(
         actionId = actionId,
         sequence = globalSequence,

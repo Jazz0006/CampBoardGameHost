@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 internal fun ClocktowerNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    confirmationEnabled: Boolean = hasNewDemon,
     onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
@@ -44,6 +45,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
         ClocktowerCompactNewDemonConfirmationScreen(
             newDemonLabel = newDemonLabel,
             hasNewDemon = hasNewDemon,
+            confirmationEnabled = confirmationEnabled,
             onHostTools = onHostTools,
             onShowPlayerDisplay = onShowPlayerDisplay,
             onConfirm = onConfirm,
@@ -192,7 +194,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
                         onHostTools = onHostTools,
                         onNext = onConfirm,
                         previousEnabled = false,
-                        nextEnabled = hasNewDemon,
+                        nextEnabled = confirmationEnabled,
                     )
                 }
             }
@@ -204,6 +206,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
 private fun ClocktowerCompactNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    confirmationEnabled: Boolean = hasNewDemon,
     onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
@@ -274,7 +277,7 @@ private fun ClocktowerCompactNewDemonConfirmationScreen(
                     onNext = onConfirm,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     previousEnabled = false,
-                    nextEnabled = hasNewDemon,
+                    nextEnabled = confirmationEnabled,
                 )
             }
         }
@@ -287,9 +290,7 @@ internal fun ClocktowerNightActiveScreen(
     title: String,
     subtitle: String,
     progress: String,
-    canGoPrevious: Boolean,
     nextEnabled: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     contentOwnsFullScreen: Boolean = false,
@@ -334,10 +335,10 @@ internal fun ClocktowerNightActiveScreen(
                     previousLabel = if (language == "en") "← Previous" else "← 上一步",
                     hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
                     nextLabel = if (language == "en") "Next →" else "下一步 →",
-                    previousEnabled = canGoPrevious,
+                    previousEnabled = false,
                     previousVisible = false,
                     nextEnabled = nextEnabled,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 ) {

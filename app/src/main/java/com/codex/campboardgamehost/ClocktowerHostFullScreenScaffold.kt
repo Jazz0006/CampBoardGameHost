@@ -26,7 +26,7 @@ internal fun ClocktowerHostFullScreenScaffold(
     previousLabel: String,
     hostToolsLabel: String,
     nextLabel: String,
-    onPrevious: () -> Unit,
+    onPrevious: () -> Unit = {},
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     previousEnabled: Boolean = true,

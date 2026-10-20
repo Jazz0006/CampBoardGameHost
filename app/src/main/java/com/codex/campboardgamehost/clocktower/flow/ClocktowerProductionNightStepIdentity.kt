@@ -40,12 +40,6 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
             }
             ClocktowerInteractionId("other_night:event:imp:new_demon_identity")
         }
-        Kind.DEMON_SUCCESSOR -> {
-            require(phase == ClocktowerNightFlowPhase.OTHER_NIGHT) {
-                "Demon succession is only an other-night production interaction."
-            }
-            ClocktowerInteractionId("other_night:event:imp:demon_successor")
-        }
         Kind.MAYOR_REDIRECT -> {
             require(phase == ClocktowerNightFlowPhase.OTHER_NIGHT) {
                 "Mayor death resolution is only an other-night production interaction."
@@ -70,9 +64,6 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
         fun newDemonIdentity(): ClocktowerProductionNightStepIdentity =
             ClocktowerProductionNightStepIdentity(Kind.NEW_DEMON_IDENTITY)
 
-        fun demonSuccessor(): ClocktowerProductionNightStepIdentity =
-            ClocktowerProductionNightStepIdentity(Kind.DEMON_SUCCESSOR)
-
         fun mayorRedirect(): ClocktowerProductionNightStepIdentity =
             ClocktowerProductionNightStepIdentity(Kind.MAYOR_REDIRECT)
     }
@@ -83,7 +74,6 @@ internal data class ClocktowerProductionNightStepIdentity private constructor(
         DEMON_INFO,
         FORTUNE_TELLER_RED_HERRING,
         NEW_DEMON_IDENTITY,
-        DEMON_SUCCESSOR,
         MAYOR_REDIRECT,
     }
 }

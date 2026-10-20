@@ -450,7 +450,7 @@ internal class ClocktowerGameSession private constructor(
         expectedGameStateRevision: Long,
     ): TimelineBoundActionFact {
         if (draft.phase == StorytellerPhase.NIGHT) {
-            check(!mayorAttackAwaitsRuling()) {
+            check(state.mayorRulingSeat() == null) {
                 "The confirmed Imp attack on the Mayor must be resolved before Day."
             }
         }
@@ -607,10 +607,6 @@ internal class ClocktowerGameSession private constructor(
         draft: EpistemicObservationDraft,
         expectedRevision: StorytellerDecisionRevision? = null,
     ): RecordedEpistemicObservation {
-        check(expectedRevision == null || expectedRevision ==
-            StorytellerDecisionRevision(state.gameStateRevision, state.playerInputRevision)) {
-            "Stale information publication."
-        }
         val committed = preflightGlobalEpistemicObservation(draft)
         if (
             committed.observationLog === state.epistemicObservationLog &&
@@ -618,6 +614,10 @@ internal class ClocktowerGameSession private constructor(
             committed.playerInputRevision == state.playerInputRevision
         ) {
             return committed.record
+        }
+        check(expectedRevision == null || expectedRevision ==
+            StorytellerDecisionRevision(state.gameStateRevision, state.playerInputRevision)) {
+            "Stale information publication."
         }
         updateState(
             state.copy(
@@ -875,24 +875,6 @@ internal class ClocktowerGameSession private constructor(
             return previous
         }
         return acceptDeterministicNightAttack(targetSeat, phase, round, actionId, successorSeat)
-    }
-
-    private fun mayorAttackAwaitsRuling(): Boolean {
-        val seat = state.nightTargets.attackSeat ?: return false
-        val target = state.gameState.playerAt(seat) ?: return false
-        if (!target.alive || target.actualRole != RoleId("Mayor") || target.poisoned) return false
-        val effectiveMonkProtection = state.nightTargets.monkSeat == seat &&
-            state.gameState.players.any {
-                it.alive && !it.poisoned && it.actualRole == RoleId("Monk")
-            }
-        if (effectiveMonkProtection) return false
-        if (state.gameState.players.none { it.alive && !it.poisoned && it.actualRole == RoleId("Imp") }) {
-            return false
-        }
-        return state.actionTimeline.entries.none {
-            it.point.phase == StorytellerPhase.NIGHT && it.point.round == state.round &&
-                it.fact is ActionFact.MayorRedirectChoice
-        }
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {

@@ -9,7 +9,6 @@ internal fun ClocktowerSingleTargetAbilitySection(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerSingleTargetAbilityPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
@@ -25,7 +24,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
             seats = seats,
             presentation = presentation,
             language = language,
-            canGoPrevious = canGoPrevious,
+
             onHostTools = onHostTools,
             onEvent = onEvent,
         )
@@ -64,9 +63,9 @@ internal fun ClocktowerSingleTargetAbilitySection(
         title = title,
         helper = helper,
         language = language,
-        canGoPrevious = canGoPrevious,
+
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
@@ -85,7 +84,6 @@ internal fun ClocktowerNightRulingSection(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerNightRulingPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
@@ -97,9 +95,9 @@ internal fun ClocktowerNightRulingSection(
         title = if (language == "en") "Mayor · Redirect death" else "市长 · 转移死亡",
         helper = null,
         language = language,
-        canGoPrevious = canGoPrevious,
+
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
