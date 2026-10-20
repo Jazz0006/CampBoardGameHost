@@ -1325,7 +1325,10 @@ internal fun ClocktowerJudgeScreen(
                     nightStepIndex = directive.stepIndex
                 }
                 is ClocktowerNightAdvanceDirective.AwaitRefreshedFlow -> pendingNightAdvance = directive
-                ClocktowerNightAdvanceDirective.CompleteNight -> onCompleteNight()
+                ClocktowerNightAdvanceDirective.CompleteNight -> {
+                    if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight()
+                    else onCompleteNight()
+                }
             }
         }
 
@@ -1405,7 +1408,8 @@ internal fun ClocktowerJudgeScreen(
                     error("Refreshed night advance cannot remain pending.")
                 ClocktowerNightAdvanceDirective.CompleteNight -> {
                     pendingNightAdvance = null
-                    confirmActualNightResult()
+                    if (phase == ClocktowerPhase.FirstNight) onAdvanceFromFirstNight()
+                    else onCompleteNight()
                 }
             }
         }
