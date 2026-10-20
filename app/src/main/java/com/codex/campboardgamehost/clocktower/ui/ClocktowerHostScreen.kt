@@ -1108,7 +1108,15 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.Chambermaid,
                 ClocktowerNightAction.Ravenkeeper,
             ) && currentStep.roleEnName != "Spy"
-        val globalAiPending = if (globalAiAssisted && currentStep.displayProposition == null &&
+        // Only a reliable, matching Host-authored *numeric* fact is known to
+        // require no AI discretion. Other typed statements may still be discretionary.
+        val currentActorSeatForInformation = currentStep.actor?.name?.let { name ->
+            cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
+        }
+        val hostDeterminedNumeric = currentActorSeatForInformation?.let { seat ->
+            clocktowerDeterminedNumericResult(currentStep, seat)
+        } != null
+        val globalAiPending = if (globalAiAssisted && !hostDeterminedNumeric &&
             phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
                 currentStep, phase, round, cards, sessionGameState, gameId,
@@ -1117,7 +1125,7 @@ internal fun ClocktowerJudgeScreen(
             )
         } else null
         val globalAiScalarPending = if (globalAiAssisted &&
-            currentStep.displayProposition == null &&
+            !hostDeterminedNumeric &&
             phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
             globalAiPending == null
         ) pendingGlobalNightScalarDecision(

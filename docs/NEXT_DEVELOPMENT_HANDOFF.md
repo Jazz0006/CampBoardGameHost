@@ -14,6 +14,12 @@
 >
 > **2026-10-20 最小纵向流程实施第 1 批（本提交后按实际 SHA/CI 更新）**：不扩展全角色；生产 UI 取消后夜通用 StartNight/ReadyCard 以及无真实首夜配置时的通用准备页，唯独实际恶魔伪装确认保留为真实决策操作；删除无生产消费者的 `ClocktowerNightReadyCard`，添加 Poisoner→Monk（中毒后仍可选目标但保护无效）→Imp（即时 Death）→Butler（幂等）的 Session 事实时序回归。**未实现/绝不宣称完成**：唯一 `nextStep(Session)` 和替换 UI `nightStepIndex`/`AwaitRefreshedFlow`，退出旧 NightHostProjection 攻击死亡预测，首夜真实伪装决策持久恢复，D 展示关闭自动下一角色，B/C 白天调整，完整 TB/NGJ 全角色覆盖。测试需以新代码 SHA 对应 Android CI/R2 为准；独立隔离工作区的 Gradle 曾因文件锁/端口 bind 失败，非代码通过证据。
 
+## 2026-10-20 D2 跨夜数字草稿隔离与免 AI 边界收紧（第五批，以新 SHA/CI 为准）
+
+- 数字输入草稿的 Compose `remember` 现在包含当前步骤身份 `informationDecisionKey`，避免同一角色与相同对象在后续夜晚错误复用前夜数字。
+- 免 AI 的请求屏蔽由“任何非空 typed 命题”改为严格要求已有可靠、来源/指标/座位一致的 **Host 数字结果**。其他 typed 声明可能仍涉及人工/AI 裁量，不可仅凭非空 `displayProposition` 跳过 AI。本批仍不重建独立合法候选引擎。
+- D2 仍有同角色专用方桌高亮与真机交互待验收，不能把此批当作统一 `nextStep(Session)` 已完成。
+
 ## 2026-10-20 D2 模式边界与唯一数字信息直显（第四批；以新 SHA/CI 为准）
 
 - 首夜 AI 推荐的有效性严格以实际操作模式为边界：`MANUAL` 不复用 `jointOpeningSemantics` 或残余 AI 推荐；自动模式当前失败时不能降级沿用旧结果。

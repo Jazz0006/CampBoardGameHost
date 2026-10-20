@@ -111,6 +111,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     ?.let(onShowPlayerDisplay)
             },
             onDraftChanged = onInformationDraftChanged,
+            draftKey = informationDecisionKey,
         )
         return
     }
@@ -537,6 +538,7 @@ internal fun ClocktowerNightStepCardLocalized(
                                 )?.let(onShowPlayerDisplay)
                             },
                             onDraftChanged = onInformationDraftChanged,
+                            draftKey = informationDecisionKey,
                         )
                     }) else null,
                     onPrevious = onPrevious,

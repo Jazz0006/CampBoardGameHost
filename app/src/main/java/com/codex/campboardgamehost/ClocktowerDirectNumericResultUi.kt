@@ -85,9 +85,10 @@ internal fun ClocktowerDirectNumericResultUi(
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
     onDraftChanged: () -> Unit = {},
+    draftKey: String,
 ) {
     // An async recommendation must not overwrite a Storyteller's live manual draft.
-    var entered by remember(title, actorLabel, subjectSeats) {
+    var entered by remember(draftKey, title, actorLabel, subjectSeats) {
         mutableStateOf(initialValue?.toString().orEmpty())
     }
     val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
