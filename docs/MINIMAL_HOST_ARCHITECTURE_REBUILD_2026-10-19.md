@@ -104,7 +104,7 @@ Android UI / platform adapter      existing AI recommendation
 | P1（与 P2 代表性路径联动） | 单 Session、每步即时提交、不允许夜间返回、实用恢复和 AI stale 边界；以投毒者→僧侣→小恶魔→死亡/条件触发的真实业务链验证 | 已确认事件不可被普通返回改写，不存在待提交操作，确认后不得改写，崩溃可安全继续，无第二 GameState |
 | P2 | 所有相关夜间角色、条件唤醒/跳过、死亡、保护、投毒时序、市长/继任、Night→Day 直接转换及白天死者显示；替换旧夜间 Planner/Projector/Registry/HostScreen 控制和夜末自由死亡结果链 | TB/NGJ 目标夜间用同一 Session 正常执行；**被替代的旧生产路径彻底退出** |
 | P3 | 白天讨论控制、提名、投票/鬼票、处决、处女/杀手/艺术家/呆瓜、胜负与持续昼夜循环；落实 B（方桌一次完成日结）与 C（Death/Execution 派生呆瓜行动，不记录 Learned）；必要确定性线索由 Host 窄函数处理 | 关键 5–15 人可完成完整对局，白天无 UI 独立裁判，无 EndConfirm/独立 KlutzLearned 事实 |
-| P4 | UI 完全只读展示/输入、同一 Host 接口对接原有 AI 首夜/后夜预选/战略/自动辅助/人工模式；落实 A（无 StartNight/准备页）与 D（信息实际展示即记录、关闭自动进下一步），删除旧协调/影子状态 | 正式事实只从 Host 写入，AI 依赖指纹过期安全、关闭展示无二次 Next，两类跨局多样性不变 |
+| P4 | UI 完全只读展示/输入、同一 Host 接口对接原有 AI 首夜/后夜预选/战略/自动辅助/人工模式；落实 A（无 StartNight/准备页）与 D2（预览返回同角色，仅本角色 Next 记录最终一条 Observation），删除旧协调/影子状态 | 正式事实只从 Host 写入，AI 依赖指纹过期安全、预览不提交且唯一 Next 幂等，两类跨局多样性不变 |
 | P5 | 全树每个源码/测试/CI/文档职责复核、旧评分/候选/世界枚举/独立恢复/旧 UI 控制零残留、文件大小及依赖方向检查、完整回归、适当真机验收 | 无旧可执行控制链、无双轨数据、无孤儿实验及旧代码专属测试；代码 + Android CI/R2 + 实际游戏验收真实可追溯 |
 
 **每一批替换审计必须列出**：现权威入口、新入口、生产调用者、真实状态/事件影响、替代并实际删除的文件/函数/测试/CI 守卫、尚存旧路径、精确提交与 CI/R2、是否有未覆盖场景。不能以“生产有调用”作为保留理由；必要能力必须迁移完成后删掉旧路径。完成度按**已由新架构承接且旧链退出的完整业务行为**，不按净删行数。
@@ -132,8 +132,8 @@ Android UI / platform adapter      existing AI recommendation
 | 过度抽象或过度删减 | 不复活通用 Rules 引擎，也不删除必须的确定性规则；函数直观、测试验收实际游戏结果 |
 | 全树不彻底 | P0 全树功能归属 + 每批旧链退出 + P5 再逐文件复核；不因仅剩测试/字符串引用误判真实生产清理完成 |
 
-## 8. 已核对的基线与新对话开工方式
+## 8. 当前基线与本地接续
 
-截至本文编写前只读核对：Mini MCP alias `clocktower`，分支 `refactor/minimal-night-flow-20261019`，HEAD `011baa1f49683c42b1eef65acc5a50f669c373ab`、工作树 clean、远端相等；[Draft PR #335](https://github.com/Jazz0006/CampBoardGameHost/pull/335) 基于 `codex/minimal-host-full-scan-20261018` / #334，不是直接基于 main。#335 代码提交 `47ce60da9522c0cebf1613ccd58581c3035b31a0` 的完整 Android CI #4422、R2 #4002 SUCCESS；随后 docs-only `011baa1f` 的 CI #4423、R2 #4003 SUCCESS 但 Android skipped。**后续新提交须重新核对 HEAD/PR/确切代码运行，不能拿此基线当新代码证明。**
+Codex Windows 本地直接读写，不使用 MiniMCP。#334 HEAD `76be7e17`/base main、#335 分支 `refactor/minimal-night-flow-20261019`/base #334，均 Draft。同步基线 `cf3dd516` 是已验证代码 `35a2c880` 的纯文档子提交；完整 Android CI #4479 / R2 #4055 成功。最新状态及每批证据集中维护在 [路线图](CURRENT_DEVELOPMENT_ROADMAP.md) 与 [交接](NEXT_DEVELOPMENT_HANDOFF.md)，后续代码须独立验证。
 
-本轮下一项工作**从 P0 开始并马上输出真实源码归属/删除清单，随后在风险受控的第一条完整业务链上实施**，不要再停在纯讨论/重新规划。P0 必须遍历全树，不按旧局部审计数字假装已经完成；对未确定需要保留的现行代码标记“删除或人工审核”，不是因为有生产调用便保留。优先检查 Session 写入口/持久化、夜间调度链和 HostScreen 夜末确认、日间控制、AI 接口；逐批精确 commit、push 和真实 CI/R2。未经批准不进行付费模型实验、主线合并或不可逆分支操作。
+先收尾 D2 确认/编辑失效及实际 UI 缺口，再完成全夜 nextStep(Session) 和同批旧链删除，然后 B/C、恢复、角色覆盖和 P5。当前树全语义审计未全部完成；不要重做已删规则历史，也不要把 UI 游标/动态 handoff 的已知暂留误报为最终架构。无合并、改 base、rebase、强推或删除分支授权。
