@@ -1,38 +1,29 @@
 # 当前开发路线 — Minimal Host（2026-10-20）
 
+**最新代码检查点：`311191a30d6b0d83b5cf2d6de2a67905b526e596`。** 已执行无用途净删，并把全夜当前步骤切换到 Session 事实；详见 [全源码台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。本地 fast 593 / full 616 tests（含 23 个真实 UI 用例）及 Debug APK 通过。精确代码 [完整 CI #4486](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032184) SUCCESS，[R2 #4062](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032113) SUCCESS；不能用旧代码或后续 docs-only 的绿灯代替。
 
-> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
+以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准。当前直接使用 Codex 本地 Windows 文件，不使用 MiniMCP。用户已报告前一测试版本真机流程可运行、细节待优化，并要求优先清理；不视为本次新代码全部真机验收。
 
-以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准。当前在 Codex 本地 Windows 环境直接读写仓库；不使用 MiniMCP。
+## 当前事实
 
-## 当前事实与证据
+- main `0abc842e`；#330–#333 已合并。#334 基线 `76be7e17` / base main；#335 仍基于 #334 的 `codex/minimal-host-full-scan-20261018`，保持 Draft。
+- 已有代表性 Poisoner→Monk→Imp→Butler 即时 Session 机械链、确定死亡/继任、夜末自由判死和独立 Dawn/重复公开死亡事务删除。
+- D2 保持预览→返回同角色/改选→显式 Next 唯一 Observation；无 UI 持久草稿或跨角色 Previous。
+- **本批已完成**：移除 UI night index/start/handoff/自动提交，NightFlow 从 Script+Session 已确认事实决定步骤；旧 Planner/Projector/First/Other flow、Fixed/Dynamic resolver、毒游标 chronology、攻击预测适配整链退出。无用途首夜生命周期、旧登记/投影 helper、Homebrew 分支也已净删；codec 移入测试。AI 全链、两内置剧本、两种跨局防重复保留。
+- 生产净删 2278 行/101108B，测试净删 1961 行/77387B；18 个专属旧测试文件退休，真实不变量移至 Session/实际 UI 回归。清理详情、最小 Spy wake 事实及 Imp 通知完成证据见台账。
 
-- main：`0abc842e`，#330–#333 已合并。
-- #334：Draft，`codex/minimal-host-full-scan-20261018`，HEAD `76be7e17`，base main。
-- #335：Draft，`refactor/minimal-night-flow-20261019`，base #334。此次本地已安全快进到远端文档提交 `cf3dd516`，父提交即代码 `35a2c880`。
-- 代码 `35a2c880` 的 [完整 Android CI #4479](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39401685093) / [R2 #4055](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39401684985) 成功。后续代码必须取得独立证据；docs-only 成功不证明 Android。
-- 已分批实现四角色即时 Session 机械链、即时 Death/继任边界、删除夜末自由判死和 Dawn/重复公开死亡事务；D2 已实现预览/返回/最终 Next 单条 Observation、三模式及部分 stale/query 防护、数字隔夜隔离和双人预览恢复。以上不是全夜/全角色验收。
+## 接续顺序
 
-## 当前执行顺序
+1. 接受本批精确代码的独立完整 Android CI/R2，完成当前 P2 切换后的跨夜/角色/人数和必要新 APK 真机回归；不要再恢复旧游标或无限补非阻塞 D2 细节。
+2. P3：B 同一白天方桌一次日结；C 从 Death/Execution 派生 Klutz 真实选择，删 EndConfirm / KlutzLearnedDeath 整链；白天与胜负的必要确定性结算归 Host，并同批删除界面层旧控制。
+3. P4/P5：唯一 Session 原子存储与真实安全续局、AI/展示剩余职责收敛、TB 5–15 / NGJ 5–6 完整轨迹、全树删除证明、全部源码 <=50000B 和完整 CI/R2/必要真机验收。
 
-1. 已更新落后文档和 #334/#335 描述；当前状态与历史记录分开，旧记录归档保留。
-2. D2 代码及自动化交互已到验收检查点（af35cee9；CI #4484/R2 #4060）。当前剩独立设备/现场操作验收，不能以 JVM 操作回归冒称真机视觉通过；完整覆盖矩阵见上方报告。一般确定性线索计算、特殊身份通知及持久恢复仍按原职责阶段处理。
-3. 统一全夜 `nextStep(Session)`：替换并同批删除 UI `nightStepIndexState`、`nightStartedState`、`pendingNightAdvance`、旧 Dynamic/Fixed resolver 控制链。清理点目标自动提交的旧路径，恢复所有行动的显式 Next 确认；保留 AI 裁量/预选，不让 AI 代替玩家选择。
-4. P3：B 同一白天方桌一次日结，C 从 Death/Execution 派生 Klutz 真实选择；确定性结算和胜负归 Host。
-5. P4/P5：AI 三模式同一入口、唯一 Session 原子存储和安全续局、TB 5–15/NGJ 5–6 全角色与代表性交互、全树删除证明、全部源码 <=50,000 bytes、完整 CI/R2 和必要真机验收。
+P0 全树语义归属审计仍未完结；当前 212 生产 Kotlin/150 测试文件的库存不等于语义验收。不回溯重建旧世界/合法域引擎，不引入通用管理框架或第二可写 GameState。每条职责迁移当批删旧，不等合并后再清。
 
-P0 当前树的完整语义归属审计仍未完结，已有枚举和关键链审查不算全树验收；随业务迁移补齐原台账。不回溯重建已删规则，不恢复通用候选/评分/世界引擎，不引入持久 Pending 或第二 GameState。
+超限生产文件仍为 App **148697B**、HostScreen **80726B**、Session **53414B**。先净删职责，再按必要内聚职责整理；最终大小门槛未满足。
 
-## 审计区分与集成边界
+## 集成边界
 
-UI 游标/交接、Previous 空参数和超限文件属于已规划但未完成的清理。双人草稿未失效属于已要求行为的实现遗漏；点目标自动提交属于需要明确退役的旧行为。临时预览和普通输入草稿是必要 UI 状态，不以多一个变量就判定第二事实权威。
+两个堆叠 PR 保持 Draft；不单独合入 #334 的夜末人工确认中间设计。成功 CI 不等于合并授权；merge/retarget/rebase/force-push/删分支仍需明确批准。必要事实/隐私/身份/去重/原子/stale、AI 首夜/后夜/transport/parser/memory/modes、两内置剧本及双防重复必须保留。
 
-当前超限生产文件：App 150,261B、HostScreen 94,508B、Session 54,310B（本地代码基线实测；后续重测）。优先删旧职责，再按内聚职责整理。
-
-每条链迁移完成即删旧，不等 PR 合并。P2 完成后可审查独立安全集成点，但当前合同未批准提前合并；最终 main 接受仍需剩余整局/恢复/P5 证据。#334 保留被 #335 替代的中间设计，不因 CI 绿单独先合入。保持两个 Draft；merge/retarget/rebase/force-push/删除分支须明确批准。合并后 main 验证通过且无依赖 PR，才清理相应分支。
-
-保护现有 AI 全链、两内置剧本、跨局阵容和同玩家身份两类防重复，以及事实顺序、私密范围、去重、原子与 stale 安全。无真机或付费 API 验收声明。
-
-## 历史记录
-
-旧路线完整保留于 [本地 D2 接续前快照](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_LOCAL_D2_2026-10-20.md)。其中 Pending、Previous、Dawn、旧展示即提交和旧 MiniMCP NEXT 均不是现行命令。当前唯一接续动作见 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。
+历史证据保留于 [原路线快照](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_LOCAL_D2_2026-10-20.md)、[D2 验收](D2_INTERACTION_ACCEPTANCE_2026-10-20.md) 与完整台账；其中旧 NEXT 不是当前命令。

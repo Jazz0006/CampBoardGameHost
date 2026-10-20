@@ -1,44 +1,23 @@
-# 当前交接 — Codex 本地 D2（2026-10-20）
+# 当前交接 — Codex 本地净删与全夜切换（2026-10-20）
 
+**代码基线 `311191a30d6b0d83b5cf2d6de2a67905b526e596`，已推送原 Draft #335。** [完整 CI #4486](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032184) SUCCESS；[R2 #4062](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032113) SUCCESS。本地 fast 593/full 616 tests（145/146 suites，0 failure/error/skipped，含 23 个真实 UI 用例）及 APK 通过。docs-only 后续提交不改变此代码验收归属。
 
-> **最新代码验收（2026-10-20）**：`af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 Android CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) 与 [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 SUCCESS，Android full/APK、ASP、Clingo 与总门禁通过。本地 fast 671 / full 692 tests（含 21 个真实 Compose 交互用例）及 APK 通过。D2 系统 Back、全屏 Next、显式重试及真实查询的战略检查缺口已修复；详见 [D2 验收矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md)。这是代码/自动交互检查点，不是设备/像素视觉/现场或付费 API 验收。
+## 已完成的责任与删除边界
 
-## 环境、分支与已验证基线
+直接使用本地 Windows `C:/Users/Jazz_/source/repos/CampBoardGameHost`，不使用 MiniMCP。JDK `C:/Program Files/Android/Android Studio/jbr`。原未跟踪 node_modules/package 文件保留，不属于本批。
 
-直接使用 Windows 本地 `C:/Users/Jazz_/source/repos/CampBoardGameHost` 和 PowerShell；不使用 MiniMCP。JDK 可用路径为 `C:/Program Files/Android/Android Studio/jbr`；实际 Gradle/SDK 能力每次核验。
+一个 Session/GameState + 有序事实 + 稳定 stepId；信息预览不记录，当前角色显式 Next 才写最后唯一 Observation。夜间不再依赖 App/HostScreen 的 index/start/pendingAdvance，所有目标动作显式 Next。旧 Planner/Projector/First/OtherFlow、Fixed/Dynamic resolver、毒游标 chronology 和攻击预测链已实删。NightHostProjection/Materializer 只保留读取当前事实并渲染的职责，不再决定流程。
 
-本轮从 `35a2c880` 安全快进到同名远端纯文档提交 `cf3dd516`；未 merge 其他分支、rebase 或强推。已跟踪文件当时干净；原未跟踪 `node_modules/`、`package.json`、`package-lock.json` 不属于本批，不暂存。
+无用途首夜发布生命周期、旧 live-query/role projection、完整登记 UI/映射和自定义/Homebrew 分支已删除；保留处女/Spy 真实裁量、实际 AI、TB/NGJ 和两类跨局多样性。测试专用 snapshot codec 已移入 test，交换 fixture 保留。Spy 以实际 NightWake 事实完成真实方桌交接，不建 Grimoire 镜像；Imp 待通知从 RoleChange 与已确认私密信息推导，不再有两个可写 UI 通知标记。
 
-#334 Draft/base main/HEAD `76be7e17`；#335 Draft/base #334/分支 `refactor/minimal-night-flow-20261019`。代码 `35a2c880` 的 [完整 Android CI #4479](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39401685093) 与 [R2 #4055](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39401684985) 成功；不能当作后续代码验证。两个 PR 描述已按当前架构和未完成项更新，未改 base/Draft。
+生产目录 16 旧路径退出（15 删除+1 codec 移到测试）；新增 Session NightFlow 与 AI 仍需的 Family 分类。18 个专属旧测试文件退休；混合真实行为保留/迁移。生产净删 **2278 行/101108B**，测试净删 **1961 行/77387B**。当前超限 App **148697B**、HostScreen **80726B**、Session **53414B**。具体旧→新消费者、完整删除名单及风险见 [当前台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 和代码 diff。
 
-## 唯一当前合同
+## 下一批
 
-一个 Session/GameState + 已确认顺序事件 + 稳定 stepId。行动本角色 Next 立即提交；D2 选择→全屏预览→返回同角色→可改选再看→本角色 Next 才提交最后唯一 typed Observation。预览和草稿不持久化，未确认中断可重做；已确认不能用跨角色返回修改。无 Pending/Previous/Dawn/重复公开死亡事务。
+1. 核实此代码精确 Android CI/R2 完整成功，并做 P2 新切换的跨夜/全角色/人数与必要新 APK 真机检查。用户已报告前一版本流程可运行；不冒称本批新 APK 真机/全角色/中断恢复已通过。无付费 API 实验。
+2. 然后推进 P3 B/C：白天共享方桌一次日结，删除 EndConfirm；Death/Execution 派生 Klutz 真实选择，删除 Learned 事件/producer/编码/消费者；必要白天/胜负规则归 Host，同批退役旧 UI 控制。
+3. 原子持久化/真实进程恢复、AI/展示剩余收敛、源码 <=50000B 与 P5 全树证明仍未完成。不要把同一已确认状态的纯读取重建测试当作落盘/进程恢复验证。
 
-Host 执行确定性规则与流程，AI/人工只做真实非唯一裁量；真人玩家查询仍由真人选择。保持实际生产 AI、TB/NGJ、双防重复、事件隐私和原子/stale 安全。
+每批列删除生产/专属测试、消费者迁移、净量、超限文件、状态/隐私风险与精确代码 CI/R2。保持 #334/#335 Draft，不 merge/retarget/rebase/force-push/删分支；没有新增所有者决策阻塞。
 
-## 已完成范围与最新 D2 批次（本地及精确代码 CI/R2 已通过）
-
-四角色机械链、即时确定性死亡/继任及夜末/Dawn 删除已有分批证据。D2 已有最终 Next/稳定 Observation、三模式/部分重试和查询绑定、数字草稿隔离、双人最后预览恢复。D2 仍不是全角色或真机验收。
-
-本批已修复双人信息编辑身份/座位/无对应角色/恢复推荐的旧预览失效；去掉以 lastPreview 为重建条件的 remember key，避免失效回调反过来清空正在编辑的选择。送葬者、守鸦人、贤者也接入旧预览失效，并以步骤/实际查询身份隔离草稿，去掉 AI 推荐变更导致的人工编辑重置。数字组件从当前查询匹配的最后预览恢复输入；占卜师结果按钮突出最近预览。所有这些仍是可丢弃 UI 草稿，沿原 Next→Observation 提交入口，不修改 Session 事实模型或引入新状态框架。
-
-上述方向的组件及代表性 Host/Session 自动化已在本轮补充；接续优先进行设备视觉/现场交互和真实网络的独立验收（付费仍需授权），具体覆盖边界见 D2 验收记录。保留共享确认提示和 typed 结果门禁，不新增预览管理框架、候选领域或持久 UI 状态。旧点目标自动提交路径已列为后续行动确认收敛的明确删除项，不应以“自动模式”代替显式 Next 合同。
-
-本批验证与净体量：本地 `:app:testFast` 通过；最终 `:app:testFull :app:assembleDebug` 通过，162 suites / 670 tests，0 failure/error/skipped。新增两个查询/结构绑定行为用例；首次运行新增用例尝试构造负数，被既有 NumericResult 构造器直接拒绝，去掉这条无效测试数据后完整重跑成功。没有设备或付费 API 验收。
-
-本批 8 个生产文件 +101 行/+4,620B、2 个测试文件 +41 行/+2,476B，未整删生产/测试文件；这是 D2 合同修复，不能冒称净删。替换的是各角色的推荐驱动 remember 重置/不通知父级的局部改选路径，统一复用原 onInformationDraftChanged→清空最后预览。无新 Pending/Session/流程游标/候选引擎。现有 UI index/dynamic handoff 尚存，下一阶段必须整体迁移删除。超限源码仍是 App 150,261B、HostScreen 94,508B、Session 54,310B，三者本批未增长。远端代码 b5a955e9 的完整 CI #4482/R2 #4058 通过，remote compare 与本地 12 文件变更一致。
-
-每批报告生产/测试删除与净体量、替换消费者、尚存旧链、超限文件、状态/事件风险、精确代码 SHA 的测试及 CI/R2。不得以构建通过声称设备交互已通过。
-
-## 后续依次推进
-
-1. D2 缺口验收后，统一全夜 `nextStep(Session)` 并同批删旧 UI index、nightStarted、动态 handoff 和过渡 FixedNightStepResolver，处理所有角色/触发/跳过。
-2. B/C 白天 Host 结算：同方桌结束与 Death/Execution 派生 Klutz 真实选择。
-3. 唯一 Session 原子持久化/安全恢复、全角色/人数回归、全树职责审计与零遗留、源码 <=50,000B 和真机验收。
-
-两个 PR 继续 Draft。当前无 merge/retarget/rebase/force-push/删分支授权；不把 #334 的夜末人工确认中间版单独合入 main。P2 后可重新审查集成点，当前最终验收仍按完整重建/P5 合同。
-
-## 历史证据
-
-全部旧批次和 CI 记录保留于 [原交接快照](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_LOCAL_D2_2026-10-20.md)，其中的“下一步”均不是现行命令。更早 P0/P1 交接仅供历史取证。当前路线以 [路线图](CURRENT_DEVELOPMENT_ROADMAP.md)、最终架构、A–D2 决策和测试策略为准。
+历史原记录保留于 [交接快照](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_LOCAL_D2_2026-10-20.md)、[D2 交互矩阵](D2_INTERACTION_ACCEPTANCE_2026-10-20.md) 和台账。旧游标/Pending/Previous/Dawn/展示即提交/MiniMCP NEXT 不恢复。

@@ -1,4 +1,107 @@
-> **2026-10-20 当前使用方式**：本文件是原逐路径审计/删除证据台账，继续保留历史原文；不是今日实施状态。旧 F15 人工夜末判死、Future Rules、Pending/Previous/Dawn 与 MiniMCP NEXT 都不再执行。当前采用唯一 Session、显式 Next 与 D2，阶段与实测证据只读当前路线/交接；全树语义审计仍未全部完成。
+## 2026-10-20 已实施：无用途净删与全夜 Session 步骤切换
+
+代码 **`311191a30d6b0d83b5cf2d6de2a67905b526e596`** 已推送原 Draft #335。本节是实际实施状态；下方同日候选表保留为迁移前审计证据，不再把已经完成的项目作为 NEXT。
+
+### 实际退出的生产调用链
+
+- **夜间唯一当前步骤**：`ClocktowerSessionState.nightInteractions/nextNightInteraction` 由两内置剧本固定夜序、当前真实/展示身份、生死与已确认 ActionFact/Observation 产生步骤。HostScreen 只按稳定 ID 取展示组件，进度数字只是派生展示；App 的异步 AI 接受改为检查当前 Session 步骤身份和原有 state/revision/mode/request 绑定。删除 `nightStepIndexState`、`nightStartedState`、`pendingNightAdvance`、`freshAutomaticPlayerTarget`、重置游标和 UI 接力逻辑；没有持久 Pending 或新可写 GameState。
+- **夜序控制整链删除**：原 First/OtherNightFlow → FlowPlanner → InteractionProjector → ResolvedFlowFacts，以及 Fixed resolver / Dynamic handoff 与旧毒游标 chronology，均无生产消费者后整删。MaterializerRegistry 现在只渲染 Host 已决定的步骤，不再过滤死者或决定唤醒。原 NightHostProjection 缩成只读座位/能力展示，死亡触发读真实 Death，中毒读 Session 及死亡前事件；不再调用旧夜序和攻击预测。
+- **行动必须显式 Next**：删除点座位自动提交、Mayor AI 自动确认、红鲱鱼 UI 自动推进 helper/效应。玩家真实选目标与 AI 的合法裁量预选保留，实际提交沿既有 Session 机械入口。夜间 Previous 参数/事件传播清除；共享白天取消、设置返回、D2 全屏返回同角色保留。
+- **全部无用途候选已处理**：旧首夜 Request/Lifecycle/Migration 发布控制和专属测试退休，仅保留 AI 当前使用的 FirstNightInformationFamily；无调用的 live-query reveal disposition / role-choice projection 退出；完整 Spy/Recluse 登记控件、角色列表和多余 UI 映射退出，处女提名中的显式 Spy 镇民类型裁量保留。
+- **旧死亡适配链整删**：攻击预测、安全座位全表枚举和无消费者结果不再存在。单一存活 Imp 的旧通用 Card 适配/规则包装亦因最后消费者退出而删除，唯一 Session 中的多 Imp 歧义失败和真实继任行为由新行为测试保护；确定性攻击、保护、投毒、死亡和继任实现仍保留。
+- **两内置剧本收窄**：删除 CustomDefinition、jinx/special/bootlegger 解析/归一化/数据字段与专属测试/辅助 fixture。保留 TB/NGJ 资产、官方角色/提醒元数据、固定夜序及原两内置内容 hash 的规范输出，不增加动态导入兼容层。候选/多样性代码没有因名称相似而误删；两种跨局防重复及其既有测试保留。
+- **测试专用交换 codec**：7985B 的 TroubleBrewingGameSnapshotJsonCodec 从 main 移到 test，保留 golden/round-trip 和跨项目交换合同；实际开局/AI 使用的只读 Snapshot/Projector 没有被删掉。
+
+### 正式步骤完成证据与最小新增
+
+- 行动完成直接读同夜真实 Poison/Protect/Attack/Butler/Mayor 事实；普通信息完成读同夜、同接收者能力的正式私密 Observation。没有额外机械“完成事件”。
+- Spy 只在真实方桌交接后的 Next 写一条 **NightWake**，记录实际唤醒座位、角色和稳定步骤 ID；不复制 Grimoire、角色状态或信息快照，不制造另一条观察。此事实解决已无 UI 游标后“Spy 是否实际唤醒”的唯一完成证据。
+- 开场邪恶信息在最终 Next 写实际私密接收范围和内容，预览中间版本不记事件，且校验 preview revision。角色变化后的 Imp 私密通知从 RoleChange 与实际确认 Observation 派生，删掉两个 UI 可写待通知标记；实际 RoleChange 不被通知二次写入。
+- 同一信息确认的重复提交先核对已记录内容并幂等返回；新内容仍检查 revision，冲突不改事实。死亡触发信息使用已建立交互的醉毒标记，避免死后生死检查丢掉中毒属性。
+
+### 文件、测试与净缩减（40909dfe → 311191a3）
+
+- 生产目录退出 **16 个旧路径**：其中 **15 个文件删除**（含原混合 Migration 文件），另 **1 个 codec 移入测试**；新增 Session NightFlow 10732B 和保留下来的 Family 分类文件。实际删除名单可直接查该提交；不是“隐藏按钮”或留下旧实现。
+- 专属旧测试整删 **18 文件**；混合 AI/数值/登记/目标选择/NGJ 元数据测试仅移除旧职责，保留或迁移真实行为。新增 `ClocktowerNightFlowTest` **14 个** Session 行为用例，D2 UI 从 21 增到 **23 个**，包括自动模式 Butler/Poisoner 点目标不提交、显式 Next 才提交的真实 JudgeScreen→Session 链。
+- 按 Git blob 和关闭 rename 折叠的 numstat：生产 **+427/-2705，净删 2278 行 / 101108B**；测试 **+454/-2415，净删 1961 行 / 77387B**；生产+测试合计 **净删 4239 行 / 178495B**。codec 移动在生产/测试各自计出入，在总量中抵消。另 R2 工作流净 +3 行，更新旧控件必须存在的过时守卫。
+- 当前 Git 跟踪 **828 文件**，生产 Kotlin **212**、测试 Kotlin **150**。全树完整语义审计仍未完结；本批只对整条已迁移职责负责，不宣称所有遗留模块清空。
+- 全部仍超限生产源码：App **148697B**、HostScreen **80726B**、Session **53414B**；相比基线分别缩小 2002B、13782B、896B。没有新增超限文件，<=50000B 的最终门槛尚未达到。
+
+### 验证与尚存边界
+
+本地 `:app:testFast :app:testFull :app:assembleDebug` 全部通过：fast **593 tests / 145 suites**，full **616 tests / 146 suites**，0 failure/error/skipped，含 23 个 Compose+Robolectric 实际交互。直接运行原 R2 工作流脚本通过。精确代码的 [完整 CI #4486](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032184) **SUCCESS**；[R2 #4062](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39419032113) **SUCCESS**。已核对 CI 的 full Android 单测/APK、APK 附件、ASP、真实 Clingo 和总门禁均 SUCCESS。没有本批新 APK 真机/像素视觉或付费 API 验收；用户先前真机反馈只覆盖其实际测试版本与范围。
+
+本批完成的是全夜当前步骤/推进控制切换及相应净删。P2 全人数/全角色与跨夜完整轨迹、原子落盘/真实进程恢复仍需独立证据；P3 EndConfirm、KlutzLearnedDeath、App 白天/胜负控制仍未迁移，本批没有扩大到白天。P4/P5 还需 AI/展示剩余职责、文件大小和全树零遗留证明。没有新增需要所有者决策的阻塞；不 merge/retarget/rebase/force-push/删分支。
+
+---
+
+## 2026-10-20 当前代码清理审计：D2 检查点之后
+
+本节是当前候选及迁移边界；下方旧 F 批次保留历史原文，不重新执行。用户已报告真机流程可运行、细节待优化，并要求优先审计代码清理；这不是全角色、完整对局、中断恢复或像素视觉的覆盖证明。本次只审计并更新记录，没有删除生产代码或测试。
+
+### 基线与审计范围
+
+- 本地分支 `refactor/minimal-night-flow-20261019`，HEAD `40909dfe05c3b43742f8d5ced98a3333bc6771bb`；GitHub #335 实时核对为同一 HEAD、open/Draft、base `codex/minimal-host-full-scan-20261018` / `76be7e176650d4b7852a8151ff577db718929fad`。main 仍为 `0abc842e5468e3ba41eb32b5fae15264c6f5e221`。
+- 当前 Git 跟踪 858 文件；生产 Kotlin 226 文件、测试 Kotlin 166 文件。已横向枚举全部生产 Kotlin 的目录、大小和顶层符号引用，再对下述候选逐项读取、核对生产/测试消费者；不以符号零引用自动判死，也不声称 226 文件均完成语义审计。Android Manifest 的 Application 入口就是不可误删的零 Kotlin 调用示例。
+- 目录库存：根包 102；catalog 8、domain 16、epistemic 7、flow 7、rules 10、session 29、setup 21、clocktower/ui 17、clocktower/persistence 1、clocktower 根 1；debug 2、根 persistence 5。计数不等于需要保留或删除的结论。
+- 源码/测试引用检查同时覆盖 `app/src/main`、`app/src/test`、`tools` 和 `.github`，并对孤立候选用跟踪树检索复核。现有未跟踪 npm 文件与 node_modules 不属于本次审计删除范围。
+
+### 可以近期清理，不依赖全夜 nextStep 重建
+
+“可以清理”表示已经明确代码边界；删除批仍须切换混合测试、编译并取得相应行为验证，不能直接删除整份混合文件。
+
+| 项目 | 当前证据、生产边界 | 建议实际删除与保留 |
+| --- | --- | --- |
+| 旧首夜发布生命周期 | `ClocktowerFirstNightInformationRequest.kt:16` 在生产没有调用；`FirstNightInformationMigration.kt:63` 的迁移器和 publication resolution 只被测试实例化；Lifecycle 只服务此迁移器。当前真实展示走 HostScreen 的 typed preview → `recordReliablePrivateInformation` → `onCommitConfirmedPrivateInformationPublication`，没有接入这套 ready/displayed 集合 | 整删 `ClocktowerFirstNightInformationRequest.kt`（3696B）和 `session/FirstNightInformationLifecycle.kt`（911B）；删除 Migration 文件中的 Candidate/Request/Migration/PublicationResolution。**保留** `FirstNightInformationFamily` / `usesAuthoritativePairDomain`，它们仍被 `ClocktowerGlobalFirstNightDecision` 使用，不能整删该混合文件 |
+| 旧信息重新打开裁定 helper | `ClocktowerHostSelectionSemantics.kt:94` 的 `ClocktowerLiveQueryRevealDisposition` 和同名函数只被 `ClocktowerRedHerringAutoAdvancePolicyTest` 调用，没有 Host 生产调用 | 删除此枚举/函数及专属旧测试方法；保留同文件真实目标校验、当前 AI busy/error 绑定及红鲱鱼真实开局逻辑。单次正式 Observation、stale、幂等仍由当前 Session/D2 行为测试保护 |
+| 未使用的角色选项投影 | `ClocktowerRoleRevealChoiceProjection.kt:37` 的函数与返回 DTO 没有生产或测试调用；同文件 `clocktowerRoleRevealAnchor` 仍被 Ravenkeeper typed result 使用 | 删 ChoiceProjection 函数/DTO；保留 Anchor 类型/函数，不能整删文件或破坏守鸦人的真实查询绑定 |
+| 不再使用的完整登记 UI/状态 | `ClocktowerSpyRegistrationDecisionControls`、`ClocktowerRecluseRegistrationDecisionControls` 没有生产调用；Spy 角色列表及 Recluse 状态编辑也只在旧测试中使用。真实调用是 NominationInteraction 的 `ClocktowerSpyTownsfolkTypeDecisionControls` 和 explicit Spy 类型选择 | 删除两个废弃控件、角色选择分支、Spy 角色映射及 Recluse UI 映射/方法；把共享控件缩为实际使用的布尔类型选择。保留处女提名中 Spy 是否登记为镇民的真实裁量、显式选择与未选择的区别、对应 Session 事实。不是取消 Spy/Recluse 规则上的裁量能力 |
+| 旧死亡预测的无消费者结果 | `ClocktowerDemonAttackProductionAdapter.kt:78` 仍遍历所有座位求 `demonSafeSeats`，并计算 `resolvedDeathSeat/Name`。生产只在 NightHostProjection 使用 `mayorRedirectEligible` 和 `facts.mayorSeat`；预测死者与安全座位没有外部生产消费者。后续唤醒已经读取已提交 Death | 裁掉整表安全座位和预测死者的计算/DTO字段，缩为窄市长边界输入，清除旧 Dawn 规划注释。保留攻击、保护、中毒的必要确定性规则及市长触发；NightHostProjection/adapter 整体退役另见下节，不因可裁剪部分就整删 |
+| 夜间无效 Previous 传播 | HostScreen 两个夜间入口固定传 `canGoPrevious=false` / `onPrevious={}`，NightStepUi、各角色卡和 NightActiveScreen 仍传播这套参数 | 从仅服务跨角色后退的夜间接口/事件/分支清除参数链。共享 scaffold 仍用于白天取消、设置返回；D2 全屏返回同角色必须保留，不可全仓删除 onBack/onPrevious |
+| 自定义/Homebrew 解析分支 | 两内置脚本仅有 `_meta`、官方角色引用及固定夜序。Parser 仍支持 CustomDefinition、jinx/special、bootlegger，Normalizer 构造自定义角色并计算 Homebrew source；没有产品导入入口需求 | 裁剪 Parser/Normalizer/CatalogModels 的自定义角色和专属校验/数据分支，删除其专属测试。**保留或直接简化**两内置脚本的解析、官方角色映射、固定夜序和必要内容身份；不能整删 Loader/Catalog 或资产。三份混合文件当前共 41815B，不能把总大小当预计净删量 |
+
+第一项可整删的两个生产文件合计 **4607B**；其余为混合文件的局部职责，净删行数/字节必须在实施后测量，不在审计阶段编造总收益。
+
+### 测试如何随上述清理处理
+
+- 首夜旧链的专属 `ClocktowerFirstNightInformationRequestTest`、`FirstNightInformationLifecycleTest`、`FirstNightInformationMigrationTest` 可随被测实现退休。`ClocktowerChefAlternativePublicationTest` 和 `ClocktowerAiPairRecommendationRecoveryTest` 是混合行为证据：数值可真实记录、AI 预选及人工覆盖不得丢失，应改走现有 typed 信息/Session 入口，而不是整删有价值的 AI 回归。
+- `ClocktowerRedHerringAutoAdvancePolicyTest` 只删除旧 live-query reveal disposition 的方法，保留真实红鲱鱼开局及 AI key 隔离用例。
+- `ClocktowerRegistrationInteractionStateTest` 缩到真实处女/Spy 类型裁量，不继续为已无消费者的角色列表/Recluse UI 状态留代码。
+- `ClocktowerDemonAttackDawnFactsTest`、`ClocktowerMonkRetargetRavenkeeperDeathTest` 中针对全表安全集合/旧 DTO 的断言需退休或收敛；Session 实际投毒/保护/攻击/Death、死亡触发和市长真实分支的测试必须保留。不能因为删预测而删规则行为证据。
+- 任何只绑定字符串、类名或旧界面结构的 CI 守卫在实际迁移时复核；Session 写入、隐私、身份、stale、安全和完整构建门禁不属于清理目标。
+
+### 必须先迁移，然后同批删除的生产控制链
+
+| 优先级/阶段 | 仍活跃的链 | 迁移与整删边界 |
+| --- | --- | --- |
+| 最高，P2 | App 的 UI night 状态 → HostScreen `nightStepIndexState/nightStartedState/pendingNightAdvance` → Fixed resolver → Dynamic handoff → 再写 UI cursor / Night→Day | 用 Script + Session 已确认 ActionFact/Observation + 稳定步骤身份产生唯一当前步骤，覆盖所有信息/机械/死亡触发/跳过及必要实际开局配置。然后同批删 `ClocktowerDynamicNightAdvance.kt`、`session/ClocktowerFixedNightStepResolver.kt`、对应专属测试和 App/HostScreen 游标逻辑。两 helper 文件合计仅 5399B，主要工作在大文件中的控制职责，不以删两个文件冒称整夜已收敛 |
+| 最高，与 P2 行动确认同批 | HostScreen `freshAutomaticPlayerTarget` → `clocktowerShouldAutoConfirmFreshPlayerTarget` / Mayor 自动分支 → `advanceNightStep()`（约 1399–1423 行） | 去掉无显式 Next 的提交入口，保留真实玩家输入、AI 裁量/预选和同一个确认函数；调整旧自动提交测试。它是仍执行的行为，不是可以仅凭零引用删除的死代码 |
+| P2 | NightHostProjection → PlayerCard/checkpoint 攻击预测适配 → flow facts → planner/projector → UI materializer | Host 统一接收事实和决定步骤后删除被替代的计算/协调层；保留必要的纯展示 materializer 和稳定身份。当前 Planner/Projector 仍是内置夜序/触发的生产实现，不能按类名一刀切。`NightOrderToken.System.DAWN` 当前是脚本元数据边界，Projector 对其执行 Unit，不是已删除的 Dawn 页面/事务复活 |
+| P3/B | DayMode.EndConfirm → HostScreen 路由 → `ClocktowerExecutionConfirmScreen` → App 日结 | 把同方桌一次确认与真实处决/无处决/胜负接到唯一 Host 提交；同批删枚举、独立页面职责、专属路由/测试。`ClocktowerDayScreen.kt` 仍含其他职责，不整文件误删 |
+| P3/C | App `captureKlutzLearnedDeathOnPublicAnnouncement` → Producer.learned → `KlutzLearnedDeath` ActionFact/Draft/JSON/reducer → Producer.choice 依赖 Learned | 从已确认 Death/Execution、真实身份及未完成选择推出实际玩家动作，重接 choice 后同批移除 Learned 生产者/事件/编码/消费者。保留真实 KlutzChoice、顺序和对应胜负；不能只删事件声明或直接整删 producer 文件 |
+| P3/P4 | App 内多处 `evaluateGameOutcome` / 可写 `gameOutcome`，UI 负责结算调度 | 将必要确定性终局与持续流程合入 Host；界面只读结果。迁移前不能删除仍使对局结束的分支；保留圣徒、市长、呆瓜、恶魔继任等真实规则行为 |
+
+### 生产外移候选与必须保留的边界
+
+- `clocktower/TroubleBrewingGameSnapshotJsonCodec.kt`（7985B）仅被 SnapshotProjectorTest 的 golden/round-trip 用例使用，没有 Android 生产或工具消费者；可从 main 移至测试支持代码。是否连同 golden fixture 整删须核对跨项目交换合同，不能把“当前未使用”自动等同“无合同价值”。Snapshot DTO/Projector 本身仍服务实际开局和 AI，不能一起删；只读快照也不等于第二可写 GameState。
+- 保留唯一 Session、顺序 ActionFact/Observation、接收者隐私、去重/身份/stale、防凭据泄漏；`ClocktowerSessionPlayerCards` 是实时只读投影，不是第二份卡牌事实缓存。
+- 保留现有实际 AI 首夜/后夜、prompt/transport/parser/memory、三模式及真实推荐；例如 `PendingPairInformationDecision` / `PendingMayorRedirectDecision` 是当前请求 DTO，不等于已经禁止的持久待提交机械操作，不能按 Pending 名字误删。
+- 保留两内置剧本及两种跨局防重复。SetupDiversitySelector 的多样性评分属于明确保留的产品要求，不因名称含 Score/Candidate 就归入退休世界/合法域引擎。
+- 旧 web、世界枚举、通用合法域的大块删除已发生，不回溯重建。全树还未完成语义分类的源码/工具/实验应继续横向审查，不能用本节局部候选当作 P0/P5 全部完成。
+
+### 建议实施顺序与验收状态
+
+1. 先做已经无生产用途的首夜生命周期、孤立 helper、旧登记分支和无消费者死亡预测结果的净删除，处理混合测试；无效夜间 Previous 参数可同一夜间 UI 整理批收掉。
+2. 随即完成 P2 唯一全夜步骤与显式 Next，替换并整删仍活跃的旧推进控制。自定义脚本分支可作独立明确边界的净删批，避免同全夜语义重建混为一个不可审查的大提交。
+3. 完成 P3 白天 B/C 与胜负归 Host，再做 P4/P5 全树复核；每条已迁移职责当批删除旧实现，不等最后阶段或 PR 合并才动手。
+
+本次生产文件删除 **0**、测试删除 **0**、代码净缩减 **0**；仅记录审计。所有超限生产源码仍为 App **150699B**、HostScreen **94508B**、Session **54310B**，必须先净删多余职责，再按必要内聚职责整理到每文件 <=50000B。
+
+实时复核原代码 `af35cee951539df689552fb3c3ff97b7b2b5861e` 的 [完整 CI #4484](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558605) / [R2 #4060](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39411558519) 均 success；本次无代码变化，未重跑 Android 或付费 API。上述成功不是未来删除批的验证。剩余风险是仍由 UI 控制部分步进和结算、原子持久化/安全续局尚无完整证明；本次明确净删项没有新增产品决策阻塞，跨项目 codec 整删仅为待核合同候选。PR 继续 Draft，不 merge/rebase/force-push/删分支。
+
+---
+
+> **2026-10-20 当前使用方式**：当前审计结论见上节；以下是原逐路径审计/删除证据台账，保留历史原文，不是今日实施状态。旧 F15 人工夜末判死、Future Rules、Pending/Previous/Dawn 与 MiniMCP NEXT 都不再执行。当前采用唯一 Session、显式 Next 与 D2，阶段与实测证据只读当前路线/交接；全树语义审计仍未全部完成。
 
 > **2026-10-19 改变审计组织方式**：当前全树审计与退出验收以 [Minimal Host Architecture Rebuild](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md) 为准：P0 按完整目标职责横向遍历当下真实源码，P1–P4 每条业务链重建同时删除旧调用，P5 再全树严格复核。旧 F12-L/R 日期、审计覆盖分子/分母、F15 夜末自由选择死者均仅为当时历史，不是现在的交付目标。不得因为一个旧生产调用保留旧功能，也不得用历史台账漏审量代替真实当前代码树的审查。
 >
