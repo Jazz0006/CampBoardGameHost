@@ -1,3 +1,29 @@
+## 2026-10-21 已实施：Session 白天/胜负迁移、B/C 退役与原子活动局
+
+当前代码 **`f4d78d5c70c55be988c1daf29558fde2e0c82305`** 已推送原 Draft #335；[完整 Android CI #4490](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956510) **SUCCESS**，[R2 #4066](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956507) **SUCCESS**。本地 fast **612**、full **639**（27 UI）、APK、工作流原始 R2 脚本均通过。前一节“在途、Artist 编译失败、代码未推送”保留为历史，已不代表当前。最终全树/文件大小/真机验收仍未完成。
+
+### 完整消费者迁移与物理删除
+
+| 职责 | 被替代链及本批实删 | 当前唯一生产入口/事实 |
+|---|---|---|
+| B 方桌日结 | Overview→EndConfirm→ExecutionConfirmScreen→App 处决/无人处决/继任/胜负；**ClocktowerDayScreen.kt 删除** | DayHostScreen→Session.confirmEndDay，读取已确认 voteStanding，整批结算/进入夜晚；一个稳定 round 接受一次 |
+| C Klutz | App pending/resume/捕获 learned→KlutzLearnedDeath/Draft/reducer/projection→producer；**NoGreaterJoyKlutzHistoryProducerV1.kt 删除** | pendingKlutzDeath 从真实 Death/Execution 派生；KlutzChoice 直接引用 deathActionId；夜死进入 Day 才开放真实选择 |
+| 提名/投票 | UI 判处女结果、App marker/执行及跨页临时 pair 的确认控制 | Session.confirmNomination/confirmVote，Virgin 确定效果/窄 Spy 裁量，鬼票/管家及重复身份；pendingVote 只读事实恢复，未投票不能日结 |
+| 杀手/继任 | UI 任意 targetDied、App 杀死/另调 Scarlet Woman | Session.confirmSlayerShot：确定命中/失效，只询问真实 Recluse 登记；死亡/Scarlet Woman 及终局在同批确认 |
+| Artist/终局 | App used/claimed/gameOutcome；evaluateGameOutcome 与旧多点写结果 | ArtistAnswer + 精确私密 Observation；GameEnded 唯一终局事实，UI 仅本地化展示 |
+| 临时白天控制 | App dayMode/reset/Klutz 选择草稿与 NightHost 中白天大分支 | 内聚 DayHostScreen 只持展示草稿；正式投票/Klutz 待处理从 Session 读，无持久 pending |
+| 原子存储 | 原仅 remember 的缺口，没有保留第二旧存档链 | Session 确认批先写唯一私有 noBackup AtomicFile；失败整批回滚；恢复同一 Session，不存预览/未确认 AI 请求，保留 AI 已接受记忆与开局轮换元数据 |
+
+**专属旧测试实删 2 文件**：ClocktowerNominationDraftTest（已确认投票不再由 UI draft 转交）、ClocktowerSlayerDraftTest（任意人工判死合同退休）。混合 LiveKlutzScriptReachabilityTest、Artist 草稿不变量、D2 实际 UI 用例保留/迁移。新增 **ClocktowerDayFlowTest 15 项**、**ClocktowerActiveGameStoreTest 8 项**；NightFlow 加支持人数的两夜轨迹；原 23 UI 加 4 条 Day UI，合计 27。证据覆盖日结/平票/鬼票/管家、醉毒及真实裁量、继任/终局、实际隐私、原子失败、完整文件重读/半写文件/坏文件保留、建议记忆与双跨局防重复元数据。纯文件测试不冒称 Android 真机进程被杀已验收。
+
+生产新文件 7 个：ClocktowerActiveGameMetadata、ClocktowerOutcomePresentation、Session DayFlow/SessionJson/SessionState、DayHostScreen、ActiveGameStore；均为现有最小职责，无一般化管理/恢复框架。SessionState 是不可变合同和临时提交结果，非第二个可写 Session。夜间确认冻结所显示阶段/轮次，日结/提名/投票显式绑定轮次并测试跨阶段重复提交。
+
+### 实际净量、风险与仍未完成项
+
+对 `25c0aca0`→`f4d78d5c` Git blob 比较（计入所有新增、LF 字节）：生产 **+1265/-1373，净 -108 行、+1775B**；测试 **+588/-176，净 +412 行、+27595B**。不能把本批必要结算/保存及测试新增排除后宣称字节净删。当前 217 生产 Kotlin /150 测试文件；全树库存不等于语义审计。
+
+超限源码从 3 个降至 2 个：App **122572B**、Night HostScreen **68496B**；Session **49577B** 已达标。P0/P5 全树职责/零遗留、剩余 UI/AI 收敛、全部信息自动结果及必要新 APK 真机/杀进程验收仍未完成。无新所有者决策阻塞；保持 #334/#335 Draft，不合并/改 base/重写历史/删除分支，不调用付费 API。
+
 ## 2026-10-21 在途实施：P3 白天与原子保存（未验收、未推送代码）
 
 最新所有者要求：收尾 P2、推进 P3 并完成最终收敛；随后要求同步当前进度文档。本次仅提交文档，工作树 Kotlin 改动仍未提交。完整状态/下一步见 [路线](CURRENT_DEVELOPMENT_ROADMAP.md) 与 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。已验收代码仍是下面的 `311191a3`，本轮不能借用其 CI #4486/R2 #4062 作为新代码验收。
