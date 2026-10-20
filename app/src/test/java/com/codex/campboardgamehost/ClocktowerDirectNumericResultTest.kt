@@ -32,4 +32,23 @@ class ClocktowerDirectNumericResultTest {
         assertNull(clocktowerDirectNumericResult(step.copy(informationQuestion =
             ClocktowerInformationQuestion.Number(baseline.metric, listOf(99))), 1, 17, cards))
     }
+
+    @Test fun `manual number records actual selected query subjects rather than stale step subjects`() {
+        val step = ClocktowerNightStepUi(
+            title = "Chambermaid", actor = PlayerCard("Alice"), isRealAction = true,
+            reason = "", storytellerAction = "", tellPlayer = "", explanation = "",
+            roleEnName = "Chambermaid",
+            informationQuestion = ClocktowerInformationQuestion.Number(
+                NumericMetric.ADJACENT_EVIL_PAIRS, listOf(1, 2),
+            ),
+        )
+        val cards = listOf(PlayerCard("Alice"), PlayerCard("Bob"), PlayerCard("Carol"))
+        val result = requireNotNull(clocktowerDirectNumericResult(
+            step, 1, 0, cards, subjectSeats = listOf(2, 3),
+        ))
+        assertEquals(listOf(2, 3),
+            (result.displayProposition as InformationProposition.NumericResult).subjectSeats)
+        assertNull(clocktowerDirectNumericResult(step, 1, 0, cards, subjectSeats = listOf(2, 2)))
+        assertNull(clocktowerDirectNumericResult(step, 1, 0, cards, subjectSeats = listOf(2, 4)))
+    }
 }

@@ -159,6 +159,11 @@ internal fun ClocktowerJudgeScreen(
     val slayerDraft = remember(gameId) { ClocktowerSlayerDraft() }
     val artistDraft = remember(gameId) { ClocktowerArtistDraft() }
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
+    // UI-only D2 draft must outlive the fullscreen early return below.
+    // Match the interaction identity before reuse: no persisted night cursor or Session event.
+    var lastInformationPreview by remember(gameId, phase, round) {
+        mutableStateOf<ClocktowerNightStepUi?>(null)
+    }
     val legalDemonBluffs = clocktowerRolesForScript(script).distinctBy { it.enName }
     val legalDemonBluffRoleNames = legalDemonBluffs.mapTo(linkedSetOf()) { it.enName }
     var manualDemonBluffDraft by remember(
@@ -1090,11 +1095,10 @@ internal fun ClocktowerJudgeScreen(
         }
         val currentStepIndex = resolvedIndex ?: nightSteps.lastIndex
         val currentStep = nightSteps[currentStepIndex]
-        // D2: the only uncommitted information choice is the latest preview
-        // for this exact night interaction. Leaving the fullscreen does not commit
-        // information and does not advance the role.
-        var lastInformationPreview by remember(gameId, phase, round, currentStep.interactionId) {
-            mutableStateOf<ClocktowerNightStepUi?>(null)
+        // A fullscreen preview temporarily replaces this role's composable subtree.
+        // Only a draft for this exact Host interaction can enable final Next.
+        val currentInformationPreview = lastInformationPreview?.takeIf {
+            it.interactionId == currentStep.interactionId
         }
         val isPrivateInformationStep = currentStep.isRealAction &&
             currentStep.actor != null && currentStep.roleEnName != null &&
@@ -1276,8 +1280,16 @@ internal fun ClocktowerJudgeScreen(
             // A confirmed operation may still be waiting for Session's fresh flow.
             // Do not let double taps or recomposition advance the UI again.
             if (pendingNightAdvance != null) return@advance
+            // Check readiness before the only irreversible Observation write.
+            if (!playerTargetReady || !successorReady) {
+                Toast.makeText(context, text(
+                    "请先完成当前行动目标及必要的恶魔继任选择。",
+                    "Select the current target and any required Imp successor before continuing.",
+                ), Toast.LENGTH_LONG).show()
+                return@advance
+            }
             if (isPrivateInformationStep) {
-                val preview = lastInformationPreview
+                val preview = currentInformationPreview
                 if (preview == null ||
                     preview.actor?.name != currentStep.actor?.name ||
                     preview.roleEnName != currentStep.roleEnName
@@ -1297,13 +1309,7 @@ internal fun ClocktowerJudgeScreen(
                     ), Toast.LENGTH_LONG).show()
                     return@advance
                 }
-            }
-            if (!playerTargetReady || !successorReady) {
-                Toast.makeText(context, text(
-                    "请先完成当前行动目标及必要的恶魔继任选择。",
-                    "Select the current target and any required Imp successor before continuing.",
-                ), Toast.LENGTH_LONG).show()
-                return@advance
+                lastInformationPreview = null
             }
             if (currentStep.action == ClocktowerNightAction.RedHerring &&
                 currentStep.isRealAction
@@ -1477,7 +1483,7 @@ internal fun ClocktowerJudgeScreen(
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
             canGoPrevious = false,
             nextEnabled = resolvedIndex != null && pendingNightAdvance == null &&
-                (!isPrivateInformationStep || lastInformationPreview != null) &&
+                (!isPrivateInformationStep || currentInformationPreview != null) &&
                 playerTargetReady && successorReady && (currentStep.action !in setOf(
                 ClocktowerNightAction.MayorRedirect,
             ) || selectedNightName != null) &&
@@ -1492,12 +1498,16 @@ internal fun ClocktowerJudgeScreen(
                 if (globalAiAssisted && globalAiDecisionIdentity != null &&
                     globalAiCurrentKey != null
                 ) {
-                    if (!globalAiAutomatic) {
+                    if (!globalAiAutomatic ||
+                        (approvedOpeningOption == null &&
+                            (!globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey))
+                    ) {
                         OutlinedButton(
                             onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex) },
                             enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
                         ) {
-                            Text(text("AI 全局局势与当前合法裁量", "Global AI advice"))
+                            Text(if (globalAiAutomatic) text("重新请求 AI 信息", "Retry AI information")
+                                else text("AI 全局局势与当前合法裁量", "Global AI advice"))
                         }
                     }
                     if (globalAiAdviceKey == globalAiCurrentKey) {
@@ -1573,7 +1583,10 @@ internal fun ClocktowerJudgeScreen(
                             ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
                             ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
                             ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
-                            ClocktowerNightAction.Ravenkeeper -> onSelectRavenkeeperTarget(nextSelection)
+                            ClocktowerNightAction.Ravenkeeper -> {
+                                lastInformationPreview = null
+                                onSelectRavenkeeperTarget(nextSelection)
+                            }
                             else -> Unit
                         }
                         freshAutomaticPlayerTarget = nextSelection?.takeIf { target ->
@@ -1589,15 +1602,19 @@ internal fun ClocktowerJudgeScreen(
                     }
                 },
                 onSelectFortuneTellerFirst = {
+                    lastInformationPreview = null
                     onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it)
                 },
                 onSelectFortuneTellerSecond = {
+                    lastInformationPreview = null
                     onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it)
                 },
                 onSelectChambermaidFirst = {
+                    lastInformationPreview = null
                     onSelectChambermaidFirst(if (chambermaidFirst == it) null else it)
                 },
                 onSelectChambermaidSecond = {
+                    lastInformationPreview = null
                     onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
                 },
                 onShowPlayerDisplay = { selectedStep ->
@@ -1623,11 +1640,11 @@ internal fun ClocktowerJudgeScreen(
                 onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )
-                if (isPrivateInformationStep && lastInformationPreview != null) {
+                if (isPrivateInformationStep && currentInformationPreview != null) {
                     Text(
-                        text = text("上次预览（下一步确认后记录）", "Last preview (saved on Next)") +
-                            " · " + (lastInformationPreview?.displayPrimary.orEmpty()) +
-                            listOfNotNull(lastInformationPreview?.displaySecondary)
+                        text = text("✓ 上次预览（下一步确认后记录）", "✓ Last preview (saved on Next)") +
+                            " · " + (currentInformationPreview.displayPrimary.orEmpty()) +
+                            listOfNotNull(currentInformationPreview.displaySecondary)
                                 .joinToString(prefix = " ", separator = " "),
                         color = MaterialTheme.colorScheme.primary,
                     )

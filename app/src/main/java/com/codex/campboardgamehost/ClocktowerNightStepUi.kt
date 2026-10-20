@@ -530,7 +530,9 @@ internal fun ClocktowerNightStepCardLocalized(
                             actorLabel = requireNotNull(step.actor).seatLabel(cards), wakeInstruction = null,
                             language = language, canGoPrevious = false, onPrevious = {}, onHostTools = onHostTools,
                             onNext = onNext, onConfirm = { value ->
-                                clocktowerDirectNumericResult(step, structuredActorSeat, value, cards)?.let(onShowPlayerDisplay)
+                                clocktowerDirectNumericResult(
+                                    step, structuredActorSeat, value, cards, subjectSeats = selectedSeats,
+                                )?.let(onShowPlayerDisplay)
                             },
                         )
                     }) else null,

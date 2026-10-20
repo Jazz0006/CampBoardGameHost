@@ -32,12 +32,14 @@ internal fun clocktowerDirectNumericResult(
     actorSeat: Int,
     value: Int,
     cards: List<PlayerCard>,
+    subjectSeats: List<Int>? = null,
 ): ClocktowerNightStepUi? {
     if (value < 0) return null
     if (cards.indexOfFirst { it.name == step.actor?.name } + 1 != actorSeat || actorSeat <= 0) return null
     val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
-    if (question.subjectSeats.distinct().size != question.subjectSeats.size ||
-        question.subjectSeats.any { it !in 1..cards.size }) return null
+    val subjects = subjectSeats ?: question.subjectSeats
+    if (subjects.distinct().size != subjects.size ||
+        subjects.any { it !in 1..cards.size }) return null
     val result = ClocktowerDisplayOption(
         label = value.toString(),
         displayKind = ClocktowerDisplayKind.Number,
@@ -45,8 +47,8 @@ internal fun clocktowerDirectNumericResult(
         displayPrimary = value.toString(),
         displaySecondary = null,
         displayFooter = null,
-        proposition = InformationProposition.NumericResult(question.metric, actorSeat, question.subjectSeats, value),
-        presentationSubjectSeats = question.subjectSeats,
+        proposition = InformationProposition.NumericResult(question.metric, actorSeat, subjects, value),
+        presentationSubjectSeats = subjects,
     )
     return resolveClocktowerPlayerDisplay(step, result).copy(
         // The Storyteller confirmed what was shown, not whether Host rules say it is true.
