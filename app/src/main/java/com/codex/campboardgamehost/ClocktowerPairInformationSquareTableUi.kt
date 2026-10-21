@@ -111,6 +111,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 seatNumber = seatNumber,
                 label = content.primaryLabel,
                 detailLabels = content.detailLabels,
+                actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive,
                 hasUnspentGhostVote = seat.hasUnspentGhostVote,
                 state = state,

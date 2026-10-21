@@ -126,6 +126,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
             ClocktowerSquareTableSeatUiModel(
                 seatId = seat.seatId.renderKey(), seatNumber = seat.seatId.number,
                 label = content.primaryLabel, detailLabels = content.detailLabels,
+                actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive, hasUnspentGhostVote = seat.hasUnspentGhostVote,
                 state = visual.state, isCurrentActor = visual.isCurrentActor, badge = visual.badge,
             )

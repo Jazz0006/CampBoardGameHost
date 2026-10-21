@@ -18,4 +18,7 @@ internal object ClocktowerContrastPolicy {
     val accentForeground = Color(0xFF17120A)
     val secondary = Color(0xFF506677)
     val secondaryForeground = Color(0xFFF7F1E6)
+    // Phase-independent true-alignment identity, shared by both table themes.
+    val goodSeat = Color(0xFF24568D)
+    val evilSeat = Color(0xFF8F2D3D)
 }

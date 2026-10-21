@@ -49,6 +49,8 @@ internal fun ClocktowerNightStepCardLocalized(
     playerInputRevision: Long,
     informationDecisionKey: String,
     cards: List<PlayerCard>,
+    /** Current Session alignment is the only source for night card colors. */
+    actualAlignmentBySeat: Map<Int, com.codex.campboardgamehost.clocktower.domain.Alignment>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     poisonedPlayerName: String?,
     aliveCards: List<PlayerCard>,
@@ -292,7 +294,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 language = language,
                 ghostVoteAuthority = ghostVoteAuthority,
                 isPoisoned = card.name == poisonedPlayerName,
-            )
+            ).copy(actualAlignment = actualAlignmentBySeat[index + 1])
         }
         fun seatNumberForName(name: String?): Int? = name
             ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }

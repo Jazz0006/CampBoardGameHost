@@ -93,6 +93,7 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val badgeTone: ClocktowerSquareTableBadgeTone = ClocktowerSquareTableBadgeTone.Default,
     val isAlive: Boolean = true,
     val hasUnspentGhostVote: Boolean = false,
+    val actualAlignment: com.codex.campboardgamehost.clocktower.domain.Alignment? = null,
 )
 
 internal data class ClocktowerSquareTableSeatPlacement(
@@ -544,7 +545,7 @@ private fun ClocktowerSquareTableSeat(
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
         seat.isInteractionEnabled
-    val palette = clocktowerSquareTableSeatPalette(seat.state)
+    val palette = clocktowerSquareTableSeatPalette(seat.state, seat.actualAlignment)
     val lifeMarkers = clocktowerSquareTableLifeMarkers(
         isAlive = seat.isAlive,
         hasUnspentGhostVote = seat.hasUnspentGhostVote,
@@ -565,7 +566,7 @@ private fun ClocktowerSquareTableSeat(
         color = palette.container,
         contentColor = palette.content,
         border = if (seat.isCurrentActor) {
-            BorderStroke(4.dp, MaterialTheme.colorScheme.tertiary)
+            BorderStroke(4.dp, Color(0xFFFFD56B))
         } else {
             BorderStroke(palette.borderWidth, palette.border)
         },
@@ -698,6 +699,14 @@ private fun ClocktowerSquareTableSeat(
     }
 }
 
+/** Actual Session alignment controls background, never selection or shown role. */
+internal fun clocktowerAlignmentSeatColor(
+    alignment: com.codex.campboardgamehost.clocktower.domain.Alignment,
+): Color = when (alignment) {
+    com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD -> ClocktowerContrastPolicy.goodSeat
+    com.codex.campboardgamehost.clocktower.domain.Alignment.EVIL -> ClocktowerContrastPolicy.evilSeat
+}
+
 private data class ClocktowerSquareTableSeatPalette(
     val container: Color,
     val content: Color,
@@ -708,9 +717,10 @@ private data class ClocktowerSquareTableSeatPalette(
 @Composable
 private fun clocktowerSquareTableSeatPalette(
     state: ClocktowerSquareTableSeatState,
+    alignment: com.codex.campboardgamehost.clocktower.domain.Alignment?,
 ): ClocktowerSquareTableSeatPalette {
     val colors = MaterialTheme.colorScheme
-    return when (state) {
+    val statePalette = when (state) {
         ClocktowerSquareTableSeatState.Neutral -> ClocktowerSquareTableSeatPalette(
             container = colors.surfaceVariant,
             content = colors.onSurfaceVariant,
@@ -766,6 +776,21 @@ private fun clocktowerSquareTableSeatPalette(
             borderWidth = 1.5.dp,
         )
     }
+    // Alignment is stable visual identity; selection changes only border/marker.
+    val alignmentColor = alignment?.let(::clocktowerAlignmentSeatColor)
+        ?: return statePalette // Seating before the actual game exists
+    val actionBorder = when (state) {
+        ClocktowerSquareTableSeatState.SelectedFirst,
+        ClocktowerSquareTableSeatState.Selected,
+        ClocktowerSquareTableSeatState.SelectedHighlighted,
+        ClocktowerSquareTableSeatState.HighlightedInformation -> Color(0xFFFFD56B)
+        ClocktowerSquareTableSeatState.SelectedSecond -> Color(0xFF85E3D4)
+        ClocktowerSquareTableSeatState.RegistrationHint -> Color(0xFFFFC27A)
+        ClocktowerSquareTableSeatState.Selectable -> Color(0xFFE5EAF0)
+        ClocktowerSquareTableSeatState.Disabled -> Color(0xFF8E97A3)
+        ClocktowerSquareTableSeatState.Neutral -> Color(0xFFCBD5E1)
+    }
+    return statePalette.copy(container = alignmentColor, content = Color.White, border = actionBorder)
 }
 
 private fun clocktowerSquareTableStateMarker(
