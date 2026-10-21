@@ -6,23 +6,6 @@ import org.junit.Test
 
 class ClocktowerDayNominationGestureTest {
     @Test
-    fun `day nomination gesture only exposes alive typed seats`() {
-        val tableState = ClocktowerDayOverviewTableState(
-            seats = listOf(
-                seat(ClocktowerSeatId(3), "Casey", isAlive = true),
-                seat(ClocktowerSeatId(1), "Alice", isAlive = true),
-                seat(ClocktowerSeatId(2), "Bob", isAlive = false),
-            ),
-            interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
-        )
-
-        val policy = clocktowerDayNominationGesturePolicy(tableState)
-
-        assertEquals(setOf(ClocktowerSeatId(1), ClocktowerSeatId(3)), policy.sourceSeatIds)
-        assertEquals(setOf(ClocktowerSeatId(1), ClocktowerSeatId(3)), policy.targetSeatIds)
-    }
-
-    @Test
     fun `directional drag resolves against the rendered slot ring and rejects self or illegal targets`() {
         val layout = hostTableLayout(
             playerCount = 5,
@@ -67,14 +50,4 @@ class ClocktowerDayNominationGestureTest {
             ),
         )
     }
-
-    private fun seat(
-        seatId: ClocktowerSeatId,
-        name: String,
-        isAlive: Boolean,
-    ): HostSeatPresentation = HostSeatPresentation(
-        seatId = seatId,
-        playerName = name,
-        isAlive = isAlive,
-    )
 }
