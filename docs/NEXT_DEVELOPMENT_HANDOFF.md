@@ -8,7 +8,7 @@
 
 不含维护文档15文件+29/-323，净删**294行/11391B**，整删1生产策略文件和2专属测试文件，无新文件/框架。Android测试9项只保护已退役入口；身份/隐私/配色实际断言保留。首次完整核查原待审现存**13路径**；台账现为**437路径、232有结论、205待审**。其余修改文件只局部复核则不重计全文审计，未把扫描清单当结论。
 
-验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**和Debug APK通过；精确远端CI/R2提交后核对；原R2、10类CI路由/失败门禁及shell语法、退休符号零残余、diff检查通过。两剧本、唯一Session、现有AI、D2、隐私/原子保存、两项跨局防重复保持。App115420B、Night Host63787B仍超50000B，Session46770B；本批不声称解决大文件。下一步继续App/Host真实混合职责和剩余待审源文件，UI细节后置。Draft不合并/强推，无新增所有者决策阻塞。
+验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**和Debug APK通过；代码`21aed457c6282e985ac7a99b4de1af42dd0f563f`的[完整Android CI #4515](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39585170348)与[R2 #4090](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39585170361)均SUCCESS，独立核对18路径/逐行diff、全量测试/APK构建与上传及CI gate；后续仅文档提交只记录验收，不替代代码验证；原R2、10类CI路由/失败门禁及shell语法、退休符号零残余、diff检查通过。两剧本、唯一Session、现有AI、D2、隐私/原子保存、两项跨局防重复保持。App115420B、Night Host63787B仍超50000B，Session46770B；本批不声称解决大文件。下一步继续App/Host真实混合职责和剩余待审源文件，UI细节后置。Draft不合并/强推，无新增所有者决策阻塞。
 
 本批日志`/tmp/campboard-batch4-gradle.log`、摘要`/tmp/campboard-batch4-tests.json`；工具链沿用下方Cloud说明。以下第三批交接为历史证据。
 
