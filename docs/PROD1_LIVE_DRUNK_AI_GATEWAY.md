@@ -1,3 +1,5 @@
+> 2026-10-21 第二阶段清理：本文保留为旧V1候选协议历史；独立Python Gateway、smoke/latency及专属测试/CI已退休。现用Android直连联合开局/续规划V3与会话延续不变。不要按下方旧部署命令恢复双查询流程。
+
 # PROD-1 — Transport/Host legality SPIKE, not complete global recommendation
 
 > **2026-10-09 PRODUCT CORRECTION:** This implementation's standalone Drunk-screen recommendation is not an acceptable PROD-1 endpoint. Keep useful transport, schema, rules-domain, freshness and setup-confirmation tests, but **do not merge #292 as-is**. Whole-game issue-first diagnosis, conditional plan, private after-deal square-table relationship view, and per-decision plan continuity are required. See [PROD-GLOBAL-1](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md).

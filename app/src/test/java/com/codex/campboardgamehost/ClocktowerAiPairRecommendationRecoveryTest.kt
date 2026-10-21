@@ -45,7 +45,7 @@ class ClocktowerAiPairRecommendationRecoveryTest {
         )
         val candidate = SemanticResult("PAIR_RESULT", pairRoleId = "Baron", pairSeats = listOf(1, 2))
         val selected = ClocktowerResidualDisplayMatcherV2.matchPair(
-            decision, candidate, emptyList(), cards, "en")
+            decision, candidate, cards, "en")
         assertNotNull("the restored AI candidate should preselect the structural Host UI", selected)
         assertEquals(candidate.pairSeats.sorted(),
             selected!!.proposition.let {

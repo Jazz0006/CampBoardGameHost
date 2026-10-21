@@ -1,3 +1,20 @@
+# 当前交接 — 收尾两批，第1/2批（2026-10-21）
+
+## 2026-10-21 第二阶段第六批：收尾两批中的第一批
+
+所有者要求再两批完成。继续同一Draft #337，基线`89aa377a`，main`40050941efc3`。本批完成所有剩余非测试路径的归属核查：生产Kotlin全文/实际消费者、工具/CI全文、媒体实际查看、480条模板全量结构校验、Gradle二进制依赖完整性、历史证据全量结构解析；**不是把二进制/CSV盘点冒称源码全文审计**。新形成结论的现存路径63个；退休路径单列，不虚增当前已审数。
+
+- **Host收敛**：通用/首夜显示构造归既有无状态materializer，后夜显示归既有Session只读投影，三pair构造共用；未新增文件/Context/Manager/游戏对象，夜序/确认权威仍在Session。Host从63787B降至**46706B**，D2/隐私/stale/机械不改。
+- **整链退休**：仅旧V1候选协议的独立Python Gateway→synthetic smoke/latency→21项专属Python测试→专用CI。当前App已显式禁止旧两查询fallback，仍使用Android直连联合开局/续规划V3；连接配置/运输/receipt/会话延续/记忆/三模式未删。旧SDE专用probe源码/init退休，历史报告与原5项预期失败证据保留。孤立player/handbook的旧五人阵容/夜序示例和localStorage单页退休，没有App入口，也不作为实际Session规则证据；删除其CI docs-ignore路径。
+- **死分支/接线**：新恶魔通知compact分支只有false调用，整段专属UI删除；active-night从未消费的title/subtitle、Residual matcher从未读取的currentOptions及菜单构造删除。现用显示、自动/人工、Next均保留。现有Android测试项0删除/忽略；只调整真实matcher调用参数。
+- **净量**：不含维护文档19文件+258/-3113，净删**2855行/162007B**，整删10文件；全仓路径**427，367有结论，60待审**。剩余待审全部在app/src/test；App115421B仍超限，Session46770B。
+
+验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**及APK通过；原R2、10路由/失败门禁、workflow shell语法/模板结构/退役引用/diff检查通过。精确远端CI/R2待提交后独立核对。无付费API、无真机/杀进程、未发布field-test release；唯一Session、两剧本、现有AI、两项跨局防重复、隐私与原子保存保持。
+
+**最后一批明确范围**：审完剩余60个测试/fixture；处理App职责和<=50000B、复核现存已审中的需要解耦结论/零遗留扫描、全量测试/APK及精确CI/R2，统一给出第二阶段完成或具体未满足项。不能把本批Host达标或待审清零单独称为整个清理已完成。PR仍Draft，不合并/强推。
+
+当前日志`/tmp/campboard-batch6-gradle.log`、摘要`/tmp/campboard-batch6-tests.json`。下方是历史批次证据。
+
 # 当前交接 — 扩大连续清理批次（2026-10-21）
 
 ## 2026-10-21 第二阶段第五批：扩大连续审计与方桌死接线清理

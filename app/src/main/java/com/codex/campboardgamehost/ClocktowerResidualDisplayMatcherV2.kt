@@ -140,7 +140,6 @@ internal object ClocktowerResidualDisplayMatcherV2 {
     fun matchPair(
         decision: PendingPairInformationDecision,
         selected: SemanticResult?,
-        currentOptions: List<ClocktowerDisplayOption>,
         cards: List<PlayerCard>,
         language: String,
     ): ClocktowerDisplayOption? {
@@ -187,7 +186,6 @@ internal object ClocktowerResidualDisplayMatcherV2 {
     fun matchScalar(
         decision: PendingGlobalScalarInformationDecision,
         selected: SemanticResult?,
-        currentOptions: List<ClocktowerDisplayOption>,
         language: String = "en",
     ): ClocktowerDisplayOption? {
         if (selected?.kind != "SCALAR_RESULT") return null

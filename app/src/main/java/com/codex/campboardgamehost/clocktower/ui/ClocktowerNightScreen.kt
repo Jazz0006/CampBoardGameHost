@@ -39,20 +39,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
     onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
-    compact: Boolean = false,
 ) {
-    if (compact) {
-        ClocktowerCompactNewDemonConfirmationScreen(
-            newDemonLabel = newDemonLabel,
-            hasNewDemon = hasNewDemon,
-            confirmationEnabled = confirmationEnabled,
-            onHostTools = onHostTools,
-            onShowPlayerDisplay = onShowPlayerDisplay,
-            onConfirm = onConfirm,
-        )
-        return
-    }
-
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
 
@@ -202,93 +189,9 @@ internal fun ClocktowerNewDemonConfirmationScreen(
     }
 }
 
-@Composable
-private fun ClocktowerCompactNewDemonConfirmationScreen(
-    newDemonLabel: String,
-    hasNewDemon: Boolean,
-    confirmationEnabled: Boolean = hasNewDemon,
-    onHostTools: () -> Unit,
-    onShowPlayerDisplay: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-
-    ClocktowerDarkTheme {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-        ) {
-            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
-                Text(
-                    text = text("小恶魔 · 传承", "Imp · Succession"),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 14.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Black,
-                )
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = newDemonLabel,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 30.sp,
-                    lineHeight = 36.sp,
-                    fontWeight = FontWeight.Black,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = text("唤醒并展示新身份", "Wake and show the new identity"),
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
-                OutlinedButton(
-                    onClick = onShowPlayerDisplay,
-                    enabled = hasNewDemon,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    Text(stringResource(R.string.clocktower_host_show_to_player))
-                }
-            }
-
-            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 12.dp) {
-                HostBottomActionBar(
-                    previousLabel = text("上一步", "Previous"),
-                    hostToolsLabel = text("主持工具", "Host Tools"),
-                    nextLabel = text("继续", "Continue"),
-                    onPrevious = {},
-                    onHostTools = onHostTools,
-                    onNext = onConfirm,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    previousEnabled = false,
-                    nextEnabled = confirmationEnabled,
-                )
-            }
-        }
-    }
-}
-
 /** Compact active-night shell: full-screen steps own the Activity-root workspace directly. */
 @Composable
 internal fun ClocktowerNightActiveScreen(
-    title: String,
-    subtitle: String,
     progress: String,
     nextEnabled: Boolean,
     onHostTools: () -> Unit,
