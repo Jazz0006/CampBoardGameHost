@@ -1,15 +1,12 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
-import com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ActionFactTimelineContractTest {
-    private val snapshot = A4RuntimeFixtures.snapshot()
-
     @Test fun `action sequence must equal shared global timeline sequence`() {
         val fact = ActionFact.Death("death-seat-two", sequence = 7L, targetSeat = 2)
         val point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 7, globalSequence = 8L)
@@ -71,7 +68,7 @@ class ActionFactTimelineContractTest {
         callerOwned.clear()
 
         assertEquals(listOf("first"), timeline.entries.map { it.fact.actionId })
-        assertEquals(listOf(4L), timeline.reducerFacts().map(ActionFact::sequence))
+        assertEquals(listOf(4L), timeline.entries.map { it.fact }.map(ActionFact::sequence))
     }
 
     @Test fun `append canonicalizes by global timeline across phase and local resets`() {
@@ -102,37 +99,8 @@ class ActionFactTimelineContractTest {
         assertEquals(listOf(40L, 41L, 42L), timeline.entries.map { it.point.globalSequence })
         assertEquals(
             listOf("first-night-poison", "day-execution", "second-night-death"),
-            timeline.reducerFacts().map(ActionFact::actionId),
+            timeline.entries.map { it.fact }.map(ActionFact::actionId),
         )
-    }
-
-    @Test fun `bound timeline preserves existing dynamic reducer semantics`() {
-        val facts = listOf(
-            ActionFact.Poison("poison", 10L, 2),
-            ActionFact.Execution("execution", 11L, 3),
-            ActionFact.PhaseAdvance("advance", 12L, StorytellerPhase.DAY, 1),
-        )
-        val timeline = facts.fold(ActionFactTimeline()) { current, fact ->
-            val phase = if (fact is ActionFact.PhaseAdvance) StorytellerPhase.DAY else StorytellerPhase.FIRST_NIGHT
-            val local = if (phase == StorytellerPhase.DAY) 0 else fact.sequence.toInt()
-            current.append(
-                TimelineBoundActionFact(
-                    fact,
-                    TimelinePoint(phase, round = 1, sequence = local, globalSequence = fact.sequence),
-                ),
-            )
-        }
-
-        val raw = DynamicActionReducer.reduce(snapshot, StorytellerPhase.FIRST_NIGHT, 1, facts.reversed())
-        val bound = DynamicActionReducer.reduce(
-            snapshot,
-            StorytellerPhase.FIRST_NIGHT,
-            1,
-            timeline.reducerFacts().reversed(),
-        )
-
-        assertEquals(raw, bound)
-        assertEquals(listOf(10L, 11L, 12L), timeline.reducerFacts().map(ActionFact::sequence))
     }
 
     private fun bound(

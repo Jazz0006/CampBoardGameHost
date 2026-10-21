@@ -2,29 +2,28 @@
 
 #335、#334 均已合并；main 基线 `40050941efc3a9bcfd061d3c91d5cc72c5c1d2e5`。GitHub 独立核实完整 CI #4506（39577688281）和 Field Test APK #157（39577688218）均 SUCCESS。旧“两 PR 仍 Draft、不得合并”记录过时。最小完整游戏第一阶段关闭，具体闭环/限制见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。现在全仓遍历/大规模删除，之后才优化界面和流程细节。
 
-## 本批实际清理
+## 当前批：旧回放/观察副本/候选呈现删除
 
-工作分支 `codex/whole-tree-cleanup-20261021`，从上述 main 新建，非旧堆叠分支。
+同一工作分支 `codex/whole-tree-cleanup-20261021` / Draft [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337)，从上批文档头`2a8ad070`继续；main未变。上批孤立ASP/静态样例证据留在路线和台账，不重复计本批删除。
 
-- `tools/asp_oracle/`：旧 FormalGameState 静态 corpus、botc-asp 翻译/运行器、专属 14 个 Python 测试和说明整体删除。该工具不调用/比较当前 Android Host 或 Session；实际游戏确定性规则继续由 Session 及 Android 行为测试保护。
-- `.github/workflows/ci.yml`：移除旧 ASP/Clingo 输出、路径分类、jobs、needs/env；Android full-ci、未知路径全检、真实 APK 和失败门禁仍保留。R2 原脚本无改动。
-- `ui/`：孤立的 HTML/CSS/JS 组件展示样例删除，只有目录内相互引用和历史设计文档，无 App/资源/构建消费者；Android Compose UI 未更改。
-- `tools/setup/migrate_tb_drunk_templates.py`：已完成的一次性迁移脚本删除；运行时模板、schema、迁移结果证据和两条跨局轮换链不变。
+- 删除DynamicActionReducer/ReducedDynamicGameState，及只供它的reducerFacts桥；测试直接读canonical entries，Session实际规则和当前保存不依赖旧replay。
+- 删除旧snapshot-bound EpistemicObservation、bindTo副本、SemanticStableId与独有JSON入口；实际RecordedObservation、InformationProposition、顺序/recipient及现有存档字节合同保留，未改schema。
+- 整删无外部消费者的ClocktowerSingleNumericChoiceUi及ClocktowerRoleRevealChoiceProjection；移除仅旧测试消费的TypedResult/唤醒集合、无调用的App能力/语言辅助、FullScreenColumn及日志回调。
+- 删除12个零引用字符串key的中英文条目；2个仍在使用的单推荐控件只删take(1)后不可达分支，当前推荐/手选/自动/Next行为保持。
+- 3个退休实现专属测试退出（1个旧唤醒测试文件、旧reducer等价用例、旧bindTo用例）。实际JSON/schema/私密收件人断言迁到Recorded记录；其他UI/Session事实/幂等测试保留。
 
-9 文件整删；包括 CI/setup 说明共 11 文件 +4/-2766，净删 2762 行 / 134078B，不含维护文档的增删。Android 生产/测试 Kotlin 删除 0。App 116000B、Night Host 63787B 仍超 50000B；Session 47578B。
+不含维护文档共31文件+47/-748，净删**701行/30956B**；生产Kotlin净删574行/24267B，资源24行/1726B，测试净删102行/4905B，R2去除1条死符号存在性守卫。生产整删2文件、专属测试整删1文件，无新生产文件/框架。
 
-## 本批验证
+## 验证与当前库存
 
-Cloud `:app:testFull :app:assembleDebug` 成功，654 tests / 147 suites / 38 UI，0 failures/errors/skips；原始 R2 shell 成功。执行实际 CI 分类 shell 的 10 类路径/事件用例及 gate success/skip/failure/cancelled/classifier failure 均通过，workflow bash syntax 和 diff 检查通过。没有收费 API、真机或实际杀进程测试。代码 `280992ca271d7edffcd190834340cd1768fd7ad3` 的[完整 Android CI #4508](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230705) 和 [R2 #4083](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230512) 均 SUCCESS；已独立核对 full tests、APK 构建/上传及 CI gate。Draft PR [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337) 保持未合并；本次后续文档提交不替代上述代码验收。
+最终Cloud `:app:testFull :app:assembleDebug` SUCCESS，651 tests /146 suites /38 UI，0 failures/errors/skips；原始R2 shell、CI的10类路由/失败门禁、零残余符号、资源引用及diff检查通过。较原654减少的3项只保护退休实现，不减少现有两剧本、AI、隐私或原子保存行为覆盖。精确远端CI/R2待本批提交推送后核实，不能复用上批#4508/#4083；上批docs-only头#4510/#4085仅为历史。
 
-## 库存及下一步
+本批真正首次全文审计原待审的18个现存文件，更新唯一[源码台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)；当前445路径，213带审计结论、232待审。改了一行测试但未阅读全文仍保留待审，不以扫描数替代审计。App115420B、Night Host63787B超限，Session47578B。
 
-在唯一 [源码台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 对齐当前 Git 树，删除 54 条前阶段已退休的悬空路径，漏登文件补为待审；不得把路径扫描、历史审计结论或净删除行数冒充现行全树语义审计。历史 artifacts 也纳入库存，原未跟踪文件不动。
-
-继续全仓待审路径与 App/Night Host 混合职责。先确认真实生产消费者及当前确定性规则/AI用途，再移除整条废弃链和专属测试；不机械拆大文件。完成全部源码 <=50000B 和全树零遗留后，进入统一界面/流程细节优化。无新增所有者决策阻塞；新清理 PR 保持 Draft，不自动合并/强推/删分支。
+下一步继续待审源文件和App/Night Host混合职责，按真实消费者/必要固定规则/既有AI审计后整链删除；LegacyLocal兼容、Session仅测试使用的改写入口等是后续候选，不能一次盲删其安全测试。UI视觉/提示细节在清理后集中做。新PR保持Draft，不自动合并/强推/删分支；无新增所有者决策阻塞。
 
 ## 环境和保留合同
 
-Codex Cloud `/workspace/CampBoardGameHost` 直接读写、执行；不依赖 MiniMCP/Windows。每个 shell `source /workspace/.cloud-setup/activate.sh`；JDK25 位于 `/workspace/.cloud-setup/jdk25`。本批临时测试 init `/tmp/campboard-tests.init.gradle`、用户目录 `/tmp/campboard-java-user`，复用环境代理/CA；完整日志 `/tmp/campboard-cleanup-full.log`，摘要 `/tmp/campboard-cleanup-tests.json`，CI/R2 本地检查 `/tmp/campboard-ci-check.py`，均不提交。工具缓存可能需要网络补齐，不修改产品构建来绕过环境问题。
+Codex Cloud `/workspace/CampBoardGameHost` 直接读写、执行；不依赖 MiniMCP/Windows。每个 shell `source /workspace/.cloud-setup/activate.sh`；JDK25 位于 `/workspace/.cloud-setup/jdk25`。本批临时测试 init `/tmp/campboard-tests.init.gradle`、用户目录 `/tmp/campboard-java-user`，复用环境代理/CA；本批完整日志 `/tmp/campboard-stage2-final.log`，摘要 `/tmp/campboard-stage2-tests.json`，CI/R2 本地检查 `/tmp/campboard-ci-check.py`，均不提交。工具缓存可能需要网络补齐，不修改产品构建来绕过环境问题。
 
 保留唯一 ClocktowerGameSession、两内置剧本、现有 AI 全链和模式范围、A/B/C/D2、实际展示信息/顺序/隐私、旧响应隔离、原子/幂等存储，以及开局阵容和同一玩家身份两项跨局防重复。

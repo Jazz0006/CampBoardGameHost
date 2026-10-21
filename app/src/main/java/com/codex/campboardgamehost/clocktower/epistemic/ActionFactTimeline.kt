@@ -4,7 +4,7 @@ import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import java.util.Collections
 
 /**
- * Explicit bridge between the domain reducer's existing global action sequence and the shared
+ * Binds the confirmed action sequence to the shared
  * epistemic game timeline. Domain actions remain independent of the epistemic package; callers
  * must supply the committed [TimelinePoint] rather than reconstructing one from local phase data.
  */
@@ -24,9 +24,7 @@ data class TimelineBoundActionFact(
 /**
  * Immutable canonical action history whose ordering authority is the shared global timeline.
  *
- * The underlying [ActionFact.sequence] remains unchanged for [com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer]
- * compatibility. This contract proves that sequence is the same identity as [TimelinePoint.globalSequence]
- * before facts cross into timeline-aware epistemic code.
+ * [ActionFact.sequence] and [TimelinePoint.globalSequence] identify the same position.
  */
 class ActionFactTimeline(
     entries: List<TimelineBoundActionFact> = emptyList(),
@@ -55,9 +53,6 @@ class ActionFactTimeline(
         }
         return ActionFactTimeline((entries + entry).canonical())
     }
-
-    /** Exact reducer-compatible view; no action payload or sequence is rewritten. */
-    fun reducerFacts(): List<ActionFact> = entries.map { it.fact }
 
     override fun equals(other: Any?): Boolean = other is ActionFactTimeline && entries == other.entries
     override fun hashCode(): Int = entries.hashCode()

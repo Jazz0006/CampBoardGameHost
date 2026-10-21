@@ -129,7 +129,6 @@ jobs:
             exit 1
           fi
           grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$core"
-          grep -q "internal fun isClocktowerEvil" "$core"
           grep -q "internal fun clocktowerPrivateObservationRecordId" "$core"
 
           for symbol in \

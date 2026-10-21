@@ -4,9 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.AbilityState
 import com.codex.campboardgamehost.clocktower.domain.Alignment
 import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
 
 /** Stable schema marker for persisted A1/A1.1 semantic objects. */
 const val EPISTEMIC_SCHEMA_VERSION: Int = 2
@@ -65,44 +62,6 @@ enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO
 enum class BooleanMetric { DEMON_OR_RED_HERRING_PRESENT, PLAYER_QUESTION_ANSWER }
 enum class ObservationVisibility { PUBLIC, PRIVATE }
 enum class ObservationReliability { RECEIVED_AS_FUNCTIONING, KNOWN_MALFUNCTIONING, NOT_ABILITY_INFORMATION }
-
-data class EpistemicObservation(
-    val observationId: String,
-    val snapshotId: String,
-    val phase: StorytellerPhase,
-    val round: Int,
-    val sequence: Int,
-    val sourceSeat: Int?,
-    val sourceAbility: RoleId?,
-    val visibility: ObservationVisibility,
-    val recipientSeats: Set<Int>,
-    val reliability: ObservationReliability,
-    val proposition: InformationProposition,
-    val schemaVersion: Int = EPISTEMIC_SCHEMA_VERSION,
-    val timelineBinding: ObservationTimelineBinding = ObservationTimelineBinding.LegacyLocal,
-) {
-    init {
-        requireSchemaVersion(schemaVersion)
-        require(observationId.isNotBlank() && snapshotId.isNotBlank())
-        require(round > 0 && sequence >= 0)
-        require(sourceSeat == null || sourceSeat > 0)
-        require(recipientSeats.all { it > 0 })
-        require(visibility != ObservationVisibility.PRIVATE || recipientSeats.isNotEmpty())
-        require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty())
-        timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
-    }
-}
-
-object SemanticStableId {
-    fun create(prefix: String, canonicalPayload: String): String {
-        require(prefix.matches(Regex("[a-z][a-z0-9-]*")))
-        val digest = MessageDigest.getInstance("SHA-256")
-            .digest(canonicalPayload.toByteArray(StandardCharsets.UTF_8))
-            .take(16)
-            .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
-        return "$prefix-$digest"
-    }
-}
 
 internal fun requireSchemaVersion(version: Int) {
     require(version == EPISTEMIC_SCHEMA_VERSION) {

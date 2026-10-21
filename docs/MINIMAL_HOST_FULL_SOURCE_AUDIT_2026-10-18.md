@@ -1,3 +1,13 @@
+## 2026-10-21 第二阶段第二批：旧回放/观察副本/无消费呈现退休
+
+- 从Draft #337 `2a8ad070`继续，main仍为`40050941efc3`，不合并/改base/强推。现行业务合同及两条跨局防重复不变。
+- **完整删除链**：仅测试调用的DynamicActionReducer/ReducedDynamicGameState与reducerFacts桥；RecordedObservation→bindTo→snapshot-bound EpistemicObservation→另一个SemanticStableId及独占JSON；Ravenkeeper/Undertaker旧TypedResult→RoleRevealAnchor文件；旧唤醒集合和仅保其实现的测试；无外部入口的SingleNumericChoiceRows两个自调用重载及文件。NightFlow和Session现行死亡/唤醒/继任/保存不是旧reducer的消费者，不能以旧reducer还在测试中推定生产需要。
+- **同时净删**：App未调用abilitySubject/labelResId、旧FullScreenColumn、postcommit/reveal日志回调、12个中英文零引用key；2个实际单推荐UI只删take(1)后不可达的次要按钮分支，保留当前推荐顺序/人工/自动模式/Next。无新生产文件或框架。
+- **净量（不含维护文档）**：31文件+47/-748，净删**701行/30956B**。生产Kotlin17文件+16/-590，净删**574行/24267B**；资源-24行/1726B；测试11文件净删102行/4905B；R2仅去掉要求已死isClocktowerEvil存在的1行/58B。生产整删2文件（旧数字候选UI、旧RoleRevealChoiceProjection），专属测试整删1文件（旧WakingRoleAuthority）；另删旧reducer等价性及bindTo专属测试各1项，原654→651，其他真实行为覆盖保留。
+- **测试迁移**：EpistemicSemanticModelTest的实际Recorded记录保留schema/私密收件人/JSON排序断言；混合Session测试保留当前事实、重复与非法输入拒绝，只删旧回放断言。现行Session写者、SessionJson、AtomicFile存储未改，未改已确认事实/AI协议/两剧本/双轮换；现有真实NightFlow/38 UI/AtomicFile测试继续执行。
+- **横向审计**：首次全文/真实引用核查原待审的18个现存路径，跨发牌、展示模型、方桌身份、侍女、推荐、实际信息显示、设置保存、AtomicFile、资源及时间线/Session测试；原已审路径只复核不重计。3个退役待审路径从当前表移出。现行**445路径、213带审计结论、232待审**；目录对齐与修改测试中的一行不算整文件已审。所有新结论直接写入原表，历史证据不冒称本批重审。
+- **验证**：最终Cloud full **651 tests/146 suites/38 UI，0 failure/error/skipped**、APK、原R2脚本、CI分类与门禁、零残余符号/资源引用及diff检查均通过；精确远端CI/R2提交后核对。App **115420B**、Night Host **63787B**仍超50000B，Session **47578B**。下一步继续待审生产/测试及App/Host混合职责；LegacyLocal兼容、Session测试专用改写入口等仍待后续消费审计，不声称全树清空。无新增所有者决策；无付费模型/真机/杀进程验收。
+
 ## 2026-10-21 第二阶段首批：遗留工具整链删除与当前树对齐
 
 - 起点 main `40050941efc3`；#335/#334 已合并，完整 CI #4506 / Field Test APK #157 SUCCESS。旧 Draft 禁令仅为历史。
@@ -425,7 +435,7 @@
 | `.github/workflows/ci.yml` | 7501 | 已审计 | 必须保留 | 本批审查完整分类/Android/gate；旧静态corpus不读取Host已整链退休，Android full/APK、未知路径全检及失败门禁仍启用。实际shell 10类路由/5类gate检查通过；远端精确HEAD另核。 |
 | `.github/workflows/field-test-apk.yml` | 13182 | 待审 | — | 尚未形成有证据结论 |
 | `.github/workflows/prod1-gateway-offline.yml` | 990 | 已审计 | 需要解耦 | F12-E全文及实际生产/测试调用；代码HEAD 2ce0e897898e8f040c3bef8dcbda20186e2e4689；独立PR路径/手动离线跑gateway/latency工具和unittest，密钥为空；不等于App直连模型产品验收，需与工具一起判断保留必要性；未运行。（静态，未运行新增测试） |
-| `.github/workflows/r2-write-probe.yml` | 15570 | 已审计 | 需要解耦 | F12-O解决R2 #3985旧enum存在性门禁冲突：不恢复废弃ClocktowerPairInformationAbility，而核新的DirectPairSelection存在且旧PairManualAuthority/SelectionModel/Ability不再出现在生产。新R2 #3986成功；其余结构门禁仍后续按实际职责更新。 |
+| `.github/workflows/r2-write-probe.yml` | 15512 | 已审计 | 需要解耦 | F12-O解决R2 #3985旧enum存在性门禁冲突：不恢复废弃ClocktowerPairInformationAbility，而核新的DirectPairSelection存在且旧PairManualAuthority/SelectionModel/Ability不再出现在生产。新R2 #3986成功；其余结构门禁仍后续按实际职责更新。 |
 | `.gitignore` | 219 | 已审计 | 必须保留 | 保护私有模型评估输出、凭据所在local.properties、构建缓存和APK；全文核对。 |
 | `AGENTS.md` | 34651 | 已审计 | 必须保留 | 当前规范入口已全文读取；本批修正合并状态和孤立oracle退休，仍保留唯一Session/AI/双轮换/隐私及原子性。 |
 | `README.md` | 2813 | 已审计 | 必须保留 | 当前项目入口；删除已过时pending/退一步说明，与当前D2和清理顺序一致。 |
@@ -438,22 +448,22 @@
 | `app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json` | 331689 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/assets/setup/trouble_brewing_setup_presets_v3.schema.json` | 1650 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/AppClocktowerLandingScreen.kt` | 6026 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt` | 13556 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt` | 464 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt` | 12982 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。真实App发牌/中断发牌→PassPhoneScreen/RevealCardScreen→共享方桌及私密展示；全文复核、删除零引用FullScreenColumn，正式交接及身份显示未变。 |
+| `app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt` | 464 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。PlayerCard/GameOutcome为Session和准备名单的展示DTO；App/SessionPlayerCards/终局UI消费，不是第二游戏事实来源。 |
 | `app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt` | 12093 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/AppSettingsScreen.kt` | 10085 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/BotcAiTrace.kt` | 3982 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；App开局联合模型请求调用firstNightStage/Event，ADB只写allowlist stage/原因/计数，保护在线调试；剩余未被调用的postcommit旧事件helper可独立裁剪。（静态审计） |
-| `app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt` | 116000 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；MainActivity.onCreate→CampBoardGameHostApp→JudgeScreen；Session/开局/续规划/密钥 stores；已按3121行覆盖根组件。保留设备配置、setup交付、Session单writer回调、联合开局及续规划/记忆/预选/异步key。L1353/1967醉汉候选回匹配、1747自动继承、2445Slayer效果、2606Virgin、2691处决/毒到期、2851Dawn推导、3075自动终局应退出Host规则责任。ArtistUsed/Claimed、lastExecutedName/pending身份/终局仍有Compose实际语义，需回到唯一事件；UI草稿不误当第二canonical状态。先成组断开规则计算和重复事实，再按真实职责缩至<=50000B，不机械抽facade。（静态；运行仅上述明确测试） |
+| `app/src/main/java/com/codex/campboardgamehost/BotcAiTrace.kt` | 1667 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。App实际只调用firstNightStage/firstNightEvent；无消费者postcommit START/STAGE/DROPPED/FINISHED/FAILED/BLOCKED及专属allowlist整删。实际首夜有界日志保留。 |
+| `app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt` | 115420 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；MainActivity.onCreate→CampBoardGameHostApp→JudgeScreen；Session/开局/续规划/密钥 stores；已按3121行覆盖根组件。保留设备配置、setup交付、Session单writer回调、联合开局及续规划/记忆/预选/异步key。L1353/1967醉汉候选回匹配、1747自动继承、2445Slayer效果、2606Virgin、2691处决/毒到期、2851Dawn推导、3075自动终局应退出Host规则责任。ArtistUsed/Claimed、lastExecutedName/pending身份/终局仍有Compose实际语义，需回到唯一事件；UI草稿不误当第二canonical状态。先成组断开规则计算和重复事实，再按真实职责缩至<=50000B，不机械抽facade。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApplication.kt` | 367 | 已审计 | 必须保留 | F12-E全文及实际生产/测试调用；代码HEAD 2ce0e897898e8f040c3bef8dcbda20186e2e4689；AndroidManifest.xml经android:name反射实例化Application，onCreate安装DebugFlightRecorder；无Kotlin直接调用不能判死。（静态，未运行新增测试） |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerActiveGameMetadata.kt` | 6389 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt` | 926 | 已审计 | 需要解耦 | F12-E全文及实际生产/测试调用；代码HEAD 2ce0e897898e8f040c3bef8dcbda20186e2e4689；Team/Phase/NightAction/DisplayKind/Script在Host UI/Flow、AI matcher、catalog广泛使用；部分类别与Domain重复，但不可整文件删除。（静态，未运行新增测试） |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt` | 926 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。两剧本、展示角色、UI阶段/行动/白天模式枚举；App/Host/各角色呈现共同消费，未发现独立写事实入口。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerArtistTableState.kt` | 2237 | 已审计 | 需要解耦 | F12-R全文+ArtistInteraction：玩家实体seat映射有效，但claimantCandidateNames和已使用真实Artist禁止UI选择是Host规则候选门禁，F12-R作为下一批目标，以已知物理座位替代。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerCompactNightUi.kt` | 5126 | 已审计 | 必须保留 | F12-J全文核查现用consumer：已切除无人调用的BeginnerSingleTargetRevealDialog；现用AbilityDialog、ReadOnlyRevealDialog、TwoTargetRevealDialog在生产仍有真实UI消费者，应逐用途保留。 完整代码CI #4393 / R2 #3973均成功。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerNightGuidance.kt` | 4873 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidPresentationSemantics.kt` | 882 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt` | 8811 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerNightGuidance.kt` | 4873 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。NightStepUi读取实际/展示身份和稳定座位，生成唤醒提示及真人输入说明；无唤醒/提交权威，保留Drunk展示与邪恶分组。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidPresentationSemantics.kt` | 882 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。JudgeScreen将已重新验证的双目标映射为展示名/座位，供侍女当前UI及typed Observation；无独立规则结果。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt` | 8375 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。NightStepUi的当前双目标/数字输入/当前AI建议呈现；只删take(1)后不可能到达的多推荐else，选座/人工/自动及Next回调保持。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidStepMaterializer.kt` | 1647 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerContrastPolicy.kt` | 1565 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerContrastPolicy.kt` | 1565 | 已审计 | 需要解耦 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。PresentationTheme消费固定调色板；contrastRatio只被颜色回归测试消费，可在后续将该测试计算移回既有测试，但不能删除实际配色或无障碍断言。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerCurrentResidualScopeV2.kt` | 7419 | 已审计 | 必须保留 | F12-N全文/现用链：从当前Session与实际nightSteps生成首夜/后夜AI scalar/pair/Mayor API请求，跨未完成玩家行动设置barrier；留真实AI能力；末尾manualInformationCandidates非空才判UNSUPPORTED的旧Host domain依赖下一轮替代。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerDayNominationGesture.kt` | 2043 | 已审计 | 需要解耦 | F12-M全文件/引用：ClocktowerDayOverviewTableUi经HostTableUi消费方向手势，实体座位映射需留；只允许alive的指向候选是旧交互约束，后续按实际提名操作能力复核，不与Session规则有效性捆绑。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableState.kt` | 1280 | 已审计 | 必须保留 | F12-M全文件/引用：HostScreen多处日间/投票/Klutz直接从canonical GameState投影真实座位、存活/Drunk展示身份和幽灵票；只读方桌的身份与保密入口。 |
@@ -470,14 +480,14 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightDecision.kt` | 2158 | 已审计 | 必须保留 | F12-N全文：首夜washerwoman/librarian/investigator真实actor绑定唯一GameState及AI请求identity，不枚举合法配对答案；当前AI首夜真实consumer。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightScalarDecision.kt` | 3678 | 已审计 | 必须保留 | F12-N全文：按当前问题/selected FT两座位构建NUMBER/BOOLEAN/ROLE AI合同和Session revision，不生成答案；防止过期和两个影子身份。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostBottomInsetPolicy.kt` | 1233 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt` | 6529 | 已审计 | 需要解耦 | F12-K全文/生产消费者复核：全文件审阅实际引用：现用私密命题ID稳定hash、Drunk/Poison显示命题、活着的邻居/真实角色判别和夜间角色wake仍消费；仅老storytellerPairHint单一Sage consumer已整删，余helpers混合真实场景与规则语义，未来逐项解耦，不整删。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt` | 5488 | 已审计 | 需要解耦 | F12-K全文/生产消费者复核：全文件审阅实际引用：现用私密命题ID稳定hash、Drunk/Poison显示命题、活着的邻居/真实角色判别和夜间角色wake仍消费；仅老storytellerPairHint单一Sage consumer已整删，余helpers混合真实场景与规则语义，未来逐项解耦，不整删。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt` | 2877 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt` | 3261 | 已审计 | 必须保留 | F12-O全文审+生产引用：NightStepUi是宿主夜信息actor/phase/typed proposition/显示和提示词AI上下文的结构合同；退役PairInformationAbility旧枚举；其他role的候选字段仍按用途后续削减，不应整删live DTO。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt` | 2600 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt` | 4816 | 已审计 | 需要解耦 | F12-N全文/调用：真实目标、夜间手工动作、私密重复展示、自动模式fresh ID/防误跳、DisplayOption结构仍由HostScreen/NightStep实际消费；删除无生产调用automaticRedHerringSelectionAtBarrier的旧singleton伪决定，不改已采纳AI红鲱鱼自动推进。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSquareTableScaffold.kt` | 2793 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt` | 5651 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjection.kt` | 1916 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt` | 5651 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。HostTableUi→hostTableSeatFrames：物理seat identity/连续唯一座位/选择及稳定渲染映射；这些属于数据身份与UI一致性，不是旧通用规则域。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjection.kt` | 1916 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。DayOverviewTableState读取当前GameState并生成Host私密方桌；实际角色/展示角色/生死分离，以域seat排序，无第二权威。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableLayout.kt` | 12909 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableReorder.kt` | 2043 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt` | 3596 | 待审 | — | 尚未形成有证据结论 |
@@ -493,39 +503,37 @@
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightPresentationRole.kt` | 710 | 已审计 | 必须保留 | F12-L全文：NightStepUi+NightFullScreenOwnership实际调用，Drunk夜间显示遵循展示镇民身份，不读取规则候选。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepMaterializerRegistry.kt` | 2333 | 已审计 | 需要解耦 | F12-L全文：HostScreen first/other-night有实时消费者；顺序身份/去重必要，但角色死亡引起的额外流程筛选及旧Flow门禁待审，保护正常步骤和AI。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt` | 35814 | 已审计 | 需要解耦 | F12-P已删Undertaker/Ravenkeeper脚本Role全候选ResultChoices、自动singleton fallback与旧key。两类真实界面接DirectRoleReveal，AI预选必须当前target+RoleAt一致；Ravenkeeper自动公布使用现存clocktowerInformationCandidateId去重。其余>50KB UI及规则手工候选仍待进一步减少。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerOutcomePresentation.kt` | 1659 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerOutcomePresentation.kt` | 1659 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。App从Session GameEnded只读映射本地化GameOutcome；不结算胜负。KLUTZ仍复用邪恶通用summary，属清理后提示细化项，本批不改UI内容。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt` | 11767 | 已审计 | 必须保留 | F12-O彻底迁移production：不再接完整候选网格；按实际脚本身份/座位数及AI typed建议初始化，坐标点击两席或None人工直选，在确认时构造一个ClocktowerDisplayOption→原onShowPlayerDisplay/唯一Session; 仍保持隐私与自动/辅助模式。代码de091e24，Android CI #4406/R2 #3986成功。 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt` | 3074 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt` | 3074 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。PlayerDisplayUi只从typed proposition/显式subjectSeats取得恰好两座位与名字；保留实际信息和recipient隐私，不从文案推身份。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPhaseStorytellerAdapter.kt` | 357 | 已审计 | 必须保留 | F12-L全文：App/HostScreen/HostSelectionSemantics多处真实事件与AI/时间线消费者，阶段映射属统一Session结构语义。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt` | 6819 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayResolution.kt` | 2715 | 已审计 | 必须保留 | F12-L全文：实际所选信息在同一player display中投影typed RoleAt与实际可见payload；清除孤立LegacyUnreliable兼容函数，普通和AI选择统一，保留敏感选项清空。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt` | 12569 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationRoleCatalog.kt` | 7722 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationTheme.kt` | 3168 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt` | 7801 | 已审计 | 必须保留 | F12-P全文新版+真正consumer：守鸦人方桌仍先由玩家确认查询seat，再直选脚本身份或AI typed RoleAt预选；不再从Host候选菜单读ResultChoices；实际公布沿onShowPlayerDisplay/Session和同一action revision，保留当前角色/目标高亮。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt` | 7172 | 已审计 | 必须保留 | F12-P全文新版+真正consumer：守鸦人方桌仍先由玩家确认查询seat，再直选脚本身份或AI typed RoleAt预选；不再从Host候选菜单读ResultChoices；实际公布沿onShowPlayerDisplay/Session和同一action revision，保留当前角色/目标高亮。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRecurringInformationStepMaterializers.kt` | 1897 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt` | 3810 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationInteractionState.kt` | 694 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerResidualDisplayMatcherV2.kt` | 12977 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerResidualRequestIdentityV2.kt` | 947 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleLocalization.kt` | 583 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleRevealChoiceProjection.kt` | 940 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt` | 7069 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：Sage UI已改为AI仅一条预选和现有方桌轻点任意两个真实座位；仅结构检查不同/存在座位，不从全部可能的pair/真假列表筛选。原真人确认与Sage actor高亮保留。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializer.kt` | 3315 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：Sage实际被杀唤醒的NightStep构建仍真实消费；删除全Sage合法/真假配对枚举及直接恶魔默认Pair、highPressure旧字段；保留从说书人手工两seat构造typed AnyOf和原PlayerDisplay确认/事件。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberBadge.kt` | 2796 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabel.kt` | 390 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCards.kt` | 2522 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App.cards→JudgeScreen及所有展示读者；AbstractList每次get读取当前Session而非镜像可写cards，保留seat/name绑定、已确认role/death round投影；setupCards仅开局展示。复活/多次死亡的first death round与未知role渲染扩展是后续状态合同核查项，不据此发明恢复状态。对应现有3测试本轮通过。（静态；运行仅上述明确测试） |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleNumericChoiceUi.kt` | 4197 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleRecommendationChoiceUi.kt` | 2362 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleRecommendationChoiceUi.kt` | 1959 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。Pair/Ravenkeeper/Undertaker UI消费单条AI建议和手选回调；take(1)后的额外ranked按钮else整删，排序与默认按钮未变。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionPresentation.kt` | 3305 | 已审计 | 需要解耦 | F12-J全文核查现用consumer：Mayor夜间展示签名移除无消费者automatic/explanation，现有single-target合约仍兼容受权Session用户提交，但upstream selectableSeats来自旧Host候选，未来需仅保留结构输入。 完整代码CI #4393 / R2 #3973均成功。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt` | 5284 | 已审计 | 必须保留 | F12-J全文核查现用consumer：现唯一MayorRedirect方桌确认路径，删不可达automatic/ImpSuccession分支，仍支持手选重定向及Mayor dies。 完整代码CI #4393 / R2 #3973均成功。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSlayerTableState.kt` | 2892 | 已审计 | 需要解耦 | F12-Q全文与SlayerInteraction消费者：物理座位稳定/玩家身份选择、UI互斥高亮仍需；现在仍把claimant/target alive-only及曾用过候选门禁混入投影，后续按最小结构/存在座位改造，不能为旧测试还原机械命中推导。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableLifeMarkers.kt` | 434 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatDensityPolicy.kt` | 3360 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt` | 35812 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt` | 7414 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt` | 7414 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。HostScreen当前恶魔伪装确认页和手工三角色选择；实际Host工具及确认入口、私密提示继续使用，非已退休通用Night Ready页。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt` | 3141 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt` | 9135 | 已审计 | 必须保留 | F12-P全文新版+真实consumer：昨夜已确认处决seat决定投影，用户只在角色菜单选择展示的角色或采纳当前AI RoleAt；展示文案/序列化只从实际选择生成，不依赖Host全脚本Role候选表，仍沿单一Session记录。 |
+| `app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt` | 8622 | 已审计 | 必须保留 | F12-P全文新版+真实consumer：昨夜已确认处决seat决定投影，用户只在角色菜单选择展示的角色或采纳当前AI RoleAt；展示文案/序列化只从实际选择生成，不依赖Host全脚本Role候选表，仍沿单一Session记录。 |
 | `app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteHistoryRecord.kt` | 1024 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/CommonPlayersDefaultPolicy.kt` | 415 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt` | 3802 | 待审 | — | 尚未形成有证据结论 |
@@ -535,7 +543,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/MainActivity.kt` | 1103 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；AndroidManifest launcher activity→setContent(CampBoardGameHostApp)；平台生命周期与沉浸模式、唯一Compose入口；无规则真值/候选计算。manifest反射消费者已核对，不能仅按Kotlin零引用删入口。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/PlayerExperiencePicker.kt` | 1921 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt` | 10527 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/java/com/codex/campboardgamehost/StorytellerAiSettings.kt` | 3507 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/main/java/com/codex/campboardgamehost/StorytellerAiSettings.kt` | 3507 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。App root remember管理直连/gateway配置加载及700ms安全延迟保存；本局Session/请求生命周期不在这里，离开设置页仍保留保存任务。 |
 | `app/src/main/java/com/codex/campboardgamehost/StorytellerAiSettingsPanel.kt` | 8247 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；App真实渲染模式/direct API key/gateway设置，安全存储在上游Keystore store；保留用户配置入口，未来废弃Gateway应单独确认，不因Rules清理误删AI设置。（静态审计） |
 | `app/src/main/java/com/codex/campboardgamehost/StorytellerOperationMode.kt` | 2026 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；App/AI RequestIdentity/Settings真实用MANUAL、AI_ASSISTED、AI_AUTOMATIC；新局密钥可用性与异步mode一致性是权限和过期安全，不属于旧Rules。（静态审计） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalog.kt` | 3528 | 已审计 | 必须保留 | App、HostScreen；生产调用 fromContext.ruleset；现用两内置剧本资产/元数据入口，延迟缓存是静态内容；parse/adapter 均真实消费，不能按 legacy 历史注释退休。（静态） |
@@ -546,7 +554,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/LegacyRulesetCatalogAdapter.kt` | 2594 | 已审计 | 必须保留 | BuiltInClocktowerRulesetCatalog.load；将真实 rules asset 文本和顺序组装 registry；无候选/事实否决，独占生产消费者尚在，需等目录来源替换才可退役。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/NoGreaterJoyOfficialCharacterMetadata.kt` | 3502 | 已审计 | 必须保留 | BuiltInClocktowerRulesetCatalog.load；现用 NGJ 角色文本/顺序/提醒元数据来源，无 truth 计算；不能借 Host Rules 清理删除支持剧本。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/OfficialReminderTokenMetadata.kt` | 3220 | 已审计 | 必须保留 | BuiltInClocktowerRulesetCatalog→GrimoireReminderToken；真实魔典 reminder token 字典及来源版本；结构完整性检查，已确认标记/私密展示消费者须保留。（静态） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ActionFact.kt` | 11857 | 已审计 | 需要解耦 | Session、ActionFactDraft/Timeline、SemanticJson、GlobalEventProjection、ProviderHistoryPrefix；ActionFact 和有序 reducer 必须保留；no-self nomination/Butler/Klutz 与 hit⇒consumed 仍是规则约束，不能把已确认事实拒绝为不合法；保留 seat/ID/sequence/原子性。（静态） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ActionFact.kt` | 5902 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。保留全部确认ActionFact及Klutz证据；DynamicActionReducer/ReducedDynamicGameState仅测试调用、非Session恢复器，整段退休。真实机械效果仍在唯一Session。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ClocktowerGameStateAdapter.kt` | 1817 | 已审计 | 需要解耦 | App、TroubleBrewingSetupCommitter；是旧 PlayerCard→canonical immutable 输入适配，非第二写入者；以 name 匹配毒和死亡自动清毒需改为稳定 seat/明确事实，不能直接删除开局适配。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ClocktowerSemanticHistoryMode.kt` | 2302 | 已审计 | 必须保留 | GameSnapshot、Session、ProviderHistoryPrefixMaterializer、StrategicContinuation；显式 legacy/global 模式、防未来或冲突序列，避免从缺失历史捏造事实；迁移策略不等于独立恢复产品。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetup.kt` | 2462 | 已审计 | 必须保留 | SetupCommitter/Provider/ShownIdentity/Template、GameSnapshotProjector、RotationRecordFactory；确切已确认初始身份不可由 provenance 重算；只作不可变输入/事实，结构检查为座位身份和非空，不算线索合法性。（静态） |
@@ -563,12 +571,12 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderHistoryPrefixV1.kt` | 9094 | 已审计 | 必须保留 | ProviderHistoryPrefixMaterializer、GlobalEventProjection、StrategicContinuation、ProviderContract；不可变冻结事实前缀、明确 UNKNOWN/PARTIAL、recipient 和 cutoff；供 AI 连续策略，非独立文本复盘。Action.copy 对 list 字段浅拷贝是后续不可变性核查项，未断言 bug。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/domain/TroubleBrewingGameSnapshot.kt` | 5165 | 已审计 | 必须保留 | RuntimeGameProjector、GameSnapshotProjector、InitialOpeningRequest/Joint、MayorBoundary、JsonCodec；只读真实座位/状态投影及 known/uncommitted/unknown，不自算信息真值；保留现用 AI 请求；不是另一份可写 GameState。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactDraft.kt` | 13274 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；App、Session与NightResultConfirmed形成真实ActionFactDraft→bindGlobal→同一Action timeline；identity/seat/sequence保护有效，某些角色级phase/ability约束未来缩窄。（静态审计） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimeline.kt` | 4576 | 已审计 | 必须保留 | F12-G全文+真实引用核查：F12-G删除只有Formal世界消费的FormalActionTimelineBinding，保留ActionFactTimeline/TimelineBoundActionFact由Session/Temporal History真实消费和fact.sequence/globalSequence一致性。（代码8644e757，待精确CI结果） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimeline.kt` | 4171 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。确认事件唯一有序entries、immutable snapshot和跨观察全局序列碰撞检查保留；仅测试使用reducerFacts桥删除，测试直接读取entries.fact。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicContracts.kt` | 848 | 已审计 | 必须保留 | F12-D全文/真实引用证据0f904f7031770bd2f12acea4299aa9b1d5c8e5c0；TimelinePoint由Session.nextTimelinePoint→绑定Action/Observation、公开历史/AI prefix/JSON消费；globalSequence唯一排序权威，round/本地sequence仅结构和诊断，正数/非负形状检查不涉及游戏规则。 |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationDraft.kt` | 3378 | 已审计 | 必须保留 | F12-E全文及实际生产/测试调用；代码HEAD 2ce0e897898e8f040c3bef8dcbda20186e2e4689；Session/HostScreen/App信息公布与AI residual matcher使用；仅处理记录ID、收件人可见范围、global timeline结构绑定与匹配，不推导线索真值。（静态，未运行新增测试） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationLog.kt` | 7852 | 已审计 | 必须保留 | F12-G全文+真实引用核查：F12-G删除worldReplay观察排序与Formal重载bindTo；真实Session日志的Global/Legacy chronology、recipient隐私、去重、按snapshotId绑定保留。（代码8644e757，待精确CI结果） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticJson.kt` | 11525 | 已审计 | 必须保留 | F12-G全文+真实引用核查：F12-G删除FormalState、PlayerKnowledge的旧ActionFact/Ruleset影子JSON，现仅有GlobalEventProjection/HostCoreSemantics使用的InformationProposition、实际观察/私密日志及TimelinePoint codec。（代码8644e757，待精确CI结果） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticModel.kt` | 5326 | 已审计 | 必须保留 | F12-G全文+真实引用核查：F12-G已删除FormalGameState/FormalPlayerState/PlayerKnowledgeSnapshot及b4CanonicalPayload/referencedSeats，现保留实际InformationProposition、GrimoireState、EpistemicObservation、StableId和不可变列表。（代码8644e757，待精确CI结果） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationDraft.kt` | 2745 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。当前Session确认前输入/Global绑定及幂等matches保留；无消费者bindLegacyLocal移除，不变更已保存记录。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationLog.kt` | 6591 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。Session/AI/存储所用RecordedEpistemicObservation及immutable log不变；删旧world-set bindTo复制和无消费destructuring兼容方法。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticJson.kt` | 9810 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。当前Session保存/AI所需Recorded/proposition JSON不变；旧snapshot-bound Observation独有encode/decode移除，未改现有schema/JSON字节合同。 |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticModel.kt` | 3675 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。现用InformationProposition/visibility/reliability保留；无现行生产消费者的snapshot-bound EpistemicObservation及专属SemanticStableId整删。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerHostInteraction.kt` | 1651 | 已审计 | 必须保留 | HostPresentationModels、NightHostProjection、NightStepMaterializerRegistry、Flow/EffectiveNightState；稳定 interaction ID、phase、kind 与完成类型，只有形状约束，无候选/真值推理；不新增可写 Context。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionNightStepIdentity.kt` | 3458 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/persistence/ClocktowerRulesetPersistence.kt` | 1848 | 已审计 | 需要解耦 | App.troubleBrewingRulesetRefFor、开局 rulesetBasis；现用 setup role-set 哈希与 catalog script hash 两种身份并行；先核对 Snapshot/历史消费者选一种内容身份，不能直接废弃现用 RulesetRef 或引入兼容恢复壳。（静态） |
@@ -577,7 +585,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetContentHasher.kt` | 2875 | 已审计 | 必须保留 | TroubleBrewingRulesetPersistence.refFor；现用开局 RulesetRef 内容身份哈希，非信息真值或行动许可；有第二 catalog 哈希但用途/输入不同，不能按算法相似直接删除。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetJsonLoader.kt` | 3108 | 已审计 | 必须保留 | App、BuiltInClocktowerRulesetCatalog；parse 的旧 rules asset 仍是文本/顺序 registry 来源，parseScript 仍加载两内置脚本；没有据此判信息正确，命名 legacy 不等于孤立。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetKnowledge.kt` | 995 | 已审计 | 必须保留 | RulesetJsonLoader、LegacyRulesetCatalogAdapter、ContentHasher、RulesetPersistence；角色文本/顺序/jinx 数据及结构检查；服务现用目录和内容身份，不能随旧 Rules 门禁整包删。（静态） |
-| `app/src/main/java/com/codex/campboardgamehost/clocktower/session/BotcAiWireTrace.kt` | 6748 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；PersonalDirect、JointOpening、StrategicContinuation、App/HostScreen；保留best-effort诊断、密钥redaction、UTF8分块与stage枚举；DEBUG+显式VERBOSE可输出完整私密角色/响应，revealFailure直接Log.e异常不受opt-in控制，需核对可导出的最小安全字段并缩减raw payload/异常文本；调试日志不能变成第二事实日志，不能宣称只记录无敏感元数据。（静态；运行仅上述明确测试） |
+| `app/src/main/java/com/codex/campboardgamehost/clocktower/session/BotcAiWireTrace.kt` | 5729 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。保留当前传输/开局/后夜trace与脱敏/分片；无消费者revealStage/revealFailure已删，实际请求/解析/凭据安全不变。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerDayFlow.kt` | 15255 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt` | 47578 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App、Role/Alive/Poison扩展、AI冻结context/history/continuation、PlayerCards；816行确认单writer/revision/ID去重/同一cursor行动+观测原子更新必须保留。L367 Butler同夜首次目标固定、存活/role/非自身、L601继承alive、L231/265 setup限定须区分事实许可与基本时序；L480phase规则表不与lastaccepted源时序混删。clearAttack/Protection仅改nightTargets无清除事件，voteStanding自动阈值，causal journal并行历史，须P3联合收敛；不另建Session或Context。（静态；运行仅上述明确测试） |
 | `app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionAliveBoundaries.kt` | 1533 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；App Slayer/Virgin/普通处决/Dawn→commitConfirmedPlayerDeath；保留已知seat、death事实+可选public observation原子性/expected revision；新actionID再次确认死者被拒、死亡自动清毒属现有规则/结果联动，须与实际确认语义拆开，不以删除规则破坏现有单次死亡提交。（静态；运行仅上述明确测试） |
@@ -647,7 +655,7 @@
 | `app/src/main/java/com/codex/campboardgamehost/debug/DebugFlightRecorder.kt` | 8403 | 已审计 | 需要解耦 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；Manifest Application注册崩溃捕捉、App/Settings分享ZIP、noBackup私有保存与FileProvider真实消费；有诊断价值，检查crash state以及可分享trace是否包含私密game事实后再缩减。（静态审计） |
 | `app/src/main/java/com/codex/campboardgamehost/debug/DebugFlightRecorderCore.kt` | 2706 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；DebugFlightRecorder使用bounded event buffer、crash/trace序列化，ADB/ZIP故障诊断合同有真实消费者；需检查fields/exception message泄露范围，避免向公开日志输出敏感事实。（静态审计） |
 | `app/src/main/java/com/codex/campboardgamehost/persistence/AppPreferencesStore.kt` | 4026 | 已审计 | 必须保留 | CampBoardGameHostApp；语言/常用玩家/AI操作模式/经验偏好；非 canonical 游戏状态或重复历史。保留 MANUAL 默认与 AI 模式开关。（静态） |
-| `app/src/main/java/com/codex/campboardgamehost/persistence/ClocktowerActiveGameStore.kt` | 1980 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/main/java/com/codex/campboardgamehost/persistence/ClocktowerActiveGameStore.kt` | 1980 | 已审计 | 必须保留 | 第二阶段本批：基线2a8ad070，全文及真实引用核查。App私有noBackup AtomicFile唯一活动局；SessionJson/metadata同批写、完成后重读字节校验、写失败failWrite；无更改存档字段/兼容/规则。 |
 | `app/src/main/java/com/codex/campboardgamehost/persistence/GatewayTokenEnvelopeV1.kt` | 1294 | 已审计 | 必须保留 | StorytellerGatewayConnectionStore；AES-GCM envelope 长度/IV/version parser，保护设备密钥传输；无 token 输出或规则计算。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/persistence/PersonalOpenAiSettingsStore.kt` | 1273 | 已审计 | 必须保留 | App→PersonalDirectOpenAiV1；真实 direct 模型/启用/密钥配置，分离 gateway scope；无授权不发付费请求，不能当实验删现用 AI。（静态） |
 | `app/src/main/java/com/codex/campboardgamehost/persistence/StorytellerGatewayConnectionStore.kt` | 4649 | 已审计 | 必须保留 | App、PersonalOpenAiSettingsStore；AndroidKeyStore AES-GCM、scope/AAD 隔离、AtomicFile/noBackup 原子密钥持久化，必要安全支撑；不能与普通偏好或游戏历史合并。（静态） |
@@ -655,10 +663,10 @@
 | `app/src/main/res/drawable-nodpi/clocktower_launch_hero.png` | 1387505 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/main/res/drawable/ic_launcher.xml` | 768 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/res/values-en/debug_strings.xml` | 472 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/res/values-en/strings.xml` | 6858 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/res/values-en/strings.xml` | 6003 | 已审计 | 必须保留 | 第二阶段全文/代码及XML引用核查：只删12个零引用key，两语言同步；正式字串/身份/私密展示保留，无动态getIdentifier入口；完整资源编译验证另列。 |
 | `app/src/main/res/values-v27/themes.xml` | 479 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/res/values/debug_strings.xml` | 426 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/main/res/values/strings.xml` | 6616 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/main/res/values/strings.xml` | 5745 | 已审计 | 必须保留 | 第二阶段全文/代码及XML引用核查：只删12个零引用key，两语言同步；正式字串/身份/私密展示保留，无动态getIdentifier入口；完整资源编译验证另列。 |
 | `app/src/main/res/values/themes.xml` | 412 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/main/res/xml/debug_file_paths.xml` | 208 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；AndroidManifest FileProvider resource引用该cache-path，DebugFlightRecorder.shareDebugBundle依赖；限制仅debug-flight-recorder-export，不应按无Kotlin字符串引用判死。（静态审计） |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerActiveGameStoreTest.kt` | 12521 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
@@ -671,17 +679,17 @@
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerChambermaidSelectionAuthorityTest.kt` | 853 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerChambermaidStepMaterializerTest.kt` | 1566 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerChefAlternativePublicationTest.kt` | 1734 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerCompleteAppUiTest.kt` | 7690 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerCompleteAppUiTest.kt` | 7699 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerContrastPolicyTest.kt` | 2991 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerCurrentResidualScopeV2Test.kt` | 19070 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerD2UiTest.kt` | 39183 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerD2UiTest.kt` | 39282 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDayNominationGestureTest.kt` | 2643 | 已审计 | 需要解耦 | F12-M全文件审阅：实际座位手势ring index/self映射是UI有效测试；alive-only nominator/target规则候选断言属于待解耦交互限制。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableStateTest.kt` | 2519 | 已审计 | 必须保留 | F12-M全文件审阅：canonical GameState实际Role/ShownRole、座位排序、存活和只读状态的必要Storyteller魔典显示回归。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentationTest.kt` | 3571 | 已审计 | 必须保留 | F12-M全文件审阅：当前AI三掩饰身份不静默补齐、准确展示选择顺序及真人角色三选的结构/脚本域测试；不是Host线索真值门禁。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDirectBooleanResultTest.kt` | 1687 | 已审计 | 必须保留 | F12-M全文件审阅：验证即使Host旧候选仅YES也能人工公布NO，并记录typed Boolean、主体两座位与无虚构truthful；重要P1/AI回归。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDirectNumericResultTest.kt` | 6079 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDirectPairInformationTest.kt` | 4691 | 已审计 | 必须保留 | F12-O新增并全文：结构化直选顺序/未知座位/缺席typed事实/AI预选及Spy-Recluse不臆造登记，不依赖旧Host枚举；Android CI #4406通过。 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerDirectRoleRevealTest.kt` | 4047 | 已审计 | 必须保留 | F12-P新增全文：执行座位/守鸦查询座位事实、AI当前RoleAt无全候选预选、异常/无效身份座位拒绝、显示不虚构registration，替换旧ResultChoices专属菜单测试。 |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerDirectRoleRevealTest.kt` | 3682 | 已审计 | 必须保留 | F12-P新增全文：执行座位/守鸦查询座位事实、AI当前RoleAt无全候选预选、异常/无效身份座位拒绝、显示不虚构registration，替换旧ResultChoices专属菜单测试。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerDisplayedInformationReliabilityTest.kt` | 2049 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerEvilInfoSquareTablePresentationTest.kt` | 4197 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerFirstNightEvilInformationPresentationTest.kt` | 4882 | 待审 | — | 尚未形成有证据结论 |
@@ -701,7 +709,6 @@
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTablePresentationTest.kt` | 3116 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnershipTest.kt` | 6646 | 已审计 | 必须保留 | F12-O全文核：真实夜行动至方桌surface dispatch，3首夜pair在无Host候选域时仍必须有完整可编辑UI，Ravenkeeper/FT/Mayor/newDemon保留。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerNightStepMaterializerRegistryTest.kt` | 5456 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerOtherNightWakingRoleAuthorityTest.kt` | 1540 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTablePresentationTest.kt` | 2066 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayPresentationTest.kt` | 6681 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayResolutionTest.kt` | 5304 | 已审计 | 必须保留 | F12-L全文：实际私密显示typed RoleAt/座位与文本不反推安全断言；旧兼容调用替换为生产统一resolve，保留真实回归。 |
@@ -715,7 +722,7 @@
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageSquareTablePresentationTest.kt` | 2888 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：保留现用Sage typed two-seat信息展示、防文本反推座位、实际手工两seat toggle及actor独立高亮、结构拒绝越界/重复座位；删除旧候选dropdown/LegacyUnreliable路径专项测试。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializerTest.kt` | 4418 | 已审计 | 必须保留 | F12-K全文/生产消费者复核：原Sage全合法pair真值/默认恶魔decoy断言退役；现验证Host步骤初始无伪默认信息，Storyteller实际两seat记录为AnyOf、非法/重复座位不提交。 代码SHA9c7c57a；完整Android CI #4396 / R2 #3976通过。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabelTest.kt` | 601 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCardsTest.kt` | 5825 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→ClocktowerSessionPlayerCards；3项验证同frame读取Session死亡/role变化无需镜像写cards、纯setup仍可编辑；本轮通过，保护唯一事实来源而非UI表象字符串。（静态；运行仅上述明确测试） |
+| `app/src/test/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCardsTest.kt` | 5758 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→ClocktowerSessionPlayerCards；3项验证同frame读取Session死亡/role变化无需镜像写cards、纯setup仍可编辑；本轮通过，保护唯一事实来源而非UI表象字符串。（静态；运行仅上述明确测试） |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerShownUnreliablePropositionTest.kt` | 4641 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionPresentationTest.kt` | 4205 | 已审计 | 必须保留 | F12-J全文核查现用consumer：复核现行target selection/seat identity/首夜动作人工与auto确认防旧selection自动提交；删除只测已退役Mayor automatic旧呈现的断言。 完整代码CI #4393 / R2 #3973均成功。 |
 | `app/src/test/java/com/codex/campboardgamehost/ClocktowerSlayerTableStateTest.kt` | 2467 | 已审计 | 需要解耦 | F12-Q全文：实体座位稳定、选中先后结构需要；待删claimant候选合法域及dead-target硬门禁旧玩法裁定断言，随生产UI变更调整。 |
@@ -748,11 +755,11 @@
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/domain/MurmurHash3Test.kt` | 872 | 已审计 | 必须保留 | Gradle testFast/testFull→JVM JUnit；生产 setup hash 消费者；保留 reference vectors，已不含退休 candidate ID 测试；本轮定向运行1用例通过。（静态，运行结论仅明确列出者） |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderContractV1Test.kt` | 4996 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/A4RuntimeFixtures.kt` | 1520 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimelineContractTest.kt` | 5514 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimelineContractTest.kt` | 4151 | 已审计 | 必须保留 | 第二阶段本批：真实entries的全局/本地序列分离、重复ID/全局位置、不可变列表及跨phase排序断言保留；旧动态reducer等价性专属用例删除。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ClocktowerPrivateObservationRecordIdTest.kt` | 891 | 已审计 | 必须保留 | F12-F全文+真实生产/测试引用，代码基线569759560837591695168244b1a4eeeca21fb574；真实已公布私人线索稳定ID受game/phase/role/subject/value影响，记录重复与更正辨别；保留Session信息去重安全合同。（静态审计） |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/CrossTypeTimelineCompatibilityTest.kt` | 5263 | 已审计 | 必须保留 | F12-G全文+真实引用核查：Action/Observation全局序列碰撞、Legacy混用拒绝、mutable输入防御；生产SemanticHistoryMode实际消费兼容性检查。（代码8644e757，待精确CI结果） |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticModelTest.kt` | 4194 | 已审计 | 必须保留 | F12-G全文+真实引用核查：删除旧FormalState/PlayerKnowledge与shadow ActionFact测试；保留InformationProposition、RecordedObservation、Spy私密Grimoire、schema迁移、recipient与稳定ID。（代码8644e757，待精确CI结果） |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ObservationTimelineBindingTest.kt` | 6851 | 已审计 | 必须保留 | F12-G全文+真实引用核查：以真正的snapshotId替代Formal对象；保留Global排序、重复序列/混用拒绝、旧Local兼容、TimelinePoint往返及bindTo。（代码8644e757，待精确CI结果） |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticModelTest.kt` | 3776 | 已审计 | 必须保留 | 第二阶段本批：旧snapshot-bound observation断言迁到真实Recorded记录；保留schema拒绝、JSON canonical recipient顺序与private recipient必填，删除旧ID哈希算法断言。 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ObservationTimelineBindingTest.kt` | 6358 | 已审计 | 必须保留 | 第二阶段本批：真实Global记录JSON、全局顺序/重复/格式拒绝保留；仅旧bindTo快照复制专属用例删除；不声称本批已清空所有LegacyLocal兼容。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/ShownRoleAtSemanticContractTest.kt` | 899 | 已审计 | 必须保留 | F12-G全文+真实引用核查：ShownRoleAt角色公开/实际展示身份语义及稳定JSON往返对Session/AI结构化信息有价值。（代码8644e757，待精确CI结果） |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/fixtures/TroubleBrewingFixtures.kt` | 3370 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/fixtures/g10-game2-precommit-tbgs-v1.json` | 2116 | 待审 | — | 尚未形成有证据结论 |
@@ -762,15 +769,15 @@
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/rules/RulesetContentHasherTest.kt` | 2515 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/AcceptedSessionActionTestFixture.kt` | 520 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/BotcAiWireTraceCodecTest.kt` | 1579 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerDayFlowTest.kt` | 12288 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerDayFlowTest.kt` | 12360 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionAliveBoundaryTest.kt` | 5832 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionConfirmedActionBoundaryTest.kt` | 13492 | 已审计 | 需要解耦 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→Session confirmedAction/observation；保留live cursor、action+revision、同ID内容冲突/幂等、stale、实际信息原值；Butler自选拒绝/同夜不许改目标的规则断言随职责退休，不整删原子性验证。当前6用例通过不代表这些旧规则须永久保留。（静态；运行仅上述明确测试） |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionPhaseBoundaryTest.kt` | 5345 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionPoisonBoundaryTest.kt` | 8150 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionRoleIdentityBoundaryTest.kt` | 3371 | 已审计 | 必须保留 | 证据HEAD `22716fa4d6bdbe92edeb0091b4c9483a733a7370`；testFast/testFull→Session RoleIdentity boundary；1项验证RoleChange事实/状态/版本原子、shown/alive/poison/其它seat不变、幂等与stale无半写；本轮通过，不依赖候选继承算法。（静态；运行仅上述明确测试） |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionTest.kt` | 15427 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionTest.kt` | 14579 | 已审计 | 必须保留 | 第二阶段本批：已读全文件；Session身份/状态/输入revision/事实幂等和过期响应断言保留，旧reducer回放比较删除；updateGameState/advanceGameStateRevision等测试专用入口后续需与实际生产入口再收敛。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGlobalObservationCommitTest.kt` | 9804 | 待审 | — | 尚未形成有证据结论 |
-| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerHistoricalActionObservationCaptureTest.kt` | 6397 | 待审 | — | 尚未形成有证据结论 |
+| `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerHistoricalActionObservationCaptureTest.kt` | 6406 | 待审 | — | 尚未形成有证据结论 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerNightFlowTest.kt` | 17368 | 待审 | — | 本轮按当前Git树补登；尚未形成现行全文语义审计结论。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerNightVoteOwnershipTest.kt` | 5182 | 已审计 | 需要解耦 | F15全文核查，保留Session真实Attack/Protect/Poison/Mayor、stale/幂等与实际Vote顺序/重试/phase reset；旧successor字段断言删除。票数门槛/最高者与依赖失效策略仍有旧规则预期，需随真实生产所有者缩窄，不能因本批绿灯永远保留。 证据9f6c4af245b3aa7424e1134ad1789be6520181bc；本轮验收见F15。 |
 | `app/src/test/java/com/codex/campboardgamehost/clocktower/session/ClocktowerPoisonSettlementTest.kt` | 4021 | 已审计 | 需要解耦 | F15全文核查，保留显式keep/clear、旧事实不修复、死亡后毒事实、双写一致性、stale/ID幂等的6用例；旧successor元数据断言退出。部分phase/日间只清除策略仍待与实际手工状态输入合同核对；没有角色健康/转职合法域判断。 证据9f6c4af245b3aa7424e1134ad1789be6520181bc；本轮验收见F15。 |

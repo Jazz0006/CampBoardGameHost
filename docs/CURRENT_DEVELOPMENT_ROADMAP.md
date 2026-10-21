@@ -33,3 +33,9 @@
 可执行/样例/工具及其说明共删除 9 文件，11 文件 +4/-2766，净删 2762 行 / 134078B（不含本批路线/规范/台账说明变动）。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK 和原 R2 shell 通过；10 类 CI 路由及门禁失败/取消检查通过。代码 `280992ca271d7edffcd190834340cd1768fd7ad3` 的[完整 Android CI #4508](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230705) 和 [R2 #4083](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230512) 均 SUCCESS；已独立核对 full tests、APK 构建/上传及 CI gate。Draft PR [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337) 保持未合并；本次后续文档提交不替代上述代码验收。
 
 唯一台账按当前 Git 树对齐：清除前阶段已删除但仍挂表的 54 条路径和本批 8 条已删源路径；漏登的新 Session/UI/测试及历史 artifacts 补为待审。库存校正不算新语义审计，全树尚未完成。后续继续待审代码及现有 App/Night Host 混合职责，优先整链净删；两个超限文件仍为 116000B / 63787B，Session 47578B。
+
+## 第二阶段第二批：生产孤立回放/观察副本与旧候选展示退出
+
+在同一Draft #337从`2a8ad070`继续，整删只供测试调用的旧动态reducer、旧snapshot-bound observation/ID/JSON链、无入口数字候选UI、旧角色揭示投影和唤醒集合辅助，连同专属旧测试。保留Session确定机械和当前Recorded观察；schema、AI协议、AtomicFile与两类轮换未改。另清未调用日志/UI辅助、12组无引用字符串，以及两处不可达的多推荐分支。
+
+不含维护文档：31文件+47/-748，净删701行/30956B；生产Kotlin净删574行/24267B，整删生产2/测试1文件。原654测试减少3个退休实现专属用例，全部现用UI/AI/隐私/原子性回归继续执行。全文审计进度与逐路径证据见唯一台账；全树仍未完成，App115420B/Night Host63787B仍超限。最终本地及远端验收见交接，不能使用上批CI代替本批代码。

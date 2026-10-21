@@ -23,28 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-
-internal data class ClocktowerUndertakerTypedResult(
-    val executedSeat: Int,
-    val roleId: RoleId,
-)
 
 internal data class ClocktowerUndertakerSeatVisual(
     val state: ClocktowerSquareTableSeatState,
     val badge: String?,
     val isCurrentActor: Boolean,
 )
-
-internal fun clocktowerUndertakerTypedResult(
-    proposition: InformationProposition?,
-    seatCount: Int,
-): ClocktowerUndertakerTypedResult? {
-    val roleAt = proposition as? InformationProposition.RoleAt ?: return null
-    if (roleAt.seat !in 1..seatCount) return null
-    return ClocktowerUndertakerTypedResult(roleAt.seat, roleAt.role)
-}
 
 internal fun clocktowerUndertakerSeatVisual(
     seatNumber: Int,

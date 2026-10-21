@@ -110,29 +110,6 @@ internal object BotcAiWireTrace {
         }
     }
 
-    /** Host-side reveal lifecycle. No player names or observed clue text. */
-    fun revealStage(event: String, phase: String, round: Int) {
-        bestEffort {
-            if (event !in setOf("CLICKED", "PREFLIGHT_OK", "FIRST_NIGHT_RECORDED",
-                    "OBSERVATION_RECORDED", "REVEAL_OPENED", "BLOCKED"))
-                return@bestEffort
-            Log.v(TAG, "stage=PLAYER_REVEAL event=$event phase=" +
-                phase.takeIf { it in setOf("FIRST_NIGHT", "DAWN", "DAY", "NIGHT") }
-                    .orEmpty() + " round=" + round.coerceAtLeast(1))
-        }
-    }
-
-    /** Debug-only error location; player-facing text never includes the exception. */
-    fun revealFailure(error: Exception) {
-        if (BuildConfig.DEBUG) {
-            try {
-                Log.e(TAG, "stage=PLAYER_REVEAL event=FAILED; check Host game history before retry", error)
-            } catch (_: Exception) {
-                // Reporting the failure must not cause another failure.
-            }
-        }
-    }
-
 }
 
 /** Pure chunking/redaction. No impact on the actual model request or answer. */

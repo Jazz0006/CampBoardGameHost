@@ -57,7 +57,7 @@ class ClocktowerHistoricalActionObservationCaptureTest {
         assertEquals(0L, action.point.globalSequence)
         assertEquals(1L, (observation.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence)
         assertEquals(2L, session.snapshot.nextTimelineGlobalSequence)
-        assertEquals(listOf("night-one-poison-seat-two"), session.snapshot.actionTimeline.reducerFacts().map { it.actionId })
+        assertEquals(listOf("night-one-poison-seat-two"), session.snapshot.actionTimeline.entries.map { it.fact }.map { it.actionId })
 
     }
 

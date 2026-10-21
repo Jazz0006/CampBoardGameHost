@@ -11,11 +11,9 @@ import org.json.JSONObject
 /** Canonical, locale-independent JSON for actual observations and information propositions. */
 object EpistemicSemanticJson {
     fun encode(value: InformationProposition): String = canonical(proposition(value))
-    fun encode(value: EpistemicObservation): String = canonical(observation(value))
     fun encode(value: RecordedEpistemicObservation): String = canonical(recordedObservation(value))
 
     fun decodeInformationProposition(json: String): InformationProposition = proposition(JSONObject(json))
-    fun decodeEpistemicObservation(json: String): EpistemicObservation = observation(checkedRoot(json))
     fun decodeRecordedEpistemicObservation(json: String): RecordedEpistemicObservation = recordedObservation(checkedRoot(json))
 
     private fun proposition(value: InformationProposition): Map<String, Any?> = when (value) {
@@ -34,15 +32,6 @@ object EpistemicSemanticJson {
         is InformationProposition.NumericResult -> mapOf("kind" to "numeric-result", "metric" to value.metric.name, "sourceSeat" to value.sourceSeat, "subjectSeats" to value.subjectSeats, "value" to value.value)
         is InformationProposition.BooleanResult -> mapOf("kind" to "boolean-result", "metric" to value.metric.name, "sourceSeat" to value.sourceSeat, "subjectSeats" to value.subjectSeats, "value" to value.value)
     }
-
-    private fun observation(value: EpistemicObservation): Map<String, Any?> = mapOf(
-        "observationId" to value.observationId, "phase" to value.phase.name,
-        "proposition" to proposition(value.proposition), "recipientSeats" to value.recipientSeats.sorted(),
-        "reliability" to value.reliability.name, "round" to value.round, "schemaVersion" to value.schemaVersion,
-        "sequence" to value.sequence, "snapshotId" to value.snapshotId,
-        "sourceAbility" to value.sourceAbility?.value, "sourceSeat" to value.sourceSeat,
-        "visibility" to value.visibility.name,
-    ) + timelineBindingFields(value.timelineBinding)
 
     private fun recordedObservation(value: RecordedEpistemicObservation): Map<String, Any?> = mapOf(
         "phase" to value.phase.name, "proposition" to proposition(value.proposition),
@@ -84,18 +73,6 @@ object EpistemicSemanticJson {
         "boolean-result" -> InformationProposition.BooleanResult(BooleanMetric.valueOf(json.getString("metric")), json.getInt("sourceSeat"), json.getJSONArray("subjectSeats").ints(), json.getBoolean("value"))
         else -> error("Unknown InformationProposition kind: ${json.getString("kind")}")
     }
-
-    private fun observation(json: JSONObject): EpistemicObservation = EpistemicObservation(
-        observationId = json.getString("observationId"), snapshotId = json.getString("snapshotId"),
-        phase = StorytellerPhase.valueOf(json.getString("phase")), round = json.getInt("round"),
-        sequence = json.getInt("sequence"), sourceSeat = json.nullableInt("sourceSeat"),
-        sourceAbility = json.nullableString("sourceAbility")?.let(::RoleId),
-        visibility = ObservationVisibility.valueOf(json.getString("visibility")),
-        recipientSeats = json.getJSONArray("recipientSeats").ints().toSet(),
-        reliability = ObservationReliability.valueOf(json.getString("reliability")),
-        proposition = proposition(json.getJSONObject("proposition")), schemaVersion = json.getInt("schemaVersion"),
-        timelineBinding = observationTimelineBinding(json),
-    )
 
     private fun recordedObservation(json: JSONObject): RecordedEpistemicObservation = RecordedEpistemicObservation(
         recordId = json.getString("recordId"), phase = StorytellerPhase.valueOf(json.getString("phase")),

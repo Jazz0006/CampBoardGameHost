@@ -172,7 +172,7 @@ class ClocktowerGameSessionTest {
         assertEquals(2L, session.state.nextTimelineGlobalSequence)
         assertEquals(
             listOf("red-herring-choice", "demon-bluff-choice"),
-            session.state.actionTimeline.reducerFacts().map {
+            session.state.actionTimeline.entries.map { it.fact }.map {
                 when (it) {
                     is com.codex.campboardgamehost.clocktower.domain.ActionFact.RedHerringChoice ->
                         "red-herring-choice"
@@ -182,15 +182,6 @@ class ClocktowerGameSessionTest {
                 }
             },
         )
-        val replay = com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer.reduce(
-            initialSnapshot = session.toGameSnapshot(rulesetRef),
-            initialPhase = StorytellerPhase.FIRST_NIGHT,
-            initialRound = 1,
-            facts = session.state.actionTimeline.reducerFacts(),
-        )
-        assertEquals(4, replay.redHerringSeat)
-        assertEquals(bluffRoles, replay.demonBluffRoleIds)
-
         session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3)
         assertEquals(8, session.state.redHerringSeat)
         session.commitDemonBluffs(listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 4)
@@ -206,11 +197,6 @@ class ClocktowerGameSessionTest {
         }
         assertSame(confirmed, session.state)
         assertEquals(4L, session.state.playerInputRevision)
-        val replayConfirmed = com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer.reduce(
-            initialSnapshot = session.toGameSnapshot(rulesetRef), initialPhase = StorytellerPhase.FIRST_NIGHT,
-            initialRound = 1, facts = session.state.actionTimeline.reducerFacts())
-        assertEquals(8, replayConfirmed.redHerringSeat)
-        assertEquals(listOf(RoleId("Chef")), replayConfirmed.demonBluffRoleIds)
     }
 
     @Test
@@ -274,7 +260,7 @@ class ClocktowerGameSessionTest {
         assertEquals(2L, view.gameStateRevision)
         assertEquals(1L, view.playerInputRevision)
         assertEquals(ClocktowerSemanticHistoryMode.GLOBAL_V1, view.semanticHistoryMode)
-        assertEquals(listOf("view-poison"), view.actionTimeline.reducerFacts().map { it.actionId })
+        assertEquals(listOf("view-poison"), view.actionTimeline.entries.map { it.fact }.map { it.actionId })
         assertEquals(listOf("view-public"), view.epistemicObservationLog.records.map { it.recordId })
         assertEquals(2L, view.nextTimelineGlobalSequence)
     }

@@ -83,7 +83,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupRotationR
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
-import com.codex.campboardgamehost.clocktower.rules.AbilitySubject
 import com.codex.campboardgamehost.clocktower.rules.RulesetJsonLoader
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 import kotlinx.coroutines.Dispatchers
@@ -141,13 +140,6 @@ internal enum class LanguageMode(val prefsValue: String) {
     English("en"),
 }
 
-internal fun PlayerCard.abilitySubject(poisonTarget: String?): AbilitySubject = AbilitySubject(
-    actualRole = clocktowerRole?.enName,
-    shownRole = clocktowerShownRole?.enName,
-    isPoisoned = poisonTarget == name && eliminatedRound == null,
-    isAlive = eliminatedRound == null,
-)
-
 private fun Context.playerName(number: Int): String = getString(R.string.default_player_name_format, number)
 
 internal const val MIN_CLOCKTOWER_PLAYERS = 5
@@ -159,12 +151,6 @@ private fun Context.localized(languageMode: LanguageMode): Context {
     val config = Configuration(resources.configuration)
     config.setLocale(locale)
     return createConfigurationContext(config)
-}
-
-internal fun LanguageMode.labelResId(): Int = when (this) {
-    LanguageMode.System -> R.string.language_system
-    LanguageMode.Chinese -> R.string.language_chinese
-    LanguageMode.English -> R.string.language_english
 }
 
 private fun defaultClocktowerScriptFor(playerCount: Int): ClocktowerScript =

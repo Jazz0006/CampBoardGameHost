@@ -3,18 +3,16 @@ package com.codex.campboardgamehost.clocktower.epistemic
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
 class EpistemicSemanticModelTest {
-    private val snapshotId = "snapshot-0123456789abcdef0123456789abcdef"
     private val pair = InformationProposition.AnyOf(
         listOf(InformationProposition.RoleAt(2, RoleId("Spy")), InformationProposition.RoleAt(5, RoleId("Spy"))),
     )
-    private val observation = EpistemicObservation(
-        "observation-investigator-1", snapshotId, StorytellerPhase.FIRST_NIGHT, 1, 3,
+    private val observation = RecordedEpistemicObservation(
+        "observation-investigator-1", StorytellerPhase.FIRST_NIGHT, 1, 3,
         1, RoleId("Investigator"), ObservationVisibility.PRIVATE, setOf(1),
         ObservationReliability.RECEIVED_AS_FUNCTIONING, pair,
     )
@@ -33,7 +31,7 @@ class EpistemicSemanticModelTest {
             BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 1, listOf(2, 4), true,
         )
         assertEquals(booleanResult, EpistemicSemanticJson.decodeInformationProposition(EpistemicSemanticJson.encode(booleanResult)))
-        assertEquals(observation, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(observation)))
+        assertEquals(observation, EpistemicSemanticJson.decodeRecordedEpistemicObservation(EpistemicSemanticJson.encode(observation)))
         assertEquals(durableRecord, EpistemicSemanticJson.decodeRecordedEpistemicObservation(EpistemicSemanticJson.encode(durableRecord)))
         assertTrue(EpistemicSemanticJson.encode(durableRecord).contains("\"schemaVersion\":2"))
     }
@@ -41,7 +39,7 @@ class EpistemicSemanticModelTest {
     @Test fun `schema v1 is rejected with an explicit migration error`() {
         val v1 = EpistemicSemanticJson.encode(observation).replaceFirst("\"schemaVersion\":2", "\"schemaVersion\":1")
         try {
-            EpistemicSemanticJson.decodeEpistemicObservation(v1)
+            EpistemicSemanticJson.decodeRecordedEpistemicObservation(v1)
             fail("schema v1 must not be silently decoded")
         } catch (error: IllegalArgumentException) {
             assertTrue(error.message.orEmpty().contains("explicitly migrated"))
@@ -66,15 +64,11 @@ class EpistemicSemanticModelTest {
 
     }
 
-    @Test fun `canonical sets and stable ids remain deterministic`() {
+    @Test fun `canonical recipient sets remain deterministic`() {
         val first = observation.copy(recipientSeats = linkedSetOf(3, 1, 2))
         val second = observation.copy(recipientSeats = linkedSetOf(2, 3, 1))
         assertEquals(EpistemicSemanticJson.encode(first), EpistemicSemanticJson.encode(second))
 
-        val id = SemanticStableId.create("observation", "seat=1|pair=2,5")
-        assertEquals(id, SemanticStableId.create("observation", "seat=1|pair=2,5"))
-        assertNotEquals(id, SemanticStableId.create("observation", "seat=1|pair=2,6"))
-        assertTrue(id.matches(Regex("observation-[0-9a-f]{32}")))
     }
 
     @Test(expected = IllegalArgumentException::class)

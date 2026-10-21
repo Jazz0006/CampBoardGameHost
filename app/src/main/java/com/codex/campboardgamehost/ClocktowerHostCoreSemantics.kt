@@ -1,18 +1,6 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.domain.GameState
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-
-/**
- * Stable non-Compose semantics extracted from the legacy Clocktower host monolith.
- *
- * Keep signatures and record identity byte-for-byte compatible while the host screen
- * is decomposed. This file intentionally remains in the existing package during the
- * behavior-preserving extraction phase.
- */
-internal fun isClocktowerEvil(card: PlayerCard): Boolean =
-    card.clocktowerTeam == ClocktowerTeam.Minion || card.clocktowerTeam == ClocktowerTeam.Demon
 
 internal fun PlayerCard.clocktowerShownAsDifferentRole(): Boolean =
     clocktowerRole?.enName != null && clocktowerShownRole?.enName != null && clocktowerRole?.enName != clocktowerShownRole?.enName
@@ -125,18 +113,3 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
     baseRole: T?,
     otherNightRole: () -> T?,
 ): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
-
-/** Night role eligibility reads the one authoritative Session game state, not a second UI card list. */
-internal fun clocktowerNightWakingRoleIds(
-    gameState: GameState,
-    includeDead: Boolean,
-): Set<RoleId> = buildSet {
-    gameState.players.filter { includeDead || it.alive }.forEach { player ->
-        add(player.actualRole)
-        if (player.actualRole == RoleId("Drunk")) {
-            player.shownRole?.let { add(it) }
-        }
-    }
-}
-
-

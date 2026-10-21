@@ -127,7 +127,7 @@ class ClocktowerCompleteAppUiTest {
         val ended = state()
         assertEquals(first.gameId, ended.gameId)
         assertEquals(GameEndReason.NO_DEMON, ended.outcome?.reason)
-        assertEquals(1, ended.actionTimeline.reducerFacts().filterIsInstance<ActionFact.GameEnded>().size)
+        assertEquals(1, ended.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.GameEnded>().size)
         // Restore the actual ended save, then start another game with the same canonical participants.
         remount()
         waitFor("Confirm and reveal all roles")

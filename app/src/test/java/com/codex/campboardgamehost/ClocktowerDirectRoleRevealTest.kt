@@ -28,7 +28,6 @@ class ClocktowerDirectRoleRevealTest {
         assertEquals(4, choice.targetSeat)
         assertEquals(RoleId("Spy"), choice.roleId)
         assertEquals(InformationProposition.RoleAt(4, RoleId("Spy")), choice.displayOption.proposition)
-        assertEquals(4, clocktowerUndertakerTypedResult(choice.displayOption.proposition, 7)?.executedSeat)
         assertTrue(clocktowerUndertakerSeatVisual(4, 1, 4, "en").badge == "EX")
     }
     @Test fun `Ravenkeeper target must be player confirmed before role input`() {
@@ -40,9 +39,7 @@ class ClocktowerDirectRoleRevealTest {
         val choice = requireNotNull(clocktowerDirectRoleRevealChoice(
             current, 5, 7, "Chef", scriptRoles, { it },
         ))
-        assertEquals(RoleId("Chef"), clocktowerRavenkeeperTypedResult(
-            choice.displayOption.proposition, 5, 7,
-        )?.roleId)
+        assertEquals(InformationProposition.RoleAt(5, RoleId("Chef")), choice.displayOption.proposition)
     }
     @Test fun `typed AI suggested role preselects without a Host candidate list`() {
         val step = step("Ravenkeeper", 5)
@@ -71,7 +68,5 @@ class ClocktowerDirectRoleRevealTest {
         assertFalse(chosen.displayOption.isTruthful)
         assertEquals(InformationProposition.RoleAt(4, RoleId("Imp")),
             resolveClocktowerPlayerDisplay(step("Undertaker", 4), chosen.displayOption).displayProposition)
-        assertNull(clocktowerUndertakerTypedResult(InformationProposition.RoleInPlay(RoleId("Imp"), true), 7))
-        assertNull(clocktowerRavenkeeperTypedResult(InformationProposition.RoleAt(5, RoleId("Chef")), 4, 7))
     }
 }
