@@ -1814,7 +1814,6 @@ internal fun CampBoardGameHostApp() {
                         sessionState = requireClocktowerGameSession().state,
                         script = currentClocktowerScript,
                         gameId = clocktowerGameId,
-                        gameSeed = clocktowerGameSeed,
                         globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                         globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                         jointOpeningAvailable = openingHintsUsable,
@@ -1861,7 +1860,6 @@ internal fun CampBoardGameHostApp() {
                         butlerMaster = clocktowerButlerMaster,
                         lastExecutedName = clocktowerLastExecutedName,
                         ghostVoteAuthority = clocktowerGhostVoteAuthority,
-                        gameOutcome = gameOutcome,
                         onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
                         onHostTools = {
                             hostToolTab = HostToolTab.Roles

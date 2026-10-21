@@ -1,28 +1,24 @@
-# 当前交接 — F2 投毒来源退出修复（2026-10-21）
+# 当前交接 — 夜间继任与展示职责收敛（2026-10-21）
 
-本批从 `2dea23bc` 接续 `refactor/minimal-night-flow-20261019` / Draft #335，base 仍为 #334 `76be7e17`。当前 F2 修复 `6a76a57cfa8034363abbf884d1a0326edc1c15a4` 已通过 Cloud full/APK，以及精确完整 Android CI #4496 / R2 #4072（均 SUCCESS）；前一 `bc263581` 的 CI #4494/R2 #4070 只证明前一代码。接续先重新核对 HEAD、分支、工作区及远端状态。
+原分支 `refactor/minimal-night-flow-20261019` / Draft #335，base 仍为 #334 `76be7e17`。本批基线 `9ec8b969`，前一生产 F2 `6a76a57c` 已通过 full 640 / CI #4496 / R2 #4072。接续先核对本批实际 HEAD、远端和工作区，不能用前一 CI 代替新代码。
 
-## 本批实现
+## 2026-10-21 P4 接续：夜间继任与角色展示职责收敛
 
-F2 已改为唯一 Session 发布入口的最小确定性后处理：确认的 Death/Execution/RoleChange 让原实际 Poisoner 死亡或退出身份时，活动目标毒标记与既有 Poison(null) 事实一并结束，再允许保存/发布。来源仍在、没有活动毒、其他玩家死亡或保护挡住攻击都不结束毒；单纯未配套确认事实的 raw state 编辑不制造新事实。
+基线 `9ec8b969`，原 Draft #335 / base #334 不变。已确认的来源退出 F2 保留，本批不修改毒效终止语义。
 
-全部写者已核对：夜间 `confirmNightAttack → acceptDeterministicNightAttack → updateState`；白天 `confirmEndDay/killInDay → commitConfirmedPlayerDeath → commitConfirmedGameAction → updateState`；身份 `commitConfirmedActualRoleChange → commitConfirmedGameAction → updateState`。单一原子保存前完成，不新建框架、源状态字段或独立历史，不改旧 Observation。失败回滚/重复确认/过期隔离沿用 Session。
+- **继任一份判定**：UI 自算存活 Imp、中毒、僧侣保护、存活人数、红唇女郎及可继任爪牙的代码已删除。既有 RoleIdentityBoundaries 的 Session 只读 `impSelfKillSuccession` 被 JudgeScreen 和最终攻击确认共同调用；底层保留现用 DemonSuccessionSemantics。UI 只把返回的座位映射到展示、保留未确认选择、控制 Next；确认时重新根据当前 Session 判定，无持久 pending、第二状态、新 schema 或通用候选机制。
+- **角色一份展示**：投毒者、管家、间谍和已有共情者/占卜师/侍女 materializer 在两夜共享；Registry 仍只按 Session 提供的步骤顺序渲染，不从注册列表决定夜序。普通 actor 从 canonical alive/wakingRole 映射座位；死后触发仍用既有明确 override 和事件时点醉毒语义。
+- **身份/草稿**：删去 UI 自建 roster/seed/poison 指纹，信息草稿 key 使用 gameId、Session state/input revision、稳定 interactionId。删除已无消费的 JudgeScreen gameSeed/gameOutcome 参数及 App 接线；Session outcome 仍阻止继续已结束游戏。D2 最后预览/唯一 Next Observation、真实玩家目标与 AI stale/receipt/记忆协议保持。
+- **消费者与测试**：生产改动仅 App 接线、JudgeScreen、Session attack 与既有 RoleIdentityBoundaries。新增真实 Session 3 项（4 人/中毒红唇、僧侣保护、旧继任选择失效），扩充已有确认断言；新增真实 JudgeScreen 3 项（多爪牙选择不提前提交、强制红唇、不生效自杀无继任）。无生产或专属测试文件删除，无测试忽略。
+- **精确净量**：生产 +104/-190，净删 **86 行 / 4651B**；测试 +138/-5，净 +133 行。App **118438B**、Night Host **63094B** 仍超 50000B，Session **48526B** 达标。没有声称本批解决所有超限文件。
+- **验证**：Cloud `testFull + assembleDebug` **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，原始 R2 shell 与 diff 检查通过；远端精确提交 CI/R2 待推送。本批无真机、杀进程或付费 API。首轮新测试失败来自测试前置 Spy 尚未确认、夹具已有 Scarlet Woman 的错误预期和弹窗/方桌重名选择器，未把它们记作生产 bug 或修复前反例。
 
-新增 9 项来源退出行为测试、1 项真实 AtomicFile 中断/重读测试；旧时间线测试保留并拆分普通玩家处决与 Poisoner 处决两种语义。原 8 项来源定向测试有 5 个先失败，修复后全部通过。最终 Cloud **640 tests / 146 suites / 30 UI，0 failure/error/skipped**，Debug APK、原 R2 shell 与 diff 检查通过。没有本批真机、杀进程或付费 API 验收。
-
-本批生产 +33 行/+1904B，测试净 +187 行；删除文件 0。App 118544B、Night HostScreen 68496B 超限，Session 49453B 合规。完整证据见 [源台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 与 [审计 F2](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
+下一步继续 Night 信息发布/AI 与保存恢复入口职责审计、两个超限文件按内聚职责缩减，再完成逐角色/强制线索、全树 P0/P5 和设备证据。
 
 ## 云端执行
 
-```bash
-source /workspace/.cloud-setup/activate.sh
-./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug
-```
+Codex Cloud `/workspace/CampBoardGameHost` 直接读写/测试，不需要 MiniMCP 或 Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整验证 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`。Test JVM user.home 位于工作区，透传已有代理/CA，不改产品构建或 HOME；Gradle 通信需要执行环境网络能力。
 
-当前 Cloud `/workspace/CampBoardGameHost` 直接读写/测试，无需 MiniMCP/Windows。SDK/Gradle 缓存和 JDK25 daemon 已准备；临时 init 把 Test JVM user.home 定向至 `/workspace/work/java-user` 并传递已有代理/CA，解决只读 home 的 Robolectric 锁文件。init 属当前环境中间文件，换环境按同样最小配置重建，不是产品构建依赖。Gradle 进程通信需带网络能力的执行权限；不要改 HOME 或写用户 home。
+本批日志 `/workspace/work/night-ownership/full.log`，原工作流 R2 shell 为 `/workspace/work/r2-current.sh`。仍需区分真机进程中断和 JVM AtomicFile 回归，禁止把后者当作前者验收。
 
-## 立即接续
-
-先核实本批精确代码 CI/R2，然后继续 Night Host 的角色 actor/能力展示、实际确认与 AI 绑定职责及所有保存/恢复入口审计。两个超限文件先净删、再内聚整理，不引入 Context/Manager、机械拆文件或第二状态。随后完成逐角色/强制线索、P0/P5 全树与必要设备证据。
-
-保持 D2 仅 Next 最终 Observation、Session 夜间进度/同页日结/Death 派生 Klutz、生产 AI 全链及双跨局防重复。#334/#335 继续 Draft；不合并/改 base/重写历史/删分支或调用付费 API。无新的所有者决策阻塞。
+无新增所有者决策阻塞。保留两剧本、实际 AI 全链和双跨局防重复；#334/#335 保持 Draft，不合并/改 base/重写历史/删分支/调用付费 API。

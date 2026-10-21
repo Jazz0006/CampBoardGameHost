@@ -642,24 +642,8 @@ internal class ClocktowerGameSession private constructor(
         successorSeat: Int?,
     ): TimelineBoundActionFact {
         val roster = state.gameState.players
-        val imp = roster.singleOrNull { it.alive && it.actualRole == RoleId("Imp") }
-        val monkProtectsTarget = state.nightTargets.monkSeat == targetSeat &&
-            roster.any { it.alive && !it.poisoned && it.actualRole == RoleId("Monk") }
-        val selfKill = imp != null && imp.seat == targetSeat &&
-            !imp.poisoned && !monkProtectsTarget
-        val succession = if (selfKill) {
-            DemonSuccessionSemantics.resolve(DemonSuccessionContext(
-                demonActuallyDied = true,
-                demonDeathWasImpSelfKill = true,
-                aliveCountBeforeDemonDeath = roster.count { it.alive },
-                functioningScarletWomanSeat = roster.singleOrNull {
-                    it.alive && !it.poisoned && it.actualRole == RoleId("Scarlet Woman")
-                }?.seat,
-                livingMinionSeats = roster.filter {
-                    it.alive && it.actualType == CharacterType.MINION
-                }.mapTo(linkedSetOf()) { it.seat },
-            ))
-        } else DemonSuccessionResolution.None
+        val selfKill = state.impSelfKillSucceeds(targetSeat)
+        val succession = state.impSelfKillSuccession(targetSeat)
         val promotedSeat = when (succession) {
             is DemonSuccessionResolution.Forced -> {
                 require(successorSeat == succession.targetSeat) {

@@ -408,6 +408,63 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun selfKillWithMultipleMinionsWaitsForChoiceThenCommitsOnNext() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Spy", "Baron", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmSpyWake(
+            com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+                .ruleset(ClocktowerScript.TroubleBrewing), "other_night:role:Spy")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertExists()
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size) }
+        ui.onNodeWithText("#2 P2").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(false, host.session.state.gameState.playerAt(1)!!.alive)
+            assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(2)!!.actualRole)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+        }
+    }
+
+    @Test fun selfKillUsesForcedScarletWithoutOfferingOtherMinion() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Spy", "Scarlet Woman", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmSpyWake(
+            com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+                .ruleset(ClocktowerScript.TroubleBrewing), "other_night:role:Spy")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(3)!!.actualRole)
+            assertEquals(RoleId("Spy"), host.session.state.gameState.playerAt(2)!!.actualRole)
+        }
+    }
+
+    @Test fun poisonedImpSelfTargetDoesNotOfferOrCommitSuccession() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Poisoner", "Baron", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmNightPoison(1, StorytellerPhase.NIGHT, 2, "other_night:role:Poisoner")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(true, host.session.state.gameState.playerAt(1)!!.alive)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size)
+            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+        }
+    }
+
     /** Uses the production JudgeScreen and real Session; only external input/provider callbacks are fixtures. */
     private class Host(role: String, val mode: StorytellerOperationMode,
         private val script: ClocktowerScript = ClocktowerScript.TroubleBrewing,
@@ -443,6 +500,12 @@ class ClocktowerD2UiTest {
                 "ui-day", session.state.phase, session.state.round, session.nextInputSequence, StorytellerPhase.DAY, session.state.round), session.state.gameStateRevision)
             refresh()
         }
+        fun enterOtherNight() {
+            enterDay()
+            session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
+                "ui-night", StorytellerPhase.DAY, 1, session.nextInputSequence, StorytellerPhase.NIGHT, 2), session.state.gameStateRevision)
+            refresh()
+        }
         fun reload() {
             session = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(session.state)))
             refresh()
@@ -471,7 +534,7 @@ class ClocktowerD2UiTest {
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
                 cards = ClocktowerSessionPlayerCards(cards, { session.state }, "en"), sessionState = state,
-                script = script, gameId = state.gameId, gameSeed = state.gameSeed,
+                script = script, gameId = state.gameId,
                 globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
                 globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
                 globalAiAdviceKey = adviceKey.value, globalAiAdviceError = adviceError.value,
@@ -488,17 +551,23 @@ class ClocktowerD2UiTest {
                     StorytellerPhase.NIGHT -> ClocktowerPhase.Night
                 }, round = state.round,
                 nightCheckpoint = ClocktowerNightCheckpoint(state.phase.name, state.round, state.gameStateRevision, state.playerInputRevision,
-                    null, null, null, target.value, null, null, null, null, null, nextTimelineGlobalSequence = state.nextTimelineGlobalSequence),
+                    null, target.value, null, target.value, null, null, null, null,
+                    state.pendingImpNotification()?.targetSeat?.let { state.gameState.playerAt(it)?.name },
+                    nextTimelineGlobalSequence = state.nextTimelineGlobalSequence),
                 fortuneTellerFirst = null, fortuneTellerSecond = null,
                 chambermaidFirst = null, chambermaidSecond = null, ravenkeeperTarget = null, redHerring = null,
                 recommendedDemonBluffRoleNames = emptyList(), butlerMaster = target.value,
                 lastExecutedName = null,
-                ghostVoteAuthority = ClocktowerGhostVoteAuthority(), gameOutcome = null,
+                ghostVoteAuthority = ClocktowerGhostVoteAuthority(),
                 onCommitConfirmedPrivateInformationPublication = { draft, revision ->
                     session.commitGlobalEpistemicObservation(draft, revision)
                     tick.value++
                 },
-                onHostTools = {}, onSelectNightDeath = {}, onConfirmDemonAttack = { _, _ -> },
+                onHostTools = {}, onSelectNightDeath = { target.value = it }, onConfirmDemonAttack = { step, successor ->
+                    session.confirmNightAttack(cards.indexOfFirst { it.name == target.value } + 1, state.phase, state.round, step,
+                        successor?.let { name -> cards.indexOfFirst { it.name == name } + 1 })
+                    refresh()
+                },
                 onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
                     session.confirmNightPoison(cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
                     refresh()
@@ -511,7 +580,7 @@ class ClocktowerD2UiTest {
                     refresh()
                 },
                 onSelectMonkProtectedTarget = {}, onConfirmMonkProtectedTarget = {},
-                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = {}, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
+                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = { session.confirmImpNotification(); refresh() }, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
                 onConfirmKlutzChoice = { chosenName ->
                     session.confirmKlutzChoice(requireNotNull(session.state.pendingKlutzDeath()).actionId,
                         cards.indexOfFirst { it.name == chosenName } + 1)

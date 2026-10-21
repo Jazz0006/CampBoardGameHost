@@ -1,5 +1,11 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionContext
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionResolution
+import com.codex.campboardgamehost.clocktower.rules.DemonSuccessionSemantics
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 
@@ -38,3 +44,27 @@ internal fun ClocktowerGameSession.commitConfirmedActualRoleChange(
     )
 }
 
+/** Read only confirmed mechanics; selecting an attack target never makes it a fact. */
+internal fun ClocktowerSessionState.impSelfKillSucceeds(targetSeat: Int?): Boolean {
+    if (phase != StorytellerPhase.NIGHT) return false
+    val imp = gameState.players.singleOrNull { it.alive && it.actualRole == RoleId("Imp") } ?: return false
+    return imp.seat == targetSeat && !imp.poisoned && !(nightTargets.monkSeat == targetSeat &&
+        gameState.players.any { it.alive && !it.poisoned && it.actualRole == RoleId("Monk") })
+}
+
+/** The live UI and final attack confirmation share this one succession decision. */
+internal fun ClocktowerSessionState.impSelfKillSuccession(targetSeat: Int?): DemonSuccessionResolution {
+    if (!impSelfKillSucceeds(targetSeat)) return DemonSuccessionResolution.None
+    val roster = gameState.players
+    return DemonSuccessionSemantics.resolve(DemonSuccessionContext(
+        demonActuallyDied = true,
+        demonDeathWasImpSelfKill = true,
+        aliveCountBeforeDemonDeath = roster.count { it.alive },
+        functioningScarletWomanSeat = roster.singleOrNull {
+            it.alive && !it.poisoned && it.actualRole == RoleId("Scarlet Woman")
+        }?.seat,
+        livingMinionSeats = roster.filter {
+            it.alive && it.actualType == CharacterType.MINION
+        }.mapTo(linkedSetOf()) { it.seat },
+    ))
+}
