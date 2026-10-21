@@ -8,6 +8,9 @@ on:
       - codex/storyteller-algorithm-v4
       - 'cleanup/**'
     paths:
+      - app/src/main/java/**
+      - app/src/test/**
+      - app/build.gradle.kts
       - app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt
@@ -129,7 +132,6 @@ jobs:
             exit 1
           fi
           grep -q "internal fun PlayerCard.clocktowerShownAsDifferentRole" "$core"
-          grep -q "internal fun isClocktowerEvil" "$core"
           grep -q "internal fun clocktowerPrivateObservationRecordId" "$core"
 
           for symbol in \
@@ -300,3 +302,19 @@ jobs:
           main_bytes="$(wc -c < "$main")"
           test "$main_lines" -lt 200
           test "$main_bytes" -lt 6000
+
+          # Final source-size contract applies to all maintained source, including tests.
+          while IFS= read -r -d '' file; do
+            test -f "$file" || continue
+            bytes="$(wc -c < "$file")"
+            if test "$bytes" -gt 50000; then
+              echo "Source exceeds 50000 bytes: $file ($bytes)" >&2
+              exit 1
+            fi
+          done < <(git ls-files -z '*.kt' '*.kts' '*.py' '*.js' '*.ts' '*.tsx' '*.sh')
+
+          # Test-only adapters must not return as a second Host decision surface.
+          if grep -R -q -E 'clocktowerNightWakingRoleIds|clocktowerUndertakerTypedResult|clocktowerRavenkeeperTypedResult|storytellerAiResponseMayApply|isClocktowerEvil' app/src/main/java; then
+            echo "Retired test-only Host adapter returned" >&2
+            exit 1
+          fi

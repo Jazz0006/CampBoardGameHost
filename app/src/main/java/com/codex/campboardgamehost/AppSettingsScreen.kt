@@ -215,3 +215,20 @@ internal fun SettingsContent(
         }
     }
 }
+
+@Composable
+internal fun EmptyStateCard(text: String) {
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFCF6)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            color = Color(0xFF6F7B74),
+        )
+    }
+}

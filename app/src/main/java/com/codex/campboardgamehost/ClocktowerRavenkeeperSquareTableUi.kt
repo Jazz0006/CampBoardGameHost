@@ -24,25 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-
-internal data class ClocktowerRavenkeeperTypedResult(
-    val targetSeat: Int,
-    val roleId: RoleId,
-)
-
-internal fun clocktowerRavenkeeperTypedResult(
-    proposition: InformationProposition?,
-    selectedSeat: Int?,
-    seatCount: Int,
-): ClocktowerRavenkeeperTypedResult? = clocktowerRoleRevealAnchor(
-    proposition = proposition,
-    expectedSeat = selectedSeat,
-    seatCount = seatCount,
-)?.let { anchor ->
-    ClocktowerRavenkeeperTypedResult(anchor.targetSeat, anchor.roleId)
-}
 
 /** The query target is actual player input; the shown role is chosen independently. */
 @Composable
@@ -179,4 +160,3 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
         }
     }
 }
-
