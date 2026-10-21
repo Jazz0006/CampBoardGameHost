@@ -73,7 +73,7 @@ internal fun ClocktowerLightTheme(content: @Composable () -> Unit) =
     ClocktowerPhaseTheme(isNight = false, content = content)
 
 @Composable
-private fun ClocktowerPhaseTheme(isNight: Boolean, content: @Composable () -> Unit) {
+internal fun ClocktowerPhaseTheme(isNight: Boolean, content: @Composable () -> Unit) {
     val typography = MaterialTheme.typography
     MaterialTheme(
         colorScheme = if (isNight) ClocktowerHostColorScheme else ClocktowerDayColorScheme,

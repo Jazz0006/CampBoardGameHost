@@ -44,6 +44,7 @@ internal enum class HostToolTab {
 }
 @Composable
 internal fun NewGameConfirmationDialog(
+    isNight: Boolean,
     onDismiss: () -> Unit,
     onManagePlayers: () -> Unit,
     onQuickRestart: () -> Unit,
@@ -52,7 +53,7 @@ internal fun NewGameConfirmationDialog(
     val language = context.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val gameName = stringResource(R.string.game_clocktower)
-    ClocktowerDarkTheme {
+    ClocktowerPhaseTheme(isNight = isNight) {
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(text("结束当前游戏？", "End this game?")) },
@@ -97,6 +98,7 @@ internal fun NewGameConfirmationDialog(
 @Composable
 internal fun HostGameToolsScreen(
     cards: List<PlayerCard>,
+    isNight: Boolean,
     initialTab: HostToolTab,
     settingsContent: @Composable () -> Unit,
     onDismiss: () -> Unit,
@@ -109,7 +111,7 @@ internal fun HostGameToolsScreen(
 
     BackHandler(onBack = onDismiss)
 
-    ClocktowerDarkTheme {
+    ClocktowerPhaseTheme(isNight = isNight) {
         Surface(
             modifier = Modifier
                 .fillMaxSize(),
