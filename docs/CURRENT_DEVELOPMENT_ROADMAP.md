@@ -11,7 +11,7 @@
 - **身份/草稿**：删去 UI 自建 roster/seed/poison 指纹，信息草稿 key 使用 gameId、Session state/input revision、稳定 interactionId。删除已无消费的 JudgeScreen gameSeed/gameOutcome 参数及 App 接线；Session outcome 仍阻止继续已结束游戏。D2 最后预览/唯一 Next Observation、真实玩家目标与 AI stale/receipt/记忆协议保持。
 - **消费者与测试**：生产改动仅 App 接线、JudgeScreen、Session attack 与既有 RoleIdentityBoundaries。新增真实 Session 3 项（4 人/中毒红唇、僧侣保护、旧继任选择失效），扩充已有确认断言；新增真实 JudgeScreen 3 项（多爪牙选择不提前提交、强制红唇、不生效自杀无继任）。无生产或专属测试文件删除，无测试忽略。
 - **精确净量**：生产 +104/-190，净删 **86 行 / 4651B**；测试 +138/-5，净 +133 行。App **118438B**、Night Host **63094B** 仍超 50000B，Session **48526B** 达标。没有声称本批解决所有超限文件。
-- **验证**：Cloud `testFull + assembleDebug` **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，原始 R2 shell 与 diff 检查通过；远端精确提交 CI/R2 待推送。本批无真机、杀进程或付费 API。首轮新测试失败来自测试前置 Spy 尚未确认、夹具已有 Scarlet Woman 的错误预期和弹窗/方桌重名选择器，未把它们记作生产 bug 或修复前反例。
+- **验证**：Cloud `testFull + assembleDebug` **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，原始 R2 shell 与 diff 检查通过；生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324` 的[完整 Android CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) 与 [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 均 SUCCESS（包含 full tests / Debug APK、ASP、Clingo 和 gate）。本批无真机、杀进程或付费 API。首轮新测试失败来自测试前置 Spy 尚未确认、夹具已有 Scarlet Woman 的错误预期和弹窗/方桌重名选择器，未把它们记作生产 bug 或修复前反例。
 
 下一步继续 Night 信息发布/AI 与保存恢复入口职责审计、两个超限文件按内聚职责缩减，再完成逐角色/强制线索、全树 P0/P5 和设备证据。
 
@@ -34,7 +34,7 @@ Session 拥有夜间步骤/确定性机械、白天提名/投票/处决/胜负�
 
 ## 下一步
 
-1. 验收本批夜间职责收敛精确代码 CI/R2；继续信息发布/AI 确认边界和保存/恢复入口职责审计。
+1. 本批精确代码 CI/R2 已验收；继续信息发布/AI 确认边界和保存/恢复入口职责审计。
 2. 两个超限文件先净删，再按真实内聚职责收敛至全部源码 <=50000B，不用机械切块、泛用 Context/Manager 或影子 Session。
 3. 完成 P0/P5 全树语义归属与零遗留证明、两剧本逐角色合同、更多强制线索及代表性交互证据。
 4. 新 APK 真机操作与杀进程安全续局。TB 5–15/NGJ 5–6 显式两夜 fixture 不等于所有合法阵容或设备验收。
