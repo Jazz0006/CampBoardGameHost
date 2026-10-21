@@ -6,7 +6,6 @@ import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
 import com.codex.campboardgamehost.clocktower.domain.requireCompatible
@@ -28,32 +27,6 @@ internal data class GlobalActionFactCommit(
     val entry: TimelineBoundActionFact,
     val actionTimeline: ActionFactTimeline,
     val nextTimelineGlobalSequence: Long,
-)
-
-/**
- * Immutable Compose-facing read model for session identity, revision, and semantic chronology.
- *
- * [GameState] is canonical inside [ClocktowerGameSession], but remains intentionally absent here:
- * production UI still owns [PlayerCard]-style presentation metadata and uses derived GameState
- * projections for pre-session, recommendation, and screen-local reads. Excluding GameState keeps this
- * view narrow and prevents a second broad mechanical read API while preserving the single session writer.
- */
-internal data class ClocktowerSessionView(
-    val gameId: String,
-    val scriptId: ScriptId,
-    val gameStateRevision: Long,
-    val playerInputRevision: Long,
-    val gameSeed: Long,
-    val actionTimeline: ActionFactTimeline,
-    val epistemicObservationLog: EpistemicObservationLog,
-    val semanticHistoryMode: ClocktowerSemanticHistoryMode,
-    val nextTimelineGlobalSequence: Long,
-    val phase: StorytellerPhase,
-    val round: Int,
-    val nightTargets: ClocktowerNightTargets,
-    val voteStanding: ClocktowerVoteStanding,
-    val redHerringSeat: Int?,
-    val demonBluffRoleIds: List<RoleId>,
 )
 
 /**

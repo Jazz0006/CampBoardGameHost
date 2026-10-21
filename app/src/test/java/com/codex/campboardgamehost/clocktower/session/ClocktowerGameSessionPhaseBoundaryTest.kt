@@ -16,14 +16,14 @@ class ClocktowerGameSessionPhaseBoundaryTest {
     @Test
     fun `first night to day atomically commits chronology and only one revision`() {
         val session = newSession()
-        assertEquals(StorytellerPhase.FIRST_NIGHT, session.view.phase)
-        assertEquals(1, session.view.round)
+        assertEquals(StorytellerPhase.FIRST_NIGHT, session.state.phase)
+        assertEquals(1, session.state.round)
         val beforeState = session.state.gameState
         val draft = phase("first-day", StorytellerPhase.FIRST_NIGHT, 1, StorytellerPhase.DAY, 1)
 
         val committed = session.commitConfirmedPhaseAdvance(draft, expectedGameStateRevision = 0L)
-        assertEquals(StorytellerPhase.DAY, session.view.phase)
-        assertEquals(1, session.view.round)
+        assertEquals(StorytellerPhase.DAY, session.state.phase)
+        assertEquals(1, session.state.round)
         val accepted = session.state
         assertEquals(beforeState, accepted.gameState)
         assertEquals(1L, accepted.gameStateRevision)
@@ -78,8 +78,8 @@ class ClocktowerGameSessionPhaseBoundaryTest {
             phase("day-2", StorytellerPhase.NIGHT, 2, StorytellerPhase.DAY, 2),
             expectedGameStateRevision = session.state.gameStateRevision,
         )
-        assertEquals(StorytellerPhase.DAY, session.view.phase)
-        assertEquals(2, session.view.round)
+        assertEquals(StorytellerPhase.DAY, session.state.phase)
+        assertEquals(2, session.state.round)
         assertEquals(4L, session.state.gameStateRevision)
         assertEquals(4L, session.state.nextTimelineGlobalSequence)
         assertEquals(4, session.state.actionTimeline.entries.size)

@@ -22,13 +22,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
+import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
+import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
-import com.codex.campboardgamehost.clocktower.session.ClocktowerNightCheckpoint
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
@@ -42,8 +44,6 @@ internal fun ClocktowerJudgeScreen(
     cards: List<PlayerCard>,
     // Confirmed mechanical facts come from the one Session, never rebuilt from UI cards.
     sessionState: ClocktowerSessionState,
-    script: ClocktowerScript,
-    gameId: String,
     globalAiAssisted: Boolean = false,
     /** A verified joint plan is advisory; only confirmed current steps affect Session. */
     globalAiAutomatic: Boolean = false,
@@ -56,9 +56,10 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceError: String? = null,
     globalResidualRecommendedChoices: Map<String, com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult> = emptyMap(),
     onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
-    phase: ClocktowerPhase,
-    round: Int,
-    nightCheckpoint: ClocktowerNightCheckpoint,
+    demonAttackDraftTarget: String?,
+    poisonDraftTarget: String?,
+    monkProtectedDraftTarget: String?,
+    mayorRedirectDraftTarget: String?,
     fortuneTellerFirst: String?,
     fortuneTellerSecond: String?,
     chambermaidFirst: String?,
@@ -68,8 +69,6 @@ internal fun ClocktowerJudgeScreen(
     openingRecommendedRedHerring: String? = null,
     recommendedDemonBluffRoleNames: List<String>,
     butlerMaster: String?,
-    lastExecutedName: String?,
-    ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
     onSelectNightDeath: (String?) -> Unit,
@@ -106,17 +105,26 @@ internal fun ClocktowerJudgeScreen(
     val sessionGameState = sessionState.gameState
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
-    val gameStateRevision = nightCheckpoint.gameStateRevision
-    val playerInputRevision = nightCheckpoint.playerInputRevision
-    val pendingNightDeath = nightCheckpoint.confirmedAttackTarget
-    val demonAttackDraftTarget = nightCheckpoint.attackDraftTarget
-    val poisonTarget = nightCheckpoint.confirmedPoisonTarget
-    val poisonDraftTarget = nightCheckpoint.poisonDraftTarget
-    val monkProtectedTarget = nightCheckpoint.confirmedMonkTarget
-    val monkProtectedDraftTarget = nightCheckpoint.monkDraftTarget
-    val mayorRedirectTarget = nightCheckpoint.confirmedMayorRedirectTarget
-    val mayorRedirectDraftTarget = nightCheckpoint.mayorRedirectDraftTarget
-    val pendingNewDemonName = nightCheckpoint.pendingNewDemonName
+    val gameId = sessionState.gameId
+    val round = sessionState.round
+    val phase = when (sessionState.phase) {
+        StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
+        StorytellerPhase.DAY -> ClocktowerPhase.Day
+        StorytellerPhase.NIGHT -> ClocktowerPhase.Night
+    }
+    val script = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionGameState.script }
+    val gameStateRevision = sessionState.gameStateRevision
+    val playerInputRevision = sessionState.playerInputRevision
+    val pendingNightDeath = sessionState.nightTargets.attackSeat?.let(sessionGameState::playerAt)?.name
+    val poisonTarget = sessionState.confirmedPoisonTargetName(round)
+    val monkProtectedTarget = sessionState.nightTargets.monkSeat?.let(sessionGameState::playerAt)?.name
+    val mayorRedirectTarget = sessionState.nightTargets.mayorRedirectSeat?.let(sessionGameState::playerAt)?.name
+    val pendingNewDemonName = sessionState.takeIf { phase == ClocktowerPhase.Night }
+        ?.pendingImpNotification()?.targetSeat?.let(sessionGameState::playerAt)?.name
+    val ghostVoteAuthority = ClocktowerGhostVoteAuthority.from(sessionState.actionTimeline)
+    val lastExecutedName = sessionState.actionTimeline.entries.asReversed().firstNotNullOfOrNull {
+        (it.fact as? ActionFact.Execution)?.targetSeat
+    }?.let(sessionGameState::playerAt)?.name
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
 
@@ -310,7 +318,7 @@ internal fun ClocktowerJudgeScreen(
                 stepId = stepId,
             ),
             phase = phase.toStorytellerPhase(),
-            round = round, sequence = (nightCheckpoint.nextTimelineGlobalSequence + 1).toInt(), sourceSeat = actorSeat,
+            round = round, sequence = (sessionState.nextTimelineGlobalSequence + 1).toInt(), sourceSeat = actorSeat,
             sourceAbility = RoleId(requireNotNull(displayStep.roleEnName)), visibility = ObservationVisibility.PRIVATE,
             recipientSeats = setOf(actorSeat),
             reliability = if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
@@ -707,7 +715,7 @@ internal fun ClocktowerJudgeScreen(
         val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
             ClocktowerResidualRequestIdentityV2.build(
                 gameId, round, currentStepIndex, identity.requestId,
-                gameStateRevision, playerInputRevision, nightCheckpoint.nextTimelineGlobalSequence,
+                gameStateRevision, playerInputRevision, sessionState.nextTimelineGlobalSequence,
                 if (globalAiAutomatic) StorytellerOperationMode.AI_AUTOMATIC
                 else StorytellerOperationMode.AI_ASSISTED,
             )

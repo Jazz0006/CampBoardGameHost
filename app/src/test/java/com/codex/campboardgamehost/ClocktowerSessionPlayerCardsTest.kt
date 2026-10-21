@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionJson
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedActualRoleChange
 import com.codex.campboardgamehost.clocktower.session.commitConfirmedPlayerDeath
 import org.junit.Assert.assertEquals
@@ -86,4 +87,37 @@ class ClocktowerSessionPlayerCardsTest {
         source[0] = source[0].copy(eliminatedRound = 3)
         assertEquals(3, cards[0].eliminatedRound)
     }
+
+    @Test fun `restored game presents its complete roster without any setup cards`() {
+        val original = session("restored-only")
+        val restored = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(original.state)))
+        val cards = ClocktowerSessionPlayerCards(emptyList(), { restored.state }, "en")
+        assertEquals(initial.players.size, cards.size)
+        assertEquals(initial.players.map { it.name }, cards.map { it.name })
+        assertEquals("Investigator", cards[5].clocktowerShownRole?.enName)
+        assertEquals("Drunk", cards[5].clocktowerRole?.enName)
+    }
+
+    @Test fun `clearing or changing setup cannot remove or rename active Session seats`() {
+        val source = mutableListOf(PlayerCard("Unrelated setup"))
+        val session = session("session-roster")
+        val cards = ClocktowerSessionPlayerCards(source, { session.state }, "en")
+        assertEquals(initial.players.size, cards.size)
+        assertEquals(initial.players[0].name, cards[0].name)
+        source.clear()
+        assertEquals(initial.players.size, cards.size)
+        assertEquals(initial.players.last().name, cards.last().name)
+    }
+
+    @Test fun `same presentation follows the active game replacement with different players and size`() {
+        var active = session("first-session")
+        val cards = ClocktowerSessionPlayerCards(emptyList(), { active.state }, "en")
+        assertEquals(8, cards.size)
+        val next = initial.copy(players = initial.players.take(5).map { it.copy(name = "New ${it.seat}") })
+        active = ClocktowerGameSession.createProduction("second-session", next.seed, next, ClocktowerSemanticHistoryMode.GLOBAL_V1)
+        assertEquals(5, cards.size)
+        assertEquals("New 1", cards[0].name)
+        assertEquals("New 5", cards.last().name)
+    }
+
 }

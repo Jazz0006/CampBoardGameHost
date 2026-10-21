@@ -2,6 +2,19 @@
 
 最新所有者指令优先于旧 P0–P5 顺序：当前实现仍会调整，先完成完整游戏流程的最小实现；随后遍历全部代码、大规模删除；界面和流程细节优化放在清理之后。
 
+## 2026-10-21 单一游戏对象的最小整局接线
+
+所有者补充：完整游戏必须基于同一个游戏对象，不拼接不同的事实/进度依赖。当前对象为 `ClocktowerGameSession`；其 `state` 是唯一游戏事实。UI 草稿、静态剧本、AI 推荐/传输和存储适配可存在，但不能有独立的游戏真值或进度，也不为赶进度引入新旧双轨。
+
+- 移除 `ClocktowerSessionView` 类型、Session.view 及 App 的可写投影。App 直接读活跃 Session；UI tick 只触发重绘，不承载任何游戏数据/业务版本，阶段/轮次的派生值仍在同一回调中读最新 Session。
+- 删除 `ClocktowerNightCheckpoint.kt` 及其 App 构造/辅助读取链。JudgeScreen 的 script/gameId/phase/round、版本/游标、确认的攻击/毒/保护/市长目标、继任通知、鬼票/处决历史都从同一 SessionState 派生；外部只交未确认的 UI 目标草稿与实际操作回调。
+- 活跃/恢复后的 `ClocktowerSessionPlayerCards` 不再依赖 setupCards 的大小、姓名或身份，也不再复制 setupCard；直接由 Session 构造只读展示。App 恢复不再重建开局卡牌镜像。开局尚无 Session 时仍可编辑准备名单；玩家偏好/下局设置不成为本局事实。
+- 新增 3 项无 setup 镜像的读取/重载/换局回归；两项真实 JudgeScreen 代表性整局从 Session 创建后的首夜输入/预览/最终确认，经 Day1、Night2 真实死亡、Day2 提名/投票/处决，到 NO_DEMON 终局和重读/幂等验证。TB 含两次投毒；两剧本均使用 5 人的内置角色。投票前提名由测试调用同一 Session 的真实边界，非模拟 UI 手势；不是整个 App 发牌页面或真机/所有阵容已验收。
+- 生产 +90/-204，净删 **114 行 / 5281B**；测试净 +81 行。删除生产文件 1 个（NightCheckpoint）、专属测试文件 0 个。App **115684B**、Night Host **63787B** 仍超 50000B，Session **47578B**；不以大小达标阻塞本阶段闭环。
+- 本地验证：首轮定向 54 项通过；最终移除 Checkpoint 后 Cloud `testFull + assembleDebug` **651 tests / 146 suites / 35 UI，0 failure/error/skipped**，原始 R2 shell、diff 检查通过。精确代码 CI/R2 待提交推送核对。未运行真机/实际杀进程/付费 API。
+
+当前立即任务是验收本批单一对象接线，再针对真实创建/发牌入口及最小角色分支核对剩余阻断；闭环满足退出标准后直接进入全仓遍历/大规模删除，不转回界面精修。
+
 ## 第一阶段：尽快完成完整游戏流程的最小实现（当前）
 
 目标是两套内置剧本 TB 5–15 / NGJ 5–6 能从创建游戏，经首夜、白天、后续日夜循环走到正式终局，并能从已确认状态安全继续。
@@ -26,9 +39,9 @@
 
 ## 立即下一步
 
-以最新分支为准，做一次面向整局可玩性的缺口检查，给出“已可用 / 阻断 / 延后优化”的短清单，随后直接修复最高优先级阻断并跑一条完整轨迹。若没有实际阻断且第一阶段证据满足，就转入全仓清理，不人为继续打磨当前 UI。
+本批单一对象接线验收后，以最新分支为准，做一次面向真实创建/发牌入口及剩余最小角色分支的整局可玩性缺口检查，给出“已可用 / 阻断 / 延后优化”的短清单，随后直接修复最高优先级阻断并跑一条完整轨迹。若没有实际阻断且第一阶段证据满足，就转入全仓清理，不人为继续打磨当前 UI。
 
-## 已验收基线与执行边界
+## 前一已验收基线与执行边界（本批见上）
 
 最新生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324`：Cloud full **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，Debug APK、原 R2 shell、[完整 CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) / [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 通过。路线调整为纯文档，不增加新的代码验收。前批继任/展示收敛净删 86 行/4651B，无生产/专属测试文件删除；App 118438B、Night Host 63094B 仍超限，Session 48526B。历史细节见 [台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
 

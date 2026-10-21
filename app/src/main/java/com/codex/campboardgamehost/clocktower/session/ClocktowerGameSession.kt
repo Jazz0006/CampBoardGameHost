@@ -42,26 +42,6 @@ internal class ClocktowerGameSession private constructor(
             return state.nextTimelineGlobalSequence.toInt() + 1
         }
 
-    /** Read-only cutover projection suitable for publishing through an observable UI boundary. */
-    val view: ClocktowerSessionView
-        get() = ClocktowerSessionView(
-            gameId = state.gameId,
-            scriptId = state.gameState.script,
-            gameStateRevision = state.gameStateRevision,
-            playerInputRevision = state.playerInputRevision,
-            gameSeed = state.gameSeed,
-            actionTimeline = state.actionTimeline,
-            epistemicObservationLog = state.epistemicObservationLog,
-            semanticHistoryMode = state.semanticHistoryMode,
-            nextTimelineGlobalSequence = state.nextTimelineGlobalSequence,
-            phase = state.phase,
-            round = state.round,
-            nightTargets = state.nightTargets,
-            voteStanding = state.voteStanding,
-            redHerringSeat = state.redHerringSeat,
-            demonBluffRoleIds = state.demonBluffRoleIds,
-        )
-
     /**
      * Backward-compatible strict snapshot view for ruleset-backed sessions.
      * Production sessions without an advanced ruleset must use [state] until a real ref is available.
