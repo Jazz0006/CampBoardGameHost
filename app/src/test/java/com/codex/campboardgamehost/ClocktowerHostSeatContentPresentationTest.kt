@@ -22,7 +22,7 @@ class ClocktowerHostSeatContentPresentationTest {
     }
 
     @Test
-    fun `seat without actual role remains identity only before deal`() {
+    fun `precommit seat shows confirmed shown identity without inventing actual role`() {
         val seat = HostSeatPresentation(
             seatId = ClocktowerSeatId(1),
             playerName = "Alice",
@@ -33,7 +33,7 @@ class ClocktowerHostSeatContentPresentationTest {
         val presentation = hostSeatContentPresentation(seat, language = "zh")
 
         assertEquals("Alice", presentation.primaryLabel)
-        assertEquals(emptyList<String>(), presentation.detailLabels)
+        assertEquals(listOf("共情者"), presentation.detailLabels)
     }
 
     @Test
