@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.codex.campboardgamehost.clocktower.domain.Alignment
+import com.codex.campboardgamehost.clocktower.domain.Alignment as ClocktowerAlignment
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkCandidate
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRequest
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPreparedSetup
@@ -46,9 +46,9 @@ internal fun troubleBrewingPrecommitHostSeats(
                 displayName = roleLabel(assignment.shownRoleId),
             ),
             actualAlignment = if (assignment.shownRoleId in goodShownRoles) {
-                Alignment.GOOD
+                ClocktowerAlignment.GOOD
             } else {
-                Alignment.EVIL
+                ClocktowerAlignment.EVIL
             },
             isAlive = true,
         )
