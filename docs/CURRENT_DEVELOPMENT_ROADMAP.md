@@ -24,4 +24,12 @@
 
 ## 验证与执行边界
 
-本批 Cloud full 654 / 147 suites / 38 UI、APK、原 R2 shell 通过，生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；前一 `3268440f` / Cloud 651 / CI #4501 / R2 #4077 为历史基线。保持两剧本、现有 AI 全链/已有模式范围、双跨局防重复、确定机械、D2 最终 Next、顺序/隐私/幂等/原子保存。Cloud 直接读写测试；原 #335 仍堆叠 #334，均 Draft，不合并/改 base/重写历史/删分支/付费 API。交接见 [下一步](NEXT_DEVELOPMENT_HANDOFF.md)。
+本批 Cloud full 654 / 147 suites / 38 UI、APK、原 R2 shell 通过，生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；前一 `3268440f` / Cloud 651 / CI #4501 / R2 #4077 为历史基线。保持两剧本、现有 AI 全链/已有模式范围、双跨局防重复、确定机械、D2 最终 Next、顺序/隐私/幂等/原子保存。Cloud 直接读写测试；原 #335、#334 已合并，main `40050941efc3` 的完整 CI #4506 与 Field Test APK #157 SUCCESS；旧 Draft 禁令已过时。新清理 PR 独立验收，保持 Draft，不强推/删分支/付费 API。交接见 [下一步](NEXT_DEVELOPMENT_HANDOFF.md)。
+
+## 第二阶段首批：孤立工具/静态样例整链退休
+
+从 main `40050941efc3` 建立 `codex/whole-tree-cleanup-20261021`。删除 `tools/asp_oracle/`（静态 FormalGameState corpus→外部 botc-asp、专属 Python 测试/说明）、孤立 `ui/` HTML/CSS/JS 展示样例和已完成的模板迁移脚本。CI 同批移除 ASP/Clingo 路由/jobs/dependencies，保留 Android full/APK、失败门禁和独立 R2。真实 Host/AI 没有调用该旧 corpus；Android 生产/测试 Kotlin 零改动。
+
+可执行/样例/工具及其说明共删除 9 文件，11 文件 +4/-2766，净删 2762 行 / 134078B（不含本批路线/规范/台账说明变动）。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK 和原 R2 shell 通过；10 类 CI 路由及门禁失败/取消检查通过。提交后的精确远端 CI/R2 待核对，不能借用 #4506。
+
+唯一台账按当前 Git 树对齐：清除前阶段已删除但仍挂表的 54 条路径和本批 8 条已删源路径；漏登的新 Session/UI/测试及历史 artifacts 补为待审。库存校正不算新语义审计，全树尚未完成。后续继续待审代码及现有 App/Night Host 混合职责，优先整链净删；两个超限文件仍为 116000B / 63787B，Session 47578B。

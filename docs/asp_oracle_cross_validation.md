@@ -1,3 +1,5 @@
+> Historical evidence only (2026-10-21): the static FormalGameState corpus, external botc-asp runner, exclusive tests and CI jobs have been retired. This harness did not compare current Android/Session output. Current rules/privacy/atomicity acceptance uses the actual Host tests; see the current roadmap and testing strategy.
+
 # Official golden corpus and ASP Oracle cross-validation (A2.1)
 
 > Milestone: Phase A / PR A2.1  
