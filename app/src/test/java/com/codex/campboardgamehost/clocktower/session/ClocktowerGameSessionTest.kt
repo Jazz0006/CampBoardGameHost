@@ -104,7 +104,7 @@ class ClocktowerGameSessionTest {
         session.recordEpistemicObservation(
             RecordedEpistemicObservation(
                 recordId = "dawn-one-dead",
-                phase = StorytellerPhase.DAWN,
+                phase = StorytellerPhase.DAY,
                 round = 1,
                 sequence = 0,
                 sourceSeat = null,
@@ -163,8 +163,6 @@ class ClocktowerGameSessionTest {
         assertEquals(bluffRoles, session.state.demonBluffRoleIds)
         assertEquals(2L, session.state.playerInputRevision)
         assertEquals(0L, session.state.gameStateRevision)
-        assertEquals(4, session.view.redHerringSeat)
-        assertEquals(bluffRoles, session.view.demonBluffRoleIds)
         assertSame(session.state, session.commitRedHerringSeat(
             4, StorytellerPhase.FIRST_NIGHT, 1, 1,
         ))
@@ -249,7 +247,7 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `session view publishes cutover safe identity revisions and chronology`() {
+    fun `one Session state supplies identity revisions and chronology`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "observable-view",
             gameSeed = initialState.seed,
@@ -268,10 +266,10 @@ class ClocktowerGameSessionTest {
         )
         session.commitGlobalEpistemicObservation(globalPublicDraft("view-public"))
 
-        val view = session.view
+        val view = session.state
 
         assertEquals("observable-view", view.gameId)
-        assertEquals(initialState.script, view.scriptId)
+        assertEquals(initialState.script, view.gameState.script)
         assertEquals(initialState.seed, view.gameSeed)
         assertEquals(2L, view.gameStateRevision)
         assertEquals(1L, view.playerInputRevision)
@@ -327,7 +325,7 @@ class ClocktowerGameSessionTest {
 
     private fun globalPublicDraft(recordId: String): EpistemicObservationDraft = EpistemicObservationDraft(
         recordId = recordId,
-        phase = StorytellerPhase.DAWN,
+        phase = StorytellerPhase.DAY,
         round = 1,
         sequence = 0,
         sourceSeat = null,

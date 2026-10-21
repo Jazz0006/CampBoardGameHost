@@ -1,59 +1,20 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class ClocktowerPrivateObservationRecordIdTest {
-    @Test
-    fun `private observation identity is stable for duplicates and changes with shown statement`() {
-        val first = InformationProposition.BooleanResult(
-            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-            sourceSeat = 1,
-            subjectSeats = listOf(2, 3),
-            value = false,
+    @Test fun `observation identity is the stable role step not the previewed result`() {
+        fun id(stepId: String) = clocktowerPrivateObservationRecordId(
+            gameId = "game-1", phase = ClocktowerPhase.Night, round = 2,
+            roleEnName = "Fortune Teller", actorSeat = 1, stepId = stepId,
         )
-        val same = InformationProposition.BooleanResult(
-            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-            sourceSeat = 1,
-            subjectSeats = listOf(2, 3),
-            value = false,
-        )
-        val corrected = InformationProposition.BooleanResult(
-            metric = BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
-            sourceSeat = 1,
-            subjectSeats = listOf(2, 4),
-            value = true,
-        )
-
-        val firstId = clocktowerPrivateObservationRecordId(
-            gameId = "game-1",
-            phase = ClocktowerPhase.Night,
-            round = 2,
-            roleEnName = "Fortune Teller",
-            actorSeat = 1,
-            proposition = first,
-        )
-        val sameId = clocktowerPrivateObservationRecordId(
-            gameId = "game-1",
-            phase = ClocktowerPhase.Night,
-            round = 2,
-            roleEnName = "Fortune Teller",
-            actorSeat = 1,
-            proposition = same,
-        )
-        val correctedId = clocktowerPrivateObservationRecordId(
-            gameId = "game-1",
-            phase = ClocktowerPhase.Night,
-            round = 2,
-            roleEnName = "Fortune Teller",
-            actorSeat = 1,
-            proposition = corrected,
-        )
-
-        assertEquals(firstId, sameId)
-        assertNotEquals(firstId, correctedId)
+        // Displaying another candidate before Next must not create another event identity.
+        assertEquals(id("ft-step"), id("ft-step"))
+        assertNotEquals(id("ft-step"), id("another-night-action"))
+        assertNotEquals(id("ft-step"), clocktowerPrivateObservationRecordId(
+            "game-1", ClocktowerPhase.Night, 3, "Fortune Teller", 1, "ft-step",
+        ))
     }
 }

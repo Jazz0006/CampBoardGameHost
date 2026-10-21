@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -89,33 +90,46 @@ internal fun clocktowerUndertakerPlayerDisplayStep(
 /** Render one confirmed execution target and direct manual role input or a single typed AI choice. */
 @Composable
 internal fun ClocktowerUndertakerSquareTableDialog(
+    interactionKey: String,
     seats: List<HostSeatPresentation>,
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
     scriptRoles: List<ClocktowerRole>,
     recommendedOption: ClocktowerDisplayOption?,
+    lastPreviewRoleId: String?,
+    automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDirectRoleRevealChoice) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
     val executedSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)?.subjectSeat
         ?.takeIf { it in 1..seats.size } ?: return
     val advised = clocktowerDirectRecommendedRoleReveal(
         step, executedSeat, seats.size, scriptRoles, recommendedOption,
     )
-    var editing by remember(executedSeat, advised) { mutableStateOf(advised == null) }
-    var selectedRole by remember(executedSeat, advised) { mutableStateOf(advised?.roleId?.value) }
+    var editing by remember(interactionKey, executedSeat, automaticOnly) {
+        mutableStateOf(!automaticOnly && (advised == null ||
+            (lastPreviewRoleId != null && lastPreviewRoleId != advised.roleId.value)))
+    }
+    var selectedRole by remember(interactionKey, executedSeat, automaticOnly) {
+        mutableStateOf(lastPreviewRoleId ?: advised?.roleId?.value)
+    }
+    fun changeRole(roleId: String) {
+        if (selectedRole != roleId) {
+            selectedRole = roleId
+            onDraftChanged()
+        }
+    }
     var roleMenuExpanded by remember(executedSeat) { mutableStateOf(false) }
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
@@ -147,7 +161,15 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                             if (language == "en") "Show: ${choice.displayLabel}" else "展示：${choice.displayLabel}"
                         },
                         onConfirm = onConfirm,
-                        onManualSelection = { editing = true },
+                        onManualSelection = if (automaticOnly) null else ({
+                            selectedRole = lastPreviewRoleId ?: advised.roleId.value
+                            editing = true
+                        }),
+                    )
+                } else if (automaticOnly) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI recommendation" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 } else {
                     Box(Modifier.fillMaxWidth()) {
@@ -161,7 +183,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                             scriptRoles.distinctBy { it.enName }.forEach { role ->
                                 DropdownMenuItem(
                                     text = { Text(roleLabel(role.enName)) },
-                                    onClick = { selectedRole = role.enName; roleMenuExpanded = false },
+                                    onClick = { changeRole(role.enName); roleMenuExpanded = false },
                                 )
                             }
                         }
@@ -178,7 +200,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                     ) { Text(if (language == "en") "Show to player" else "展示给玩家") }
                     if (advised != null) {
                         TextButton(onClick = {
-                            selectedRole = advised.roleId.value
+                            changeRole(advised.roleId.value)
                             editing = false
                         }) { Text(if (language == "en") "Use recommendation" else "恢复推荐") }
                     }

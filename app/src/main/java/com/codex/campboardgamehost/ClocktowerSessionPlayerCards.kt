@@ -6,8 +6,8 @@ import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 /**
  * Read-only Clocktower presentation over the *live* Session, not a second card-state cache.
  *
- * The backing cards own seat presentation during setup.
- * After Clocktower Session creation, every access resolves mechanics from Session.
+ * Setup cards are used only before Session creation. An active or restored game
+ * supplies its entire roster from Session, including size and names.
  * A live list is essential: confirmation callbacks can read the updated Session in
  * the same frame, before Compose has recomposed the screen.
  */
@@ -16,17 +16,14 @@ internal class ClocktowerSessionPlayerCards(
     private val currentSession: () -> ClocktowerSessionState?,
     private val language: String,
 ) : AbstractList<PlayerCard>() {
-    override val size: Int get() = setupCards.size
+    override val size: Int get() = currentSession()?.gameState?.players?.size ?: setupCards.size
 
     override fun get(index: Int): PlayerCard {
-        val setupCard = setupCards[index]
-        val session = currentSession() ?: return setupCard
+        val session = currentSession() ?: return setupCards[index]
+        if (index !in session.gameState.players.indices) throw IndexOutOfBoundsException(index.toString())
         val seat = index + 1
         val player = requireNotNull(session.gameState.playerAt(seat)) {
             "Session must own Clocktower seat $seat."
-        }
-        check(player.name == setupCard.name) {
-            "Clocktower presentation seat $seat differs from confirmed Session identity."
         }
         val actual = requireNotNull(clocktowerRoleByName(player.actualRole.value)) {
             "Unknown confirmed Clocktower role ${player.actualRole.value}."
@@ -47,7 +44,7 @@ internal class ClocktowerSessionPlayerCards(
                 "Dead Session seat $seat has no confirmed death or execution."
             }
         }
-        return setupCard.copy(
+        return PlayerCard(
             name = player.name,
             roleLabel = shown?.nameFor(language),
             actualRoleLabel = actual.nameFor(language),

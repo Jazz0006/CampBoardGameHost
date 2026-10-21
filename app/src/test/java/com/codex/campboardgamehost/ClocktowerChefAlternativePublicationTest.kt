@@ -1,11 +1,7 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerGameState
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
-import com.codex.campboardgamehost.clocktower.session.FirstNightInformationMigration
-import com.codex.campboardgamehost.clocktower.session.FirstNightPublicationResolution
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Both outcomes are legal in the same state; this is a cross-role contract, not a Chef heuristic. */
@@ -28,15 +24,10 @@ class ClocktowerChefAlternativePublicationTest {
         )
         for (value in listOf(0, 1, 99)) {
             val displayed = requireNotNull(clocktowerDirectNumericResult(step, 1, value, cards))
-            val request = requireNotNull(clocktowerFirstNightInformationRequest(
-                displayed, ClocktowerPhase.FirstNight, 1, cards,
-            ))
-            val migration = FirstNightInformationMigration()
-            val publication = migration.resolvePublication(request)
-            assertTrue(publication is FirstNightPublicationResolution.Published)
-            val gate = (publication as FirstNightPublicationResolution.Published).migration
-            assertTrue(gate.isDisplayed(request.decisionId))
-            assertEquals(value, request.candidates.single { it.id == request.selectedCandidateId }.observation.shownNumber)
+            assertEquals(
+                value,
+                (displayed.displayProposition as com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult).value,
+            )
 
         }
     }

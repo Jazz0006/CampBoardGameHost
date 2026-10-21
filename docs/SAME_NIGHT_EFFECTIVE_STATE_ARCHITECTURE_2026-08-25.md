@@ -1,7 +1,7 @@
 # Clocktower Same-Night Effective State Architecture
 
 > Date: 2026-08-25
-> Status: **SPECIALIZED DESIGN / architecture authority for the current same-night correctness campaign**
+> Status: **HISTORICAL SAME-NIGHT DESIGN; superseded as overall architecture authority by [Minimal Host Architecture Rebuild (2026-10-19)](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)**. Its accurate gameplay-time semantics remain relevant: immediate internal effects, death triggers and later dawn publication; its old multi-layer implementation, candidate checks and future dynamic-script ambitions are not current instructions.
 > Repository: `Jazz0006/CampBoardGameHost`
 > Baseline at research start: `main = c8985cb4991f6c7e5ea02adedb932d2d86452da1` (PR #53 merged)
 > Scope: same-night mechanical state, role eligibility, information/target legality, persistent-effect lifetime, death-trigger timing, future dynamic scripts/characters

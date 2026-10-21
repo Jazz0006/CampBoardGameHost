@@ -24,7 +24,6 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerSingleTargetAbilityPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
@@ -41,8 +40,7 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
             )
         },
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        canGoPrevious = canGoPrevious,
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
@@ -74,8 +72,6 @@ internal fun ClocktowerBeginnerReadOnlyRevealDialog(
     actorSeat: Int?,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShow: () -> Unit,
@@ -89,8 +85,7 @@ internal fun ClocktowerBeginnerReadOnlyRevealDialog(
             clocktowerBeginnerNeutralSeatPresentation(seatNumber, actorSeat)
         },
         onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
@@ -118,9 +113,7 @@ internal fun ClocktowerBeginnerTwoTargetRevealDialog(
     enabled: Boolean,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShow: (() -> Unit)?,
@@ -138,8 +131,7 @@ internal fun ClocktowerBeginnerTwoTargetRevealDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

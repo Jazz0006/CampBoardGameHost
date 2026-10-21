@@ -53,7 +53,7 @@ jobs:
           night_step_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt
           main=app/src/main/java/com/codex/campboardgamehost/MainActivity.kt
           setup=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt
-          day=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt
+          day=app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerDayFlow.kt
           day_overview=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt
           night=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt
           host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt
@@ -74,36 +74,36 @@ jobs:
             echo "ClocktowerDayOverviewScreen still lives in CampBoardGameHostApp.kt" >&2
             exit 1
           fi
-          if grep -q "fun ClocktowerDayOverviewScreen(" "$day"; then
-            echo "ClocktowerDayOverviewScreen still lives in ClocktowerDayScreen.kt" >&2
-            exit 1
-          fi
           grep -q "internal fun ClocktowerDayOverviewScreen" "$day_overview"
           grep -q "HostTableShell(" "$day_overview"
           grep -q "private fun ClocktowerDayOverviewCenterContent" "$day_overview"
 
-          for name in ClocktowerDawnSummaryScreen ClocktowerExecutionConfirmScreen
-          do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$day"
-          done
-
-          if grep -q "fun ClocktowerDayPlayerTile(" "$day"; then
-            echo "Legacy ClocktowerDayPlayerTile returned to ClocktowerDayScreen.kt" >&2
+          # No separate Dawn screen or phase may return. Night-end goes to Day's
+          # read-only summary of accepted Death facts; do not preserve an obsolete UI.
+          if grep -R -q -E 'ClocktowerDawnSummaryScreen|ClocktowerPhase\.Dawn|StorytellerPhase\.DAWN' app/src/main/java; then
+            echo "Retired Dawn stage or screen resurfaced in production" >&2
             exit 1
           fi
-          grep -q "private fun ClocktowerDayActionHeader" "$day"
+          # Approved B/C: one shared-table Day resolution, no extra confirmation
+          # page and no separate Klutz announcement fact.
+          if grep -R -q -E 'ClocktowerExecutionConfirmScreen|ClocktowerDayMode.EndConfirm|KlutzLearnedDeath' app/src/main/java; then
+            echo "Retired Day confirmation or Klutz announcement returned" >&2
+            exit 1
+          fi
+          grep -q "confirmEndDay" "$day"
+          grep -q "pendingKlutzDeath" "$day"
+          grep -q "lastNightDeathLabels" "$day_overview"
 
-          for name in ClocktowerNightActiveScreen ClocktowerNightReadyCard; do
-            if grep -q "fun ${name}(" "$root"; then
-              echo "${name} still lives in CampBoardGameHostApp.kt" >&2
-              exit 1
-            fi
-            grep -q "internal fun ${name}" "$night"
-          done
+          if grep -q "fun ClocktowerNightActiveScreen(" "$root"; then
+            echo "ClocktowerNightActiveScreen still lives in CampBoardGameHostApp.kt" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerNightActiveScreen" "$night"
+          # Owner decision A retires the generic ready/preparation page altogether.
+          if grep -R -q "ClocktowerNightReadyCard" app/src/main/java; then
+            echo "Retired generic Night Ready card returned to production" >&2
+            exit 1
+          fi
 
           if grep -q "fun ClocktowerJudgeScreen(" "$root"; then
             echo "ClocktowerJudgeScreen still lives in CampBoardGameHostApp.kt" >&2
@@ -256,11 +256,16 @@ jobs:
               exit 1
             fi
           done
-          grep -q "internal fun ClocktowerSpyRegistrationDecisionControls" "$registration_controls"
-          grep -q "internal fun ClocktowerRecluseRegistrationDecisionControls" "$registration_controls"
+          if grep -qE "fun Clocktower(Spy|Recluse)RegistrationDecisionControls" "$registration_controls"; then
+            echo "Retired full-role registration controls resurfaced" >&2
+            exit 1
+          fi
+          grep -q "internal fun ClocktowerSpyTownsfolkTypeDecisionControls" "$registration_controls"
           # TB Virgin retains Spy-as-Townsfolk TYPE registration in its interaction owner.
           nomination=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt
-          grep -q "ClocktowerNominationInteraction(" "$host"
+          day_host=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayHostScreen.kt
+          grep -q "ClocktowerDayHostScreen(" "$host"
+          grep -q "ClocktowerNominationInteraction(" "$day_host"
           grep -q "internal fun ClocktowerNominationInteraction" "$nomination"
           grep -q "ClocktowerSpyTownsfolkTypeDecisionControls(" "$nomination"
           # No supported script has both Klutz and Spy. Guard against restoring
@@ -269,14 +274,16 @@ jobs:
             echo "Unreachable Klutz/Spy alignment picker resurfaced in production Host" >&2
             exit 1
           fi
-          # Slayer's actual result is a confirmed player-facing fact, never a
-          # Host calculation or an automatic Recluse registration judgement.
+          # Host owns fixed Slayer outcomes; only a functioning Recluse registration
+          # is discretionary. The retired blanket "target died" UI must not return.
           slayer=app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt
-          grep -q "ClocktowerSlayerInteraction(" "$host"
+          day=app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerDayFlow.kt
+          grep -q "ClocktowerSlayerInteraction(" "$day_host"
           grep -q "internal fun ClocktowerSlayerInteraction" "$slayer"
-          grep -q "targetDied" "$slayer"
-          if grep -q "ClocktowerRecluseRegistrationDecisionControls(" "$slayer"; then
-            echo "Retired Slayer mechanical registration picker returned" >&2
+          grep -q "slayerNeedsRegistration" "$slayer"
+          grep -q "confirmSlayerShot" "$day"
+          if grep -q "targetDied" "$slayer"; then
+            echo "Retired blanket Slayer manual-death authority returned" >&2
             exit 1
           fi
 

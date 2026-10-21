@@ -28,25 +28,6 @@ internal fun clocktowerLivePlayerTargetReady(
     ClocktowerNightAction.DemonKill,
 ) || (selectedName != null && selectedName in legalNames)
 
-/** A retained draft, or a previously visited step, must never trigger automatic confirmation. */
-internal fun clocktowerShouldAutoConfirmFreshPlayerTarget(
-    automaticMode: Boolean,
-    action: ClocktowerNightAction,
-    isRealAction: Boolean,
-    freshTarget: String?,
-    selectedName: String?,
-    legalNames: Set<String>,
-    playerDisplayOpen: Boolean,
-): Boolean = automaticMode && isRealAction && !playerDisplayOpen &&
-    action in setOf(
-        ClocktowerNightAction.Poison,
-        ClocktowerNightAction.ButlerMaster,
-        ClocktowerNightAction.MonkProtect,
-        ClocktowerNightAction.DemonKill,
-    ) &&
-    freshTarget != null && selectedName == freshTarget &&
-    clocktowerLivePlayerTargetReady(action, isRealAction, selectedName, legalNames)
-
 internal fun clocktowerToggledSingleTargetSelection(
     currentSelection: String?,
     tappedSelection: String,
@@ -85,100 +66,6 @@ internal fun revalidateTwoPlayerSelection(
     )
 }
 
-/**
- * Only a genuinely current, Host-resolved information result may enter the
- * normal reveal flow without a human information-choice click. For player-query
- * steps, the player-selected subjects MUST exist first; choosing those subjects
- * is never an AI decision. Already published results never auto-reveal again.
- * No parallel execution state: the Session history is authority.
- */
-internal fun clocktowerShouldAutoPresentCurrentInformation(
-    automaticMode: Boolean,
-    step: ClocktowerNightStepUi,
-    phase: ClocktowerPhase,
-    round: Int,
-    actorSeat: Int?,
-    hasCurrentLegalResult: Boolean,
-    playerQueryResolved: Boolean = false,
-    confirmedObservations: List<RecordedEpistemicObservation>,
-): Boolean = automaticMode &&
-    step.isRealAction &&
-    (step.action == ClocktowerNightAction.None ||
-        (step.action in setOf(
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.Ravenkeeper,
-        ) && playerQueryResolved)) &&
-    step.actor != null &&
-    actorSeat != null &&
-    step.roleEnName != null &&
-    hasCurrentLegalResult &&
-    confirmedObservations.none { received ->
-        received.phase == phase.toStorytellerPhase() &&
-            received.round == round &&
-            received.visibility == ObservationVisibility.PRIVATE &&
-            received.sourceSeat == actorSeat &&
-            received.sourceAbility?.value == step.roleEnName
-    }
-
-/**
- * Player-chosen targets are drafts until their information is actually shown.
- * Once one result has been published in the Session, it may only be reopened
- * with the identical typed result. A new target/result must not silently add a
- * second incompatible observation for the same actor, ability, phase and night.
- */
-internal enum class ClocktowerLiveQueryRevealDisposition {
-    NEW,
-    REOPEN,
-    CONFLICT,
-}
-
-internal fun clocktowerLiveQueryRevealDisposition(
-    action: ClocktowerNightAction,
-    phase: ClocktowerPhase,
-    round: Int,
-    actorSeat: Int?,
-    roleEnName: String?,
-    shown: InformationProposition?,
-    confirmedObservations: List<RecordedEpistemicObservation>,
-): ClocktowerLiveQueryRevealDisposition {
-    if (action !in setOf(
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.Ravenkeeper,
-        )
-    ) return ClocktowerLiveQueryRevealDisposition.NEW
-    if (shown == null || actorSeat == null || roleEnName == null) {
-        return ClocktowerLiveQueryRevealDisposition.CONFLICT
-    }
-    val previous = confirmedObservations.filter { it.phase == phase.toStorytellerPhase() &&
-        it.round == round && it.visibility == ObservationVisibility.PRIVATE &&
-        it.sourceSeat == actorSeat && it.sourceAbility?.value == roleEnName
-    }
-    if (previous.isEmpty()) return ClocktowerLiveQueryRevealDisposition.NEW
-    return if (previous.all { it.proposition == shown }) {
-        ClocktowerLiveQueryRevealDisposition.REOPEN
-    } else ClocktowerLiveQueryRevealDisposition.CONFLICT
-}
-
-/** A previously published observation never becomes a fresh auto-advance permission
- * just because its player display was manually reopened. */
-internal fun clocktowerShouldAutoAdvanceAfterFreshReveal(
-    automaticMode: Boolean,
-    phase: ClocktowerPhase,
-    currentStep: ClocktowerNightStepUi,
-    revealedStep: ClocktowerNightStepUi,
-    actorSeat: Int?,
-    alreadyPublished: Boolean,
-    handoff: ClocktowerPlayerRevealHandoff,
-): Boolean = automaticMode &&
-    phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-    currentStep.isRealAction && actorSeat != null &&
-    currentStep.actor?.name != null &&
-    currentStep.actor?.name == revealedStep.actor?.name &&
-    currentStep.roleEnName != null && currentStep.roleEnName == revealedStep.roleEnName &&
-    !alreadyPublished && handoff.openReveal && handoff.recordPublication
-
 /** Advice status may suppress only its own exact current Host decision. */
 internal fun clocktowerCurrentAiRequestBlocked(
     currentKey: String?,
@@ -187,18 +74,6 @@ internal fun clocktowerCurrentAiRequestBlocked(
     error: String?,
 ): Boolean = currentKey != null && adviceKey == currentKey &&
     (busy || error != null)
-
-internal fun shouldAutoAdvanceRedHerring(
-    allowRuleDeterminedAutoUi: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    hasSelectedRedHerring: Boolean,
-    acceptedJointOpening: Boolean = false,
-): Boolean = allowRuleDeterminedAutoUi &&
-    isRedHerringStep &&
-    // A real choice is skippable only when the Host already accepted and applied
-    // the single joint opening; an arbitrary manual/legacy selection is not enough.
-    (!isRealAction || (acceptedJointOpening && hasSelectedRedHerring))
 
 internal data class ClocktowerDisplayOption(
     val label: String,

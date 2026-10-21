@@ -24,22 +24,9 @@ import androidx.compose.ui.unit.dp
  * All credentials remain in their existing Android Keystore-backed stores.
  */
 @Composable
-internal fun StorytellerAiSettingsPanel(
-    preferredMode: StorytellerOperationMode,
-    onPreferredModeChange: (StorytellerOperationMode) -> Unit,
-    directEnabled: Boolean,
-    onDirectEnabledChange: (Boolean) -> Unit,
-    directModel: String,
-    onDirectModelChange: (String) -> Unit,
-    directKey: String,
-    onDirectKeyChange: (String) -> Unit,
-    directSaveFailed: Boolean,
-    gatewayEndpoint: String,
-    onGatewayEndpointChange: (String) -> Unit,
-    gatewayToken: String,
-    onGatewayTokenChange: (String) -> Unit,
-    gatewaySaveFailed: Boolean,
-) {
+internal fun StorytellerAiSettingsPanel(settings: StorytellerAiSettings) {
+    val context = LocalContext.current
+    val preferences = androidx.compose.runtime.remember(context) { AppPreferencesStore(context) }
     val english = LocalContext.current.resources.configuration.locales[0].language == "en"
     fun text(zh: String, en: String) = if (english) en else zh
     Card(
@@ -62,9 +49,9 @@ internal fun StorytellerAiSettingsPanel(
             )
             StorytellerOperationMode.entries.forEach { mode ->
                 Card(
-                    onClick = { onPreferredModeChange(mode) },
+                    onClick = { settings.preferredMode = mode; preferences.saveStorytellerOperationMode(mode) },
                     colors = CardDefaults.cardColors(
-                        containerColor = if (mode == preferredMode) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        containerColor = if (mode == settings.preferredMode) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                         else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
                     ),
                 ) {
@@ -79,46 +66,51 @@ internal fun StorytellerAiSettingsPanel(
                                     "AI automatic · limited coverage, manual takeover on unsupported decisions")
                         },
                         modifier = Modifier.fillMaxWidth().padding(12.dp),
-                        fontWeight = if (mode == preferredMode) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = if (mode == settings.preferredMode) FontWeight.Bold else FontWeight.Normal,
                     )
                 }
             }
             Text(text("AI 连接方式", "AI connection"),
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            // Restored credentials must arrive before edits, or the late load can overwrite them.
+            if (!settings.directLoaded || !settings.gatewayLoaded) {
+                Text(text("正在读取连接配置…", "Loading connection settings…"))
+                return@Column
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { onDirectEnabledChange(false) }) {
-                    Text(if (directEnabled) text("网关", "Gateway") else text("✓ 网关", "✓ Gateway"))
+                OutlinedButton(onClick = { settings.directEnabled = false }) {
+                    Text(if (settings.directEnabled) text("网关", "Gateway") else text("✓ 网关", "✓ Gateway"))
                 }
-                OutlinedButton(onClick = { onDirectEnabledChange(true) }) {
-                    Text(if (directEnabled) text("✓ OpenAI 直连", "✓ OpenAI direct")
+                OutlinedButton(onClick = { settings.directEnabled = true }) {
+                    Text(if (settings.directEnabled) text("✓ OpenAI 直连", "✓ OpenAI direct")
                          else text("OpenAI 直连", "OpenAI direct"))
                 }
             }
-            if (directEnabled) {
+            if (settings.directEnabled) {
                 Text(
                     text("仅供个人测试。API Key 用本机 Keystore 加密保存，不打包进 APK；设备受入侵仍有泄露风险。",
                     "Personal testing only. The API key is encrypted with Android Keystore and not bundled in the APK; a compromised device can expose it."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
-                    value = directModel,
-                    onValueChange = onDirectModelChange,
+                    value = settings.directModel,
+                    onValueChange = { settings.directModel = it },
                     label = { Text(text("OpenAI API 模型 ID", "OpenAI API model ID")) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = directKey,
-                    onValueChange = onDirectKeyChange,
+                    value = settings.directKey,
+                    onValueChange = { settings.directKey = it },
                     label = { Text(text("OpenAI API Key（仅本机）", "OpenAI API Key (device only)")) },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedButton(onClick = { onDirectKeyChange("") }) {
+                OutlinedButton(onClick = { settings.directKey = "" }) {
                     Text(text("删除本机 API Key", "Erase local API Key"))
                 }
-                if (directSaveFailed) {
+                if (settings.directSaveFailed) {
                     Text(text("API Key 安全保存失败，重启后可能需要重新输入。",
                         "Could not securely persist API key."), color = MaterialTheme.colorScheme.error)
                 }
@@ -127,21 +119,21 @@ internal fun StorytellerAiSettingsPanel(
                     "Gateway URL is stored locally; its token is encrypted with Android Keystore."),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
-                    value = gatewayEndpoint,
-                    onValueChange = onGatewayEndpointChange,
+                    value = settings.gatewayEndpoint,
+                    onValueChange = { settings.gatewayEndpoint = it },
                     label = { Text(text("Gateway HTTPS 地址", "Gateway HTTPS URL")) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = gatewayToken,
-                    onValueChange = onGatewayTokenChange,
+                    value = settings.gatewayToken,
+                    onValueChange = { settings.gatewayToken = it },
                     label = { Text(text("Gateway 访问令牌", "Gateway access token")) },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (gatewaySaveFailed) {
+                if (settings.gatewaySaveFailed) {
                     Text(text("连接配置无法安全保存，重启后可能需要重新输入。",
                         "Could not securely persist connection settings."),
                         color = MaterialTheme.colorScheme.error)

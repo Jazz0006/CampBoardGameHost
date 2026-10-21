@@ -115,7 +115,6 @@ class OfficialReminderTokenMetadataTest {
             characters = listOf(character),
             firstNightOverride = null,
             otherNightOverride = null,
-            bootleggerRules = emptyList(),
         )
 
     private data class ReminderLists(

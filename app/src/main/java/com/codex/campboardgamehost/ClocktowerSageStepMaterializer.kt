@@ -39,6 +39,14 @@ internal fun clocktowerSageStepMaterializer(
 )
 
 
+/** Read the last typed preview; display labels and AI defaults are not the selection. */
+internal fun clocktowerSagePreviewSeats(proposition: InformationProposition?, seatCount: Int): List<Int>? {
+    val pair = proposition as? InformationProposition.AnyOf ?: return null
+    val roles = pair.alternatives.map { it as? InformationProposition.RoleAt ?: return null }
+    if (roles.map { it.role }.distinct().size != 1) return null
+    return roles.map { it.seat }.takeIf { clocktowerSageValidPair(it, seatCount) }
+}
+
 /** Records the two seats the Storyteller actually chose, without deriving a legal Sage candidate menu. */
 internal fun clocktowerSageManualPlayerDisplay(
     step: ClocktowerNightStepUi,

@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMo
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -17,7 +16,7 @@ class ClocktowerGameSessionAliveBoundaryTest {
     private val initialState = TroubleBrewingFixtures.eightPlayerExample()
 
     @Test
-    fun `confirmed death preserves other seats and atomically appends public observation`() {
+    fun `confirmed death preserves other seats and commits one fact without duplicate public alive observation`() {
         val targetSeat = 2
         val seeded = initialState.copy(players = initialState.players.map { player ->
             if (player.seat == targetSeat) player.copy(poisoned = true) else player
@@ -29,12 +28,11 @@ class ClocktowerGameSessionAliveBoundaryTest {
             semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
         val before = session.state.gameState
-        val draft = ActionFactDraft.Death("night-death", StorytellerPhase.DAWN, 2, 1, targetSeat)
+        val draft = ActionFactDraft.Death("night-death", StorytellerPhase.NIGHT, 2, 1, targetSeat)
 
         val death = session.commitConfirmedPlayerDeath(
             draft = draft,
             expectedGameStateRevision = 0L,
-            publishedObservationId = "public-death-seat-2",
         )
 
         assertEquals(
@@ -44,34 +42,31 @@ class ClocktowerGameSessionAliveBoundaryTest {
         assertEquals(before.players.filterNot { it.seat == targetSeat },
             session.state.gameState.players.filterNot { it.seat == targetSeat })
         assertEquals(1L, session.state.gameStateRevision)
-        assertEquals(1L, session.state.playerInputRevision)
-        assertEquals(2L, session.state.nextTimelineGlobalSequence)
+        // Death itself is a GameState fact; no additional player information was published.
+        assertEquals(0L, session.state.playerInputRevision)
+        // The Session timeline advances once for Death, not twice for Death + public AliveAt.
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
         assertEquals(death, session.state.actionTimeline.entries.single())
-        val published = session.state.epistemicObservationLog.records.single()
-        assertEquals(1L, published.timelineBinding.let {
-            (it as com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding.Global).point.globalSequence
-        })
-        assertEquals(InformationProposition.AliveAt(targetSeat, false), published.proposition)
+        // Death is the only historical fact; there is no synthetic public AliveAt(false).
+        assertEquals(emptyList<Any>(), session.state.epistemicObservationLog.records)
 
         val committed = session.state
-        assertEquals(death, session.commitConfirmedPlayerDeath(draft, 0L, "public-death-seat-2"))
+        assertEquals(death, session.commitConfirmedPlayerDeath(draft, 0L))
         assertEquals(committed, session.state)
 
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("night-death-conflict", StorytellerPhase.DAWN, 2, 1, targetSeat),
+                ActionFactDraft.Death("night-death-conflict", StorytellerPhase.NIGHT, 2, 1, targetSeat),
                 1L,
-                "another-observation",
             )
         }.exceptionOrNull())
         assertEquals(committed, session.state)
 
-        // An already committed public record ID cannot be reused for another death.
+        // The same already-dead seat cannot receive a distinct Death action.
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("another-death", StorytellerPhase.DAWN, 2, 2, 3),
+                ActionFactDraft.Death("another-death", StorytellerPhase.NIGHT, 2, 2, targetSeat),
                 1L,
-                "public-death-seat-2",
             )
         }.exceptionOrNull())
         assertEquals(committed, session.state)
@@ -96,7 +91,6 @@ class ClocktowerGameSessionAliveBoundaryTest {
         val fact = session.commitConfirmedPlayerDeath(
             ActionFactDraft.Execution("klutz-exec", StorytellerPhase.DAY, 2, 1, 1),
             expectedGameStateRevision = 0L,
-            publishedObservationId = "klutz-public",
         ).fact as ActionFact.Execution
 
         val proof = requireNotNull(fact.klutzDeathTrigger)
@@ -108,21 +102,20 @@ class ClocktowerGameSessionAliveBoundaryTest {
     }
 
     @Test
-    fun `stale revision and invalid death publication cannot create half a transition`() {
+    fun `stale revision and invalid death target cannot create half a transition`() {
         val session = newSession("a1-reject")
         val before = session.state
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("stale", StorytellerPhase.DAWN, 2, 1, 1),
+                ActionFactDraft.Death("stale", StorytellerPhase.NIGHT, 2, 1, 1),
                 8L,
-                "not-published",
             )
         }.exceptionOrNull())
         assertEquals(before, session.state)
 
         assertNotNull(runCatching {
             session.commitConfirmedPlayerDeath(
-                ActionFactDraft.Death("unknown-seat", StorytellerPhase.DAWN, 2, 1, 100),
+                ActionFactDraft.Death("unknown-seat", StorytellerPhase.NIGHT, 2, 1, 100),
                 0L,
             )
         }.exceptionOrNull())

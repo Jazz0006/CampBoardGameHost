@@ -62,7 +62,7 @@ sealed interface InformationProposition {
 }
 
 enum class NumericMetric { ADJACENT_EVIL_PAIRS, LIVING_EVIL_NEIGHBOURS, STEPS_TO_NEAREST_MINION, PLAYERS_WAKING_FOR_ABILITY }
-enum class BooleanMetric { DEMON_OR_RED_HERRING_PRESENT }
+enum class BooleanMetric { DEMON_OR_RED_HERRING_PRESENT, PLAYER_QUESTION_ANSWER }
 enum class ObservationVisibility { PUBLIC, PRIVATE }
 enum class ObservationReliability { RECEIVED_AS_FUNCTIONING, KNOWN_MALFUNCTIONING, NOT_ABILITY_INFORMATION }
 

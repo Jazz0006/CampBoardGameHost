@@ -53,50 +53,16 @@ class ClocktowerNightVoteOwnershipTest {
         assertEquals(accepted, s.state)
     }
 
-    @Test fun `empty attack confirmation invalidates its dependent Mayor choice`() {
-        val s = session()
-        commit(s, attack(s, 4))
-        val beforeChoice = s.state
-        dependents(s)
-        assertEquals(beforeChoice.playerInputRevision, s.state.playerInputRevision)
-        // The one game revision belongs to the Mayor fact, not pending succession.
-        assertEquals(beforeChoice.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(base, s.state.gameState)
-        val accepted = s.state
-        assertEquals(accepted, s.state)
-        s.clearConfirmedNightAttack(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(accepted.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(accepted.actionTimeline, s.state.actionTimeline)
-        commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
-        dependents(s)
-        s.clearConfirmedNightProtection(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(base, s.state.gameState)
-    }
-
-    @Test fun `night cleanup and new night retain only their intended pending facts`() {
+    @Test fun `night to Day clears transient attack protection and Mayor targets`() {
         val s = session()
         commit(s, attack(s, 4))
         commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
         dependents(s)
-        s.finishNightResolution()
-        assertEquals(ClocktowerNightTargets(attackSeat = 4), s.state.nightTargets)
-        commit(s, attack(s, 4))
-        commit(s, ActionFactDraft.PhaseAdvance("next-night", StorytellerPhase.DAY, 2,
-            s.nextInputSequence, StorytellerPhase.NIGHT, 3))
+        assertEquals(ClocktowerNightTargets(attackSeat = 4, monkSeat = 3, mayorRedirectSeat = 3),
+            s.state.nightTargets)
+        commit(s, ActionFactDraft.PhaseAdvance("day", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAY, 2))
         assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-    }
-
-    @Test fun `explicit poison expiry at Dawn preserves the separate Mayor choice`() {
-        val s = session()
-        s.commitConfirmedPoisonTransition(ActionFactDraft.Poison("poison", StorytellerPhase.NIGHT,
-            2, s.nextInputSequence, 4), s.state.gameStateRevision)
-        dependents(s)
-        s.commitConfirmedPoisonTransition(ActionFactDraft.Poison("expiry", StorytellerPhase.NIGHT,
-            2, s.nextInputSequence, null), s.state.gameStateRevision, preserveNightChoices = true)
-        assertEquals(3, s.state.nightTargets.mayorRedirectSeat)
-        assertNull(s.state.confirmedPoisonTargetName(2))
     }
 
     private fun vote(s: ClocktowerGameSession, nominee: Int, count: Int) = ActionFactDraft.Vote(

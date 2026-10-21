@@ -30,8 +30,9 @@ internal data class ClocktowerNightTargets(
             is ActionFact.Poison ->
                 invalidateDependents(!preserveNightChoices && priorPoisonSeat != fact.targetSeat)
             is ActionFact.MayorRedirectChoice -> copy(mayorRedirectSeat = fact.targetSeat)
-            is ActionFact.PhaseAdvance -> if (fact.phase == StorytellerPhase.NIGHT)
-                ClocktowerNightTargets() else this
+            // These targets are only meaningful within the night in which they were
+            // confirmed. The accepted PhaseAdvance itself is the cleanup boundary.
+            is ActionFact.PhaseAdvance -> ClocktowerNightTargets()
             else -> this
         }
 }

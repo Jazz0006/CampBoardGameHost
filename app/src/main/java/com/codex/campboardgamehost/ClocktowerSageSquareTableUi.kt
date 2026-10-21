@@ -58,22 +58,29 @@ internal fun clocktowerSageSeatPresentation(
  */
 @Composable
 internal fun ClocktowerSageSquareTableDialog(
+    interactionKey: String,
     seats: List<HostSeatPresentation>,
     actorSeat: Int?,
     wakeInstruction: String?,
     recommendedSeats: List<Int>?,
+    lastPreviewSeats: List<Int>?,
+    automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirmRecommended: () -> Unit,
     onConfirmManual: (List<Int>) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
     val hasRecommendation = recommendedSeats?.let { clocktowerSageValidPair(it, seats.size) } == true
-    var manualSelection by remember(actorSeat, recommendedSeats, seats.size) { mutableStateOf(!hasRecommendation) }
-    var manualSeats by remember(actorSeat, recommendedSeats, seats.size) { mutableStateOf(emptyList<Int>()) }
-    val shownSeats = if (manualSelection) manualSeats else recommendedSeats.orEmpty()
+    var manualSelection by remember(interactionKey, actorSeat, seats.size, automaticOnly) {
+        mutableStateOf(!automaticOnly && (!hasRecommendation ||
+            (lastPreviewSeats != null && lastPreviewSeats != recommendedSeats)))
+    }
+    var manualSeats by remember(interactionKey, actorSeat, seats.size, automaticOnly) {
+        mutableStateOf(lastPreviewSeats ?: recommendedSeats.orEmpty())
+    }
+    val shownSeats = if (manualSelection) manualSeats else lastPreviewSeats ?: recommendedSeats.orEmpty()
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
         enabled = manualSelection,
@@ -82,10 +89,15 @@ internal fun ClocktowerSageSquareTableDialog(
             clocktowerSageSeatPresentation(seatNumber, actorSeat, shownSeats)
         },
         onSeatSelected = { seat ->
-            if (manualSelection) manualSeats = clocktowerSageToggledPair(manualSeats, seat, seats.size)
+            if (manualSelection) {
+                val next = clocktowerSageToggledPair(manualSeats, seat, seats.size)
+                if (next != manualSeats) {
+                    manualSeats = next
+                    onDraftChanged()
+                }
+            }
         },
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
@@ -116,23 +128,37 @@ internal fun ClocktowerSageSquareTableDialog(
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(8.dp))
-            if (manualSelection) {
+            if (automaticOnly && !hasRecommendation) {
+                Text(
+                    if (language == "en") "Waiting for a current AI suggestion" else "等待 AI 确定当前信息",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            } else if (manualSelection) {
                 Button(
                     enabled = clocktowerSageValidPair(manualSeats, seats.size),
                     onClick = { onConfirmManual(manualSeats.sorted()) },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(if (language == "en") "Show this pair" else "展示这两名玩家") }
                 if (hasRecommendation) {
-                    OutlinedButton(onClick = { manualSelection = false }, modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(onClick = {
+                        manualSeats = recommendedSeats.orEmpty()
+                        onDraftChanged()
+                        manualSelection = false
+                    }, modifier = Modifier.fillMaxWidth()) {
                         Text(if (language == "en") "Return to AI suggestion" else "返回 AI 推荐")
                     }
                 }
             } else {
                 Button(onClick = onConfirmRecommended, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (language == "en") "Use AI suggestion" else "采纳 AI 推荐")
+                    Text(if (language == "en") "Show AI-selected pair" else "向玩家展示推荐信息")
                 }
-                OutlinedButton(onClick = { manualSelection = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text(if (language == "en") "Choose seats manually" else "手动选择座位")
+                if (!automaticOnly) {
+                    OutlinedButton(onClick = {
+                        manualSeats = shownSeats
+                        manualSelection = true
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Choose seats manually" else "手动选择座位")
+                    }
                 }
             }
         }

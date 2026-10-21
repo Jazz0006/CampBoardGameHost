@@ -2,6 +2,8 @@ package com.codex.campboardgamehost.clocktower.flow
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 
+internal enum class ClocktowerNightFlowPhase { FIRST_NIGHT, OTHER_NIGHT }
+
 @JvmInline
 internal value class ClocktowerInteractionId(val value: String) {
     init {

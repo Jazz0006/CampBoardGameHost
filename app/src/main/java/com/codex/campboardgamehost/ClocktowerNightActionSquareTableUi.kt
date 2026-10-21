@@ -29,6 +29,8 @@ internal fun clocktowerSingleTargetSeatState(
 }
 
 internal val LocalClocktowerNightProgress = compositionLocalOf<String?> { null }
+// Read-only presentation of the current Host confirmation gate, including full-screen roles.
+internal val LocalClocktowerNightNextEnabled = compositionLocalOf { true }
 
 internal data class ClocktowerNightActionSeatPresentation(
     val targetState: ClocktowerSquareTableSeatState,
@@ -150,9 +152,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
     title: String,
     helper: String?,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     nextEnabled: Boolean = true,
@@ -174,8 +174,7 @@ internal fun ClocktowerSingleTargetSquareTableDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
         nextEnabled = nextEnabled,
@@ -237,8 +236,6 @@ internal fun ClocktowerNightActionSquareTableDialog(
     language: String,
     seatPresentation: (Int) -> ClocktowerNightActionSeatPresentation,
     onSeatSelected: (Int) -> Unit,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     nextEnabled: Boolean = true,
@@ -247,8 +244,8 @@ internal fun ClocktowerNightActionSquareTableDialog(
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         nextEnabled = nextEnabled,

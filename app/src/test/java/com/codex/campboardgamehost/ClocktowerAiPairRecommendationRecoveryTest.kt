@@ -7,7 +7,6 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerState
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.SemanticTruth
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
@@ -71,12 +70,13 @@ class ClocktowerAiPairRecommendationRecoveryTest {
             roleEnName = "Investigator", displayKind = ClocktowerDisplayKind.EitherOne,
         )
         val displayed = resolveClocktowerPlayerDisplay(step, manuallySelected)
-        val observed = requireNotNull(
-            clocktowerFirstNightInformationRequest(displayed, ClocktowerPhase.FirstNight, 1, cards))
-            .candidates.single().observation
-        assertEquals(RoleId("Baron"), observed.shownRole)
-        assertEquals(SemanticTruth.NOT_APPLICABLE, observed.semanticTruth)
-        assertTrue(observed.registrations.isEmpty())
+        assertEquals(
+            com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.AnyOf(listOf(
+                com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.RoleAt(2, RoleId("Baron")),
+                com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.RoleAt(3, RoleId("Baron")),
+            )),
+            displayed.displayProposition,
+        )
     }
 
     private fun state(seat: Int, role: String, type: CharacterType) = PlayerState(

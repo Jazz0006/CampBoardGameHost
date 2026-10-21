@@ -192,9 +192,9 @@ class StorytellerStrategicContinuationV2Test {
         // These facts are valid Host mechanics but have no new AI decision content.
         game.commitAcceptedTestAction(ActionFactDraft.Poison(
             "dawn-strategic-continuation-game-1-poison-seat-5-to-none",
-            StorytellerPhase.DAWN, 1, 1, null))
+            StorytellerPhase.DAY, 1, 1, null))
         game.commitAcceptedTestAction(ActionFactDraft.PhaseAdvance(
-            "phase-day1", StorytellerPhase.DAWN, 1, 2, StorytellerPhase.DAY, 1))
+            "phase-day1", StorytellerPhase.DAY, 1, 2, StorytellerPhase.DAY, 1))
         game.commitAcceptedTestAction(ActionFactDraft.Nomination(
             "nominate", StorytellerPhase.DAY, 1, 3, 3, 7, false))
         game.commitAcceptedTestAction(ActionFactDraft.Execution(

@@ -89,12 +89,22 @@ internal data class ClocktowerDirectPairSelection(
             abilityRole: String,
             seatCount: Int,
             scriptRoles: List<ClocktowerRole>,
+        ): ClocktowerDirectPairSelection? = fromProposition(
+            option?.proposition, abilityRole, seatCount, scriptRoles,
+        )
+
+        /** Restore UI highlighting from the latest fullscreen preview, not an AI default. */
+        fun fromProposition(
+            proposition: InformationProposition?,
+            abilityRole: String,
+            seatCount: Int,
+            scriptRoles: List<ClocktowerRole>,
         ): ClocktowerDirectPairSelection? {
-            val proposition = option?.proposition ?: return null
+            val confirmedPreview = proposition ?: return null
             val roles = scriptRoles.map { it.enName }.toSet()
-            return when (proposition) {
+            return when (confirmedPreview) {
                 is InformationProposition.AnyOf -> {
-                    val alternatives = proposition.alternatives
+                    val alternatives = confirmedPreview.alternatives
                         .map { it as? InformationProposition.RoleAt ?: return null }
                     if (alternatives.size != 2 ||
                         alternatives.map { it.role.value }.distinct().size != 1) return null
@@ -106,7 +116,7 @@ internal data class ClocktowerDirectPairSelection(
                 is InformationProposition.AllOf -> {
                     val absentRoles = scriptRoles.filter { it.team == pairAbsenceTeam(abilityRole) }
                         .map { RoleId(it.enName) }.toSet()
-                    val facts = proposition.propositions
+                    val facts = confirmedPreview.propositions
                         .map { it as? InformationProposition.RoleInPlay ?: return null }
                     if (absentRoles.isEmpty() || facts.any { it.inPlay } ||
                         facts.map { it.role }.toSet() != absentRoles) return null

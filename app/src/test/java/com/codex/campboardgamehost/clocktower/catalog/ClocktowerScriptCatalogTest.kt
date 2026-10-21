@@ -94,81 +94,6 @@ class ClocktowerScriptCatalogTest {
         )
     }
 
-    @Test
-    fun `custom character schema rejects unknown fields and invalid special metadata`() {
-        assertEquals(
-            ClocktowerScriptValidationCode.INVALID_FIELD,
-            failureCode(
-                homebrewJson("alpha").replace(
-                    "\"setup\":false,",
-                    "\"setup\":false,\"unexpected\":true,",
-                ),
-            ),
-        )
-        assertEquals(
-            ClocktowerScriptValidationCode.INVALID_FIELD,
-            failureCode(
-                homebrewJson("alpha").replace("\"name\":\"card\"", "\"name\":\"invented-feature\""),
-            ),
-        )
-    }
-
-    @Test
-    fun `homebrew metadata is preserved as unverified without interpreting its behavior`() {
-        val firstNormalized = normalize(homebrewJson("alpha"))
-        val secondNormalized = normalize(homebrewJson("beta"))
-        val custom = firstNormalized.characters.single { it.externalId == "customseer" }
-
-        assertEquals(RoleId("homebrew:customseer"), custom.id)
-        assertEquals(BigDecimal("1.5"), custom.firstNightOrder)
-        assertEquals(listOf("Knows"), custom.globalReminders)
-        assertEquals(RoleId("Imp"), custom.jinxes.single().targetRoleId)
-        assertEquals("Custom interaction.", custom.jinxes.single().reason)
-        assertEquals("signal", custom.specialFeatures.single().type)
-        assertEquals("card", custom.specialFeatures.single().name)
-        assertEquals(ClocktowerSpecialValueKind.TEXT, custom.specialFeatures.single().value?.kind)
-        assertEquals("alpha", custom.specialFeatures.single().value?.canonicalValue)
-        assertEquals(RuleCoverage.UNVERIFIED, custom.automationCoverage)
-        assertEquals(RuleCoverage.UNVERIFIED, firstNormalized.coverage)
-        assertEquals(ClocktowerScriptSource.IMPORTED_HOMEBREW, firstNormalized.script.source)
-        assertNotEquals(firstNormalized.script.contentHash, secondNormalized.script.contentHash)
-    }
-
-    @Test
-    fun `equivalent decimal encodings produce the same normalized identity`() {
-        val first = normalize(numericHomebrewJson("1.50", "3.0"))
-        val second = normalize(numericHomebrewJson("1.5", "3"))
-
-        assertEquals(first.script.contentHash, second.script.contentHash)
-        assertEquals(BigDecimal("1.5"), first.characters.single { it.externalId == "customseer" }.firstNightOrder)
-        assertEquals("3", first.characters.single { it.externalId == "customseer" }.specialFeatures.single().value?.canonicalValue)
-    }
-
-    @Test
-    fun `off script homebrew jinx target fails closed`() {
-        val invalid = homebrewJson("alpha").replace("\"id\":\"imp\",\"reason\":\"Custom interaction.\"", "\"id\":\"spy\",\"reason\":\"Custom interaction.\"")
-
-        assertEquals(ClocktowerScriptValidationCode.INVALID_JINX_TARGET, failureCode(invalid))
-    }
-
-    @Test
-    fun `bootlegger rule downgrades otherwise known official script to unverified`() {
-        val normalized = normalize(
-            """[{"id":"_meta","name":"Bootleg","bootlegger":["Imp attacks twice."]},"imp","chef","empath","poisoner"]""",
-        )
-
-        assertEquals(RuleCoverage.UNVERIFIED, normalized.coverage)
-        assertEquals(ClocktowerScriptSource.IMPORTED_HOMEBREW, normalized.script.source)
-    }
-
-    @Test
-    fun `script catalog rejects duplicate script identities`() {
-        val script = normalize("""["imp","chef","empath","poisoner","spy"]""").script
-        val failure = runCatching { ClocktowerScriptCatalog(listOf(script, script)) }.exceptionOrNull()
-
-        assertTrue(failure is IllegalArgumentException)
-    }
-
     private fun failureCode(json: String): ClocktowerScriptValidationCode? =
         (runCatching { normalize(json) }.exceptionOrNull() as? ClocktowerScriptValidationException)?.code
 
@@ -176,53 +101,11 @@ class ClocktowerScriptCatalogTest {
         json = json,
         requestedScriptId = ScriptId("test_script"),
         registry = registry,
-        source = ClocktowerScriptSource.IMPORTED_OFFICIAL,
+        source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
     )
 
     private fun List<NightOrderToken>?.characterRoleIds(): List<RoleId> = requireNotNull(this)
         .mapNotNull { token -> (token as? NightOrderToken.Character)?.roleId }
-
-    private fun homebrewJson(specialValue: String): String = """
-        [
-          {"id":"_meta","name":"Homebrew"},
-          "imp",
-          "chef",
-          "empath",
-          {
-            "id":"customseer",
-            "name":"Custom Seer",
-            "team":"townsfolk",
-            "ability":"You learn something.",
-            "firstNight":1.5,
-            "firstNightReminder":"Give information.",
-            "otherNight":0,
-            "reminders":["Seen"],
-            "remindersGlobal":["Knows"],
-            "setup":false,
-            "jinxes":[{"id":"imp","reason":"Custom interaction."}],
-            "special":[{"type":"signal","name":"card","value":"$specialValue","time":"firstNight"}]
-          }
-        ]
-    """.trimIndent()
-
-    private fun numericHomebrewJson(priority: String, specialValue: String): String = """
-        [
-          {"id":"_meta","name":"Homebrew"},
-          "imp",
-          "chef",
-          "empath",
-          {
-            "id":"customseer",
-            "name":"Custom Seer",
-            "team":"townsfolk",
-            "ability":"You learn something.",
-            "firstNight":$priority,
-            "otherNight":0,
-            "setup":false,
-            "special":[{"type":"vote","name":"multiplier","value":$specialValue}]
-          }
-        ]
-    """.trimIndent()
 
     private fun troubleBrewingOfficialStyleJson(): String = """
         [

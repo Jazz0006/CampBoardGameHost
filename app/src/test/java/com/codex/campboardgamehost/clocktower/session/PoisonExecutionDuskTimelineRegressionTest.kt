@@ -5,14 +5,17 @@ import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding
 import com.codex.campboardgamehost.clocktower.fixtures.TroubleBrewingFixtures
 import org.junit.Assert.*
 import org.junit.Test
 
 /** Real-device regression shape, now exercised through the actual atomic Session boundaries. */
 class PoisonExecutionDuskTimelineRegressionTest {
-    @Test fun `first night poison and day execution precede dusk expiry and next night`() {
+    @Test fun `first night poison survives another players execution until Dusk`() = checkTimeline(6)
+
+    @Test fun `executing Poisoner ends poison before Dusk without a duplicate expiry`() = checkTimeline(7)
+
+    private fun checkTimeline(executedSeat: Int) {
         val fixture = TroubleBrewingFixtures.eightPlayerExample()
         val base = fixture.copy(players = fixture.players.map {
             if (it.seat == 7) it.copy(actualRole = RoleId("Poisoner"), shownRole = RoleId("Poisoner")) else it
@@ -24,12 +27,13 @@ class PoisonExecutionDuskTimelineRegressionTest {
         session.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("day", StorytellerPhase.FIRST_NIGHT,
             1, session.nextInputSequence, StorytellerPhase.DAY, 1), session.state.gameStateRevision)
         session.commitConfirmedPlayerDeath(ActionFactDraft.Execution("execution", StorytellerPhase.DAY,
-            1, session.nextInputSequence, 7), session.state.gameStateRevision, "public-execution")
-        assertTrue(session.state.gameState.playerAt(2)!!.poisoned)
+            1, session.nextInputSequence, executedSeat), session.state.gameStateRevision)
+        assertEquals(executedSeat != 7, session.state.gameState.playerAt(2)!!.poisoned)
         val before = session.state
-        assertTrue(session.expirePoisonAtDusk(before.gameStateRevision))
+        assertEquals(executedSeat != 7, session.expirePoisonAtDusk(before.gameStateRevision))
         val settled = session.state
-        assertEquals(before.gameStateRevision + 1, settled.gameStateRevision)
+        assertEquals(before.gameStateRevision + if (executedSeat == 7) 0 else 1, settled.gameStateRevision)
+        if (executedSeat == 7) assertSame(before, settled)
         assertFalse(session.expirePoisonAtDusk(settled.gameStateRevision))
         assertEquals(settled, session.state)
         session.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("night", StorytellerPhase.DAY,
@@ -39,16 +43,15 @@ class PoisonExecutionDuskTimelineRegressionTest {
         val execution = actions.single { it.fact is ActionFact.Execution }
         val clear = actions.single { it.fact is ActionFact.Poison && (it.fact as ActionFact.Poison).targetSeat == null }
         val nextNight = actions.last()
-        val observation = session.state.epistemicObservationLog.records.single()
-        val publicationPoint = (observation.timelineBinding as ObservationTimelineBinding.Global).point
-        assertTrue(execution.point.globalSequence < publicationPoint.globalSequence)
-        assertTrue(publicationPoint.globalSequence < clear.point.globalSequence)
+        // The execution is the public event; a second AliveAt(false) observation is redundant.
+        assertTrue(session.state.epistemicObservationLog.records.isEmpty())
+        assertTrue(execution.point.globalSequence < clear.point.globalSequence)
         assertTrue(clear.point.globalSequence < nextNight.point.globalSequence)
         assertEquals(StorytellerPhase.DAY, clear.point.phase)
         assertEquals(1, clear.point.round)
         assertEquals(StorytellerPhase.NIGHT, session.state.phase)
         assertEquals(2, session.state.round)
-        assertFalse(session.state.gameState.playerAt(7)!!.alive)
+        assertFalse(session.state.gameState.playerAt(executedSeat)!!.alive)
         assertFalse(session.state.gameState.playerAt(2)!!.poisoned)
         assertNull(session.state.confirmedPoisonTargetName(1))
     }

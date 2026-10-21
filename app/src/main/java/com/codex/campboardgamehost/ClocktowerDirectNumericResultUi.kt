@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 
 /**
  * A numeric result is an actual Storyteller choice, not one of the Host's calculated
@@ -32,12 +33,14 @@ internal fun clocktowerDirectNumericResult(
     actorSeat: Int,
     value: Int,
     cards: List<PlayerCard>,
+    subjectSeats: List<Int>? = null,
 ): ClocktowerNightStepUi? {
     if (value < 0) return null
     if (cards.indexOfFirst { it.name == step.actor?.name } + 1 != actorSeat || actorSeat <= 0) return null
     val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
-    if (question.subjectSeats.distinct().size != question.subjectSeats.size ||
-        question.subjectSeats.any { it !in 1..cards.size }) return null
+    val subjects = subjectSeats ?: question.subjectSeats
+    if (subjects.distinct().size != subjects.size ||
+        subjects.any { it !in 1..cards.size }) return null
     val result = ClocktowerDisplayOption(
         label = value.toString(),
         displayKind = ClocktowerDisplayKind.Number,
@@ -45,13 +48,35 @@ internal fun clocktowerDirectNumericResult(
         displayPrimary = value.toString(),
         displaySecondary = null,
         displayFooter = null,
-        proposition = InformationProposition.NumericResult(question.metric, actorSeat, question.subjectSeats, value),
-        presentationSubjectSeats = question.subjectSeats,
+        proposition = InformationProposition.NumericResult(question.metric, actorSeat, subjects, value),
+        presentationSubjectSeats = subjects,
     )
     return resolveClocktowerPlayerDisplay(step, result).copy(
         // The Storyteller confirmed what was shown, not whether Host rules say it is true.
         selectedInformationTruthful = null,
     )
+}
+
+/** A Host-authored unambiguous number needs no AI selection or manual input.
+ * Never use a fixed answer for a drunk/poisoned ability or a different query. */
+internal fun clocktowerDeterminedNumericResult(step: ClocktowerNightStepUi, actorSeat: Int): Int? {
+    if (step.informationReliability != ReliabilityState.RELIABLE) return null
+    return clocktowerMatchingNumericResult(step, actorSeat, step.displayProposition)
+}
+
+/** Restore only a typed number for the current actor and actual query. */
+internal fun clocktowerMatchingNumericResult(
+    step: ClocktowerNightStepUi,
+    actorSeat: Int,
+    proposition: InformationProposition?,
+    subjectSeats: List<Int>? = null,
+): Int? {
+    val question = step.informationQuestion as? ClocktowerInformationQuestion.Number ?: return null
+    val result = proposition as? InformationProposition.NumericResult ?: return null
+    return result.value.takeIf {
+        it >= 0 && result.sourceSeat == actorSeat &&
+            result.metric == question.metric && result.subjectSeats == (subjectSeats ?: question.subjectSeats)
+    }
 }
 
 internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorSeat: Int, cards: List<PlayerCard>): Boolean =
@@ -61,17 +86,22 @@ internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorS
 internal fun ClocktowerDirectNumericResultUi(
     title: String,
     initialValue: Int? = null,
+    lastPreviewValue: Int? = null,
+    automaticOnly: Boolean = false,
     subjectSeats: List<Int>,
     actorLabel: String,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
+    onDraftChanged: () -> Unit = {},
+    draftKey: String,
 ) {
-    var entered by remember(title, actorLabel, initialValue, subjectSeats) { mutableStateOf(initialValue?.toString().orEmpty()) }
+    // An async recommendation must not overwrite a Storyteller's live manual draft.
+    var entered by remember(draftKey, title, actorLabel, subjectSeats) {
+        mutableStateOf((lastPreviewValue ?: initialValue)?.toString().orEmpty())
+    }
     val selected = entered.trim().toIntOrNull()?.takeIf { it >= 0 }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -83,34 +113,49 @@ internal fun ClocktowerDirectNumericResultUi(
             wakeInstruction?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium)
             }
-            OutlinedTextField(
-                value = entered,
-                onValueChange = { value -> if (value.length <= 11) entered = value },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(if (language == "en") "Information shown (number)" else "向玩家展示的数字") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                singleLine = true,
-            )
-            Text(
-                if (language == "en") "Enter the actual chosen result. The Host does not calculate or verify its game-rule truth."
-                else "直接填写说书人决定展示的数字；Host 不计算或校验规则上的真假。",
-                style = MaterialTheme.typography.bodySmall,
-            )
-            Button(
-                enabled = selected != null,
-                onClick = { selected?.let(onConfirm) },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Confirm and show to player" else "确认并向玩家展示")
+            if (initialValue != null) {
+                Button(
+                    onClick = { onConfirm(initialValue) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show recommended: $initialValue" else "展示推荐信息：$initialValue")
+                }
+            }
+            if (automaticOnly && initialValue == null) {
+                Text(
+                    if (language == "en") "Waiting for a current AI decision. No manual substitution in automatic mode."
+                    else "正在等待当前 AI 信息；全自动模式不能用人工结果替代。",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            if (!automaticOnly) {
+                OutlinedTextField(
+                    value = entered,
+                    onValueChange = { value ->
+                        if (value.length <= 11 && value != entered) {
+                            entered = value
+                            // Changing an unshown draft cannot confirm a previous preview.
+                            onDraftChanged()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(if (language == "en") "Manual information (number)" else "手动选择信息数字") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                )
+                Button(
+                    enabled = selected != null,
+                    onClick = { selected?.let(onConfirm) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (language == "en") "Show manually selected result" else "展示手动选择的信息")
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onPrevious, enabled = canGoPrevious) {
-                    Text(if (language == "en") "Previous" else "上一步")
-                }
                 OutlinedButton(onClick = onHostTools) {
                     Text(if (language == "en") "Host" else "魔典")
                 }
-                OutlinedButton(onClick = onNext) {
+                OutlinedButton(onClick = onNext, enabled = LocalClocktowerNightNextEnabled.current) {
                     Text(if (language == "en") "Next" else "下一步")
                 }
             }

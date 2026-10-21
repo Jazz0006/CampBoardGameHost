@@ -12,15 +12,30 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+
+/**
+ * A prior AI result cannot be rebound to different Chambermaid query subjects.
+ * Query seats come from live player input, not AI; AI owns only the result value.
+ */
+internal fun clocktowerCurrentChambermaidRecommendation(
+    option: ClocktowerDisplayOption?,
+    actorSeat: Int?,
+    selectedSeats: List<Int>,
+): ClocktowerDisplayOption? = option?.takeIf { candidate ->
+    val answer = candidate.proposition as? InformationProposition.NumericResult
+    candidate.displayKind == ClocktowerDisplayKind.Number && answer != null &&
+        answer.metric == com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY &&
+        answer.sourceSeat == actorSeat &&
+        selectedSeats.size == 2 && selectedSeats.distinct().size == 2 &&
+        answer.subjectSeats.size == 2 && answer.subjectSeats.toSet() == selectedSeats.toSet()
+}
 
 @Composable
 internal fun ClocktowerNightStepCardLocalized(
@@ -42,8 +57,6 @@ internal fun ClocktowerNightStepCardLocalized(
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
-    /** True only for a not-yet-published, player-independent, live Host step. */
-    autoPresentAiInformation: Boolean = false,
     surfacePlan: ClocktowerNightSurfacePlan,
     selectedName: String?,
     fortuneTellerFirst: String?,
@@ -57,8 +70,8 @@ internal fun ClocktowerNightStepCardLocalized(
     onSelectChambermaidFirst: (String) -> Unit,
     onSelectChambermaidSecond: (String) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
+    onInformationDraftChanged: () -> Unit = {},
+    lastPreviewProposition: InformationProposition? = null,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
@@ -78,72 +91,33 @@ internal fun ClocktowerNightStepCardLocalized(
         directNumericActorSeat != null &&
         clocktowerHasDirectNumericInput(step, directNumericActorSeat, cards)
     ) {
-        val advised = (aiSuggestedInformationOption?.proposition as? InformationProposition.NumericResult)
-            ?.takeIf { it.sourceSeat == directNumericActorSeat &&
-                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric &&
-                it.subjectSeats == step.informationQuestion.subjectSeats }?.value
-        LaunchedEffect(gameId, phase, round, sequence, step.roleEnName, autoPresentAiInformation, advised) {
-            if (autoPresentAiInformation && advised != null) {
-                clocktowerDirectNumericResult(step, directNumericActorSeat, advised, cards)?.let(onShowPlayerDisplay)
-            }
-        }
+        val determinedNumber = clocktowerDeterminedNumericResult(step, directNumericActorSeat)
+        val advised = clocktowerMatchingNumericResult(step, directNumericActorSeat, aiSuggestedInformationOption?.proposition)
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
-            initialValue = advised,
+            // A genuinely Host-determined result has exactly one reveal button in all modes.
+            initialValue = determinedNumber ?: advised,
+            lastPreviewValue = clocktowerMatchingNumericResult(step, directNumericActorSeat, lastPreviewProposition),
+            automaticOnly = allowRuleDeterminedAutoUi || determinedNumber != null,
             subjectSeats = requireNotNull(step.informationQuestion).subjectSeats,
             actorLabel = requireNotNull(step.actor).seatLabel(cards),
             wakeInstruction = step.storytellerAction,
             language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
             onHostTools = onHostTools,
             onNext = onNext,
             onConfirm = { value ->
                 clocktowerDirectNumericResult(step, directNumericActorSeat, value, cards)
                     ?.let(onShowPlayerDisplay)
             },
+            onDraftChanged = onInformationDraftChanged,
+            draftKey = informationDecisionKey,
         )
         return
     }
-    fun optionId(option: ClocktowerDisplayOption): String = clocktowerInformationCandidateId(option)
     val currentAiSuggestedOption = aiSuggestedInformationOption
-    val automaticAuthorityDomain = step.manualInformationCandidates.ifEmpty {
-        step.automaticInformationCandidates.ifEmpty { step.legacyInformationCandidates }
-    }.distinctBy(::clocktowerInformationCandidateId)
-    val displayedInformationOptions = listOfNotNull(currentAiSuggestedOption)
-
+    // AI_AUTOMATIC can only display a present, current AI result. Do not
+    // silently substitute an arbitrary manual option when its advice is absent.
     val automaticDisplayOption = currentAiSuggestedOption.takeIf { allowRuleDeterminedAutoUi }
-    val manualInformationFallback = allowRuleDeterminedAutoUi &&
-        step.isRealAction &&
-        automaticDisplayOption == null
-    val effectiveAutomaticInformation = allowRuleDeterminedAutoUi && !manualInformationFallback
-    val manualFallbackStep = if (manualInformationFallback && automaticAuthorityDomain.isNotEmpty()) {
-        step.copy(
-            displayOptions = clocktowerManualInformationDomain(automaticAuthorityDomain),
-            recommendedDisplayOptions = emptyList(),
-        )
-    } else {
-        step
-    }
-    val effectiveRecommendedOptionIds = when {
-        manualInformationFallback -> setOf("__manual_required__")
-        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-            .mapTo(linkedSetOf(), ::optionId)
-        currentAiSuggestedOption != null -> setOf(optionId(currentAiSuggestedOption))
-        else -> emptySet()
-    }
-    val effectiveRecommendedNumericValues = when {
-        manualInformationFallback -> setOf(Int.MIN_VALUE)
-        effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption).mapNotNull { option ->
-            (option.proposition as? InformationProposition.NumericResult)?.value
-                ?: option.displayPrimary?.toIntOrNull()
-        }.toSet()
-        currentAiSuggestedOption != null -> listOfNotNull(
-            (currentAiSuggestedOption.proposition as? InformationProposition.NumericResult)?.value
-                ?: currentAiSuggestedOption.displayPrimary?.toIntOrNull()
-        ).toSet()
-        else -> emptySet()
-    }
     val structuredActorSeat = step.actor
         ?.let { actor -> cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1) }
     val undertakerTargetSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)
@@ -167,8 +141,10 @@ internal fun ClocktowerNightStepCardLocalized(
     } else {
         null
     }
-    val recommendedRoleRevealOption =
-        if (manualInformationFallback) null else currentAiSuggestedOption
+    val recommendedRoleRevealOption = currentAiSuggestedOption
+    val previewedRole = (lastPreviewProposition as? InformationProposition.RoleAt)?.let { result ->
+        clocktowerDirectRoleRevealChoice(step, result.seat, cards.size, result.role.value, scriptRoles) { it }
+    }?.roleId?.value
     val ravenkeeperRecommendedChoice = if (usesRavenkeeperSquareTable) {
         clocktowerDirectRecommendedRoleReveal(
             step, ravenkeeperSelectedSeat, cards.size, scriptRoles, recommendedRoleRevealOption,
@@ -191,7 +167,8 @@ internal fun ClocktowerNightStepCardLocalized(
     }
     val fortuneTellerRecommendedResult = (currentAiSuggestedOption?.proposition as?
         InformationProposition.BooleanResult)?.takeIf {
-            it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats
+            it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
+                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric
         }?.value
 
     fun showRecommendedDisplayOption(
@@ -201,18 +178,8 @@ internal fun ClocktowerNightStepCardLocalized(
         onShowPlayerDisplay(transformDisplayStep(resolveClocktowerPlayerDisplay(step, option)))
     }
 
-    // AI and manual results share the original exact-once publication callback.
-    val automaticCurrentChoice = automaticDisplayOption?.takeIf {
-        autoPresentAiInformation && step.action == ClocktowerNightAction.None
-    }
-    LaunchedEffect(
-        gameId, phase, round, sequence, step.roleEnName,
-        autoPresentAiInformation,
-        automaticCurrentChoice?.let(::clocktowerInformationCandidateId),
-    ) {
-        automaticCurrentChoice?.let { chosen -> showRecommendedDisplayOption(chosen) }
-    }
-
+    // A suggestion may be preselected, but opening the player's fullscreen
+    // is always an explicit live Storyteller action, including AI_AUTOMATIC.
 
     fun showUndertakerChoice(choice: ClocktowerDirectRoleRevealChoice) {
         fun undertakerDisplay(displayStep: ClocktowerNightStepUi): ClocktowerNightStepUi =
@@ -237,48 +204,9 @@ internal fun ClocktowerNightStepCardLocalized(
             ?.let(onShowPlayerDisplay)
     }
 
-    // Use current AI advice only after the players confirmed the query subjects.
-    val automaticQueriedResult = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.FortuneTeller &&
-        structuredFortuneTellerSelectedSeats != null
-    ) {
-        val aiResult = (currentAiSuggestedOption?.proposition as?
-            InformationProposition.BooleanResult)?.takeIf { proposition ->
-                proposition.sourceSeat == structuredActorSeat &&
-                    proposition.subjectSeats == structuredFortuneTellerSelectedSeats &&
-                    proposition.metric == BooleanMetric.DEMON_OR_RED_HERRING_PRESENT
-            }?.value
-        aiResult
-    } else null
-    LaunchedEffect(
-        gameId, phase, round, sequence, step.roleEnName,
-        informationDecisionKey, autoPresentAiInformation, automaticQueriedResult,
-    ) {
-        automaticQueriedResult?.let(::showStructuredFortuneTellerResult)
-    }
-
-    // Query answers retain the original publication callback and actual target seats.
-    val automaticQueriedDisplayOption = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.Chambermaid &&
-        listOfNotNull(chambermaidFirst, chambermaidSecond).let {
-            it.size == 2 && it.distinct().size == 2
-        }
-    ) automaticDisplayOption else null
-    val automaticRavenkeeperChoice = if (
-        autoPresentAiInformation &&
-        step.action == ClocktowerNightAction.Ravenkeeper &&
-        ravenkeeperSelectedSeat != null
-    ) ravenkeeperRecommendedChoice else null
-    LaunchedEffect(
-        informationDecisionKey, autoPresentAiInformation,
-        automaticQueriedDisplayOption?.let(::clocktowerInformationCandidateId),
-        automaticRavenkeeperChoice?.displayOption?.let(::clocktowerInformationCandidateId),
-    ) {
-        automaticQueriedDisplayOption?.let(::showRecommendedDisplayOption)
-        automaticRavenkeeperChoice?.let(::showRavenkeeperChoice)
-    }
+    // Fortune Teller, Chambermaid, and Ravenkeeper show the recommended
+    // result only after the player actually selects their query targets and
+    // the Storyteller explicitly taps a display button. No automatic reveal.
 
     val compactNightGuidance = clocktowerBeginnerNightGuidance(
         action = step.action,
@@ -436,6 +364,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 step = plainInformationDisplayStep,
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
+                automaticOnly = allowRuleDeterminedAutoUi,
             ) ?: ClocktowerPlainInformationSquareTablePresentation(
                 actorSeat = actionActorSeat,
                 wakeInstruction = command,
@@ -449,7 +378,6 @@ internal fun ClocktowerNightStepCardLocalized(
             when (event) {
                 is ClocktowerSingleTargetEvent.SelectSeat -> cards.getOrNull(event.seat - 1)?.name?.let(onSelectName)
                 ClocktowerSingleTargetEvent.ShowResult -> onShowPlayerDisplay(step)
-                ClocktowerSingleTargetEvent.Previous -> onPrevious()
                 ClocktowerSingleTargetEvent.Next -> onNext()
             }
         }
@@ -462,8 +390,7 @@ internal fun ClocktowerNightStepCardLocalized(
                 seats = nightActionSeats,
                 presentation = presentation,
                 language = language,
-                canGoPrevious = canGoPrevious,
-                onPrevious = onPrevious,
+
                 onHostTools = onHostTools,
                 onNext = onNext,
                 onShowPlayerDisplay = { onShowPlayerDisplay(presentation.displayStep) },
@@ -491,13 +418,14 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                 ) { "SingleTarget surface plan requires a supported real target action." }
                 key(step.action) {
-                    ClocktowerSingleTargetAbilitySection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
+                    ClocktowerSingleTargetAbilitySection(nightActionSeats, presentation, language, onHostTools, onSingleTargetEvent)
                 }
             }
 
             ClocktowerNightFullScreenSurface.Ravenkeeper -> {
                 val candidates = cards
                 ClocktowerRavenkeeperSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     selectedSeat = ravenkeeperSelectedSeat,
@@ -507,18 +435,21 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    lastPreviewRoleId = previewedRole,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
                     },
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRavenkeeperChoice,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -532,8 +463,13 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
                     recommendedResult = fortuneTellerRecommendedResult,
+                    lastPreviewResult = (lastPreviewProposition as? InformationProposition.BooleanResult)?.takeIf {
+                        it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
+                            it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric
+                    }?.value,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
@@ -544,7 +480,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         }
                     },
                     onResultSelected = ::showStructuredFortuneTellerResult,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 )
@@ -560,18 +496,20 @@ internal fun ClocktowerNightStepCardLocalized(
                     1 -> candidateSeats - selectedSeats.first()
                     else -> emptySet()
                 }
-                val resultOptions = when {
-                    manualFallbackStep.displayOptions.isEmpty() -> emptyList()
-                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    else -> manualFallbackStep.displayOptions
+                // Chambermaid's actual query targets belong to the live player.
+                // Advice prepared for a different pair must not be displayed
+                // as though it answered the newly selected pair.
+                val currentChambermaidRecommendation = clocktowerCurrentChambermaidRecommendation(
+                    option = currentAiSuggestedOption,
+                    actorSeat = structuredActorSeat,
+                    selectedSeats = selectedSeats,
+                )
+                val resultOptions = if (allowRuleDeterminedAutoUi) {
+                    listOfNotNull(currentChambermaidRecommendation)
+                } else {
+                    step.displayOptions
                 }
-                val recommendedResultOptions = when {
-                    manualInformationFallback -> emptyList()
-                    effectiveAutomaticInformation -> listOfNotNull(automaticDisplayOption)
-                    // Assisted mode highlights the one current, Host-rebound AI
-                    // suggestion but retains every legal manual result option.
-                    else -> listOfNotNull(currentAiSuggestedOption)
-                }
+                val recommendedResultOptions = listOfNotNull(currentChambermaidRecommendation)
                 ClocktowerChambermaidSquareTableDialog(
                     seats = nightActionSeats,
                     selectedSeats = selectedSeats,
@@ -581,8 +519,9 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     recommendedResultOptions = recommendedResultOptions,
                     resultOptions = resultOptions,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
+
                     onSeatSelected = { seatNumber ->
                         cards.getOrNull(seatNumber - 1)?.name?.let { name ->
                             when (twoPlayerSelectionAction(chambermaidFirst, chambermaidSecond, name)) {
@@ -592,21 +531,28 @@ internal fun ClocktowerNightStepCardLocalized(
                             }
                         }
                     },
-                    onShowDeterminedResult = { onShowPlayerDisplay(step) },
                     onResultSelected = ::showRecommendedDisplayOption,
-                    numericInput = if (selectedSeats.size == 2 && structuredActorSeat != null) ({
+                    numericInput = if (!allowRuleDeterminedAutoUi &&
+                        selectedSeats.size == 2 && structuredActorSeat != null) ({
                         ClocktowerDirectNumericResultUi(
                             title = step.displayTitle,
-                            initialValue = (currentAiSuggestedOption?.proposition as? InformationProposition.NumericResult)?.value,
+                            initialValue = (currentChambermaidRecommendation?.proposition as? InformationProposition.NumericResult)?.value,
+                            lastPreviewValue = clocktowerMatchingNumericResult(
+                                step, structuredActorSeat, lastPreviewProposition, selectedSeats,
+                            ),
                             subjectSeats = selectedSeats,
                             actorLabel = requireNotNull(step.actor).seatLabel(cards), wakeInstruction = null,
-                            language = language, canGoPrevious = false, onPrevious = {}, onHostTools = onHostTools,
+                            language = language, onHostTools = onHostTools,
                             onNext = onNext, onConfirm = { value ->
-                                clocktowerDirectNumericResult(step, structuredActorSeat, value, cards)?.let(onShowPlayerDisplay)
+                                clocktowerDirectNumericResult(
+                                    step, structuredActorSeat, value, cards, subjectSeats = selectedSeats,
+                                )?.let(onShowPlayerDisplay)
                             },
+                            onDraftChanged = onInformationDraftChanged,
+                            draftKey = informationDecisionKey,
                         )
                     }) else null,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 )
@@ -625,7 +571,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     ),
                 ) { "Ruling surface plan requires Mayor redirect or Demon succession." }
                 key(step.action) {
-                    ClocktowerNightRulingSection(nightActionSeats, presentation, language, canGoPrevious, onHostTools, onSingleTargetEvent)
+                    ClocktowerNightRulingSection(nightActionSeats, presentation, language, onHostTools, onSingleTargetEvent)
                 }
             }
 
@@ -638,8 +584,7 @@ internal fun ClocktowerNightStepCardLocalized(
                         seats = nightActionSeats,
                         presentation = presentation,
                         language = language,
-                        canGoPrevious = canGoPrevious,
-                        onPrevious = onPrevious,
+
                         onHostTools = onHostTools,
                         onNext = onNext,
                         onShowPlayerDisplay = { onShowPlayerDisplay(step) },
@@ -650,11 +595,9 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightFullScreenSurface.PairInformation -> {
                 ClocktowerPairInformationSquareTableDialog(
                     interactionKey = informationDecisionKey,
-                    recommendedOption = when {
-                        manualInformationFallback -> null
-                        effectiveAutomaticInformation -> automaticDisplayOption
-                        else -> currentAiSuggestedOption
-                    },
+                    recommendedOption = currentAiSuggestedOption,
+                    lastPreviewProposition = lastPreviewProposition,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     scriptRoles = scriptRoles,
                     abilityRoleEnName = requireNotNull(presentationRoleEnName),
                     seats = nightActionSeats,
@@ -667,11 +610,11 @@ internal fun ClocktowerNightStepCardLocalized(
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -682,21 +625,24 @@ internal fun ClocktowerNightStepCardLocalized(
                 if (!usesUndertakerSquareTable) {
                     renderPlainInformationFallback()
                 } else ClocktowerUndertakerSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    lastPreviewRoleId = previewedRole,
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showUndertakerChoice,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 
@@ -708,17 +654,20 @@ internal fun ClocktowerNightStepCardLocalized(
                 if (!usesSageSquareTable) {
                     renderPlainInformationFallback()
                 } else ClocktowerSageSquareTableDialog(
+                    interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     wakeInstruction = command,
                     recommendedSeats = sageSuggestedOption?.presentationSubjectSeats,
+                    lastPreviewSeats = clocktowerSagePreviewSeats(lastPreviewProposition, cards.size),
+                    automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
-                    canGoPrevious = canGoPrevious,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirmRecommended = { sageSuggestedOption?.let(::showRecommendedDisplayOption) },
                     onConfirmManual = ::showSageManualPair,
+                    onDraftChanged = onInformationDraftChanged,
                 )
             }
 

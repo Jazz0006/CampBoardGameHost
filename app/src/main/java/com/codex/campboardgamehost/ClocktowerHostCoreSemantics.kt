@@ -1,9 +1,8 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import java.security.MessageDigest
 
 /**
  * Stable non-Compose semantics extracted from the legacy Clocktower host monolith.
@@ -22,6 +21,7 @@ internal fun clocktowerDisplayedInformationIsUnreliable(
     step: ClocktowerNightStepUi,
     actorIsUnreliable: (String, PlayerCard?) -> Boolean,
 ): Boolean =
+    step.informationReliability != com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE ||
     step.actor?.clocktowerRole?.enName == "Drunk" ||
         step.roleEnName?.let { roleEnName -> actorIsUnreliable(roleEnName, step.actor) } == true
 
@@ -100,15 +100,13 @@ internal fun clocktowerPrivateObservationRecordId(
     round: Int,
     roleEnName: String,
     actorSeat: Int,
-    proposition: InformationProposition,
+    stepId: String,
 ): String {
-    val statementKey = MessageDigest
-        .getInstance("SHA-256")
-        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-        }
-    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
+    require(stepId.isNotBlank())
+    // A stable role/round/interaction ID prevents a second different result
+    // being written after Next. The selected proposition is event CONTENT,
+    // never part of the identity of this single confirmed step.
+    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$stepId"
 }
 
 
@@ -128,13 +126,15 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
     otherNightRole: () -> T?,
 ): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
 
-internal fun clocktowerOtherNightWakingRoleIds(
-    cards: List<PlayerCard>,
+/** Night role eligibility reads the one authoritative Session game state, not a second UI card list. */
+internal fun clocktowerNightWakingRoleIds(
+    gameState: GameState,
+    includeDead: Boolean,
 ): Set<RoleId> = buildSet {
-    cards.filter { it.eliminatedRound == null }.forEach { card ->
-        card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-        if (card.clocktowerRole?.enName == "Drunk") {
-            card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+    gameState.players.filter { includeDead || it.alive }.forEach { player ->
+        add(player.actualRole)
+        if (player.actualRole == RoleId("Drunk")) {
+            player.shownRole?.let { add(it) }
         }
     }
 }

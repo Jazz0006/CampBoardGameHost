@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 internal fun ClocktowerPairInformationSquareTableDialog(
     interactionKey: String,
     recommendedOption: ClocktowerDisplayOption?,
+    lastPreviewProposition: com.codex.campboardgamehost.clocktower.epistemic.InformationProposition? = null,
+    automaticOnly: Boolean = false,
     scriptRoles: List<ClocktowerRole>,
     abilityRoleEnName: String,
     seats: List<HostSeatPresentation>,
@@ -39,11 +41,10 @@ internal fun ClocktowerPairInformationSquareTableDialog(
     abilityLabel: String,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
     val seatCount = seats.size
     val validRecommendation = remember(interactionKey, recommendedOption, scriptRoles) {
@@ -51,36 +52,53 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             recommendedOption, abilityRoleEnName, seatCount, scriptRoles,
         )
     }
-    var selection by remember(interactionKey, recommendedOption, scriptRoles) {
-        mutableStateOf(validRecommendation ?: ClocktowerDirectPairSelection())
+    // Opening the player fullscreen temporarily unmounts this square table.
+    // Restore the last *previewed* pair (manual or recommended) on return.
+    val lastPreviewSelection = ClocktowerDirectPairSelection.fromProposition(
+        lastPreviewProposition, abilityRoleEnName, seatCount, scriptRoles,
+    )
+    // An asynchronous AI recommendation must not erase a Storyteller's in-progress edit.
+    var selection by remember(interactionKey, scriptRoles, automaticOnly) {
+        mutableStateOf(lastPreviewSelection ?: validRecommendation ?: ClocktowerDirectPairSelection())
     }
-    var editing by remember(interactionKey, recommendedOption, scriptRoles) {
-        mutableStateOf(validRecommendation == null)
+    var editing by remember(interactionKey, scriptRoles, automaticOnly) {
+        mutableStateOf(!automaticOnly &&
+            (validRecommendation == null || (lastPreviewSelection != null &&
+                lastPreviewSelection != validRecommendation)))
+    }
+    // Keep the last preview highlighted until the Storyteller edits or previews again.
+    val highlightedSelection = if (!editing && lastPreviewSelection == null && validRecommendation != null)
+        validRecommendation else selection
+    fun changeSelection(next: ClocktowerDirectPairSelection) {
+        if (next != selection) {
+            selection = next
+            onDraftChanged()
+        }
     }
     fun restoreRecommendation() {
-        selection = validRecommendation ?: ClocktowerDirectPairSelection()
-        editing = validRecommendation == null
+        changeSelection(validRecommendation ?: ClocktowerDirectPairSelection())
+        editing = validRecommendation == null && !automaticOnly
     }
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = if (editing) ClocktowerSquareTableInteractionMode.Selectable
             else ClocktowerSquareTableInteractionMode.ReadOnly,
         onSeatSelected = { seatNumber ->
-            if (editing) selection = selection.chooseSeat(seatNumber, seatCount)
+            if (editing) changeSelection(selection.chooseSeat(seatNumber, seatCount))
         },
         onBack = {
             if (editing && validRecommendation != null) restoreRecommendation()
-            else if (canGoPrevious) onPrevious()
         },
         seatUiModel = { seat ->
             val seatNumber = seat.seatId.number
-            val selected = seatNumber == selection.firstSeat || seatNumber == selection.secondSeat
+            val selected = seatNumber == highlightedSelection.firstSeat ||
+                seatNumber == highlightedSelection.secondSeat
             val state = when {
                 selected -> ClocktowerSquareTableSeatState.SelectedHighlighted
                 editing && selection.roleId != null && !selection.noneSelected ->
@@ -100,7 +118,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 isCurrentActor = seatNumber == actorSeat,
                 suppressDefaultStateMarker = selected,
                 stateMarkerOverride = clocktowerPairInformationTruthMarker(
-                    selected, selection.roleId, seat.actualRole?.roleId,
+                    selected, highlightedSelection.roleId, seat.actualRole?.roleId,
                 ),
             )
         },
@@ -132,8 +150,17 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         }
                     },
                     onConfirm = onConfirm,
-                    onManualSelection = { editing = true },
+                    onManualSelection = if (automaticOnly) null else ({
+                        selection = highlightedSelection
+                        editing = true
+                    }),
                 )
+                if (automaticOnly && validRecommendation == null) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI recommendation" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
             }
         } else {
             var expanded by remember { mutableStateOf(false) }
@@ -162,7 +189,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                             DropdownMenuItem(
                                 text = { Text(roleLabel(role.enName)) },
                                 onClick = {
-                                    selection = selection.chooseRole(role.enName)
+                                    changeSelection(selection.chooseRole(role.enName))
                                     expanded = false
                                 },
                             )
@@ -170,7 +197,7 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                         DropdownMenuItem(
                             text = { Text(if (language == "en") "None" else "没有") },
                             onClick = {
-                                selection = selection.chooseNone()
+                                changeSelection(selection.chooseNone())
                                 expanded = false
                             },
                         )
