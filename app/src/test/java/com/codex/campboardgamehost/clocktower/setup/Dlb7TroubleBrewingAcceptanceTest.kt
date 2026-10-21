@@ -27,7 +27,10 @@ class Dlb7TroubleBrewingAcceptanceTest {
                     preset = preset,
                 )
                 val intermediate = intermediateSetup(preset, visibleRoster)
-                val candidates = intermediate.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
+                val route = TroubleBrewingDrunkSelectionRouter.route(
+                    TroubleBrewingPreparedSetup(preset, intermediate), null,
+                ) as TroubleBrewingDrunkSelectionRoute.ManualSelection
+                val candidates = route.request.candidates
 
                 assertTrue("Drunk preset ${preset.id} must remain marked as Drunk-bearing.", visibleRoster.hasDrunk)
                 assertFalse(
@@ -41,7 +44,7 @@ class Dlb7TroubleBrewingAcceptanceTest {
                 )
                 assertEquals(
                     "Drunk preset ${preset.id} must expose every and only dealt Townsfolk as legal candidates.",
-                    visibleRoster.visibleRoleIds.toSet(),
+                    visibleRoster.townsfolkRoleIds.toSet(),
                     candidates.map { candidate -> candidate.shownRoleId }.toSet(),
                 )
 

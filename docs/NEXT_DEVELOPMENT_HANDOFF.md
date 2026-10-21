@@ -1,6 +1,6 @@
 # 当前开发交接（2026-10-21，已审计 main）
 
-> **2026-10-22 UI 长期设计合同**：[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。方桌稳定；Session Day Light、FirstNight/Night Dark；Session actualAlignment 善蓝恶红；交互仅边框/标记，文字高对比。第一/第二批只修改主题与阵营卡；第三批酒鬼/数字手选回方桌尚未实施。共享 Theme/Seat Renderer 承担唯一实现；提交与 CI 以实际产物为准。
+> **2026-10-22 UI 长期设计合同**：[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。第一/二批 Day Light / Night Dark、善蓝恶红已通过 PR #340 合并 main `991d6344`，CI #4533/R2 #4101 SUCCESS。第三批酒鬼选择采用相同方桌、仅显示镇民虚线可选、单选后“选定”；AI 模式继续展示身份期间一次后台全局规划、展示后才处理酒鬼，自动模式不进入人工选择。现已进入实施和验收，最终 SHA/CI 待本轮真实完成后补充。数字手选回方桌尚未实施。共享 renderer/Theme 唯一，替换即删旧页面；不建第二个 GameState。
 
 > **最终测试清理合并验收**：#338/#339 均已合并，最新已验证测试代码 main `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，后续 #339 [Android CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) / R2 #4098 成功，保留两项独有 AI 阻断和 5–15 人界面布局真实风险回归。最终静态 124 类/566 个 `@Test`，从 144 类/639 项净减 20 类/73 项。下一步仍应修复确定性信息和死者被提名的实际生产 Bug。下文各分支/旧 HEAD/待 CI 的信息视为审计过程记录。
 

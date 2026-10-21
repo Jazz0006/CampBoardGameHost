@@ -38,6 +38,7 @@ internal fun ClocktowerHostFullScreenScaffold(
     previousVisible: Boolean = previousEnabled,
     nextEnabled: Boolean = true,
     nextVisible: Boolean = true,
+    hostToolsEnabled: Boolean = true,
     onBack: (() -> Unit)? = null,
     body: @Composable () -> Unit,
 ) {
@@ -70,6 +71,7 @@ internal fun ClocktowerHostFullScreenScaffold(
                     previousVisible = previousVisible,
                     nextEnabled = nextEnabled && LocalClocktowerNightNextEnabled.current,
                     nextVisible = nextVisible,
+                    hostToolsEnabled = hostToolsEnabled,
                     onPrevious = onPrevious,
                     onHostTools = onHostTools,
                     onNext = onNext,

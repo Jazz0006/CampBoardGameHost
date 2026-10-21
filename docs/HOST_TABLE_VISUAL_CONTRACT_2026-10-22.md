@@ -15,5 +15,6 @@
 - 唯一 Session 的游戏事实 → `HostSeatPresentation` / `ClocktowerSquareTableSeatUiModel` **只读投影** → 唯一 `ClocktowerSquareTableSeat` 渲染。不在 UI 内另造可写 GameState/实际阵营或基于展示角色、侦查登记推测阵营。
 - 白天/夜晚仅存在一个共享 MaterialTheme+Surface 配置入口，提供不同 `ColorScheme`；所有日间子页面通过 `ClocktowerDayTableScaffold`，所有夜间步骤通过既有 Night Host。未知阵营（发牌前）才使用中性卡片，不把玩家阵营标签公开到传手机/预览界面。
 - 替换原有按选中状态覆盖卡片颜色的唯一调色路径，完成消费者迁移就删除旧实现；禁止长期保留并行主题、并行卡片着色或第二套游戏状态。
-- 本轮范围：第一批主题、第二批阵营卡片。酒鬼选择与数字线索离开方桌属于第三批交互统一任务，暂不改行为与 D2。
+- 前两批主题与阵营卡片已合并 PR #340。第三批酒鬼目标选定继续使用原方桌：从唯一 `TroubleBrewingIntermediateSetup` 的已展示座位生成只读预提交 HostSeatPresentation（此刻 actualRole 仍为 null），镇民来源仅取 `visibleRoster.townsfolkRoleIds`，可选镇民以虚线边框标注，已选以实线高亮，单选按钮“选定”。提交边界再校验镇民角色，不能靠 UI 过滤充当合法性保证。未产生 Session 前即使展示阵营色也只是 TB 预置阵营的只读投影（选择酒鬼不会改变善恶），不是独立游戏对象。
+- **时序不可回退**：AI 辅助/全自动在展示身份期间仍只发一次联合开局规划；所有展示完成后才处理/应用合法酒鬼建议。AI 辅助允许改选，全自动直接自动接受合法目标，纯手动模式保持现有开局入口与时序。原独立酒鬼列表被方桌替代后同批删除。数字线索离开方桌属于之后的单独任务，不修改 D2 最终 Observation 语义。
 - 验收以真实代码/构建及高价值交互为主：日夜配色、红蓝文字对比、信息不泄漏、交互边框及死亡标记、TB/NGJ/小屏座位。代码 CI/R2 与真机视觉验收分别标注，不把构建成功等同现场效果。

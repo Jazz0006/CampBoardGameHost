@@ -22,6 +22,8 @@ internal fun HostTableShell(
     onSeatClick: (ClocktowerSeatId) -> Unit = {},
     dragEnabled: Boolean = false,
     neutralSelectionChrome: Boolean = false,
+    outlineEligibleSeats: Boolean = false,
+    selectedMarker: String? = null,
     seatBadge: (HostSeatPresentation) -> String? = { null },
     seatHasUnspentGhostVote: (HostSeatPresentation) -> Boolean = { seat -> seat.hasUnspentGhostVote },
     seatMotionKey: (HostSeatPresentation) -> String = { seat -> seat.seatId.renderKey() },
@@ -56,6 +58,8 @@ internal fun HostTableShell(
             frame.toSquareTableSeatUiModel(
                 motionKey = seatMotionKey(frame.seat),
                 neutralSelectionChrome = neutralSelectionChrome,
+                outlineEligibleSeats = outlineEligibleSeats,
+                selectedMarker = selectedMarker,
                 interactionMode = interaction.mode,
                 badge = listOfNotNull(
                     "☠".takeIf { frame.seat.isPoisoned },
@@ -121,6 +125,8 @@ internal fun HostTableShell(
 private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     motionKey: String,
     neutralSelectionChrome: Boolean,
+    outlineEligibleSeats: Boolean,
+    selectedMarker: String?,
     interactionMode: HostTableInteractionMode,
     badge: String?,
     hasUnspentGhostVote: Boolean,
@@ -133,6 +139,8 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         label = content.primaryLabel,
         detailLabels = content.detailLabels,
         actualAlignment = seat.actualAlignment,
+        showDashedSelectionOutline = outlineEligibleSeats && isSelectable && !isSelected && !isLocked,
+        selectedMarker = selectedMarker.takeIf { isSelected },
         state = if (neutralSelectionChrome) {
             ClocktowerSquareTableSeatState.Neutral
         } else {

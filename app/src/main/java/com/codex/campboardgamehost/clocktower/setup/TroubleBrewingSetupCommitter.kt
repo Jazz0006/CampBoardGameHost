@@ -31,10 +31,13 @@ internal object TroubleBrewingSetupCommitter {
             "The confirmed setup must resolve its pending Drunk assignment."
         }
         confirmedDrunkCandidate?.let { confirmed ->
-            require(intermediateSetup.shownSeatAssignments.any {
-                it.seat == confirmed.seat && it.playerName == confirmed.playerName &&
-                    it.shownRoleId == confirmed.shownRoleId
-            }) { "Drunk assignment references a changed or unknown dealt seat." }
+            require(
+                confirmed.shownRoleId in intermediateSetup.visibleRoster.townsfolkRoleIds &&
+                    intermediateSetup.shownSeatAssignments.any {
+                        it.seat == confirmed.seat && it.playerName == confirmed.playerName &&
+                            it.shownRoleId == confirmed.shownRoleId
+                    }
+            ) { "Drunk assignment must name an unchanged shown Townsfolk seat." }
         }
         val gameState = materialize(intermediateSetup, confirmedDrunkCandidate, characterRegistry)
 

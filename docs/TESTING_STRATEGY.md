@@ -10,6 +10,10 @@
 - 最后一次**已验收代码** `e5ffc4e5e3ccdac5a5d4d3d7845f9754b998dbba`： [Android CI #4520](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977318) / [R2 #4095](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977316) SUCCESS；Cloud full 639 tests / 144 suites / 38 Compose UI、Debug APK 通过。后续 docs-only 提交不能冒充对新代码的编译结果。静态 ASP/Clingo 旧候选/合成门禁已退休，不能继续要求其 jobs 出现在当前 CI。
 - 真实 App 完整对局的 TB/NGJ 代表性流程与文件重读由 `ClocktowerCompleteAppUiTest` 证明，范围见 [最小整局验收](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。该结果不等于穷举所有阵容、实际 Android 进程杀死或付费 API 通过。
 
+## 2026-10-22 酒鬼方桌单选验收
+
+重点保护真实业务边界：内置有酒鬼配置的全部候选必须是展示镇民（不含外来者/爪牙/恶魔）；不得在 UI、推荐采纳或最终 SetupCommitter 中提交非镇民，即使调用绕过 UI；无酒鬼直接跳过。真人手点单选/改选只更新 UI 草稿，按钮“选定”确认一名合法目标；AI 推荐预选/人工覆盖，AI 全自动既定展示身份→直接接受不经过此手选屏、不得增加付费网络请求。保持稳定 5–15 人方桌、未确认时不创建伪 Session；删除列表旧实现。仅保留能实际防止错误目标/提交/交互退化的高价值测试，精确代码 CI/R2 和真机分别验收。
+
 ## 优先级与行为测试
 
 1. **P1 Host 唯一结果**：健康 Chef/Empath 及固定布尔查询，在完成合法登记裁量后应由 Host 提供唯一结果，不依赖手动任意输入或 AI 猜测；Drunk/poisoned/Spy/Recluse 等有裁量边界的情况允许真正选择，按玩家实际收到的内容只写一条最终 Observation。对同一 Session 的输入、查询目标、能力状态、已确认事实分别测试，明确人工误播记录边界。

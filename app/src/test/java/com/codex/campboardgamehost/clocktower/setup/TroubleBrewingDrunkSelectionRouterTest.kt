@@ -9,7 +9,9 @@ class TroubleBrewingDrunkSelectionRouterTest {
     @Test
     fun `multiple legal Drunk assignments remain manual without a recommendation`() {
         val prepared = drunkPreparedSetup()
-        val legal = prepared.intermediateSetup.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
+        val legal = prepared.intermediateSetup.shownSeatAssignments
+            .filter { it.shownRoleId in prepared.intermediateSetup.visibleRoster.townsfolkRoleIds }
+            .map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
         val route = TroubleBrewingDrunkSelectionRouter.route(prepared, null)
         val manual = route as TroubleBrewingDrunkSelectionRoute.ManualSelection
         assertEquals(legal, manual.request.candidates)
@@ -26,6 +28,15 @@ class TroubleBrewingDrunkSelectionRouterTest {
         assertThrows(IllegalArgumentException::class.java) {
             TroubleBrewingDrunkSelectionRouter.route(prepared,
                 selected.copy(playerName = "Stale Player"))
+        }
+        for (seat in prepared.intermediateSetup.shownSeatAssignments.filter {
+            it.shownRoleId !in prepared.intermediateSetup.visibleRoster.townsfolkRoleIds
+        }) {
+            assertThrows(IllegalArgumentException::class.java) {
+                TroubleBrewingDrunkSelectionRouter.route(
+                    prepared, TroubleBrewingDrunkCandidate(seat.seat, seat.playerName, seat.shownRoleId),
+                )
+            }
         }
     }
 

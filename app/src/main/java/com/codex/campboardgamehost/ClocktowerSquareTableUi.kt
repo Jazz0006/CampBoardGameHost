@@ -30,6 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -94,6 +98,9 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val isAlive: Boolean = true,
     val hasUnspentGhostVote: Boolean = false,
     val actualAlignment: com.codex.campboardgamehost.clocktower.domain.Alignment? = null,
+    /** Generic visual cue for an eligible, not-yet-selected seat. */
+    val showDashedSelectionOutline: Boolean = false,
+    val selectedMarker: String? = null,
 )
 
 internal data class ClocktowerSquareTableSeatPlacement(
@@ -579,6 +586,23 @@ private fun ClocktowerSquareTableSeat(
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (seat.showDashedSelectionOutline) {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val line = 2.5.dp.toPx()
+                    drawRoundRect(
+                        color = Color(0xFFFFD56B),
+                        topLeft = Offset(line / 2, line / 2),
+                        size = Size(size.width - line, size.height - line),
+                        cornerRadius = CornerRadius(11.dp.toPx()),
+                        style = Stroke(
+                            width = line,
+                            pathEffect = PathEffect.dashPathEffect(
+                                floatArrayOf(7.dp.toPx(), 4.dp.toPx()),
+                            ),
+                        ),
+                    )
+                }
+            }
             if (lifeMarkers.showDeathCross) {
                 Canvas(
                     modifier = Modifier
@@ -624,7 +648,7 @@ private fun ClocktowerSquareTableSeat(
                     .padding(start = 4.dp, top = 2.dp),
             )
 
-            val stateMarker = seat.stateMarkerOverride
+            val stateMarker = seat.selectedMarker ?: seat.stateMarkerOverride
                 ?: if (seat.suppressDefaultStateMarker) null else clocktowerSquareTableStateMarker(seat.state)
             stateMarker?.let { marker ->
                 Text(
