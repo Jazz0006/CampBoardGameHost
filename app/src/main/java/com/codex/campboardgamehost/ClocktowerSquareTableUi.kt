@@ -572,10 +572,10 @@ private fun ClocktowerSquareTableSeat(
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
         contentColor = palette.content,
-        border = if (seat.isCurrentActor) {
-            BorderStroke(4.dp, Color(0xFFFFD56B))
-        } else {
-            BorderStroke(palette.borderWidth, palette.border)
+        border = when {
+            seat.isCurrentActor -> BorderStroke(4.dp, Color(0xFFFFD56B))
+            seat.showDashedSelectionOutline -> null // Don't fill dashed gaps with a solid line.
+            else -> BorderStroke(palette.borderWidth, palette.border)
         },
         tonalElevation = when {
             seat.isCurrentActor -> 4.dp
