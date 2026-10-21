@@ -15,7 +15,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraf
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
-import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
@@ -99,30 +98,35 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `epistemic observation history persists across state revisions`() {
-        val session = newSession()
-        session.recordEpistemicObservation(
-            RecordedEpistemicObservation(
-                recordId = "dawn-one-dead",
-                phase = StorytellerPhase.DAY,
-                round = 1,
-                sequence = 0,
-                sourceSeat = null,
-                sourceAbility = null,
-                visibility = ObservationVisibility.PUBLIC,
-                recipientSeats = emptySet(),
-                reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-                proposition = InformationProposition.AliveAt(1, false),
-            ),
+    fun `confirmed private information persists across a real death commit`() {
+        val session = ClocktowerGameSession.createProduction(
+            "confirmed-information", initialState.seed, initialState, ClocktowerSemanticHistoryMode.GLOBAL_V1,
         )
-        session.updateGameState(initialState.copy(players = initialState.players.mapIndexed { index, player ->
-            if (index == 0) player.copy(alive = false) else player
-        }))
+        val received = session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
+            recordId = "chef-received-one", phase = StorytellerPhase.FIRST_NIGHT,
+            round = 1, sequence = session.nextInputSequence, sourceSeat = 1, sourceAbility = RoleId("Chef"),
+            visibility = ObservationVisibility.PRIVATE, recipientSeats = setOf(1),
+            reliability = ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            proposition = InformationProposition.NumericResult(
+                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS,
+                1, initialState.players.map { it.seat }, 1,
+            ),
+        ))
+        session.commitConfirmedPlayerDeath(
+            ActionFactDraft.Death("confirmed-death", StorytellerPhase.NIGHT, 2, session.nextInputSequence, 1),
+            expectedGameStateRevision = session.state.gameStateRevision,
+        )
 
-        assertEquals(1, session.snapshot.epistemicObservationLog.records.size)
-        assertEquals("dawn-one-dead", session.snapshot.epistemicObservationLog.records.single().recordId)
-        assertEquals(1, session.snapshot.playerInputRevision)
-        assertEquals(1, session.snapshot.gameStateRevision)
+        assertEquals(listOf(received), session.state.epistemicObservationLog.records)
+        assertEquals(setOf(1), received.recipientSeats)
+        assertEquals(ObservationVisibility.PRIVATE, received.visibility)
+        assertEquals(false, session.state.gameState.playerAt(1)!!.alive)
+        assertEquals(1L, session.state.playerInputRevision)
+        assertEquals(1L, session.state.gameStateRevision)
+        assertEquals(2L, session.state.nextTimelineGlobalSequence)
+        assertEquals(0L, (received.timelineBinding as
+            com.codex.campboardgamehost.clocktower.epistemic.ObservationTimelineBinding.Global).point.globalSequence)
+        assertEquals(1L, session.state.actionTimeline.entries.single().point.globalSequence)
     }
 
     @Test(expected = IllegalArgumentException::class)

@@ -1,3 +1,19 @@
+# 当前交接 — 全仓清理第三批（2026-10-21）
+
+## 2026-10-21 第二阶段第三批：过时AI实验与Legacy直接记录入口退休
+
+从同一Draft #337头`5eb48fa0`继续，main仍`40050941efc3`。本批删除旧API-0候选ID协议实验→专属fixture/Python测试/CI工作流，以及只验证continuation-v2的独立探针→专属测试。现用Android V3请求、previousResponseId/retainForContinuation、receipt/记忆/三模式及连接配置均保留；没有调用付费API。
+
+Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemicObservation，旧测试迁到真实Global私密信息提交与后续Death确认，保留隐私/顺序/revision断言；删除1项只拒绝旧方法的专属测试。其余LegacyLocal存档解码/模式隔离、Global序列/重复冲突/耗尽原子性、Session唯一写者与原子存储继续保留。
+
+不含维护文档共**9文件+26/-1009，净删983行/39695B**，6文件整删（4工具/专属测试、1工作流、1fixture）。Android专属旧入口测试-1，Python退休专属测试-15；现有业务断言迁移，未忽略测试。首次完整审计原待审现存**11路径**；当前**440路径、220有结论、220待审**。共享UI/平台资源有真实消费者则保留；发现contentMode及底部单项策略包装待后续收敛，不把部分修改当全仓完成。
+
+验证：Cloud full **650 tests/146 suites/38 UI，0 failure/error/skipped**及Debug APK通过，精确远端CI待提交后独立核对；R2原脚本、CI 10路由/5门禁和shell语法、零退休符号产品引用、diff检查通过。App115420B、Night Host63787B仍超50000B，Session46770B。两剧本、现有AI、两条跨局防重复、D2、隐私及原子保存合同不变。PR保持Draft，不合并/强推；无新增所有者决策阻塞。
+
+下一步继续剩余待审源文件，优先审计App/Night Host混合职责及已确认无作用的contentMode/底部策略包装，再与真实消费者同批删除；不要回到界面精修，也不要把测试专用Session方法及其安全测试一次盲删。直接使用Cloud，工具链和保留合同见下方历史交接；当前完整日志`/tmp/campboard-batch3-gradle.log`，测试摘要`/tmp/campboard-batch3-tests.json`。
+
+以下第二批交接保留为历史证据，当前批以上文为准。
+
 # 当前交接 — 全仓删除阶段（2026-10-21）
 
 #335、#334 均已合并；main 基线 `40050941efc3a9bcfd061d3c91d5cc72c5c1d2e5`。GitHub 独立核实完整 CI #4506（39577688281）和 Field Test APK #157（39577688218）均 SUCCESS。旧“两 PR 仍 Draft、不得合并”记录过时。最小完整游戏第一阶段关闭，具体闭环/限制见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。现在全仓遍历/大规模删除，之后才优化界面和流程细节。

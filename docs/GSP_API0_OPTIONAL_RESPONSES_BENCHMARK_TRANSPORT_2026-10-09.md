@@ -1,3 +1,5 @@
+> **2026-10-21：历史实验记录。** 该独立实验运行器、专属测试和旧输入夹具/工作流（适用者）已在全仓清理阶段退休；下方命令不再是当前可执行入口。现用 Android V3 continuation、保留会话链、请求/响应与安全回归保留，未运行付费调用。
+
 # GSP-API0 — Optional Responses API Benchmark Transport (2026-10-09)
 
 > **HISTORICAL API0 TRANSPORT REFERENCE — not a live development NEXT or Android Gateway specification.** API0 was the independent developer-side synthetic benchmark with optional paid Responses calls. The separate Oracle Gateway and Host AI_ASSISTED paths have since been implemented in [PR #292](https://github.com/Jazz0006/CampBoardGameHost/pull/292); actual phone E2E remains pending. New execution priority is [PROD-GLOBAL-1D](PROD_GLOBAL_FIRST_STORYTELLER_STRATEGY_REENTRY_2026-10-09.md) and [current handoff](NEXT_DEVELOPMENT_HANDOFF.md), not the outdated API-1 suggestions below.

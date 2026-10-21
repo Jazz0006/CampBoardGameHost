@@ -39,3 +39,13 @@
 在同一Draft #337从`2a8ad070`继续，整删只供测试调用的旧动态reducer、旧snapshot-bound observation/ID/JSON链、无入口数字候选UI、旧角色揭示投影和唤醒集合辅助，连同专属旧测试。保留Session确定机械和当前Recorded观察；schema、AI协议、AtomicFile与两类轮换未改。另清未调用日志/UI辅助、12组无引用字符串，以及两处不可达的多推荐分支。
 
 不含维护文档：31文件+47/-748，净删701行/30956B；生产Kotlin净删574行/24267B，整删生产2/测试1文件。原654测试减少3个退休实现专属用例，全部现用UI/AI/隐私/原子性回归继续执行。全文审计进度与逐路径证据见唯一台账；全树仍未完成，App115420B/Night Host63787B仍超限。代码 `212e53f4b16519d1f5a6fcacad0a8f5fb38096ab` 的[完整 Android CI #4511](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576627) 和 [R2 #4086](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576631) 均 SUCCESS；已独立核对 full tests、APK 构建/上传和 CI gate。后续仅文档提交不替代此代码验收，PR #337 保持 Draft。 最终本地及远端验收见交接，不能使用上批CI代替本批代码。
+
+## 2026-10-21 第二阶段第三批：过时AI实验与Legacy直接记录入口退休
+
+从同一Draft #337头`5eb48fa0`继续，main仍`40050941efc3`。本批删除旧API-0候选ID协议实验→专属fixture/Python测试/CI工作流，以及只验证continuation-v2的独立探针→专属测试。现用Android V3请求、previousResponseId/retainForContinuation、receipt/记忆/三模式及连接配置均保留；没有调用付费API。
+
+Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemicObservation，旧测试迁到真实Global私密信息提交与后续Death确认，保留隐私/顺序/revision断言；删除1项只拒绝旧方法的专属测试。其余LegacyLocal存档解码/模式隔离、Global序列/重复冲突/耗尽原子性、Session唯一写者与原子存储继续保留。
+
+不含维护文档共**9文件+26/-1009，净删983行/39695B**，6文件整删（4工具/专属测试、1工作流、1fixture）。Android专属旧入口测试-1，Python退休专属测试-15；现有业务断言迁移，未忽略测试。首次完整审计原待审现存**11路径**；当前**440路径、220有结论、220待审**。共享UI/平台资源有真实消费者则保留；发现contentMode及底部单项策略包装待后续收敛，不把部分修改当全仓完成。
+
+验证：Cloud full **650 tests/146 suites/38 UI，0 failure/error/skipped**及Debug APK通过，精确远端CI待提交后独立核对；R2原脚本、CI 10路由/5门禁和shell语法、零退休符号产品引用、diff检查通过。App115420B、Night Host63787B仍超50000B，Session46770B。两剧本、现有AI、两条跨局防重复、D2、隐私及原子保存合同不变。PR保持Draft，不合并/强推；无新增所有者决策阻塞。

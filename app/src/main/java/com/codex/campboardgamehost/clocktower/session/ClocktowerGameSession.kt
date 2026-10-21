@@ -507,22 +507,6 @@ internal class ClocktowerGameSession private constructor(
         return committed.record
     }
 
-    /** Records pre-cutover LegacyLocal information only; Global producers must use the draft API. */
-    fun recordEpistemicObservation(record: RecordedEpistemicObservation): ClocktowerSessionState {
-        require(state.semanticHistoryMode == ClocktowerSemanticHistoryMode.LEGACY_LOCAL) {
-            "Direct durable observation recording is reserved for LEGACY_LOCAL history."
-        }
-        require(record.timelineBinding === ObservationTimelineBinding.LegacyLocal) {
-            "LEGACY_LOCAL session cannot accept a pre-bound Global observation."
-        }
-        return updateState(
-            state.copy(
-                playerInputRevision = state.playerInputRevision + 1,
-                epistemicObservationLog = state.epistemicObservationLog.append(record),
-            ),
-        )
-    }
-
     /**
      * A night action is accepted on its OWN Next button, with no intermediate pending cache.
      * Re-entering a previously accepted step is idempotent for the same choice; attempting
