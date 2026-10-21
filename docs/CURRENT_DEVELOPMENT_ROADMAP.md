@@ -1,5 +1,7 @@
 # 当前开发路线（2026-10-21，main 已合并清理）
 
+> **最终高价值测试验收（2026-10-21）**：#338 清理后，#339 按代码复审补回两个独有的高价值保护（当前行动未确认不生成后续 AI 请求；360×520 竖屏支持 5–15 人）。两 PR 已合并；最新代码合并点 `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，#339 [CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) / R2 #4098 SUCCESS；静态最终 124 测试类/566 个 `@Test`，相较初始 144/639 净删 20 类/73 项。下文 #338 后的 122/564 是中间检查点，不是最终数量。
+
 > **测试清理新进度（2026-10-21）**：仅保留高价值行为测试的第一轮清理 [#338](https://github.com/Jazz0006/CampBoardGameHost/pull/338) 已合并入 main `2dcf8a9745f487c3b4a0e30188fc67e3d58c5dfd`；共删除 22 个低中价值测试类、1 无用 helper 和 75 项 `@Test`，静态保留 122 类、564 项。精确清理代码 `b050033b` [CI #4524](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39602538249) / [CI #4525](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39602587292) / R2 #4097 均 SUCCESS。只清理测试，未修复下述两个生产 Bug。其余尚未逐条证实属中低价值的测试不作盲删。
 
 > 唯一权威状态索引。先看本文件和 [当前交接](NEXT_DEVELOPMENT_HANDOFF.md)；旧阶段性 NEXT、Draft 禁令、局部失败记录仅是历史。最近独立只读复核基线为 `main` `6230b5959cf4b64e1c41f08bb48aa66460e13667`，下一轮须再次核对实时 HEAD。

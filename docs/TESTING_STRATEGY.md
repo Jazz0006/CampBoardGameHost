@@ -1,5 +1,7 @@
 # CampBoardGameHost 测试与验收策略（2026-10-21）
 
+> **最终高价值测试清理**：PR #338 + #339 合并，精确代码 `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，其中补回两项独立安全/可玩性覆盖的 #339 [Android CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) 与 R2 #4098 SUCCESS。最终静态 124 测试类/566 项（原 144 类/639 项），不把旧版 639 或中途 564 视为现在的应过数量。文件下方保留执行过程的分批计数供追踪，但以本段为最新基线；真机强退和付费 AI 未验收。
+
 > **当前唯一验收策略。** 先以 [开发路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[当前交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 [合并后独立审计](MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md) 判断应测什么；不照搬 F12/P1–P5 历史进度或机械 test-first。之前的详细时间线已存档至 [旧版测试策略](archive/checkpoints/TESTING_STRATEGY_PRE_POST_MERGE_AUDIT_2026-10-21.md)，仅用于溯源而非现行命令。
 
 ## 事实和验证基线
