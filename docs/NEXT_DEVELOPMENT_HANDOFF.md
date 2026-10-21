@@ -15,7 +15,7 @@
 
 ## 本批验证
 
-Cloud `:app:testFull :app:assembleDebug` 成功，654 tests / 147 suites / 38 UI，0 failures/errors/skips；原始 R2 shell 成功。执行实际 CI 分类 shell 的 10 类路径/事件用例及 gate success/skip/failure/cancelled/classifier failure 均通过，workflow bash syntax 和 diff 检查通过。没有收费 API、真机或实际杀进程测试。精确远端 CI/R2 必须在提交推送后核对，旧 #4506 不是新代码验收。
+Cloud `:app:testFull :app:assembleDebug` 成功，654 tests / 147 suites / 38 UI，0 failures/errors/skips；原始 R2 shell 成功。执行实际 CI 分类 shell 的 10 类路径/事件用例及 gate success/skip/failure/cancelled/classifier failure 均通过，workflow bash syntax 和 diff 检查通过。没有收费 API、真机或实际杀进程测试。代码 `280992ca271d7edffcd190834340cd1768fd7ad3` 的[完整 Android CI #4508](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230705) 和 [R2 #4083](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230512) 均 SUCCESS；已独立核对 full tests、APK 构建/上传及 CI gate。Draft PR [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337) 保持未合并；本次后续文档提交不替代上述代码验收。
 
 ## 库存及下一步
 

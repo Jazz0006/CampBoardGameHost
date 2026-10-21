@@ -2,7 +2,7 @@
 
 - 起点 main `40050941efc3`；#335/#334 已合并，完整 CI #4506 / Field Test APK #157 SUCCESS。旧 Draft 禁令仅为历史。
 - 删除链：静态 FormalGameState fixture→ASP renderer→外部 botc-asp/Clingo→专属 Python 测试→CI 输出/路由/jobs/needs；它没有 Android/Session 输出消费者。删除孤立 ui/ 展示样例及已完成一次模板迁移脚本。未改 Android Kotlin、真实 AI/Session/两剧本/双跨局轮换/存储。保留迁移结果证据，不删除真实确定性规则。
-- 9 文件退休（其中 Python 专属测试 1 文件/14 项，Android生产/测试 0 文件）；工具/样例/CI/setup说明 11 文件 +4/-2766，净删 2762 行 / 134078B。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK、原 R2 shell、CI 10类路由/5类gate、shell syntax、diff检查通过；远端精确HEAD CI/R2待核。
+- 9 文件退休（其中 Python 专属测试 1 文件/14 项，Android生产/测试 0 文件）；工具/样例/CI/setup说明 11 文件 +4/-2766，净删 2762 行 / 134078B。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK、原 R2 shell、CI 10类路由/5类gate、shell syntax、diff检查通过；代码 `280992ca271d7edffcd190834340cd1768fd7ad3` 的[完整 Android CI #4508](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230705) 和 [R2 #4083](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230512) 均 SUCCESS；已独立核对 full tests、APK 构建/上传及 CI gate。Draft PR [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337) 保持未合并；本次后续文档提交不替代上述代码验收。
 - 原目录表有54条前阶段已经删除的悬空路径（含旧snapshot codec移动到test），本批8条表内新退休路径也移出；9个删除文件中的oracle README原未入表。全部历史删除证据仍留本文各检查点，不能将54条再次计入本批净删。
 - 当前表对齐全部非docs跟踪文件：**448路径，195条带审计结论、253待审**（包含根部规范、资源/二进制及34条历史artifacts；docs/历史文档不在源码目录表，仍为参考证据）。既有审计结论保留其原证据日期，不能当作全部在本轮重新全文审过。补登路径默认待审，库存校正本身不计语义审计完成；当前大小为磁盘LF字节。
 - 本批明确复核CI、根部规范/README和git换行/忽略规则及setup说明；删除对象按文件内容/目录内引用/Android构建/CI消费者闭合审查，未将全部现行源码标成已读。当前App116000B、Night Host63787B仍超限，Session47578B；后续继续现行待审代码/混合职责及整链净删，最后界面细化。无新增所有者决策、无付费API/真机/杀进程验收。

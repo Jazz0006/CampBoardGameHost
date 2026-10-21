@@ -30,6 +30,6 @@
 
 从 main `40050941efc3` 建立 `codex/whole-tree-cleanup-20261021`。删除 `tools/asp_oracle/`（静态 FormalGameState corpus→外部 botc-asp、专属 Python 测试/说明）、孤立 `ui/` HTML/CSS/JS 展示样例和已完成的模板迁移脚本。CI 同批移除 ASP/Clingo 路由/jobs/dependencies，保留 Android full/APK、失败门禁和独立 R2。真实 Host/AI 没有调用该旧 corpus；Android 生产/测试 Kotlin 零改动。
 
-可执行/样例/工具及其说明共删除 9 文件，11 文件 +4/-2766，净删 2762 行 / 134078B（不含本批路线/规范/台账说明变动）。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK 和原 R2 shell 通过；10 类 CI 路由及门禁失败/取消检查通过。提交后的精确远端 CI/R2 待核对，不能借用 #4506。
+可执行/样例/工具及其说明共删除 9 文件，11 文件 +4/-2766，净删 2762 行 / 134078B（不含本批路线/规范/台账说明变动）。Cloud full 654 / 147 suites / 38 UI，0 failure/error/skipped，APK 和原 R2 shell 通过；10 类 CI 路由及门禁失败/取消检查通过。代码 `280992ca271d7edffcd190834340cd1768fd7ad3` 的[完整 Android CI #4508](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230705) 和 [R2 #4083](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39580230512) 均 SUCCESS；已独立核对 full tests、APK 构建/上传及 CI gate。Draft PR [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337) 保持未合并；本次后续文档提交不替代上述代码验收。
 
 唯一台账按当前 Git 树对齐：清除前阶段已删除但仍挂表的 54 条路径和本批 8 条已删源路径；漏登的新 Session/UI/测试及历史 artifacts 补为待审。库存校正不算新语义审计，全树尚未完成。后续继续待审代码及现有 App/Night Host 混合职责，优先整链净删；两个超限文件仍为 116000B / 63787B，Session 47578B。
