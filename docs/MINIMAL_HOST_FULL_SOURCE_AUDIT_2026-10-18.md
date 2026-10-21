@@ -6,7 +6,7 @@
 - **净量（不含维护文档）**：31文件+47/-748，净删**701行/30956B**。生产Kotlin17文件+16/-590，净删**574行/24267B**；资源-24行/1726B；测试11文件净删102行/4905B；R2仅去掉要求已死isClocktowerEvil存在的1行/58B。生产整删2文件（旧数字候选UI、旧RoleRevealChoiceProjection），专属测试整删1文件（旧WakingRoleAuthority）；另删旧reducer等价性及bindTo专属测试各1项，原654→651，其他真实行为覆盖保留。
 - **测试迁移**：EpistemicSemanticModelTest的实际Recorded记录保留schema/私密收件人/JSON排序断言；混合Session测试保留当前事实、重复与非法输入拒绝，只删旧回放断言。现行Session写者、SessionJson、AtomicFile存储未改，未改已确认事实/AI协议/两剧本/双轮换；现有真实NightFlow/38 UI/AtomicFile测试继续执行。
 - **横向审计**：首次全文/真实引用核查原待审的18个现存路径，跨发牌、展示模型、方桌身份、侍女、推荐、实际信息显示、设置保存、AtomicFile、资源及时间线/Session测试；原已审路径只复核不重计。3个退役待审路径从当前表移出。现行**445路径、213带审计结论、232待审**；目录对齐与修改测试中的一行不算整文件已审。所有新结论直接写入原表，历史证据不冒称本批重审。
-- **验证**：最终Cloud full **651 tests/146 suites/38 UI，0 failure/error/skipped**、APK、原R2脚本、CI分类与门禁、零残余符号/资源引用及diff检查均通过；精确远端CI/R2提交后核对。App **115420B**、Night Host **63787B**仍超50000B，Session **47578B**。下一步继续待审生产/测试及App/Host混合职责；LegacyLocal兼容、Session测试专用改写入口等仍待后续消费审计，不声称全树清空。无新增所有者决策；无付费模型/真机/杀进程验收。
+- **验证**：最终Cloud full **651 tests/146 suites/38 UI，0 failure/error/skipped**、APK、原R2脚本、CI分类与门禁、零残余符号/资源引用及diff检查均通过；代码 `212e53f4b16519d1f5a6fcacad0a8f5fb38096ab` 的[完整 Android CI #4511](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576627) 和 [R2 #4086](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576631) 均 SUCCESS；已独立核对 full tests、APK 构建/上传和 CI gate。后续仅文档提交不替代此代码验收，PR #337 保持 Draft。App **115420B**、Night Host **63787B**仍超50000B，Session **47578B**。下一步继续待审生产/测试及App/Host混合职责；LegacyLocal兼容、Session测试专用改写入口等仍待后续消费审计，不声称全树清空。无新增所有者决策；无付费模型/真机/杀进程验收。
 
 ## 2026-10-21 第二阶段首批：遗留工具整链删除与当前树对齐
 

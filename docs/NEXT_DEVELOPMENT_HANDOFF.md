@@ -16,7 +16,7 @@
 
 ## 验证与当前库存
 
-最终Cloud `:app:testFull :app:assembleDebug` SUCCESS，651 tests /146 suites /38 UI，0 failures/errors/skips；原始R2 shell、CI的10类路由/失败门禁、零残余符号、资源引用及diff检查通过。较原654减少的3项只保护退休实现，不减少现有两剧本、AI、隐私或原子保存行为覆盖。精确远端CI/R2待本批提交推送后核实，不能复用上批#4508/#4083；上批docs-only头#4510/#4085仅为历史。
+最终Cloud `:app:testFull :app:assembleDebug` SUCCESS，651 tests /146 suites /38 UI，0 failures/errors/skips；原始R2 shell、CI的10类路由/失败门禁、零残余符号、资源引用及diff检查通过。较原654减少的3项只保护退休实现，不减少现有两剧本、AI、隐私或原子保存行为覆盖。代码 `212e53f4b16519d1f5a6fcacad0a8f5fb38096ab` 的[完整 Android CI #4511](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576627) 和 [R2 #4086](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576631) 均 SUCCESS；已独立核对 full tests、APK 构建/上传和 CI gate。后续仅文档提交不替代此代码验收，PR #337 保持 Draft。 上批#4508/#4083及docs-only头#4510/#4085仅为历史。
 
 本批真正首次全文审计原待审的18个现存文件，更新唯一[源码台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)；当前445路径，213带审计结论、232待审。改了一行测试但未阅读全文仍保留待审，不以扫描数替代审计。App115420B、Night Host63787B超限，Session47578B。
 

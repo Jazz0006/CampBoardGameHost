@@ -38,4 +38,4 @@
 
 在同一Draft #337从`2a8ad070`继续，整删只供测试调用的旧动态reducer、旧snapshot-bound observation/ID/JSON链、无入口数字候选UI、旧角色揭示投影和唤醒集合辅助，连同专属旧测试。保留Session确定机械和当前Recorded观察；schema、AI协议、AtomicFile与两类轮换未改。另清未调用日志/UI辅助、12组无引用字符串，以及两处不可达的多推荐分支。
 
-不含维护文档：31文件+47/-748，净删701行/30956B；生产Kotlin净删574行/24267B，整删生产2/测试1文件。原654测试减少3个退休实现专属用例，全部现用UI/AI/隐私/原子性回归继续执行。全文审计进度与逐路径证据见唯一台账；全树仍未完成，App115420B/Night Host63787B仍超限。最终本地及远端验收见交接，不能使用上批CI代替本批代码。
+不含维护文档：31文件+47/-748，净删701行/30956B；生产Kotlin净删574行/24267B，整删生产2/测试1文件。原654测试减少3个退休实现专属用例，全部现用UI/AI/隐私/原子性回归继续执行。全文审计进度与逐路径证据见唯一台账；全树仍未完成，App115420B/Night Host63787B仍超限。代码 `212e53f4b16519d1f5a6fcacad0a8f5fb38096ab` 的[完整 Android CI #4511](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576627) 和 [R2 #4086](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39582576631) 均 SUCCESS；已独立核对 full tests、APK 构建/上传和 CI gate。后续仅文档提交不替代此代码验收，PR #337 保持 Draft。 最终本地及远端验收见交接，不能使用上批CI代替本批代码。
