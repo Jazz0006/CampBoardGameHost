@@ -31,6 +31,7 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -39,12 +40,6 @@ import org.junit.Test
 
 /** All actions use the SAME generic transition gate. No role-specific planner. */
 class StorytellerStrategicChangeCheckpointV2Test {
-    @Test fun currentInformationAlwaysUsesModelAdviceWithoutHostCandidateSelection() {
-        assertFalse(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(emptyList()))
-        assertTrue(StorytellerStrategicChangeCheckpointV2.pendingNeedsJudgment(listOf(
-            StorytellerStrategicContinuationV2.OpenDecision("current", 1, "NIGHT_INFORMATION"))))
-    }
-
     private val position = StorytellerStrategicChangeCheckpointV2.Position(
         StorytellerPhase.FIRST_NIGHT, 1)
     private val memory = HostOpeningStrategyMemoryV2(
@@ -302,6 +297,52 @@ class StorytellerStrategicChangeCheckpointV2Test {
             legalCandidates = listOf(StorytellerProviderCandidateV1(
                 "number-0", StorytellerProviderCandidatePayloadV1.ScalarResult("0"))),
         )
+    }
+
+    @Test fun actualConversationPromotesOnlyTheFinalMatchingPublication() = conversationPublication(0, true)
+    @Test fun actualConversationKeepsHumanOverrideOutsideAcceptedAiMemory() = conversationPublication(1, true)
+    @Test fun actualConversationCannotPromoteAnUncommittedPreview() = conversationPublication(0, false)
+
+    private fun conversationPublication(value: Int, publish: Boolean) {
+        val host = session()
+        val before = host.state
+        val request = scalarRequest(host)
+        val open = HostCurrentOpenDecisionInventoryV2.fromPendingRequests(
+            before, StorytellerPhase.FIRST_NIGHT, 1, listOf(request))
+        val prior = cursor()
+        val proposal = StorytellerStrategicContinuationV2.Result(
+            before.gameId, before.gameStateRevision, before.playerInputRevision,
+            before.nextTimelineGlobalSequence, prior.version, emptyList(),
+            setOf(request.identity.decisionId),
+            mapOf(request.identity.decisionId to SemanticResult("SCALAR_RESULT", scalarValue = "0")),
+            memory, "Current information based on confirmed Host facts",
+        )
+        val accepted = StorytellerResidualPackageGateV2.verify(
+            before, StorytellerPhase.FIRST_NIGHT, 1, open, listOf(request), proposal, prior)
+        val conversation = com.codex.campboardgamehost.ClocktowerAiConversation().apply {
+            strategicPolicyCursor = prior
+            canonicalConversationResponseId = "previous-confirmed-response"
+            liveAiAdviceKey = "current-request"
+            pendingCurrentStepAdvice = com.codex.campboardgamehost.PendingCurrentStepAdvice(
+                accepted, "current-request", request, proposal, "new-response", "model")
+        }
+        val draft = EpistemicObservationDraft("actual-publication", StorytellerPhase.FIRST_NIGHT,
+            1, host.nextInputSequence, 1, RoleId("Chef"), ObservationVisibility.PRIVATE,
+            setOf(1), ObservationReliability.RECEIVED_AS_FUNCTIONING,
+            InformationProposition.NumericResult(NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = value))
+        assertEquals("previous-confirmed-response", conversation.canonicalConversationResponseId)
+        assertSame(before, host.state)
+        if (publish) host.commitGlobalEpistemicObservation(draft)
+        conversation.reviewConfirmedCurrentStepAdvice(host,
+            com.codex.campboardgamehost.StorytellerOperationMode.AI_ASSISTED, before, draft)
+        assertEquals(null, conversation.pendingCurrentStepAdvice)
+        assertEquals(if (publish && value == 0) "new-response" else "previous-confirmed-response",
+            conversation.canonicalConversationResponseId)
+        assertEquals(if (publish && value == 0) prior.version + 1 else prior.version,
+            conversation.strategicPolicyCursor?.version)
+        assertEquals(if (publish) 1 else 0, host.state.epistemicObservationLog.records.size)
+        if (publish) assertEquals(value,
+            (host.state.epistemicObservationLog.records.single().proposition as InformationProposition.NumericResult).value)
     }
 
     @Test fun onlyExactlyPublishedCurrentHostSemanticsCanConfirmModelMemory() {

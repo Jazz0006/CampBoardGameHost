@@ -100,7 +100,7 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
 
         assertEquals(
             newerSix.playerStartingIdentities,
-            store.latestPlayerStartingIdentitiesFor("test-dataset", 2),
+            store.recentPlayerStartingIdentityHistoryFor("test-dataset", 2).recentGames.firstOrNull().orEmpty(),
         )
     }
 
@@ -114,7 +114,7 @@ class TroubleBrewingSetupRotationHistoryStoreTest {
         store.recordCompletedGame("older-identity-game", recordWithStartingIdentities())
         store.recordCompletedGame("newer-no-identities-game", simpleRecord("newer-no-identities", 6))
 
-        assertTrue(store.latestPlayerStartingIdentitiesFor("test-dataset", 2).isEmpty())
+        assertTrue(store.recentPlayerStartingIdentityHistoryFor("test-dataset", 2).recentGames.firstOrNull().orEmpty().isEmpty())
     }
 
     @Test

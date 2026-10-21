@@ -94,7 +94,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
-    fun `reliable numeric without registration offers only Foundation legal truth`() {
+    fun `reliable numeric preserves typed question and revision without answer candidates`() {
         val chef = step(1, "Chef", InformationProposition.NumericResult(
             NumericMetric.ADJACENT_EVIL_PAIRS, 1, (1..8).toList(), 1,
         ))
@@ -103,7 +103,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
-    fun `result first multiple registration witnesses collapse to observable values`() {
+    fun `candidate display witnesses cannot change the actual numeric question`() {
         val metric = NumericMetric.ADJACENT_EVIL_PAIRS
         val subjects = (1..8).toList()
         val options = listOf(
@@ -116,18 +116,24 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
             manual = options,
         )
         val pending = requireNotNull(build(chef))
+        assertEquals(subjects, pending.subjectSeats)
+        assertEquals(metric.name, pending.metric)
+        assertEquals(pending, build(chef.copy(manualInformationCandidates = emptyList())))
     }
 
     @Test
-    fun `poisoned Empath uses full Foundation numeric domain not curated list`() {
+    fun `poisoned Empath preserves query and reliability independently of display options`() {
         val empath = step(2, "Empath", InformationProposition.NumericResult(
             NumericMetric.LIVING_EVIL_NEIGHBOURS, 2, listOf(1, 3), 1,
         ), reliability = ReliabilityState.POISONED)
         val pending = requireNotNull(build(empath))
+        assertEquals(ReliabilityState.POISONED, pending.reliability)
+        assertEquals(listOf(1, 3), pending.subjectSeats)
+        assertEquals(NumericMetric.LIVING_EVIL_NEIGHBOURS.name, pending.metric)
     }
 
     @Test
-    fun `poisoned Chambermaid keeps exact Host legal numbers for selected targets`() {
+    fun `poisoned Chambermaid preserves the actual selected subjects`() {
         val metric = NumericMetric.PLAYERS_WAKING_FOR_ABILITY
         val subjects = listOf(1, 8)
         val options = (0..2).map { value ->
@@ -187,7 +193,7 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
     }
 
     @Test
-    fun `possible Spy registration results never become a uniquely recorded witness`() {
+    fun `possible Spy registration displays cannot change the actual queried seat`() {
         val role = step(3, "Undertaker", InformationProposition.RoleAt(7,
             com.codex.campboardgamehost.clocktower.domain.RoleId("Spy"))).copy(
             displayKind = ClocktowerDisplayKind.RoleReveal,
@@ -201,6 +207,10 @@ class ClocktowerGlobalFirstNightScalarDecisionTest {
                     spyRegistersGood = shown == "Chef")
             })
         val decision = requireNotNull(build(role.copy(displayProposition = null),
+            phase = ClocktowerPhase.Night))
+        assertEquals(listOf(7), decision.subjectSeats)
+        assertEquals(StorytellerProviderScalarKindV1.ROLE, decision.kind)
+        assertEquals(decision, build(role.copy(manualInformationCandidates = emptyList()),
             phase = ClocktowerPhase.Night))
     }
 

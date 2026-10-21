@@ -10,8 +10,8 @@ class AbilityFunctioningSemanticsTest {
     fun `healthy real role interacts and functions`() {
         val subject = subject(actual = "Monk")
 
-        assertTrue(AbilityFunctioningSemantics.interactsAs(subject, "Monk"))
-        assertTrue(AbilityFunctioningSemantics.functionsAs(subject, "Monk"))
+        assertTrue((AbilityFunctioningSemantics.stateFor(subject, "Monk") != null))
+        assertTrue((AbilityFunctioningSemantics.stateFor(subject, "Monk") == AbilityFunctioningState.FUNCTIONING))
         assertEquals(AbilityFunctioningState.FUNCTIONING, AbilityFunctioningSemantics.stateFor(subject, "Monk"))
     }
 
@@ -19,8 +19,8 @@ class AbilityFunctioningSemanticsTest {
     fun `poisoned real role interacts but does not function`() {
         val subject = subject(actual = "Monk", poisoned = true)
 
-        assertTrue(AbilityFunctioningSemantics.interactsAs(subject, "Monk"))
-        assertFalse(AbilityFunctioningSemantics.functionsAs(subject, "Monk"))
+        assertTrue((AbilityFunctioningSemantics.stateFor(subject, "Monk") != null))
+        assertFalse((AbilityFunctioningSemantics.stateFor(subject, "Monk") == AbilityFunctioningState.FUNCTIONING))
         assertEquals(AbilityFunctioningState.POISONED, AbilityFunctioningSemantics.stateFor(subject, "Monk"))
     }
 
@@ -29,8 +29,8 @@ class AbilityFunctioningSemanticsTest {
         val subject = subject(actual = "Drunk", shown = "Monk")
 
         assertEquals("Monk", AbilityFunctioningSemantics.perceivedRole(subject))
-        assertTrue(AbilityFunctioningSemantics.interactsAs(subject, "Monk"))
-        assertFalse(AbilityFunctioningSemantics.functionsAs(subject, "Monk"))
+        assertTrue((AbilityFunctioningSemantics.stateFor(subject, "Monk") != null))
+        assertFalse((AbilityFunctioningSemantics.stateFor(subject, "Monk") == AbilityFunctioningState.FUNCTIONING))
         assertEquals(AbilityFunctioningState.DRUNK, AbilityFunctioningSemantics.stateFor(subject, "Monk"))
     }
 
@@ -40,7 +40,7 @@ class AbilityFunctioningSemanticsTest {
             assertEquals(AbilityFunctioningState.FUNCTIONING, AbilityFunctioningSemantics.stateFor(subject(role), role))
             assertEquals(AbilityFunctioningState.POISONED, AbilityFunctioningSemantics.stateFor(subject(role, poisoned = true), role))
             assertEquals(AbilityFunctioningState.DRUNK, AbilityFunctioningSemantics.stateFor(subject("Drunk", role), role))
-            assertFalse(AbilityFunctioningSemantics.interactsAs(subject("Chef"), role))
+            assertFalse((AbilityFunctioningSemantics.stateFor(subject("Chef"), role) != null))
         }
     }
 
@@ -62,9 +62,9 @@ class AbilityFunctioningSemanticsTest {
     @Test
     fun `mechanical roles require healthy actual ownership`() {
         listOf("Monk", "Soldier", "Slayer", "Virgin", "Mayor").forEach { role ->
-            assertTrue(AbilityFunctioningSemantics.functionsAs(subject(role), role))
-            assertFalse(AbilityFunctioningSemantics.functionsAs(subject(role, poisoned = true), role))
-            assertFalse(AbilityFunctioningSemantics.functionsAs(subject("Drunk", role), role))
+            assertTrue((AbilityFunctioningSemantics.stateFor(subject(role), role) == AbilityFunctioningState.FUNCTIONING))
+            assertFalse((AbilityFunctioningSemantics.stateFor(subject(role, poisoned = true), role) == AbilityFunctioningState.FUNCTIONING))
+            assertFalse((AbilityFunctioningSemantics.stateFor(subject("Drunk", role), role) == AbilityFunctioningState.FUNCTIONING))
         }
     }
 
@@ -79,15 +79,15 @@ class AbilityFunctioningSemanticsTest {
     @Test
     fun `representative mechanical roles preserve interaction but require functioning state`() {
         listOf("Soldier", "Virgin", "Mayor").forEach { role ->
-            assertTrue(AbilityFunctioningSemantics.functionsAs(subject(role), role))
+            assertTrue((AbilityFunctioningSemantics.stateFor(subject(role), role) == AbilityFunctioningState.FUNCTIONING))
 
             val poisoned = subject(role, poisoned = true)
-            assertTrue(AbilityFunctioningSemantics.interactsAs(poisoned, role))
-            assertFalse(AbilityFunctioningSemantics.functionsAs(poisoned, role))
+            assertTrue((AbilityFunctioningSemantics.stateFor(poisoned, role) != null))
+            assertFalse((AbilityFunctioningSemantics.stateFor(poisoned, role) == AbilityFunctioningState.FUNCTIONING))
 
             val drunkShown = subject("Drunk", shown = role)
-            assertTrue(AbilityFunctioningSemantics.interactsAs(drunkShown, role))
-            assertFalse(AbilityFunctioningSemantics.functionsAs(drunkShown, role))
+            assertTrue((AbilityFunctioningSemantics.stateFor(drunkShown, role) != null))
+            assertFalse((AbilityFunctioningSemantics.stateFor(drunkShown, role) == AbilityFunctioningState.FUNCTIONING))
         }
     }
 

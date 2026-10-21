@@ -160,51 +160,6 @@ class InitialJointOpeningDirectV2Test {
         }.isFailure)
     }
     /**
-     * P15: Kotlin Host precommit scope for the synthetic 15-seat Baron + Drunk.
-     * Historical store:false request is retained byte-for-byte as the exact
-     * paid P15 fixture; a separate store:true fixture now covers current
-     * P1 production chaining. Neither fixture performs network calls.
-     */
-    @Test fun exportFifteenSeatOpeningWireWhenOptedIn() {
-        if (System.getenv("BOTC_15_WIRE_EXPORT") != "1") return
-        val shown = listOf(
-            "chef", "fortuneteller", "recluse", "investigator", "poisoner",
-            "monk", "washerwoman", "baron", "butler", "undertaker",
-            "imp", "librarian", "saint", "empath", "scarletwoman",
-        )
-        val domain = build(true, shown)
-        val hostPayload = InitialJointOpeningDirectV2.encode(
-            domain, ruleset.characterRegistry,
-        )
-        val host = JSONObject(hostPayload)
-        assertEquals(15, host.getJSONObject("state").getJSONArray("seats").length())
-        assertFalse(host.has("conditionalDecisionContracts"))
-        assertEquals("SETUP_PRECOMMIT",
-            host.getJSONObject("state").getString("phase"))
-        assertEquals(6, host.getJSONObject("decisionInventory")
-            .getJSONArray("information").length())
-        val wire = PersonalDirectOpenAiV1.buildRequest(
-            hostPayload, PersonalDirectOpenAiV1.DEFAULT_MODEL,
-        )
-        val request = JSONObject(wire)
-        assertEquals("gpt-6-luna", request.getString("model"))
-        assertFalse(request.getBoolean("store"))
-        assertFalse(request.has("service_tier"))
-        val output = File("build/p15/opening-app-request.json")
-        output.parentFile.mkdirs()
-        output.writeText(wire, Charsets.UTF_8)
-
-        val retained = PersonalDirectOpenAiV1.buildRequest(hostPayload,
-            PersonalDirectOpenAiV1.DEFAULT_MODEL, retainForContinuation = true)
-        val liveRequest = JSONObject(retained)
-        assertTrue(liveRequest.getBoolean("store"))
-        assertFalse(liveRequest.has("previous_response_id"))
-        assertEquals(request.getString("input"), liveRequest.getString("input"))
-        File("build/p15/opening-app-retained-request.json").writeText(
-            retained, Charsets.UTF_8)
-    }
-
-    /**
      * One actual authorized 2026-10-15 Standard Luna synthetic 15-seat output.
      * No raw provider response, encrypted reasoning, PII, or API key.
      * This tests the production response parser without making a new API call.
@@ -407,26 +362,6 @@ class InitialJointOpeningDirectV2Test {
         assertTrue(accepted.strategyMemory?.tensions?.isNotEmpty() == true)
     }
 
-    /**
-     * P1 nonsecret, opt-in fixture. This is an ACTUAL Kotlin V2 encoder +
-     * PersonalDirectOpenAiV1.buildRequest output, not a hand-built wire request.
-     * The fixture is synthetic and cannot itself certify model Host acceptance.
-     */
-    @Test fun exportP1OpeningWireWhenOptedIn() {
-        if (System.getenv("BOTC_P1_WIRE_EXPORT") != "1") return
-        val domain = build(true, eight)
-        val hostPayload = InitialJointOpeningDirectV2.encode(
-            domain, ruleset.characterRegistry,
-        )
-        val wire = PersonalDirectOpenAiV1.buildRequest(
-            hostPayload, PersonalDirectOpenAiV1.DEFAULT_MODEL,
-        )
-        val output = File("build/p1/opening-app-request.json")
-        output.parentFile.mkdirs()
-        output.writeText(wire, Charsets.UTF_8)
-        assertEquals("gpt-6-luna", JSONObject(wire).getString("model"))
-        assertFalse(JSONObject(wire).getBoolean("store"))
-    }
     /** Actual Luna P1 response from a synthetic eight-seat game: no provider metadata or API credentials. */
     /** Synthetic P1 model-generated plan, NO API key, raw provider body or personal records. */
 

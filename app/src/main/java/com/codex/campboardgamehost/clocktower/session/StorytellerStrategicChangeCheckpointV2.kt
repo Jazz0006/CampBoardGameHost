@@ -12,10 +12,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
  * authority, not model output or a guessed future role activation.
  */
 internal object StorytellerStrategicChangeCheckpointV2 {
-    fun pendingNeedsJudgment(
-        openDecisions: List<StorytellerStrategicContinuationV2.OpenDecision>,
-    ): Boolean = openDecisions.isNotEmpty()
-
     internal data class Position(
         val phase: StorytellerPhase,
         val round: Int,

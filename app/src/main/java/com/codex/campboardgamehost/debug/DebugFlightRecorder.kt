@@ -28,12 +28,10 @@ object DebugFlightRecorder {
     private val installed = AtomicBoolean(false)
     private val handlingCrash = AtomicBoolean(false)
     private val eventBuffer = DebugEventBuffer(MAX_EVENTS)
-    private val stateLock = Any()
     private val ioLock = Any()
 
     @Volatile
     private var appContext: Context? = null
-    private var latestState: Map<String, String> = emptyMap()
 
     fun install(context: Context) {
         val contextToKeep = context.applicationContext
@@ -81,12 +79,6 @@ object DebugFlightRecorder {
         persistBreadcrumb(debugEvent)
     }
 
-    fun updateState(state: Map<String, String>) {
-        synchronized(stateLock) {
-            latestState = state.toMap()
-        }
-    }
-
     fun shareDebugBundle(context: Context) {
         runCatching {
             val bundle = createDebugBundle(context)
@@ -130,7 +122,7 @@ object DebugFlightRecorder {
     private fun captureCrash(thread: Thread, throwable: Throwable) {
         val context = appContext ?: return
         val capturedAtMillis = System.currentTimeMillis()
-        val state = synchronized(stateLock) { latestState.toMap() }
+        val state = emptyMap<String, String>()
         val snapshot = DebugCrashSnapshot(
             capturedAtMillis = capturedAtMillis,
             threadName = thread.name,
@@ -168,7 +160,7 @@ object DebugFlightRecorder {
 
         val now = System.currentTimeMillis()
         val output = File(exportDir, "storyteller-debug-$now.zip")
-        val currentState = synchronized(stateLock) { latestState.toMap() }
+        val currentState = emptyMap<String, String>()
         val trace = File(root, TRACE_FILE)
 
         ZipOutputStream(FileOutputStream(output)).use { zip ->

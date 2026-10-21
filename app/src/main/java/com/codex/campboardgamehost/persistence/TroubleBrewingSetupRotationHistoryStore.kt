@@ -77,15 +77,6 @@ internal class TroubleBrewingSetupRotationHistoryStore(
         return TroubleBrewingPlayerStartingIdentityHistory(recentGames = recentGames)
     }
 
-    fun latestPlayerStartingIdentitiesFor(
-        datasetId: String,
-        schemaVersion: Int,
-    ): List<TroubleBrewingPlayerStartingIdentity> =
-        recentPlayerStartingIdentityHistoryFor(
-            datasetId = datasetId,
-            schemaVersion = schemaVersion,
-        ).recentGames.firstOrNull().orEmpty()
-
     private fun trimPerPlayerCount(entries: List<PersistedRotationEntry>): List<PersistedRotationEntry> {
         val retainedCounts = mutableMapOf<Int, Int>()
         return entries.filter { entry ->
