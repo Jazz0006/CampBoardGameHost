@@ -22,6 +22,14 @@
 
 下一批验收应覆盖夜间攻击、白天处决/死亡、继任造成 Poisoner 身份退出及失败回滚；同一次确认更新 Session 的有效毒状态和必要事实，保证之后的步骤/AI/恢复一致，不能倒改先前已确认信息。保留当前单 Session，不恢复旧独立生命周期/通用规则引擎。先把此反例迁入实际 Session 的耐久回归并修复，再继续声称中毒来源时序已闭环。
 
+### F3：旧 AI 请求因凭据变化退出后保持 busy（中等，本批回归，已修正）
+
+提取前 `aiToken/aiDirectModel` 是 composition 的局部计算值，异步闭包捕获的是旧值；提取后 `aiSettings.token/model` 会读取当前值，因而能真正识别请求期间的凭据变化。但原代码把 `liveAiAdviceBusy = false` 放在 stale 提前返回之后，同一 Host key 的请求因此可能一直显示处理中并阻止人工重试。
+
+修正采用现有协程内的 `try/finally`：包括 450ms 合并等待、实际请求和所有提前退出，都释放仍属于当前 key 的 busy；key 已被后继请求替换时不动后继状态。随后仍重新检查 Session/step/phase/round/memory/mode/model/token，旧响应不进入建议或事实。没有新请求协议、持久字段、取消管理器或额外付费重试。
+
+证据为前后实际闭包语义、两处返回和清理分支的完整 source review，以及现有 stale/retry 交互与完整回归；没有声称做了真实付费 provider 延迟注入。`23590475` 的读取门槛已通过独立 CI #4493/R2 #4069；此后 finally 修正须另以最新精确 SHA 验收。
+
 ## 对最小实现合同的核对
 
 - `StorytellerAiSettings` 只持应用连接偏好与加载/保存 UI 状态，不含玩家、对局、角色、时间线、当前游戏模式或 AI 执行状态；不是第二游戏状态。根部调用保证离开设置页不取消读取/延迟保存，凭据仍在原 Keystore store。

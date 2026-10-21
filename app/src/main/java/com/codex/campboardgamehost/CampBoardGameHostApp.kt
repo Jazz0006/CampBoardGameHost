@@ -878,20 +878,25 @@ internal fun CampBoardGameHostApp() {
                 canonicalConversationModel == requestedModel
             }
             drunkAiScope.launch {
-                // Coalesce rapid related Host updates before paying for a new
-                // whole-game request. A newer state/key cancels this pending call.
-                delay(450)
-                if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
-                    session.state !== currentHost.state ||
-                    strategicPolicyCursor != wholeCursor ||
-                    storytellerOperationMode != requestedOperationMode ||
-                    aiSettings.model != requestedModel || aiSettings.token != requestedToken ||
-                    session.state.nextNightInteraction(requestedNightRuleset)?.id != step.interactionId) return@launch
-                val result = runCatching {
-                    StorytellerStrategicContinuationV2.recommendWithReceipt(
-                        PersonalDirectOpenAiV1.ENDPOINT, requestedToken, requestedModel,
-                        session, wholeOpening, legalOpen, wholeCursor, previousResponseId,
-                    )
+                val result = try {
+                    // Coalesce related Host updates before paying for a new request.
+                    delay(450)
+                    if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
+                        session.state !== currentHost.state ||
+                        strategicPolicyCursor != wholeCursor ||
+                        storytellerOperationMode != requestedOperationMode ||
+                        aiSettings.model != requestedModel || aiSettings.token != requestedToken ||
+                        session.state.nextNightInteraction(requestedNightRuleset)?.id != step.interactionId) return@launch
+                    runCatching {
+                        StorytellerStrategicContinuationV2.recommendWithReceipt(
+                            PersonalDirectOpenAiV1.ENDPOINT, requestedToken, requestedModel,
+                            session, wholeOpening, legalOpen, wholeCursor, previousResponseId,
+                        )
+                    }
+                } finally {
+                    // Credential edits can invalidate this request without changing its Host key.
+                    // Release that request on every exit, never a newer request's busy state.
+                    if (liveAiAdviceKey == key) liveAiAdviceBusy = false
                 }
                 if (liveAiAdviceKey != key || clocktowerGameSession !== session ||
                     session.state !== currentHost.state ||
@@ -902,7 +907,6 @@ internal fun CampBoardGameHostApp() {
                     storytellerOperationMode != requestedOperationMode ||
                     aiSettings.model != requestedModel || aiSettings.token != requestedToken
                 ) return@launch
-                liveAiAdviceBusy = false
                 result.onSuccess { receipt ->
                     val proposal = receipt.proposal
                     runCatching {
