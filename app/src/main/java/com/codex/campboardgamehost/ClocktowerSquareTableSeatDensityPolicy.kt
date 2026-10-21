@@ -21,10 +21,8 @@ internal data class ClocktowerSquareTableSeatDensity(
     val verticalPaddingDp: Float,
 )
 
-@Suppress("UNUSED_PARAMETER")
 internal fun clocktowerSquareTableSeatDensity(
     playerCount: Int,
-    detailedSeatCards: Boolean,
 ): ClocktowerSquareTableSeatDensity {
     require(playerCount >= 0) { "Square-table player count cannot be negative" }
 
@@ -76,22 +74,18 @@ internal fun clocktowerSquareTableSeatDensity(
  */
 internal fun clocktowerSquareTableSeatDensityCandidates(
     playerCount: Int,
-    detailedSeatCards: Boolean,
 ): List<ClocktowerSquareTableSeatDensity> {
     require(playerCount >= 0) { "Square-table player count cannot be negative" }
 
     return listOf(
         clocktowerSquareTableSeatDensity(
             playerCount = playerCount,
-            detailedSeatCards = detailedSeatCards,
         ),
         clocktowerSquareTableSeatDensity(
             playerCount = 12,
-            detailedSeatCards = detailedSeatCards,
         ),
         clocktowerSquareTableSeatDensity(
             playerCount = 15,
-            detailedSeatCards = detailedSeatCards,
         ),
     ).distinct()
 }

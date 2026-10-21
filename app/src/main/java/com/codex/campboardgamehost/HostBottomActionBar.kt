@@ -34,7 +34,6 @@ internal fun HostBottomActionBar(
     hostToolsEnabled: Boolean = true,
     nextEnabled: Boolean = true,
     previousVisible: Boolean = true,
-    hostToolsVisible: Boolean = true,
     nextVisible: Boolean = true,
 ) {
     Row(
@@ -52,7 +51,7 @@ internal fun HostBottomActionBar(
         NavigationActionButton(
             label = hostToolsLabel,
             enabled = hostToolsEnabled,
-            visible = hostToolsVisible,
+            visible = true,
             onClick = onHostTools,
             emphasis = NavigationActionEmphasis.Utility,
             modifier = Modifier.weight(1f),

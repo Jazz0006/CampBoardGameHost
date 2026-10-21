@@ -35,15 +35,11 @@ internal fun HostTableShell(
         val availableWidth = maxWidth.value
         val availableHeight = maxHeight.value
         val language = LocalContext.current.resources.configuration.locales[0].language
-        val detailedSeatCards = seats.any { seat ->
-            hostSeatContentPresentation(seat, language).detailLabels.isNotEmpty()
-        }
-        val layout = remember(availableWidth, availableHeight, seats.size, detailedSeatCards) {
+        val layout = remember(availableWidth, availableHeight, seats.size) {
             resolveHostTableSurfaceLayout(
                 availableWidth = availableWidth,
                 availableHeight = availableHeight,
                 playerCount = seats.size,
-                detailedSeatCards = detailedSeatCards,
             ).layout
         }
         val frames = remember(seats, interaction, layout) {

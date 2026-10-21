@@ -59,3 +59,15 @@ Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemi
 不含维护文档15文件+29/-323，净删**294行/11391B**，整删1生产策略文件和2专属测试文件，无新文件/框架。Android测试9项只保护已退役入口；身份/隐私/配色实际断言保留。首次完整核查原待审现存**13路径**；台账现为**437路径、232有结论、205待审**。其余修改文件只局部复核则不重计全文审计，未把扫描清单当结论。
 
 验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**和Debug APK通过；代码`21aed457c6282e985ac7a99b4de1af42dd0f563f`的[完整Android CI #4515](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39585170348)与[R2 #4090](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39585170361)均SUCCESS，独立核对18路径/逐行diff、全量测试/APK构建与上传及CI gate；后续仅文档提交只记录验收，不替代代码验证；原R2、10类CI路由/失败门禁及shell语法、退休符号零残余、diff检查通过。两剧本、唯一Session、现有AI、D2、隐私/原子保存、两项跨局防重复保持。App115420B、Night Host63787B仍超50000B，Session46770B；本批不声称解决大文件。下一步继续App/Host真实混合职责和剩余待审源文件，UI细节后置。Draft不合并/强推，无新增所有者决策阻塞。
+
+## 2026-10-21 第二阶段第五批：扩大连续审计与方桌死接线清理
+
+所有者指出此前每轮十几个文件推进过小，改为本轮连续核查后统一验证/提交。从Draft #337 `6800a2a1`继续，main仍`40050941efc3`。本轮全文及真实消费者/被测边界核查**74个原待审文件**（生产23、测试/fixture51），非只列目录或改一行。覆盖实际UI、geometry/拖动/提名/投票、Session状态/交互ID、AI元数据/设置/隐私、完整App闭环和两项跨局防重复持久化。
+
+删除链：detailedSeatCards从HostTableShell/SquareTable→SurfaceLayout→density的整条无作用参数/计算/remember key及测试重复维度；strategicRelations从未有调用者提供，删其参数/虚线绘制/PathEffect；hostToolsVisible无调用者覆盖，删参数而保留实际按钮可见；SettingsScreen纯透传包装删除，App真实设置路由直接调用同一SettingsContent。现用AI内容/协议/模式/stale隔离/记忆/会话延续不变。测试只去无效维度重复遍历，原有字体/5–15容量/边界断言和所有测试项保留。
+
+不含维护文档9文件+43/-137，净删**94行/4541B**；整文件新增/删除0，无新框架。必要代码不按删除数量硬删：AutoPause仍有实际路由；稳定dawn事实ID是磁盘幂等兼容；两项rotation查询与完成局存储继续保留。发现原圆角测试重复生产算法和AutoPause旧文案，单表记录后续候选，不混作已删除。
+
+现行台账**437路径、306有结论、131待审**。本轮审计覆盖282578B，原已审修改路径不计新增；图像/巨型preset/历史artifact未因目录盘点冒称已审。App115421B、Night Host63787B仍超50000B，Session46770B；不以审计数量宣称职责/大小已收敛。
+
+验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**及Debug APK通过，远端精确CI/R2提交后独立核对；原R2脚本、10类CI路由/失败门禁及shell语法、退休符号全仓检查通过。唯一Session、两剧本、现有AI、D2、隐私/原子保存和两项跨局防重复保持。无付费API/真机/杀进程验收，PR保持Draft不合并/强推。后续按大批次继续剩余待审生产/测试及App/Host混合职责，不恢复每十几个文件即收尾的节奏。

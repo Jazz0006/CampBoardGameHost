@@ -1690,7 +1690,7 @@ internal fun CampBoardGameHostApp(
                         )
                     }
 
-                    Screen.Settings -> SettingsScreen(
+                    Screen.Settings -> SettingsContent(
                         languageMode = languageMode,
                         commonPlayers = commonPlayers,
                         playerExperienceByName = playerExperienceByName,
