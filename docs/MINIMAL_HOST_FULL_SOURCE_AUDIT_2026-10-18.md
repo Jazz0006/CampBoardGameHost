@@ -1,3 +1,29 @@
+## 2026-10-21 后续清理：以已合并 main 收敛职责/尺寸，退休孤立适配
+
+代码 `130fe215592f7b4725917beb302323a75bbf46b2` 已推送 [Draft #336](https://github.com/Jazz0006/CampBoardGameHost/pull/336)，base 为已合并 main `40050941`。本地 fast **617** / full **649**（145 suites、38 UI，零失败/错误/跳过）、APK 和原 R2 脚本通过；[R2 #4082](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39579927285) **SUCCESS**，[完整 Android CI #4507](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39579927163) **SUCCESS**（full/APK 上传、ASP、真实 Clingo 和总门禁已独立核对）。
+
+基线 main `40050941` 已包含 `e73e4807` 最小整局验收与其此前的 F2 毒源退出、AI 设置加载保护、live request busy-finally、SessionView/NightCheckpoint 退役。本批保留它们；没有把旧 `ce1c314c` 试作覆盖到 main，复用已有 StorytellerAiSettings。
+
+### 本批责任迁移及完整删除链
+
+| 责任 | 退休位置/链 | 现有唯一消费者与事实边界 |
+|---|---|---|
+| 夜间角色内容 | Night Host 内整组角色文案/只读 presentation 构造移出 | ClocktowerNightStepPresentation 仅 materialize Session 选出的 interactions；Host 保留实际预览/Next，Session 决定夜序/机械，不新增 writer |
+| 当前局界面绑定 | App 内整组草稿、信息发布/动作/Day 确认回调移出 | ClocktowerPlayScreen + NightDrafts 暂存当前输入，所有确认直接调用同一 Session，保存失败回调回 App；显示时阶段/轮次仍固定 |
+| 开局可见身份 handoff/Drunk | App 内原 transient 开局状态及屏幕/选择方法移出 | ClocktowerOpeningUi 不保存真实 Session，显式 Drunk 确认后调用生产准备和唯一 Session 创建；建议不是事实包 |
+| 当前 AI 请求/记忆 | App 内请求、pending advice、已接受策略/会话移出 | ClocktowerLiveAdvice 保留原 provider/parser/memory、450ms 合并、Session/step/revision/key/mode/settings stale 检查和 busy-finally；只在真实 Observation 后推进建议记忆 |
+| 平台开局边界 | App 内资产/双轮换读取与卡片本地化移出 | ClocktowerSetupPreparation 调现有 TB/NGJ 准备器和既有 rotation store；只是准备与只读显示，不新增事实对象 |
+| 孤立角色结果适配 | **整删 ClocktowerRoleRevealChoiceProjection.kt**；Ravenkeeper/Undertaker TypedResult DTO/helper 仅被测试调用，Anchor 只供该死包装 | 实际 SquareTable→DirectRoleRevealChoice→预览→Session Observation 未变；保留生产输入、目标绑定、隐私与 38 UI 用例，混合 DirectRoleRevealTest 仅移除退休包装断言 |
+| 孤立唤醒/mode/evil helper | clocktowerNightWakingRoleIds、storytellerAiResponseMayApply 只有独占测试；isClocktowerEvil 无调用 | Session 夜序/直接 wakingRole 和实际 AI 异步 closure 继续生效，不能把未接线 helper 的单测当作真实安全证明 |
+
+**整删生产文件 1、专属测试文件 2**：`ClocktowerRoleRevealChoiceProjection.kt`、`ClocktowerOtherNightWakingRoleAuthorityTest.kt`、`StorytellerOperationModeContractTest.kt`。无调用结论来自对整个当前 production/test Kotlin 树与 CI 路由的引用扫描；保留实际角色输入、Session 夜序/毒/保护/继任、当前请求隔离，不删除游戏必需行为来满足旧测试。
+
+### 实量与边界
+
+`40050941` → `130fe215` Git blob LF 计入全部五个新增职责文件：生产 **+1921/-1756、净 +165 行/+3328B**，215→219 文件；测试 **+1/-80、净 -79 行/-3271B**，151→149 文件。签名/明确职责边界带来新增，不能当作大规模净删；旧 Windows 试作的统计和验收不计本批。
+
+App **116000→48729B**，Night Host **63787→42359B**，Session **47578B**。全部维护源码尺寸检查无 >50000B（包含测试；R2 硬门禁），这只是尺寸达标。全树库存/符号扫描不等于逐文件语义审计；其他有真实 caller 的冗余功能仍须按最小产品必要性审计，第二阶段/P5 未关闭。原完整整局与必要实际 UI 行为保留，5 个 test-only 断言随死 helper 退休，全量从 654→649；未忽略真实用例。无新所有者决策阻塞；没有付费 API、真机/实际 kill、merge/rebase/force-push/删分支。
+
 ## 2026-10-21 真实 App 最小整局：已完成并验收
 
 从 `1e7fbc6d` 接续，仅改 App 首次存储/恢复和 quick restart 接线；生产 +3 行/+316B，新生产文件 0、删除生产/专属测试文件 0，新增 1 测试文件/160 行。移除无用 activeGameSaveAttached 及 screen 保存门槛；没有新状态/恢复框架。App 116000B、Night Host 63787B 仍超限，Session 47578B。

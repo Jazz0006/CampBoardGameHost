@@ -1,3 +1,5 @@
+> **2026-10-21 清理接续**：第一阶段最小整局已关闭，#335/#334 已合入 main。新 Draft #336 以 main 为基线保持唯一 Session/当前 AI/两剧本，收敛 App/夜间 Host <=50000B 并退休孤立适配；第二阶段全树语义删除仍未完成，第三阶段 UI 细节随后。精确代码/验证和当前环境以 [路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[交接](NEXT_DEVELOPMENT_HANDOFF.md) 为准。下方旧堆叠 PR/大文件状态均为历史。
+
 > **2026-10-21 最新所有者路线调整（覆盖旧阶段顺序）**：先尽快完成完整游戏流程的最小可玩实现，再遍历全部代码并大规模删除，清理完成后才优化界面和流程细节。当前不以局部 UI 精修、普遍抽象/解耦、穷举组合或文件大小收敛作为完整游戏闭环的前置任务。唯一 Session、已确认事实/隐私/原子提交、安全续局、两内置剧本与现有 AI/双跨局防重复继续保留；阻断游戏或破坏这些合同的 bug 仍须修复。必要替换仍同批删除被替代路径，不建立长期双轨。详见 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)；本文下方冲突的 P0-first/P4 精修等顺序只作历史。
 
 > **2026-10-21 后续代码检查点**：`f4d78d5c70c55be988c1daf29558fde2e0c82305` 已完成 B/C 和主要 Day/终局 Session 迁移、删除旧控制链并补唯一活动局原子保存；本地 fast 612/full 639（含原 23 D2/行动 UI＋4 Day UI）、APK、R2 原始脚本通过。[完整 Android CI #4490](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956510) **SUCCESS**；[R2 #4066](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956507) **SUCCESS**。当前进展/剩余见 [路线](CURRENT_DEVELOPMENT_ROADMAP.md) 与 [台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。下方旧“B/C 尚未实现/无存储”的状态是历史；D2 仅 Next 写 Observation 合同不变，未声称整项重构、全部线索、文件大小或真机/杀进程验收完成。

@@ -1,27 +1,22 @@
-# 当前路线 — 最小整局已验收，进入全仓清理（2026-10-21）
+# 当前路线 — 全仓清理进行中（2026-10-21）
 
-唯一游戏对象为 `ClocktowerGameSession`。UI 草稿、静态剧本、AI 传输/只读投影和存储是适配层，不是其他事实/进度来源。所有者顺序：**最小完整流程 → 全部代码遍历和大规模删除 → 界面与流程细节优化**。
+代码 `130fe215592f7b4725917beb302323a75bbf46b2` 已推送 [Draft #336](https://github.com/Jazz0006/CampBoardGameHost/pull/336)，base 为已合并 main `40050941`。本地 fast **617** / full **649**（145 suites、38 UI，零失败/错误/跳过）、APK 和原 R2 脚本通过；[R2 #4082](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39579927285) **SUCCESS**，[完整 Android CI #4507](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39579927163) **SUCCESS**（full/APK 上传、ASP、真实 Clingo 和总门禁已独立核对）。
 
-## 第一阶段：最小完整流程已完成并验收（已关闭）
+当前执行环境为 Codex 本地 Windows，直接读写文件，不使用 MiniMCP。#335、#334 已由远端其他操作合并；本批从最新 main 建新分支，没有重开旧 PR、合并或重写历史。
 
-真实 App 入口已验证：首页/玩家/座位/剧本 → 生产发牌 → 首夜 → 白天真实提名手势/投票/同页日结 → 后夜实际死亡 → 文件恢复/继续 → 正式终局/明确揭晓 → 恢复后原班再开一局。两剧本真实准备器生成的合法 5 人代表阵容均跑通；已有 5–15/NGJ 5–6 人轨迹和必要角色分支继续保留。
+## 第一阶段：最小完整流程已关闭
 
-修复了最后两个实际阻断：Session 创建后即保存，不再等到 Judge；恢复后的 quick restart 从当前 Session 取确认名单，不依赖已经丢失的准备页对象。中断发牌从同一 Session 重新展示，不保存额外发牌游标。
+保持 `e73e4807` / CI #4503 / R2 #4079 的两剧本真实完整 App 基线：首页/玩家/座位/剧本、生产发牌、首夜、真实提名/投票/同页日结、后夜死亡、私有文件重建、终局揭晓、恢复后原班再开，以及中断发牌。详见 [既有验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。本批原有 38 项界面测试全部保留通过；不重新开放第一阶段，也不冒称设备/实际杀进程/付费模型验收。
 
-[最小完整验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md) 给出逐环节证据、边界和最终 CI。完整 full/APK 与精确 CI/R2 已通过，第一阶段已关闭；不再以局部 UI、普遍职责抽取或穷举组合阻止进入清理。真机/实际杀进程/付费模型未运行，不影响这里的代码/自动化最小闭环结论，也不能宣称那些证据已完成。
+## 第二阶段：本批收敛与后续主任务
 
-## 第二阶段：下一主任务——全仓遍历、大规模删除
+- App 从 **116000B → 48729B**，Night Host 从 **63787B → 42359B**；Session 保持 **47578B**。维护源码扫描无 >50000B，R2 增加跨生产/测试的硬门禁。
+- App 中原有开局准备/Drunk 确认与 handoff、实时 AI 请求及建议记忆、对局草稿和 Session 回调、夜间只读角色文案分归明确职责。复用 main 的 `StorytellerAiSettings`，保留加载保护与实际 stale/finally；没有通用 Context/Manager、新 Session、永久 pending 或新恢复引擎。
+- 删除已无生产用途的角色揭示 Anchor/两个 typed-result 包装、旧唤醒集合、evil helper、AI mode helper及两份独占旧测试。实际直接角色输入、D2 预览/最终 Next、Session 夜序、当前 AI 和安全测试保留。
+- 对 main 的本批实量：生产 **+1921/-1756，净 +165 行/+3328B**；测试 **+1/-80，净 -79 行/-3271B**。生产 **219** / 测试 **149** 文件。拆分的签名和职责边界计入新增，不能称为大规模净删或全树语义验收。精确链见 [台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
 
-以已验收完整可玩闭环为保留基线，重新从未截断当前 Git 树逐文件/责任检查生产、资源、测试、CI 与真实消费者。删除旧引擎、冗余功能、重复状态/控制流、孤立实验和兼容包装及其专属测试；混合文件只留必要 Host、现有 AI、隐私/存储/平台职责。必要迁移和旧消费者删除同批完成，不留第二 Session 或新旧双轨。
+**下一步是未截断全树按完整职责的语义审计和大规模删除**：生产源码、资源、测试和 CI 逐项核对最小可玩必要性、实际 producer/consumer 和唯一事实所有者，删除整项多余功能而非只查未使用符号。当前只证明本批责任迁移、几个孤立出口和文件大小，不代表全树零遗留。保留一个 Session、两个内置剧本、现有 AI 全链与模式范围、双跨局防重复、确定机械、实际信息/收件人、顺序/幂等/原子性。
 
-每批给出完整删除链、实际文件/行/字节净量和保留游戏行为的验证。先删再内聚整理，全部源码 <=50000B 和全树零遗留属于本阶段验收，不能机械切块或新增泛用 Context/Manager。
+## 第三阶段与授权边界
 
-当前 App **116000B**、Night Host **63787B** 超限，Session **47578B**。本批核心修复生产 +3 行/+316B、生产文件新增/删除 0；新增 1 测试文件 / 160 行。前批 SessionView、NightCheckpoint、setupCards 活跃依赖的删除已验收，详见 [台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
-
-## 第三阶段：清理后统一优化界面与细节
-
-在精简后的完整流程上集中调整布局、按钮、提示、高亮、错误反馈和体验一致性，再做相应完整视觉/设备验收。当前仅记录非阻断问题，不预设现有页面结构必须保留。
-
-## 验证与执行边界
-
-本批 Cloud full 654 / 147 suites / 38 UI、APK、原 R2 shell 通过，生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；前一 `3268440f` / Cloud 651 / CI #4501 / R2 #4077 为历史基线。保持两剧本、现有 AI 全链/已有模式范围、双跨局防重复、确定机械、D2 最终 Next、顺序/隐私/幂等/原子保存。Cloud 直接读写测试；原 #335 仍堆叠 #334，均 Draft，不合并/改 base/重写历史/删分支/付费 API。交接见 [下一步](NEXT_DEVELOPMENT_HANDOFF.md)。
+完成清理后统一优化 UI/流程细节，再做必要视觉/设备验收。保持新 PR 为 Draft；不自行 merge、retarget、rebase、force-push、删分支或调用付费 API。无新的所有者决策阻塞。交接见 [下一步](NEXT_DEVELOPMENT_HANDOFF.md)。
