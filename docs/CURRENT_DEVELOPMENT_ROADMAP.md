@@ -70,4 +70,4 @@ Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemi
 
 现行台账**437路径、306有结论、131待审**。本轮审计覆盖282578B，原已审修改路径不计新增；图像/巨型preset/历史artifact未因目录盘点冒称已审。App115421B、Night Host63787B仍超50000B，Session46770B；不以审计数量宣称职责/大小已收敛。
 
-验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**及Debug APK通过，远端精确CI/R2提交后独立核对；原R2脚本、10类CI路由/失败门禁及shell语法、退休符号全仓检查通过。唯一Session、两剧本、现有AI、D2、隐私/原子保存和两项跨局防重复保持。无付费API/真机/杀进程验收，PR保持Draft不合并/强推。后续按大批次继续剩余待审生产/测试及App/Host混合职责，不恢复每十几个文件即收尾的节奏。
+验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**及Debug APK通过；精确代码`330a0305469f27bd02abf7c95ea86a40e48e3890`的[完整Android CI #4517](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39586474198)与[R2 #4092](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39586474337)均SUCCESS，独立核对12路径/逐行diff、full tests/APK构建与上传及CI gate；后续仅文档提交记录验收，不替代代码验证；原R2脚本、10类CI路由/失败门禁及shell语法、退休符号全仓检查通过。唯一Session、两剧本、现有AI、D2、隐私/原子保存和两项跨局防重复保持。无付费API/真机/杀进程验收，PR保持Draft不合并/强推。后续按大批次继续剩余待审生产/测试及App/Host混合职责，不恢复每十几个文件即收尾的节奏。
