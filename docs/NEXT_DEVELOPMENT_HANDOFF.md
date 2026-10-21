@@ -28,3 +28,5 @@
 ## 本轮测试清理（2026-10-21）
 
 批准标准：只留保护可感知产品行为与真实状态安全的高价值测试，中低价值及以前保护错误行为的测试均可删除。本轮从 `1cfacda8` 派生 `cleanup/high-value-test-suite-20261021`，静态删去 22 个测试类、75 个 `@Test` 和无用 helper `A4RuntimeFixtures.kt`，另按测试级清理厨师任意值 `17`、只允许活人作为被提名者的错误断言。静态余 122 类、564 个 `@Test`（正式以精确 SHA CI/R2 实测为准）。保留 TB/NGJ 整局、Session 夜/日规则、原子保存、隐私、D2 唯一 Next、AI 请求/stale/回执/记忆及两项跨局防重复。没有修改生产业务代码，因此 Host 固定线索求值和死者被提名 UI Bug 仍需修复。Oracle VM 上原生 Gradle 的锁与 aarch64 运行库受限，不能冒充为本地测试通过；必须用 GitHub 全量 Android CI/R2 验收新提交。
+
+**合并后复审补充（仅恢复两项高价值）：** #338 的自动代码复审发现两条独有缺失边界：① 真实 Session 当前玩家行动未确认，不得让残余 AI Scope 发明其后续目标与请求；② 360×520 手机竖屏 5–15 人方桌必须全部能完成容量布局。只恢复这两项小型行为测试（`ClocktowerResidualUnconfirmedActionBarrierTest`、`ClocktowerSupportedPlayerLayoutTest`），没有恢复以前 22 个低中价值类。静态总数修正为 124 类/566 项；准确验收待修复提交的 CI/R2，第一轮历史删减仍为 22 类/75 项。
