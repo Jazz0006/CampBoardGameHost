@@ -1,42 +1,35 @@
-# 当前开发路线 — Minimal Host（2026-10-21）
+# 当前开发路线 — 先完整最小闭环，再全仓清理（2026-10-21）
 
-以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准：唯一 Session/GameState 与有序确认事实，Host 执行确定性规则，AI/真人负责实际裁量，不恢复通用候选/世界枚举或第二游戏状态。
+最新所有者指令优先于旧 P0–P5 顺序：当前实现仍会调整，先完成完整游戏流程的最小实现；随后遍历全部代码、大规模删除；界面和流程细节优化放在清理之后。
 
-## 2026-10-21 P4 接续：夜间继任与角色展示职责收敛
+## 第一阶段：尽快完成完整游戏流程的最小实现（当前）
 
-基线 `9ec8b969`，原 Draft #335 / base #334 不变。已确认的来源退出 F2 保留，本批不修改毒效终止语义。
+目标是两套内置剧本 TB 5–15 / NGJ 5–6 能从创建游戏，经首夜、白天、后续日夜循环走到正式终局，并能从已确认状态安全继续。
 
-- **继任一份判定**：UI 自算存活 Imp、中毒、僧侣保护、存活人数、红唇女郎及可继任爪牙的代码已删除。既有 RoleIdentityBoundaries 的 Session 只读 `impSelfKillSuccession` 被 JudgeScreen 和最终攻击确认共同调用；底层保留现用 DemonSuccessionSemantics。UI 只把返回的座位映射到展示、保留未确认选择、控制 Next；确认时重新根据当前 Session 判定，无持久 pending、第二状态、新 schema 或通用候选机制。
-- **角色一份展示**：投毒者、管家、间谍和已有共情者/占卜师/侍女 materializer 在两夜共享；Registry 仍只按 Session 提供的步骤顺序渲染，不从注册列表决定夜序。普通 actor 从 canonical alive/wakingRole 映射座位；死后触发仍用既有明确 override 和事件时点醉毒语义。
-- **身份/草稿**：删去 UI 自建 roster/seed/poison 指纹，信息草稿 key 使用 gameId、Session state/input revision、稳定 interactionId。删除已无消费的 JudgeScreen gameSeed/gameOutcome 参数及 App 接线；Session outcome 仍阻止继续已结束游戏。D2 最后预览/唯一 Next Observation、真实玩家目标与 AI stale/receipt/记忆协议保持。
-- **消费者与测试**：生产改动仅 App 接线、JudgeScreen、Session attack 与既有 RoleIdentityBoundaries。新增真实 Session 3 项（4 人/中毒红唇、僧侣保护、旧继任选择失效），扩充已有确认断言；新增真实 JudgeScreen 3 项（多爪牙选择不提前提交、强制红唇、不生效自杀无继任）。无生产或专属测试文件删除，无测试忽略。
-- **精确净量**：生产 +104/-190，净删 **86 行 / 4651B**；测试 +138/-5，净 +133 行。App **118438B**、Night Host **63094B** 仍超 50000B，Session **48526B** 达标。没有声称本批解决所有超限文件。
-- **验证**：Cloud `testFull + assembleDebug` **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，原始 R2 shell 与 diff 检查通过；生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324` 的[完整 Android CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) 与 [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 均 SUCCESS（包含 full tests / Debug APK、ASP、Clingo 和 gate）。本批无真机、杀进程或付费 API。首轮新测试失败来自测试前置 Spy 尚未确认、夹具已有 Scarlet Woman 的错误预期和弹窗/方桌重名选择器，未把它们记作生产 bug 或修复前反例。
+- 先沿真实产品入口检查创建/发牌/必要配置 → 首夜输入与信息 → 白天提名投票/技能/日结 → 后夜死亡/触发/继任 → 胜负与结束。按是否阻断整局排序，修最高影响缺口，不从单个文件或角色 UI 细节开始。
+- 每个受支持角色必须有可执行的最小输入/展示/确认路径；现有人工裁量入口可以承接允许裁量的结果，不能代替 Host 必须决定的唤醒、死亡、继任和胜负。缺失的必需规则修最小实现，不建设通用候选、世界枚举或新框架。
+- 保留一份 Session、一次确认事实、D2 仅 Next 最终 Observation、隐私、去重/过期隔离和原子保存。保存失败不能留下半步；恢复后到安全的未完成步骤，不追求恢复预览草稿/像素状态。
+- 保留现有 AI 首夜/后夜、记忆、三模式已有支持范围及失败/过期处理；无付费 API 时仍可用人工路径验证基本可玩性。保留两项跨局防重复。
+- 暂停局部 UI 精修、按钮/文案/高亮普遍统一、普遍职责抽取、额外 AI 能力、非阻断边缘优化和穷举组合。两个超限文件不再优先于完整游戏闭环；改业务时必要删除旧替代路径即可。
 
-下一步继续 Night 信息发布/AI 与保存恢复入口职责审计、两个超限文件按内聚职责缩减，再完成逐角色/强制线索、全树 P0/P5 和设备证据。
+**退出标准**：真实入口可达；两剧本有代表性从开局到终局的完整轨迹及必要角色分支证据；没有已知游戏阻断、错误推进/终局、事实丢失或私密泄露；核心重复确认、保存失败/重读有回归；相关测试、完整构建与精确代码 CI 通过。不是穷举所有阵容或全角色视觉验收。现有两夜 fixture 和 646 通过测试不能单独证明本阶段完成；设备操作/实际杀进程仍须如实单列。
 
-## 前一已验收批次：修复 F2 投毒来源退出
+## 第二阶段：遍历全部代码，大规模删除
 
-在 `2dea23bc` 基线上接续原 Draft #335，仍堆叠于 #334 `76be7e17`；main 为 `0abc842e`。前一已验收生产代码 `bc263581` 的 CI #4494/R2 #4070 不替代本批验收。
+以完整可玩闭环为保留基线，逐文件/逐责任检查全仓生产、资源、测试和 CI 消费者。删除旧引擎、冗余功能、重复状态/控制流、孤立实验、兼容包装及其专属测试；混合文件只保留确有必要的 Host、现有 AI、隐私/存储/平台职责。必要迁移和旧消费者删除在同批完成，保持游戏可玩，不留影子 Session 或新旧双轨。
 
-- 已确认投毒者 Death/Execution/RoleChange 使其死亡或不再拥有实际 Poisoner 身份时，在 Session 唯一状态发布入口立即解除持续毒，并复用既有 Poison(null) 结束事实。
-- 夜间攻击、白天结算、确认死亡和身份变化共用这一边界；没有新持久字段、第二状态/存档、规则引擎或 UI 补写器。没有活动毒、非来源死亡或保护成功不会制造毒结束；已确认的玩家信息保持原样。
-- 状态与毒结束事实一次确认保存，失败整步回滚；真实文件中断/重读后恢复正确下一步。重复/过期确认不重复结束，也不复活旧目标。
-- 旧时间线回归中的“处决投毒者仍中毒到黄昏”预期已纠正，保留普通玩家被处决时中毒持续到黄昏的覆盖。耐久新增来源退出 9 项、真实文件 1 项，并把旧单场景拆成两场景；不恢复已删除的孤立旧规则测试。
+每批报告实际删除链、文件/行/字节净量及行为验证。最终所有源码 <=50000B 是本阶段验收目标；先删代码，再按真实职责整理，不用机械切文件或泛用 Context/Manager。全树语义归属与零遗留证据也在此阶段收尾。
 
-Cloud `testFull + assembleDebug` **640 tests / 146 suites / 30 UI，0 failure/error/skipped**，原 R2 shell 与 diff 检查通过。首批 8 个定向场景在修复前有 5 个真实失败。精确代码 `6a76a57cfa8034363abbf884d1a0326edc1c15a4` 的完整 Android CI #4496、R2 #4072 均 SUCCESS（包含 full tests / Debug APK、ASP / Clingo / gate）；未做真机/杀进程或付费 API。
+## 第三阶段：清理后优化界面和流程细节
 
-本批生产 **+33 行 / +1904B**（必要 bug 修复，不伪称净删），删除生产/专属测试文件均为 0；测试净 +187 行。App **118544B**、Night HostScreen **68496B** 仍超 50000B；Session **49453B** 达标。所有入口、保留消费者和证据见 [台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 与 [审计 F2](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
+在精简后的完整流程上集中调整界面、操作步骤、提示、高亮、错误反馈和体验一致性，再补相应交互/设备验收。当前可以记录问题，但不提前实现这些精修，也不预设现在的页面结构必须保留。
 
-## 已有基线与边界
+## 立即下一步
 
-Session 拥有夜间步骤/确定性机械、白天提名/投票/处决/胜负、Death 派生 Klutz 和单一 AtomicFile 活动局。D2 信息可预览重选，仅当前角色 Next 记录最终一条 Observation；预览不是事实。AI 配置职责已收敛，继承的读取竞态及本批暴露的 stale AI busy 问题已修复验证。
+以最新分支为准，做一次面向整局可玩性的缺口检查，给出“已可用 / 阻断 / 延后优化”的短清单，随后直接修复最高优先级阻断并跑一条完整轨迹。若没有实际阻断且第一阶段证据满足，就转入全仓清理，不人为继续打磨当前 UI。
 
-## 下一步
+## 已验收基线与执行边界
 
-1. 本批精确代码 CI/R2 已验收；继续信息发布/AI 确认边界和保存/恢复入口职责审计。
-2. 两个超限文件先净删，再按真实内聚职责收敛至全部源码 <=50000B，不用机械切块、泛用 Context/Manager 或影子 Session。
-3. 完成 P0/P5 全树语义归属与零遗留证明、两剧本逐角色合同、更多强制线索及代表性交互证据。
-4. 新 APK 真机操作与杀进程安全续局。TB 5–15/NGJ 5–6 显式两夜 fixture 不等于所有合法阵容或设备验收。
+最新生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324`：Cloud full **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，Debug APK、原 R2 shell、[完整 CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) / [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 通过。路线调整为纯文档，不增加新的代码验收。前批继任/展示收敛净删 86 行/4651B，无生产/专属测试文件删除；App 118438B、Night Host 63094B 仍超限，Session 48526B。历史细节见 [台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
 
-Codex Cloud 直接读写/测试并使用 Git/GitHub 同步分支及 PR，不依赖 MiniMCP 或开发机。保留生产 AI 全链、两剧本、双跨局防重复、隐私/顺序/去重/stale。#334/#335 保持 Draft，不合并/改 base/重写历史/删分支，不调用付费 API。环境与接续见 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。
+Codex Cloud 直接读写/测试，无需 MiniMCP/开发机。原 #335 继续堆叠 #334，均保持 Draft；不合并、改 base、重写历史、删分支或调用付费 API。环境与接续见 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。

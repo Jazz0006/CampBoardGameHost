@@ -1,24 +1,21 @@
-# 当前交接 — 夜间继任与展示职责收敛（2026-10-21）
+# 当前交接 — 先最小完整游戏，再全仓清理（2026-10-21）
 
-原分支 `refactor/minimal-night-flow-20261019` / Draft #335，base 仍为 #334 `76be7e17`。本批基线 `9ec8b969`，前一生产 F2 `6a76a57c` 已通过 full 640 / CI #4496 / R2 #4072。接续先核对本批实际 HEAD、远端和工作区，不能用前一 CI 代替新代码。
+## 最新指令与立即任务
 
-## 2026-10-21 P4 接续：夜间继任与角色展示职责收敛
+所有者已调整路线：**完整游戏流程的最小实现 → 全部代码遍历和大规模删除 → 界面与流程细节优化**。旧 P0-first、P4 局部细化/文件大小优先顺序不再执行。完整定义和退出标准见 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。
 
-基线 `9ec8b969`，原 Draft #335 / base #334 不变。已确认的来源退出 F2 保留，本批不修改毒效终止语义。
+接续先核对 HEAD/远端/工作区，再从真实创建入口追踪首夜、白天、后夜、终局及安全重载。列出短的“已可用 / 阻断 / 延后优化”清单，直接修最高影响的阻断并证明整局轨迹。不要再优先做局部高亮、按钮统一、普遍职责抽取或两个大文件缩减；没有阻断且最小闭环证据达标时即进入全仓清理。
 
-- **继任一份判定**：UI 自算存活 Imp、中毒、僧侣保护、存活人数、红唇女郎及可继任爪牙的代码已删除。既有 RoleIdentityBoundaries 的 Session 只读 `impSelfKillSuccession` 被 JudgeScreen 和最终攻击确认共同调用；底层保留现用 DemonSuccessionSemantics。UI 只把返回的座位映射到展示、保留未确认选择、控制 Next；确认时重新根据当前 Session 判定，无持久 pending、第二状态、新 schema 或通用候选机制。
-- **角色一份展示**：投毒者、管家、间谍和已有共情者/占卜师/侍女 materializer 在两夜共享；Registry 仍只按 Session 提供的步骤顺序渲染，不从注册列表决定夜序。普通 actor 从 canonical alive/wakingRole 映射座位；死后触发仍用既有明确 override 和事件时点醉毒语义。
-- **身份/草稿**：删去 UI 自建 roster/seed/poison 指纹，信息草稿 key 使用 gameId、Session state/input revision、稳定 interactionId。删除已无消费的 JudgeScreen gameSeed/gameOutcome 参数及 App 接线；Session outcome 仍阻止继续已结束游戏。D2 最后预览/唯一 Next Observation、真实玩家目标与 AI stale/receipt/记忆协议保持。
-- **消费者与测试**：生产改动仅 App 接线、JudgeScreen、Session attack 与既有 RoleIdentityBoundaries。新增真实 Session 3 项（4 人/中毒红唇、僧侣保护、旧继任选择失效），扩充已有确认断言；新增真实 JudgeScreen 3 项（多爪牙选择不提前提交、强制红唇、不生效自杀无继任）。无生产或专属测试文件删除，无测试忽略。
-- **精确净量**：生产 +104/-190，净删 **86 行 / 4651B**；测试 +138/-5，净 +133 行。App **118438B**、Night Host **63094B** 仍超 50000B，Session **48526B** 达标。没有声称本批解决所有超限文件。
-- **验证**：Cloud `testFull + assembleDebug` **646 tests / 146 suites / 33 UI，0 failure/error/skipped**，原始 R2 shell 与 diff 检查通过；生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324` 的[完整 Android CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) 与 [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 均 SUCCESS（包含 full tests / Debug APK、ASP、Clingo 和 gate）。本批无真机、杀进程或付费 API。首轮新测试失败来自测试前置 Spy 尚未确认、夹具已有 Scarlet Woman 的错误预期和弹窗/方桌重名选择器，未把它们记作生产 bug 或修复前反例。
+保留唯一 Session、确定机械、A/B/C/D2、隐私与有序事实、幂等/原子确认及安全续局；不能用人工裁量替代强制唤醒/死亡/胜负。保留现有两剧本、实际 AI 及其模式支持范围、双跨局防重复。不新建通用引擎、持久 pending 或第二状态。必要替换仍同批删除旧消费者；全面删除和 <=50000B 的最终达标归第二阶段。当前界面允许粗糙，不把未确认草稿的精确恢复或穷举组合列作闭环前置条件。
 
-下一步继续 Night 信息发布/AI 与保存恢复入口职责审计、两个超限文件按内聚职责缩减，再完成逐角色/强制线索、全树 P0/P5 和设备证据。
+## 代码基线与已完成证据
 
-## 云端执行
+分支 `refactor/minimal-night-flow-20261019` / Draft #335，base 为 #334 `76be7e17`。路线调整前文档 HEAD `52cd7931`；最新生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324`，Cloud full 646（146 suites / 33 UI）、APK、原 R2 shell、精确完整 Android CI #4498 / R2 #4074 全通过。此前投毒来源退出及夜间继任/展示职责收敛已验收。生产逻辑未随路线调整改变；docs-only CI 不替代新代码测试。
 
-Codex Cloud `/workspace/CampBoardGameHost` 直接读写/测试，不需要 MiniMCP 或 Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整验证 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`。Test JVM user.home 位于工作区，透传已有代理/CA，不改产品构建或 HOME；Gradle 通信需要执行环境网络能力。
+已有夜间 Session 路由、白天/终局、AtomicFile 活动局和真实 UI 回归，但不等于完整游戏、所有角色或真机验收已经完成。App 118438B、Night Host 63094B 超限，Session 48526B；前批细节保留在 [台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
 
-本批日志 `/workspace/work/night-ownership/full.log`，原工作流 R2 shell 为 `/workspace/work/r2-current.sh`。仍需区分真机进程中断和 JVM AtomicFile 回归，禁止把后者当作前者验收。
+## 云端执行与边界
 
-无新增所有者决策阻塞。保留两剧本、实际 AI 全链和双跨局防重复；#334/#335 保持 Draft，不合并/改 base/重写历史/删分支/调用付费 API。
+Cloud `/workspace/CampBoardGameHost` 直接读写，不需要 MiniMCP/Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整验证 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`。临时 init 使用工作区 Test JVM user.home 并透传已有代理/CA，不改产品构建或 HOME；Gradle 通信需要执行环境网络能力。前批日志 `/workspace/work/night-ownership/full.log`，原 R2 shell `/workspace/work/r2-current.sh`。
+
+保留 Draft，不合并/改 base/重写历史/删分支/调用付费 API。真机/实际杀进程证据须单列，JVM 文件回归不能冒称设备验收。没有新增所有者决策阻塞。

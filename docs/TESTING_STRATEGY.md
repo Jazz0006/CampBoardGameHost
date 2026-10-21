@@ -1,3 +1,5 @@
+> **2026-10-21 最新验证优先级**：先证明两剧本真实入口可达、从创建到终局的最小完整游戏与核心安全续局，针对阻断/机械结果/事实/隐私/原子性保留高价值回归；再为全仓大规模删除验证保留行为；UI 细节与全面视觉/交互精修验收放在清理后。每个受支持角色仍须有最小可执行路径，但不要求先穷举所有阵容或每个按钮的细节。原 646 / CI #4498 / R2 #4074 只是已验收代码基线，不是整局闭环已完成证明。详见 [路线](CURRENT_DEVELOPMENT_ROADMAP.md)。
+
 > **夜间职责接续验证**：新增 3 项真实 JudgeScreen 继任交互与 3 项 Session 继任/保护/过期状态回归；本批完整 Cloud 646（146 suites / 33 UI）、APK、原 R2 shell 与 diff 检查通过；生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324` 的[完整 Android CI #4498](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618164) 与 [R2 #4074](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39557618174) 均 SUCCESS（包含 full tests / Debug APK、ASP、Clingo 和 gate）。旧 640/4496/4072 仅证明前一 F2。继任 query 不产生事实，确认仍重新读取 Session；共同 materializer 不决定夜序。没有新增专属测试文件或忽略测试，未运行真机/杀进程/付费 API。
 
 > **F2 接续验证**：投毒来源死亡/身份退出问题已迁入实际 Session 的耐久回归并修复；新增来源 9 项、真实 AtomicFile 1 项，旧时间线回归拆分为两种执行语义。Cloud full 640（146 suites，30 UI）/APK、原 R2 shell 通过，精确代码 `6a76a57c` 完整 Android CI #4496 / R2 #4072 SUCCESS。此前临时来源死亡失败证据是已修复前历史，不再是当前已知未修复项。
