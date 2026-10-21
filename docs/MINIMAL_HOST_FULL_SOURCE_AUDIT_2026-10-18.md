@@ -1,8 +1,10 @@
 ## 2026-10-21 收尾第二批 — 当前权威结论
 
-最后两批实现已完成，精确远端验收待本次提交后核对。当前台账 **430/430 个非 docs 跟踪路径均有结论，0 待审/待删除/待解耦**；215 个生产 Kotlin 文件全部 **≤50000B**。历史 F12 中要退出固定机械/双轮换的建议已被后续所有者合同覆盖，当前逐路径结论替代旧消费者名，不以删除必要规则凑数量。
+最后两批清理和精确远端验收全部完成，**第二阶段已关闭**。当前台账 **430/430 个非 docs 跟踪路径均有结论，0 待审/待删除/待解耦**；215 个生产 Kotlin 文件全部 **≤50000B**。历史 F12 中要退出固定机械/双轮换的建议已被后续所有者合同覆盖，当前逐路径结论替代旧消费者名，不以删除必要规则凑数量。
 
-本批完成剩余60个测试/fixture，实际删除孤立template身份链/实验导出/重复几何oracle及测试专用包装；App按pre-Session开局、AI建议会话、实际Session UI职责收敛。最终Cloud full639/144 suites/38 UI与APK成功。完整规模、合同、前批CI及本批待核精确远端见[收尾验收](MINIMAL_HOST_WHOLE_TREE_CLEANUP_ACCEPTANCE_2026-10-21.md)。下面单表是当前结论；其前后的旧批次说明仅为历史，旧待审数/固定规则退出建议不再作当前任务。
+精确生产代码`e5ffc4e5e3ccdac5a5d4d3d7845f9754b998dbba`的[完整Android CI #4520](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977318)和[R2 #4095](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977316)均SUCCESS，已独立核对21路径/全部diff（大台账校验前后Git blob）、full tests/APK构建上传与CI gate。后续仅文档提交记录本验收，不替代代码构建。
+
+本批完成剩余60个测试/fixture，实际删除孤立template身份链/实验导出/重复几何oracle及测试专用包装；App按pre-Session开局、AI建议会话、实际Session UI职责收敛。最终Cloud full639/144 suites/38 UI与APK成功。完整规模、合同、前批与本批精确远端CI见[收尾验收](MINIMAL_HOST_WHOLE_TREE_CLEANUP_ACCEPTANCE_2026-10-21.md)。下面单表是当前结论；其前后的旧批次说明仅为历史，旧待审数/固定规则退出建议不再作当前任务。
 
 ## 2026-10-21 第二阶段第六批：收尾两批中的第一批
 

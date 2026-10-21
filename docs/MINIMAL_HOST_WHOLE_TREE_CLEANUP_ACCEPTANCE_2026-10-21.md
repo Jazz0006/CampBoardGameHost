@@ -2,7 +2,7 @@
 
 ## 当前结论
 
-最后两批实现已完成，精确远端验收待本次提交后核对。当前台账 **430/430 个非 docs 跟踪路径均有结论，0 待审/待删除/待解耦**；215 个生产 Kotlin 文件全部 **≤50000B**。历史 F12 中要退出固定机械/双轮换的建议已被后续所有者合同覆盖，当前逐路径结论替代旧消费者名，不以删除必要规则凑数量。
+最后两批清理和精确远端验收全部完成，**第二阶段已关闭**。当前台账 **430/430 个非 docs 跟踪路径均有结论，0 待审/待删除/待解耦**；215 个生产 Kotlin 文件全部 **≤50000B**。历史 F12 中要退出固定机械/双轮换的建议已被后续所有者合同覆盖，当前逐路径结论替代旧消费者名，不以删除必要规则凑数量。
 
 main仍为`40050941efc3`；同一Draft [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337)，不合并、不改历史。#334/#335已合并，第一阶段最小整局已关闭。当前工作仅清理收尾；后续转第三阶段界面/流程细节。
 
@@ -14,7 +14,7 @@ main仍为`40050941efc3`；同一Draft [#337](https://github.com/Jazz0006/CampBo
 
 - App仅保留导航/设置、唯一Session创建/原子保存/恢复、完成局跨局记录。115421B→48947B。
 - ClocktowerOpeningDraft（19761B）只持有pre-Session准备/显示发牌/未确认联合开局建议；显式commit回调创建原Session，两个跨局历史查询仍独立。
-- ClocktowerAiConversation（25741B）只持有advisory记忆/receipt/model/未确认建议及运输；不保存Session字段、不持有游戏事实。
+- ClocktowerAiConversation（25741B）只持有advisory记忆/receipt/model/未确认建议及运输；不保存Session字段、不拥有可写游戏事实/进度；Baseline只保留同一Session不可变比较快照。
 - ClocktowerSessionHost（30907B）挂载实际Session与其只读state，局部目标为UI草稿；所有Next/白天/夜序确认调用同一Session。state参数保证同一Session更新后Compose刷新。
 
 无通用Context/Manager，无第二游戏对象/恢复器/进度日志，不是按行数机械拆片。新建3个明确职责源码文件，Session仍46770B，Host46706B，最终最大文件为App。
@@ -29,6 +29,6 @@ main仍为`40050941efc3`；同一Draft [#337](https://github.com/Jazz0006/CampBo
 
 最终Cloud full **639 tests/144 suites/38 UI，0 failure/error/skipped**，Debug APK成功。3项实际App两剧本整局/发牌恢复、32项D2真实Compose、3项设置生命周期仍执行；两项跨局防重复/存档AtomicFile失败回滚/隐私与AI协议/记忆/stale全部保留。原R2 shell、10类CI路由/失败门禁/workflow shell、退休符号零残余与diff检查通过。
 
-**最终精确远端代码CI/R2：待提交后核对**。Cloud日志`/tmp/campboard-final-gradle5.log`，JUnit摘要`/tmp/campboard-final-tests.json`。第六批CI不能替代第七批代码验收；后续文档提交也不能代替代码全量Android验证。
+精确生产代码`e5ffc4e5e3ccdac5a5d4d3d7845f9754b998dbba`的[完整Android CI #4520](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977318)和[R2 #4095](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977316)均SUCCESS，已独立核对21路径/全部diff（大台账校验前后Git blob）、full tests/APK构建上传与CI gate。后续仅文档提交记录本验收，不替代代码构建。Cloud日志`/tmp/campboard-final-gradle5.log`，JUnit摘要`/tmp/campboard-final-tests.json`。第六批CI不能替代第七批代码验收；后续文档提交也不能代替代码全量Android验证。
 
 不声称已做真机/实际进程杀死或付费API验收。后续第三阶段可核对Day提名/Slayer目标范围和UI说明等细节；这些是当前实际交互限制，不是未审源码、死链或本批已确认的整局阻断。没有新增所有者决策阻塞。
