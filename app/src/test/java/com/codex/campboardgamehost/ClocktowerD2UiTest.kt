@@ -277,7 +277,12 @@ class ClocktowerD2UiTest {
                         allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
                         phase = ClocktowerPhase.Night, gameId = "role-d2", round = 2, sequence = 0,
                         gameStateRevision = 0, playerInputRevision = 0, informationDecisionKey = "role-d2:$role:2",
-                        cards = cards, ghostVoteAuthority = ClocktowerGhostVoteAuthority(), poisonedPlayerName = null,
+                        cards = cards,
+                        actualAlignmentBySeat = cards.mapIndexed { index, card ->
+                            (index + 1) to if (card.clocktowerTeam in setOf(ClocktowerTeam.Demon, ClocktowerTeam.Minion))
+                                Alignment.EVIL else Alignment.GOOD
+                        }.toMap(),
+                        ghostVoteAuthority = ClocktowerGhostVoteAuthority(), poisonedPlayerName = null,
                         aliveCards = cards, chambermaidTargetCards = cards, mayorRedirectTargetCards = emptyList(),
                         step = current, surfacePlan = clocktowerNightSurfacePlan(current, ClocktowerPhase.Night),
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },

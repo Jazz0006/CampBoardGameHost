@@ -132,6 +132,7 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         seatNumber = seat.seatId.number,
         label = content.primaryLabel,
         detailLabels = content.detailLabels,
+        actualAlignment = seat.actualAlignment,
         state = if (neutralSelectionChrome) {
             ClocktowerSquareTableSeatState.Neutral
         } else {

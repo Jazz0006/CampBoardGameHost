@@ -739,6 +739,7 @@ internal fun ClocktowerJudgeScreen(
                 playerInputRevision = playerInputRevision,
                 informationDecisionKey = "$gameId:$gameStateRevision:$playerInputRevision:${currentStep.interactionId}",
                 cards = cards,
+                actualAlignmentBySeat = sessionGameState.players.associate { it.seat to it.actualAlignment },
                 ghostVoteAuthority = ghostVoteAuthority,
                 poisonedPlayerName = currentStep.roleEnName?.let(effectivePoisonForRole),
                 aliveCards = publicAliveCards,

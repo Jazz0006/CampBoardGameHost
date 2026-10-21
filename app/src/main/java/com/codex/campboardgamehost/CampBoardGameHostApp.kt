@@ -898,9 +898,11 @@ internal fun CampBoardGameHostApp(
                     )
                 }
 
+                val hostUiIsNight = clocktowerGameSession?.state?.phase != StorytellerPhase.DAY
                 if (showHostTools) {
                     HostGameToolsScreen(
                         cards = cards,
+                        isNight = hostUiIsNight,
                         initialTab = hostToolTab,
                         settingsContent = {
                             SettingsContent(
@@ -929,6 +931,7 @@ internal fun CampBoardGameHostApp(
 
                 if (showNewGameConfirmation) {
                     NewGameConfirmationDialog(
+                        isNight = hostUiIsNight,
                         onDismiss = { showNewGameConfirmation = false },
                         onManagePlayers = ::returnToPlayerManagement,
                         onQuickRestart = ::restartGame,

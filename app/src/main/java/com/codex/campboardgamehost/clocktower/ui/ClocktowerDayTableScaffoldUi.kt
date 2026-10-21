@@ -16,7 +16,7 @@ internal fun ClocktowerDayTableScaffold(
     nextVisible: Boolean = true,
     tableContent: @Composable () -> Unit,
 ) {
-    ClocktowerDarkTheme {
+    ClocktowerLightTheme {
         ClocktowerHostFullScreenScaffold(
             previousLabel = previousLabel,
             hostToolsLabel = hostToolsLabel,
