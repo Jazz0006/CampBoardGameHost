@@ -1,6 +1,8 @@
+**2026-10-21 independent audit:** Settings now gate connection editing until stored values arrive (inherited load/edit race); 3 real UI regressions added, Cloud full 629/APK pass. A separate pre-existing Session bug is confirmed: killing the Poisoner leaves its target poisoned. Prioritize a dedicated single-Session source-expiry fix next; do not claim complete poison coverage or full rebuild acceptance. See `docs/MINIMAL_HOST_P4_REVIEW_2026-10-21.md`.
+
 # CampBoardGameHost AI Development Instructions
 
-**2026-10-21 Cloud follow-up:** AI connection preference lifecycle is owned by `StorytellerAiSettings`, remembered at the app root; per-game mode and Session remain separate. Retired unused DemonNightAttackSemantics/PoisonEffectLifecycle and exclusive tests after production-consumer audit. Cloud full 626 (27 UI), APK and original R2 shell pass; remote exact-SHA checks are pending push. Current roadmap/handoff describe this batch and remaining oversized App/Night Host.
+**2026-10-21 Cloud follow-up:** AI connection preference lifecycle is owned by `StorytellerAiSettings`, remembered at the app root; per-game mode and Session remain separate. Retired unused DemonNightAttackSemantics/PoisonEffectLifecycle and exclusive tests after production-consumer audit. Cloud full 626 (27 UI), APK and original R2 shell pass; exact code f852b04f passed full Android CI #4492 and R2 #4068. Current roadmap/handoff describe this batch and remaining oversized App/Night Host.
 
 ## CURRENT AUTHORITATIVE PLAN — Minimal Host Architecture Rebuild (approved 2026-10-19)
 

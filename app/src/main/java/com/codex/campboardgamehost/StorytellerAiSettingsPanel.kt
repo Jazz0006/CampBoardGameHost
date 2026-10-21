@@ -72,6 +72,11 @@ internal fun StorytellerAiSettingsPanel(settings: StorytellerAiSettings) {
             }
             Text(text("AI 连接方式", "AI connection"),
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            // Restored credentials must arrive before edits, or the late load can overwrite them.
+            if (!settings.directLoaded || !settings.gatewayLoaded) {
+                Text(text("正在读取连接配置…", "Loading connection settings…"))
+                return@Column
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { settings.directEnabled = false }) {
                     Text(if (settings.directEnabled) text("网关", "Gateway") else text("✓ 网关", "✓ Gateway"))

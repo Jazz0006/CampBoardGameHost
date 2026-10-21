@@ -1,3 +1,5 @@
+> **独立审计修正**：新增设置 UI 回归 3 项，修正前 2 失败、修正后 full 629（30 UI）/APK 成功。另一个临时真实 Session 诊断反例证明 Poisoner 死亡后的中毒清除缺陷；它是单列的失败证据，不属于 629 通过数量。后续必须迁入 Session 回归并修复，不能用 CI 绿灯覆盖这一已知缺口。详见审计报告。
+
 > **2026-10-21 Codex Cloud 本批**：最新设置职责收敛与无生产调用规则退休已实跑 full 626（27 UI），0 failure/error/skipped，Debug APK 和原 R2 shell 成功。13 项孤立旧规则测试与生产实现一起退休，真实 Session 规则/私密信息/原子性测试保留。当前工具链先 source `/workspace/.cloud-setup/activate.sh`；只读 home 的 Robolectric 测试使用工作区 user.home 与原代理/CA。下方 Windows/旧数量均为历史，最新远端精确 SHA 验收见当前交接。
 
 > **2026-10-21 当前验证**：代码 `f4d78d5c70c55be988c1daf29558fde2e0c82305` 已提交/推送，Artist 测试旧接口编译失败已修复。本地 fast 612/full 639（27 UI＝原 23＋4 Day）、Debug APK 和原始 R2 脚本成功；[完整 Android CI #4490](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956510) **SUCCESS**；[R2 #4066](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956507) **SUCCESS**。新增 DayFlow 15 项、真实文件 Store 8 项、两剧本支持人数的两夜轨迹，保护 B/C、确定白天效果、稳定轮次幂等、保存失败回滚、私密收件人和恢复后的事实进度。真机/杀进程/付费 API 未运行，全部源码大小和全树零遗留尚未完成。下方“在途编译失败/未提交”段是历史检查点，当前下一步见交接。

@@ -1,3 +1,5 @@
+> **独立审计跟进**：配置读取竞态已修正，3 新交互用例及完整 629 回归/APK 通过；删除的旧毒生命周期测试未能证明 Session 的来源死亡语义。真实 Imp 攻击杀死 Poisoner 后毒目标未清除，已通过临时 Session 反例确认，属既有缺陷、列为下一批最高优先级。见 [审计报告](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
+
 ## 2026-10-21 Codex Cloud：P4 AI 配置职责收敛与无调用规则退休
 
 在 `ce1c314c` 基线上实施，沿用 Draft #335，不改 base、不合并。当前执行环境为 Codex Cloud；每个 shell 先 `source /workspace/.cloud-setup/activate.sh`。SDK/Gradle 已预装，不依赖 MiniMCP 或 Windows 开发机。
