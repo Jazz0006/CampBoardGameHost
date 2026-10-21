@@ -100,6 +100,41 @@ class ClocktowerActiveGameStoreTest {
         restored.confirmImpNotification()
         assertEquals("other_night:role:Empath", restored.state.nextNightInteraction(rules)?.id?.value)
     }
+    @Test fun `source death and poison expiry survive file reload while interrupted save rolls both back`() {
+        val f = file("source-exit.json")
+        val s = session("Poisoner", "Monk", "Imp", "Soldier", "Empath")
+        toDay(s); s.confirmEndDay(1)
+        s.confirmNightPoison(5, s.state.phase, 2, s.state.nextNightInteraction(rules)!!.id.value)
+        s.confirmNightProtection(4, s.state.phase, 2, s.state.nextNightInteraction(rules)!!.id.value)
+        val store = ClocktowerActiveGameStore(f)
+        var broken = false
+        s.persistWith { candidate ->
+            if (broken) {
+                val atomic = android.util.AtomicFile(f)
+                val out = atomic.startWrite()
+                out.write("partial".toByteArray())
+                atomic.failWrite(out)
+                throw IOException("source exit save interrupted")
+            }
+            store.save(candidate, metadata())
+        }
+        val before = s.state
+        val step = s.state.nextNightInteraction(rules)!!.id.value
+        broken = true
+        assertThrows(IOException::class.java) { s.confirmNightAttack(1, s.state.phase, 2, step) }
+        assertSame(before, s.state)
+        assertEquals(before, ClocktowerActiveGameStore(f).load()!!.state)
+        broken = false
+        s.confirmNightAttack(1, s.state.phase, 2, step)
+        val restored = ClocktowerGameSession.restore(ClocktowerActiveGameStore(f).load()!!.state)
+        assertEquals(s.state, restored.state)
+        assertFalse(restored.state.gameState.playerAt(1)!!.alive)
+        assertFalse(restored.state.gameState.playerAt(5)!!.poisoned)
+        assertNull(restored.state.confirmedPoisonTargetSeat(2))
+        assertEquals("other_night:role:Empath", restored.state.nextNightInteraction(rules)?.id?.value)
+        assertEquals(listOf("Attack", "Death", "Poison"), restored.state.actionTimeline.entries.takeLast(3).map { it.fact.javaClass.simpleName })
+    }
+
     @Test fun `AI accepted advisory memory is restored without a second game authority or any pending request`() {
         val s = session("Imp", "Chef", "Empath", "Soldier", "Saint")
         val memory = HostOpeningStrategyMemoryV2(listOf("tension"), listOf(HostOpeningStrategicIntentionV2("trigger", "approach", "risk")), listOf("unknown"))

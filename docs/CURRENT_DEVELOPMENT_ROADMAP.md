@@ -1,35 +1,29 @@
-> **独立审计跟进**：已修正继承的配置加载覆盖输入竞态，以及本批 live getter 导致 stale AI 请求退出后 busy 不清除的回归；新增 3 项设置 UI 测试；读取门槛版本 `23590475` 的完整回归 629（30 UI）/APK、CI #4493/R2 #4069 均通过，finally 修正 `bc263581` 也已通过完整 CI #4494/R2 #4070 与云端 629 回归/APK。另通过真实 Session 反例确认基线既有“投毒者死亡未解除目标中毒”缺陷，需作为下一独立 Session 批次优先修复。不得据此前绿灯宣称无 BUG。见 [审计报告](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
-
 # 当前开发路线 — Minimal Host（2026-10-21）
 
-以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 与最新用户指令为准：唯一 Session/GameState 与有序确认事实，Host 执行确定性规则，AI/真人负责实际裁量。不恢复旧通用候选/世界枚举或第二可写游戏状态。
+以 [最终架构](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)、[A–D2 决策](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md) 和最新用户指令为准：唯一 Session/GameState 与有序确认事实，Host 执行确定性规则，AI/真人负责实际裁量，不恢复通用候选/世界枚举或第二游戏状态。
 
-## 当前基线
+## 当前批次：修复 F2 投毒来源退出
 
-最新生产代码 **`bc2635817060184e9ab6bb396e991d1a1d392b62`** 已推送 [Draft #335](https://github.com/Jazz0006/CampBoardGameHost/pull/335)，仍堆叠于 #334 `76be7e17`；main 为 `0abc842e`。本批基线 `ce1c314c`，无合并、改 base 或历史重写。
+在 `2dea23bc` 基线上接续原 Draft #335，仍堆叠于 #334 `76be7e17`；main 为 `0abc842e`。前一已验收生产代码 `bc263581` 的 CI #4494/R2 #4070 不替代本批验收。
 
-- 夜间进度由 Session 确认事实与内置夜序派生，旧 UI 游标/Start/交接推进链已退役；行动显式 Next 提交机械结果。
-- D2 信息可全屏预览、返回同角色重选，仅 Next 正式记录最终一条 Observation。预览不是事实，不持久保存。
-- 白天同方桌一次日结；Session 拥有提名、票/鬼票、技能、处决、继任、胜负；Klutz 从 Death/Execution 派生真实选择。独立 EndConfirm 和 Learned 事件链已删除。
-- 唯一活动 Session 通过私有 noBackup AtomicFile 原子保存，确认失败回滚；恢复已确认事实、AI 已接受记忆/会话与开局轮换元数据，未确认预览/AI 请求丢弃。
+- 已确认投毒者 Death/Execution/RoleChange 使其死亡或不再拥有实际 Poisoner 身份时，在 Session 唯一状态发布入口立即解除持续毒，并复用既有 Poison(null) 结束事实。
+- 夜间攻击、白天结算、确认死亡和身份变化共用这一边界；没有新持久字段、第二状态/存档、规则引擎或 UI 补写器。没有活动毒、非来源死亡或保护成功不会制造毒结束；已确认的玩家信息保持原样。
+- 状态与毒结束事实一次确认保存，失败整步回滚；真实文件中断/重读后恢复正确下一步。重复/过期确认不重复结束，也不复活旧目标。
+- 旧时间线回归中的“处决投毒者仍中毒到黄昏”预期已纠正，保留普通玩家被处决时中毒持续到黄昏的覆盖。耐久新增来源退出 9 项、真实文件 1 项，并把旧单场景拆成两场景；不恢复已删除的孤立旧规则测试。
 
-## 本批：P4 配置职责及孤立旧规则清理
+Cloud `testFull + assembleDebug` **640 tests / 146 suites / 30 UI，0 failure/error/skipped**，原 R2 shell 与 diff 检查通过。首批 8 个定向场景在修复前有 5 个真实失败。精确代码 CI/R2 待本批提交推送后核对；未做真机/杀进程或付费 API。
 
-AI 连接配置、加载、700ms 安全延迟保存与设置表单归 `StorytellerAiSettings`/原设置面板；生命周期仍在 App 根部，本局模式与持久默认分开。开局/后夜请求、stale 校验及 Session 保留原职责。原表单 16 参数及 App 重复接线退休。
+本批生产 **+33 行 / +1904B**（必要 bug 修复，不伪称净删），删除生产/专属测试文件均为 0；测试净 +187 行。App **118544B**、Night HostScreen **68496B** 仍超 50000B；Session **49453B** 达标。所有入口、保留消费者和证据见 [台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 与 [审计 F2](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
 
-确认无生产消费者后，物理删除 `DemonNightAttackSemantics`、`PoisonEffectLifecycle` 及两项专属测试文件，另删 Session 无调用的死亡 roster helper。真实攻击、保护、中毒、死亡、市长及继任的 Session 实现与行为测试保留。
+## 已有基线与边界
 
-计入新增文件，生产 Kotlin 累计（含审计修正）**净 -75 行 / -2808B**；退休专属旧测试 **-146 行 / 13 项**，另补 3 项设置交互回归。当前 App **118544B**、Night HostScreen **68496B** 仍超过 50000B；Session **49379B**，新设置文件 **3507B**。完整消费者/删除证据见 [审计台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
-
-## 验证
-
-Codex Cloud 实跑 full **629 tests / 145 suites，含 30 UI**，0 failure/error/skipped；Debug APK、原始 R2 shell、diff 检查通过。精确代码 [CI #4494](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39550998373) **SUCCESS**；[R2 #4070](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39550998375) **SUCCESS**。旧 #4490/#4066 属于前一代码，不替代本批证明。
+Session 拥有夜间步骤/确定性机械、白天提名/投票/处决/胜负、Death 派生 Klutz 和单一 AtomicFile 活动局。D2 信息可预览重选，仅当前角色 Next 记录最终一条 Observation；预览不是事实。AI 配置职责已收敛，继承的读取竞态及本批暴露的 stale AI busy 问题已修复验证。
 
 ## 下一步
 
-1. 优先修复审计 F2 的投毒来源死亡/身份退出后失效、事实及恢复一致性，然后继续夜间 Host 的角色展示/机械判断和 AI/UI 提交边界审计，核对每个保留状态、生产消费者、保存入口与错误路径；不是只按零引用或名字删除代码。
-2. 两个超限文件先净删，再按真实内聚职责收敛至全部源码 <=50000B，禁止机械切块、通用 Context/Manager 或影子 Session。
-3. 完成 P0/P5 全树语义归属与零遗留证明；按两剧本逐角色核对触发、真人输入、确定/裁量输出及代表性组合，尤其更广泛强制线索计算。
-4. 新 APK 真机操作、杀进程及安全续局验收。已有 TB 5–15 / NGJ 5–6 显式 fixture 两夜证据，不等于全部合法阵容或真机证明。
+1. 核实本批精确代码 CI/R2；随后继续 Night Host 的角色展示/机械判断、AI/UI 确认边界及保存/恢复入口职责审计。
+2. 两个超限文件先净删，再按真实内聚职责收敛至全部源码 <=50000B，不用机械切块、泛用 Context/Manager 或影子 Session。
+3. 完成 P0/P5 全树语义归属与零遗留证明、两剧本逐角色合同、更多强制线索及代表性交互证据。
+4. 新 APK 真机操作与杀进程安全续局。TB 5–15/NGJ 5–6 显式两夜 fixture 不等于所有合法阵容或设备验收。
 
-当前在 Codex Cloud `/workspace/CampBoardGameHost` 直接读写/测试并用 Git/GitHub 处理分支及 PR，不依赖 MiniMCP 或开发机。工具链与接续见 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。保持 #334/#335 Draft；保护生产 AI 全链、两剧本、双跨局防重复、隐私/有序事实/去重/stale。不进行付费 API、合并、retarget、rebase、force-push 或删分支。
+Codex Cloud 直接读写/测试并使用 Git/GitHub 同步分支及 PR，不依赖 MiniMCP 或开发机。保留生产 AI 全链、两剧本、双跨局防重复、隐私/顺序/去重/stale。#334/#335 保持 Draft，不合并/改 base/重写历史/删分支，不调用付费 API。环境与接续见 [交接](NEXT_DEVELOPMENT_HANDOFF.md)。

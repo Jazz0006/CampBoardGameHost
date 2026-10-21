@@ -6,7 +6,8 @@ import com.codex.campboardgamehost.clocktower.epistemic.TimelineBoundActionFact
 /**
  * Confirm one Host-accepted actual role transition. Unlike the old role-only boundary,
  * actual identity, globally ordered RoleChange fact, and revision publish together.
- * No shown identity, alive/poison status or other seat is changed by this transition.
+ * Shown identity and alive status stay unchanged. Session also settles any ongoing
+ * poison effect whose source loses its actual Poisoner role in this same step.
  */
 internal fun ClocktowerGameSession.commitConfirmedActualRoleChange(
     draft: ActionFactDraft.RoleChange,
