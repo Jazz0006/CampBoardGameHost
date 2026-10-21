@@ -170,14 +170,6 @@ private fun InformationProposition.defensiveCopy(): InformationProposition = whe
     is InformationProposition.BooleanResult -> copy(
         subjectSeats = Collections.unmodifiableList(subjectSeats.toList()),
     )
-    is InformationProposition.GrimoireState -> InformationProposition.GrimoireState(
-        seats = seats.map { seat ->
-            com.codex.campboardgamehost.clocktower.epistemic.GrimoireSeatView(
-                seat.seat, seat.displayedRole, seat.alive, seat.reminderTokens,
-            )
-        },
-        truthBinding = truthBinding,
-    )
     else -> this // All remaining proposition variants contain immutable scalar values.
 }
 

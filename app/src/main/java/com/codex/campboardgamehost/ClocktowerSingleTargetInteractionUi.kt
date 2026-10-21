@@ -9,7 +9,6 @@ internal fun ClocktowerSingleTargetAbilitySection(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerSingleTargetAbilityPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
@@ -25,7 +24,7 @@ internal fun ClocktowerSingleTargetAbilitySection(
             seats = seats,
             presentation = presentation,
             language = language,
-            canGoPrevious = canGoPrevious,
+
             onHostTools = onHostTools,
             onEvent = onEvent,
         )
@@ -64,9 +63,9 @@ internal fun ClocktowerSingleTargetAbilitySection(
         title = title,
         helper = helper,
         language = language,
-        canGoPrevious = canGoPrevious,
+
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
@@ -85,53 +84,26 @@ internal fun ClocktowerNightRulingSection(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerNightRulingPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
-    val isMayor = presentation.action == ClocktowerNightAction.MayorRedirect
-    val compact = !presentation.automatic
     ClocktowerSingleTargetSquareTableDialog(
         seats = seats,
         selectedSeat = presentation.selection.selectedSeat,
         selectableSeats = presentation.selection.selectableSeats,
         enabled = presentation.selection.enabled,
-        title = if (compact) {
-            if (isMayor) {
-                if (language == "en") "Mayor · Redirect death" else "市长 · 转移死亡"
-            } else {
-                if (language == "en") "Imp · Succession" else "小恶魔 · 传承"
-            }
-        } else if (isMayor) {
-            if (language == "en") "The Demon attacked the Mayor" else "市长被恶魔击杀"
-        } else {
-            if (language == "en") "Choose the new Imp" else "选择新小恶魔"
-        },
-        helper = if (compact) {
-            if (!isMayor) {
-                if (language == "en") "Choose the Minion who becomes the new Imp" else "选择继任小恶魔的爪牙"
-            } else {
-                null
-            }
-        } else if (isMayor) {
-            if (language == "en") {
-                "Choosing a dead or protected player as the redirect target can result in no death tonight."
-            } else {
-                "选择死亡或受保护的玩家作为转移目标，可能导致今夜无人死亡。"
-            }
-        } else presentation.explanation,
+        title = if (language == "en") "Mayor · Redirect death" else "市长 · 转移死亡",
+        helper = null,
         language = language,
-        canGoPrevious = canGoPrevious,
+
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
-        showSelectionSummary = !compact,
-        secondaryActionLabel = if (isMayor) {
-            if (language == "en") "Mayor dies" else "市长死亡"
-        } else null,
-        secondaryActionEnabled = isMayor && presentation.selection.enabled,
+        showSelectionSummary = false,
+        secondaryActionLabel = if (language == "en") "Mayor dies" else "市长死亡",
+        secondaryActionEnabled = presentation.selection.enabled,
         onSecondaryAction = {
             presentation.mayorSeat?.let { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) }
         },

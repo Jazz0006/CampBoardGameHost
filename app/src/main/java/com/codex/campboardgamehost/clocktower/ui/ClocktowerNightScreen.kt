@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 internal fun ClocktowerNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    confirmationEnabled: Boolean = hasNewDemon,
     onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
@@ -44,6 +45,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
         ClocktowerCompactNewDemonConfirmationScreen(
             newDemonLabel = newDemonLabel,
             hasNewDemon = hasNewDemon,
+            confirmationEnabled = confirmationEnabled,
             onHostTools = onHostTools,
             onShowPlayerDisplay = onShowPlayerDisplay,
             onConfirm = onConfirm,
@@ -187,12 +189,12 @@ internal fun ClocktowerNewDemonConfirmationScreen(
                     HostBottomActionBar(
                         previousLabel = text("上一步", "Previous"),
                         hostToolsLabel = text("主持工具", "Host Tools"),
-                        nextLabel = text("已告知，进入天亮", "Informed, continue to dawn"),
+                        nextLabel = text("已告知，继续游戏", "Informed, continue"),
                         onPrevious = {},
                         onHostTools = onHostTools,
                         onNext = onConfirm,
                         previousEnabled = false,
-                        nextEnabled = hasNewDemon,
+                        nextEnabled = confirmationEnabled,
                     )
                 }
             }
@@ -204,6 +206,7 @@ internal fun ClocktowerNewDemonConfirmationScreen(
 private fun ClocktowerCompactNewDemonConfirmationScreen(
     newDemonLabel: String,
     hasNewDemon: Boolean,
+    confirmationEnabled: Boolean = hasNewDemon,
     onHostTools: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
     onConfirm: () -> Unit,
@@ -268,13 +271,13 @@ private fun ClocktowerCompactNewDemonConfirmationScreen(
                 HostBottomActionBar(
                     previousLabel = text("上一步", "Previous"),
                     hostToolsLabel = text("主持工具", "Host Tools"),
-                    nextLabel = text("完成 · 天亮", "Done · Dawn"),
+                    nextLabel = text("继续", "Continue"),
                     onPrevious = {},
                     onHostTools = onHostTools,
                     onNext = onConfirm,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     previousEnabled = false,
-                    nextEnabled = hasNewDemon,
+                    nextEnabled = confirmationEnabled,
                 )
             }
         }
@@ -287,17 +290,19 @@ internal fun ClocktowerNightActiveScreen(
     title: String,
     subtitle: String,
     progress: String,
-    canGoPrevious: Boolean,
     nextEnabled: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     contentOwnsFullScreen: Boolean = false,
+    lastPreviewLabel: String? = null,
     content: @Composable () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     ClocktowerDarkTheme {
-        CompositionLocalProvider(LocalClocktowerNightProgress provides progress) {
+        CompositionLocalProvider(
+            LocalClocktowerNightProgress provides progress,
+            LocalClocktowerNightNextEnabled provides nextEnabled,
+        ) {
             if (contentOwnsFullScreen) {
                 // A full-screen role surface bypasses the ordinary scaffold.
                 // Own its opaque canvas and foreground explicitly so text never
@@ -307,16 +312,33 @@ internal fun ClocktowerNightActiveScreen(
                     color = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.onBackground,
                 ) {
-                    content()
+                    Box(Modifier.fillMaxSize()) {
+                        content()
+                        lastPreviewLabel?.let { label ->
+                            Surface(
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                                    .padding(horizontal = 18.dp, vertical = 90.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                )
+                            }
+                        }
+                    }
                 }
             } else {
                 ClocktowerHostFullScreenScaffold(
                     previousLabel = if (language == "en") "← Previous" else "← 上一步",
                     hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
                     nextLabel = if (language == "en") "Next →" else "下一步 →",
-                    previousEnabled = canGoPrevious,
+                    previousEnabled = false,
+                    previousVisible = false,
                     nextEnabled = nextEnabled,
-                    onPrevious = onPrevious,
+
                     onHostTools = onHostTools,
                     onNext = onNext,
                 ) {
@@ -325,41 +347,21 @@ internal fun ClocktowerNightActiveScreen(
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
+                        lastPreviewLabel?.let { label ->
+                            item {
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer,
+                                    shape = RoundedCornerShape(12.dp),
+                                ) {
+                                    Text(label, modifier = Modifier.padding(12.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
                         item { content() }
                     }
                 }
             }
-        }
-    }
-}
-@Composable
-internal fun ClocktowerNightReadyCard() {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(16.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text("夜晚准备", "Night preparation"),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text(
-                    "所有人请闭眼，低头，保持安静。如果需要唤醒某位玩家，轻拍他。不要泄露信息。",
-                    "Everyone close your eyes, look down, and stay quiet. Tap a player to wake them. Do not reveal information.",
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

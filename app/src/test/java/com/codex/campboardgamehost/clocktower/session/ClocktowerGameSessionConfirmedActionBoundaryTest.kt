@@ -32,32 +32,6 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
     }
 
     @Test
-    fun `revisiting a confirmed Butler step keeps its first master and a new night can choose again`() {
-        val roster = base.copy(players = base.players.map { player ->
-            if (player.seat == 4) player.copy(
-                actualRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Butler"),
-                shownRole = com.codex.campboardgamehost.clocktower.domain.RoleId("Butler"),
-            ) else player
-        })
-        val session = ClocktowerGameSession.createProduction(
-            gameId = "butler-revisit", gameSeed = roster.seed, initialState = roster,
-            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-        )
-        assertNotNull(runCatching {
-            session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 4)
-        }.exceptionOrNull())
-        assertEquals(0L, session.state.nextTimelineGlobalSequence)
-        val first = session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 1)
-        val accepted = session.state
-        assertEquals(first, session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 1))
-        assertEquals(first, session.confirmButlerMaster(StorytellerPhase.NIGHT, 2, 4, 2))
-        assertEquals(accepted, session.state)
-        val next = session.confirmButlerMaster(StorytellerPhase.NIGHT, 3, 4, 2)
-        assertEquals(2, (next.fact as ActionFact.ButlerMasterChoice).masterSeat)
-        assertEquals(2L, session.state.nextTimelineGlobalSequence)
-    }
-
-    @Test
     fun `attack and protection confirmations are ordered without duplicating mechanical state`() {
         val session = create("a1-night-actions")
         val original = session.state.gameState
@@ -222,6 +196,67 @@ class ClocktowerGameSessionConfirmedActionBoundaryTest {
         assertEquals(1L, session.state.playerInputRevision)
         assertEquals(2L, session.state.nextTimelineGlobalSequence)
         assertEquals(1L, session.state.actionTimeline.entries.single().point.globalSequence)
+    }
+
+    @Test
+    fun `explicit day registrations share their action identity and reject stale or changed retry atomically`() {
+        val session = create("confirmed-registration")
+        // No actual-role, impairment or rule-candidate prerequisite for a confirmed value.
+        val shot = ActionFactDraft.SlayerShot(
+            "registered-shot", StorytellerPhase.DAY, 2, 1, 1, 2,
+            abilityConsumed = false, hit = false, targetRegistersAsDemon = true,
+        )
+        val first = confirm(session, shot)
+        assertEquals(true, (first.fact as ActionFact.SlayerShot).targetRegistersAsDemon)
+        val accepted = session.state
+        assertEquals(first, session.commitConfirmedGameAction(shot, base, 0L))
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            confirm(session, shot.copy(targetRegistersAsDemon = false))
+        }
+        org.junit.Assert.assertThrows(IllegalStateException::class.java) {
+            session.commitConfirmedGameAction(shot.copy(actionId = "stale-shot", sequence = 2), base, 0L)
+        }
+        assertEquals(accepted, session.state)
+        confirm(session, ActionFactDraft.Nomination(
+            "registered-nomination", StorytellerPhase.DAY, 2, 2, 2, 3,
+            firstVirginNomination = false, nominatorRegistersAsTownsfolk = false,
+        ))
+        assertEquals(false, (session.state.actionTimeline.entries.last().fact as
+            ActionFact.Nomination).nominatorRegistersAsTownsfolk)
+        assertEquals(base, session.state.gameState)
+        assertEquals(2L, session.state.gameStateRevision)
+        assertEquals(listOf(0L, 1L), session.state.actionTimeline.entries.map { it.point.globalSequence })
+    }
+
+    @Test
+    fun `AI receives only explicit registration answers while public replay keeps them private`() {
+        val session = create("private-registration")
+        listOf<Boolean?>(null, false, true).forEachIndexed { index, answer ->
+            confirm(session, ActionFactDraft.SlayerShot(
+                "shot-$index", StorytellerPhase.DAY, 2, session.nextInputSequence, 1, 2,
+                abilityConsumed = true, hit = false, targetRegistersAsDemon = answer,
+            ))
+            confirm(session, ActionFactDraft.Nomination(
+                "nomination-$index", StorytellerPhase.DAY, 2, session.nextInputSequence, 2, 3,
+                firstVirginNomination = false, nominatorRegistersAsTownsfolk = answer,
+            ))
+        }
+        val prefix = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(
+            session.state, com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1(
+                session.state.gameStateRevision, session.state.playerInputRevision,
+            ),
+        )
+        val encoded = StorytellerGlobalEventProjectionV1.encode(prefix)
+        assertEquals(6, encoded.length())
+        org.junit.Assert.assertFalse(encoded.getJSONObject(0).has("targetRegistersAsDemon"))
+        org.junit.Assert.assertFalse(encoded.getJSONObject(1).has("nominatorRegistersAsTownsfolk"))
+        assertEquals(false, encoded.getJSONObject(2).getBoolean("targetRegistersAsDemon"))
+        assertEquals(false, encoded.getJSONObject(3).getBoolean("nominatorRegistersAsTownsfolk"))
+        assertEquals(true, encoded.getJSONObject(4).getBoolean("targetRegistersAsDemon"))
+        assertEquals(true, encoded.getJSONObject(5).getBoolean("nominatorRegistersAsTownsfolk"))
+        val delta = StorytellerGlobalEventProjectionV1.encode(prefix, 4L)
+        assertEquals(2, delta.length())
+        assertEquals("slayer", delta.getJSONObject(0).getString("type"))
     }
 
     private fun confirm(session: ClocktowerGameSession, draft: ActionFactDraft) =

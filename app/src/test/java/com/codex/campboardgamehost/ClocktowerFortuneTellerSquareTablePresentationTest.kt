@@ -74,27 +74,18 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
     }
 
     @Test
-    fun `result actions expose exactly supplied legal values with recommendation first`() {
-        assertEquals(
-            listOf(true),
-            clocktowerFortuneTellerResultActions(
-                legalResults = setOf(true),
-                recommendedResult = false,
-            ),
-        )
-        assertEquals(
-            listOf(false, true),
-            clocktowerFortuneTellerResultActions(
-                legalResults = setOf(true, false),
-                recommendedResult = false,
-            ),
-        )
-        assertEquals(
-            emptyList<Boolean>(),
-            clocktowerFortuneTellerResultActions(
-                legalResults = emptySet(),
-                recommendedResult = true,
-            ),
-        )
+    fun `result actions always allow both answers and highlight AI recommendation first`() {
+        assertEquals(listOf(true, false), clocktowerFortuneTellerResultActions(null))
+        assertEquals(listOf(false, true), clocktowerFortuneTellerResultActions(false))
+        assertEquals(listOf(true, false), clocktowerFortuneTellerResultActions(true))
+    }
+
+    @Test
+    fun `automatic Fortune Teller displays only the bound answer and never a manual fallback`() {
+        assertEquals(emptyList<Boolean>(), clocktowerFortuneTellerVisibleResults(null, automaticOnly = true))
+        assertEquals(listOf(false), clocktowerFortuneTellerVisibleResults(false, automaticOnly = true))
+        assertEquals(listOf(true), clocktowerFortuneTellerVisibleResults(true, automaticOnly = true))
+        assertEquals(listOf(false, true), clocktowerFortuneTellerVisibleResults(false, automaticOnly = false))
+        assertEquals(listOf(true, false), clocktowerFortuneTellerVisibleResults(null, automaticOnly = false))
     }
 }

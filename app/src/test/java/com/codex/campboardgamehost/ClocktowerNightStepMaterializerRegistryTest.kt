@@ -6,9 +6,7 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteractionKind
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionCompletionPolicy
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
-import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionFirstNightFlow
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
-import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionOtherNightFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertThrows
@@ -65,38 +63,6 @@ class ClocktowerNightStepMaterializerRegistryTest {
     }
 
     @Test
-    fun `other night omits normal role step without effective actor but keeps death trigger actor`() {
-        val otherNightPhase = ClocktowerNightFlowPhase.OTHER_NIGHT
-        val fortuneTellerIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller"))
-        val ravenkeeperIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))
-        val ravenkeeperActor = PlayerCard(
-            name = "Ravenkeeper",
-            )
-        val registry = ClocktowerNightStepMaterializerRegistry(
-            phase = otherNightPhase,
-            entries = listOf(
-                ClocktowerNightStepMaterializerRegistry.Entry(
-                    identity = fortuneTellerIdentity,
-                    build = { step("Fortune Teller") },
-                ),
-                ClocktowerNightStepMaterializerRegistry.Entry(
-                    identity = ravenkeeperIdentity,
-                    build = { step("Ravenkeeper", actor = ravenkeeperActor) },
-                ),
-            ),
-        )
-
-        val materialized = registry.materialize(
-            listOf(
-                roleInteraction(fortuneTellerIdentity, "Fortune Teller", otherNightPhase),
-                roleInteraction(ravenkeeperIdentity, "Ravenkeeper", otherNightPhase),
-            ),
-        )
-
-        assertEquals(listOf("Ravenkeeper"), materialized.map { it.title })
-    }
-
-    @Test
     fun `missing projected actionable interaction fails closed`() {
         val empathIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Empath"))
         val chefIdentity = ClocktowerProductionNightStepIdentity.role(RoleId("Chef"))
@@ -134,18 +100,6 @@ class ClocktowerNightStepMaterializerRegistryTest {
                 ),
             )
         }
-    }
-
-    @Test
-    fun `production night flow helpers expose canonical projected interactions`() {
-        assertTrue(
-            "First-night production flow must expose canonical projected interactions before UI materialization",
-            ClocktowerProductionFirstNightFlow::class.java.declaredMethods.any { it.name == "interactions" },
-        )
-        assertTrue(
-            "Other-night production flow must expose canonical projected interactions before UI materialization",
-            ClocktowerProductionOtherNightFlow::class.java.declaredMethods.any { it.name == "interactions" },
-        )
     }
 
     private fun roleInteraction(

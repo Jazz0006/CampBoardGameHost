@@ -1,5 +1,7 @@
 package com.codex.campboardgamehost
 
+import androidx.activity.compose.BackHandler
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
@@ -74,26 +75,9 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
     step: ClocktowerNightStepUi,
     cards: List<PlayerCard>,
     onDismiss: () -> Unit,
-    confirmedGrimoireSeats: List<HostSeatPresentation> = emptyList(),
-    redHerringSeat: Int? = null,
-    protectedSeat: Int? = null,
 ) {
+    BackHandler(onBack = onDismiss)
     val displayStep = clocktowerPlayerDisplayStep(step)
-    if (displayStep.displayKind == ClocktowerDisplayKind.Grimoire) {
-        require(displayStep.tellPlayer != null &&
-            displayStep.displayProposition is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.GrimoireState &&
-            confirmedGrimoireSeats.isNotEmpty()) {
-            "The real Grimoire must never be shown to a malfunctioning Spy."
-        }
-        ClocktowerPlayerGrimoireDisplay(
-            seats = confirmedGrimoireSeats,
-            redHerringSeat = redHerringSeat,
-            protectedSeat = protectedSeat,
-            onDismiss = onDismiss,
-        )
-        return
-    }
-
     val pairPresentation = clocktowerPairPlayerRevealPresentation(displayStep, cards)
 
     Surface(
@@ -352,55 +336,10 @@ private fun ClocktowerPlayerDisplayCenterContent(
                 }
             }
 
-            ClocktowerDisplayKind.Grimoire,
             ClocktowerDisplayKind.None,
             -> Unit
         }
     }
 }
 
-@Composable
-private fun ClocktowerPlayerGrimoireDisplay(
-    seats: List<HostSeatPresentation>,
-    redHerringSeat: Int?,
-    protectedSeat: Int?,
-    onDismiss: () -> Unit,
-) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    // Only the confirmed physical table is projected. No event history or Host controls
-    // are exposed; the same shared table renders actual/shown roles and poison markers.
-    BackHandler(onBack = {})
-    ClocktowerDarkTheme {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            HostTableShell(
-                seats = seats,
-                modifier = Modifier.fillMaxSize(),
-                interaction = HostTableInteractionState(mode = HostTableInteractionMode.ReadOnly),
-                seatBadge = { seat ->
-                    listOfNotNull(
-                        (if (language == "en") "RH" else "红鲱鱼")
-                            .takeIf { seat.seatId.number == redHerringSeat },
-                        (if (language == "en") "Protected" else "受保护")
-                            .takeIf { seat.seatId.number == protectedSeat },
-                    ).joinToString(" ").takeIf { it.isNotBlank() }
-                },
-                centerContent = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        Text(
-                            if (language == "en") "GRIMOIRE" else "魔典",
-                            color = MaterialTheme.colorScheme.onBackground,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        OutlinedButton(onClick = onDismiss) {
-                            Text(if (language == "en") "Return phone to Storyteller" else "收回手机")
-                        }
-                    }
-                },
-            )
-        }
-    }
-}
+

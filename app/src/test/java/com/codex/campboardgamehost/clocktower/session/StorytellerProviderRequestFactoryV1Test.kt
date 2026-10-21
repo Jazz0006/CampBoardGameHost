@@ -34,14 +34,12 @@ class StorytellerProviderRequestFactoryV1Test {
     @Test
     fun `pair and Mayor engine decisions materialize neutral requests without recommendation implementation`() {
         val pairRevision = StorytellerDecisionRevision(3, 2)
-        val pairDecision = PairInformationDecisionBoundary.create(
+        val pairDecision = PendingPairInformationDecision(
             requestIdentity = StorytellerDecisionRequestIdentity(
                 gameId = "provider-direct",
                 requestId = "first-night:investigator:1",
             ),
             revision = pairRevision,
-            game = pairGame(),
-            roleDefinitions = roles,
             sourceSeat = 1,
             abilityRole = RoleId("Investigator"),
             reliability = ReliabilityState.RELIABLE,
@@ -59,15 +57,7 @@ class StorytellerProviderRequestFactoryV1Test {
             StorytellerProviderDecisionContextV1.FIRST_NIGHT_PAIR_INFORMATION,
             pairRequest.identity.decisionTypeId,
         )
-        assertEquals(
-            pairDecision.legalCandidates.map { it.candidateId },
-            pairRequest.legalCandidateIds,
-        )
-        assertTrue(
-            pairRequest.legalCandidates.all {
-                it.payload is StorytellerProviderCandidatePayloadV1.PairInformation
-            },
-        )
+        assertTrue(pairRequest.legalCandidates.isEmpty())
 
         val mayorRevision = StorytellerDecisionRevision(8, 5)
         val mayorDecision = MayorRedirectDecisionBoundary.create(
@@ -91,16 +81,7 @@ class StorytellerProviderRequestFactoryV1Test {
             StorytellerProviderDecisionContextV1.MAYOR_REDIRECT,
             mayorRequest.identity.decisionTypeId,
         )
-        assertEquals(
-            mayorDecision.pending.legalCandidates.map { it.candidateId },
-            mayorRequest.legalCandidateIds,
-        )
-        assertEquals(
-            mayorDecision.legalTargetSeats,
-            mayorRequest.legalCandidates
-                .map { (it.payload as StorytellerProviderCandidatePayloadV1.SeatTarget).seat }
-                .toSet(),
-        )
+        assertTrue(mayorRequest.legalCandidates.isEmpty())
     }
 
     @Test
@@ -127,7 +108,6 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals(PlayerExperienceLevelV1.BEGINNER, context.players[1].experienceLevel)
         assertEquals(listOf(RoleId("Saint")), context.players[1].claimedRoleIds)
         assertEquals(StorytellerDeclaredPressureLevelV1.HIGH, context.players[1].pressureLevel)
-        assertTrue(context.priorDecisions.isEmpty())
     }
 
     @Test
@@ -152,7 +132,6 @@ class StorytellerProviderRequestFactoryV1Test {
         assertEquals("provider-direct", context.historyPrefix?.gameId)
         assertEquals(1L, context.historyPrefix?.exclusiveGlobalSequence)
         assertEquals(listOf("first-poison"), context.historyPrefix?.entries?.map { it.entryId })
-        assertTrue(context.priorDecisions.isEmpty())
     }
 
     private fun pairGame() = GameState(

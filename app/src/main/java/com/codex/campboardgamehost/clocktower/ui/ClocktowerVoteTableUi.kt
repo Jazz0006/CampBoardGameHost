@@ -36,7 +36,6 @@ internal fun ClocktowerVoteTableScreen(
     actionsEnabled: Boolean,
     onHostTools: () -> Unit,
     onConfirm: (ClocktowerTableVoteState) -> Unit,
-    onCancel: () -> Unit,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String): String = if (language == "en") en else zh
@@ -48,7 +47,8 @@ internal fun ClocktowerVoteTableScreen(
             previousLabel = text("返回提名", "Return to nomination"),
             hostToolsLabel = text("主持工具", "Host Tools"),
             nextLabel = text("确认投票", "Confirm vote"),
-            onPrevious = onCancel,
+            onPrevious = {},
+            previousEnabled = false,
             onHostTools = onHostTools,
             onNext = {},
             nextEnabled = false,
@@ -89,7 +89,8 @@ internal fun ClocktowerVoteTableScreen(
         previousLabel = text("取消投票", "Cancel vote"),
         hostToolsLabel = text("主持工具", "Host Tools"),
         nextLabel = text("确认投票", "Confirm vote"),
-        onPrevious = onCancel,
+        onPrevious = {},
+            previousEnabled = false,
         onHostTools = onHostTools,
         onNext = { onConfirm(voteState) },
         nextEnabled = actionsEnabled,

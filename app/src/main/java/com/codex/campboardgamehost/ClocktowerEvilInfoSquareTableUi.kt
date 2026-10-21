@@ -85,8 +85,6 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerEvilInfoSquareTablePresentation,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
@@ -103,8 +101,7 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
             )
         },
         onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

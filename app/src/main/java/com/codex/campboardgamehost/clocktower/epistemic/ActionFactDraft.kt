@@ -104,12 +104,13 @@ sealed interface ActionFactDraft {
         val targetSeat: Int,
         val abilityConsumed: Boolean,
         val hit: Boolean,
+        /** Private explicit answer only; null means no registration was confirmed. */
+        val targetRegistersAsDemon: Boolean? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
             requireSeat(claimantSeat)
             requireSeat(targetSeat)
-            require(!hit || abilityConsumed)
         }
     }
 
@@ -121,6 +122,8 @@ sealed interface ActionFactDraft {
         val nominatorSeat: Int,
         val nomineeSeat: Int,
         val firstVirginNomination: Boolean,
+        /** Private explicit answer only; never infer role or alignment from this type. */
+        val nominatorRegistersAsTownsfolk: Boolean? = null,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -152,22 +155,6 @@ sealed interface ActionFactDraft {
         }
     }
 
-    data class KlutzLearnedDeath(
-        override val actionId: String,
-        override val phase: StorytellerPhase,
-        override val round: Int,
-        override val sequence: Int,
-        val klutzSeat: Int,
-        val deathActionId: String,
-        val functioningWhenLearned: Boolean,
-    ) : ActionFactDraft {
-        init {
-            requireIdentity(actionId, round, sequence)
-            requireSeat(klutzSeat)
-            require(deathActionId.isNotBlank())
-        }
-    }
-
     data class KlutzChoice(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -175,14 +162,14 @@ sealed interface ActionFactDraft {
         override val sequence: Int,
         val klutzSeat: Int,
         val chosenSeat: Int,
-        val learnedActionId: String,
+        val deathActionId: String,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
             requireSeat(klutzSeat)
             requireSeat(chosenSeat)
             require(klutzSeat != chosenSeat)
-            require(learnedActionId.isNotBlank())
+            require(deathActionId.isNotBlank())
         }
     }
 
@@ -260,6 +247,41 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class NightWake(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val actorSeat: Int,
+        val role: RoleId,
+        val stepId: String,
+    ) : ActionFactDraft {
+        init {
+            requireIdentity(actionId, round, sequence)
+            requireSeat(actorSeat)
+            require(role == RoleId("Spy") && stepId.isNotBlank())
+        }
+    }
+
+    data class ArtistAnswer(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val claimantSeat: Int,
+        val shownAnswer: Boolean,
+        val abilityConsumed: Boolean,
+    ) : ActionFactDraft
+
+    data class GameEnded(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val reason: com.codex.campboardgamehost.clocktower.domain.GameEndReason,
+        val subjectSeat: Int? = null,
+    ) : ActionFactDraft
+
     data class PhaseAdvance(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -311,19 +333,16 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
     is ActionFactDraft.NoExecution -> ActionFact.NoExecution(actionId, globalSequence)
     is ActionFactDraft.SlayerShot -> ActionFact.SlayerShot(
-        actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit,
+        actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit, targetRegistersAsDemon,
     )
     is ActionFactDraft.Nomination -> ActionFact.Nomination(
-        actionId, globalSequence, nominatorSeat, nomineeSeat, firstVirginNomination,
+        actionId, globalSequence, nominatorSeat, nomineeSeat, firstVirginNomination, nominatorRegistersAsTownsfolk,
     )
     is ActionFactDraft.Vote -> ActionFact.Vote(
         actionId, globalSequence, nominatorSeat, nomineeSeat, voterSeats.toList(), ghostVoterSeats.toList(),
     )
-    is ActionFactDraft.KlutzLearnedDeath -> ActionFact.KlutzLearnedDeath(
-        actionId, globalSequence, klutzSeat, deathActionId, functioningWhenLearned,
-    )
     is ActionFactDraft.KlutzChoice -> ActionFact.KlutzChoice(
-        actionId, globalSequence, klutzSeat, chosenSeat, learnedActionId,
+        actionId, globalSequence, klutzSeat, chosenSeat, deathActionId,
     )
     is ActionFactDraft.RoleChange -> ActionFact.RoleChange(
         actionId = actionId,
@@ -345,6 +364,9 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.DemonBluffChoice -> ActionFact.DemonBluffChoice(
         actionId, globalSequence, roles.toList(),
     )
+    is ActionFactDraft.NightWake -> ActionFact.NightWake(actionId, globalSequence, actorSeat, role, stepId)
+    is ActionFactDraft.ArtistAnswer -> ActionFact.ArtistAnswer(actionId, globalSequence, claimantSeat, shownAnswer, abilityConsumed)
+    is ActionFactDraft.GameEnded -> ActionFact.GameEnded(actionId, globalSequence, reason, subjectSeat)
     is ActionFactDraft.PhaseAdvance -> ActionFact.PhaseAdvance(
         actionId = actionId,
         sequence = globalSequence,

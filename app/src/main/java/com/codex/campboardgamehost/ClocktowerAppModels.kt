@@ -9,7 +9,6 @@ internal enum class ClocktowerTeam {
 
 internal enum class ClocktowerPhase {
     FirstNight,
-    Dawn,
     Day,
     Night,
 }
@@ -18,10 +17,7 @@ internal enum class ClocktowerDayMode {
     Overview,
     Slayer,
     Artist,
-    Klutz,
     Nomination,
-    Vote,
-    EndConfirm,
 }
 
 internal enum class ClocktowerNightAction {
@@ -35,7 +31,6 @@ internal enum class ClocktowerNightAction {
     NewDemonIdentity,
     DemonKill,
     MayorRedirect,
-    DemonSuccessor,
     Ravenkeeper,
 }
 
@@ -47,7 +42,6 @@ internal enum class ClocktowerDisplayKind {
     RoleReveal,
     Plain,
     EvilInfo,
-    Grimoire,
 }
 
 internal enum class ClocktowerScript {

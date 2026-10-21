@@ -25,13 +25,13 @@ class ClocktowerArtistDraftTest {
     @Test fun `incomplete or rejected confirmation retains draft and cannot silently accept`() {
         val draft = ClocktowerArtistDraft()
         var calls = 0
-        assertThrows(IllegalArgumentException::class.java) { draft.confirm { calls++ } }
+        assertThrows(IllegalArgumentException::class.java) { draft.confirm { _, _, _ -> calls++ } }
         draft.selectClaimant("Alice")
         draft.selectTruthfulAnswer(true)
-        assertThrows(IllegalArgumentException::class.java) { draft.confirm { calls++ } }
+        assertThrows(IllegalArgumentException::class.java) { draft.confirm { _, _, _ -> calls++ } }
         assertEquals(0, calls)
         draft.selectShownAnswer(false)
-        assertThrows(IllegalStateException::class.java) { draft.confirm { error("Host rejected") } }
+        assertThrows(IllegalStateException::class.java) { draft.confirm { _, _, _ -> error("Host rejected") } }
         assertEquals("Alice", draft.claimantName)
         assertEquals(true, draft.truthfulAnswer)
         assertEquals(false, draft.shownAnswer)
@@ -43,8 +43,10 @@ class ClocktowerArtistDraftTest {
         draft.selectTruthfulAnswer(true)
         draft.selectShownAnswer(false)
         var accepted: String? = null
-        draft.confirm {
-            accepted = it
+        draft.confirm { claimant, truthful, shown ->
+            accepted = claimant
+            assertTrue(truthful)
+            assertFalse(shown)
             assertEquals(true, draft.truthfulAnswer)
             assertEquals(false, draft.shownAnswer)
         }

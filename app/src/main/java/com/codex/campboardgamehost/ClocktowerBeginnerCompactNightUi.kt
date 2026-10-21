@@ -24,7 +24,6 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerSingleTargetAbilityPresentation,
     language: String,
-    canGoPrevious: Boolean,
     onHostTools: () -> Unit,
     onEvent: (ClocktowerSingleTargetEvent) -> Unit,
 ) {
@@ -41,8 +40,7 @@ internal fun ClocktowerBeginnerSingleTargetAbilityDialog(
             )
         },
         onSeatSelected = { onEvent(ClocktowerSingleTargetEvent.SelectSeat(it)) },
-        canGoPrevious = canGoPrevious,
-        onPrevious = { onEvent(ClocktowerSingleTargetEvent.Previous) },
+
         onHostTools = onHostTools,
         onNext = { onEvent(ClocktowerSingleTargetEvent.Next) },
         nextEnabled = presentation.confirmationEnabled,
@@ -74,8 +72,6 @@ internal fun ClocktowerBeginnerReadOnlyRevealDialog(
     actorSeat: Int?,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShow: () -> Unit,
@@ -89,8 +85,7 @@ internal fun ClocktowerBeginnerReadOnlyRevealDialog(
             clocktowerBeginnerNeutralSeatPresentation(seatNumber, actorSeat)
         },
         onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
@@ -110,57 +105,6 @@ internal fun ClocktowerBeginnerReadOnlyRevealDialog(
 }
 
 @Composable
-internal fun ClocktowerBeginnerSingleTargetRevealDialog(
-    seats: List<HostSeatPresentation>,
-    actorSeat: Int?,
-    selectedSeat: Int?,
-    selectableSeats: Set<Int>,
-    enabled: Boolean,
-    wakeInstruction: String?,
-    language: String,
-    canGoPrevious: Boolean,
-    onSeatSelected: (Int) -> Unit,
-    onPrevious: () -> Unit,
-    onHostTools: () -> Unit,
-    onNext: () -> Unit,
-    nextEnabled: Boolean,
-    onShow: (() -> Unit)?,
-) {
-    ClocktowerNightActionSquareTableDialog(
-        seats = seats,
-        enabled = enabled,
-        language = language,
-        seatPresentation = { seatNumber ->
-            clocktowerSingleTargetSeatPresentation(
-                seatNumber = seatNumber,
-                actorSeat = actorSeat,
-                selectedSeat = selectedSeat,
-                selectableSeats = if (enabled) selectableSeats else emptySet(),
-            )
-        },
-        onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
-        onHostTools = onHostTools,
-        onNext = onNext,
-        nextEnabled = nextEnabled,
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ClocktowerNightActionWakeInstruction(wakeInstruction)
-            onShow?.let { reveal ->
-                androidx.compose.material3.Button(onClick = reveal) {
-                    androidx.compose.material3.Text(if (language == "en") "Show to player" else "展示给玩家")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 internal fun ClocktowerBeginnerTwoTargetRevealDialog(
     seats: List<HostSeatPresentation>,
     actorSeat: Int?,
@@ -169,9 +113,7 @@ internal fun ClocktowerBeginnerTwoTargetRevealDialog(
     enabled: Boolean,
     wakeInstruction: String?,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShow: (() -> Unit)?,
@@ -189,8 +131,7 @@ internal fun ClocktowerBeginnerTwoTargetRevealDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {

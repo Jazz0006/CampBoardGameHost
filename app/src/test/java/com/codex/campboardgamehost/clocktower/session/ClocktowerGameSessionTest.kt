@@ -104,7 +104,7 @@ class ClocktowerGameSessionTest {
         session.recordEpistemicObservation(
             RecordedEpistemicObservation(
                 recordId = "dawn-one-dead",
-                phase = StorytellerPhase.DAWN,
+                phase = StorytellerPhase.DAY,
                 round = 1,
                 sequence = 0,
                 sourceSeat = null,
@@ -148,20 +148,6 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `causal journal belongs to the live Session as its single owner`() {
-        val session = ClocktowerGameSession.createProduction(
-            gameId = "journal-session",
-            gameSeed = initialState.seed,
-            initialState = initialState,
-            semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1,
-        )
-        val owned = session.causalDecisionJournal
-        assertSame(owned, session.causalDecisionJournal)
-        val archive = owned.archive()
-        assertEquals("journal-session", archive.gameId)
-    }
-
-    @Test
     fun `accepted setup choices are Session owned and appear in canonical history`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "single-writer-setup",
@@ -177,8 +163,6 @@ class ClocktowerGameSessionTest {
         assertEquals(bluffRoles, session.state.demonBluffRoleIds)
         assertEquals(2L, session.state.playerInputRevision)
         assertEquals(0L, session.state.gameStateRevision)
-        assertEquals(4, session.view.redHerringSeat)
-        assertEquals(bluffRoles, session.view.demonBluffRoleIds)
         assertSame(session.state, session.commitRedHerringSeat(
             4, StorytellerPhase.FIRST_NIGHT, 1, 1,
         ))
@@ -207,20 +191,26 @@ class ClocktowerGameSessionTest {
         assertEquals(4, replay.redHerringSeat)
         assertEquals(bluffRoles, replay.demonBluffRoleIds)
 
+        session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3)
+        assertEquals(8, session.state.redHerringSeat)
+        session.commitDemonBluffs(listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 4)
+        assertEquals(listOf(RoleId("Chef")), session.state.demonBluffRoleIds)
+        val confirmed = session.state
         assertThrows(IllegalArgumentException::class.java) {
-            session.commitRedHerringSeat(8, StorytellerPhase.FIRST_NIGHT, 1, 3) // Imp is Evil.
+            session.commitRedHerringSeat(99, StorytellerPhase.FIRST_NIGHT, 1, 5)
         }
         assertThrows(IllegalArgumentException::class.java) {
             session.commitDemonBluffs(
                 listOf(RoleId("Saint"), RoleId("Saint")), StorytellerPhase.FIRST_NIGHT, 1, 3,
             )
         }
-        assertThrows(IllegalArgumentException::class.java) {
-            session.commitDemonBluffs(
-                listOf(RoleId("Chef")), StorytellerPhase.FIRST_NIGHT, 1, 3,
-            ) // Already in play.
-        }
-        assertEquals(2L, session.state.playerInputRevision)
+        assertSame(confirmed, session.state)
+        assertEquals(4L, session.state.playerInputRevision)
+        val replayConfirmed = com.codex.campboardgamehost.clocktower.domain.DynamicActionReducer.reduce(
+            initialSnapshot = session.toGameSnapshot(rulesetRef), initialPhase = StorytellerPhase.FIRST_NIGHT,
+            initialRound = 1, facts = session.state.actionTimeline.reducerFacts())
+        assertEquals(8, replayConfirmed.redHerringSeat)
+        assertEquals(listOf(RoleId("Chef")), replayConfirmed.demonBluffRoleIds)
     }
 
     @Test
@@ -257,7 +247,7 @@ class ClocktowerGameSessionTest {
     }
 
     @Test
-    fun `session view publishes cutover safe identity revisions and chronology`() {
+    fun `one Session state supplies identity revisions and chronology`() {
         val session = ClocktowerGameSession.createProduction(
             gameId = "observable-view",
             gameSeed = initialState.seed,
@@ -276,10 +266,10 @@ class ClocktowerGameSessionTest {
         )
         session.commitGlobalEpistemicObservation(globalPublicDraft("view-public"))
 
-        val view = session.view
+        val view = session.state
 
         assertEquals("observable-view", view.gameId)
-        assertEquals(initialState.script, view.scriptId)
+        assertEquals(initialState.script, view.gameState.script)
         assertEquals(initialState.seed, view.gameSeed)
         assertEquals(2L, view.gameStateRevision)
         assertEquals(1L, view.playerInputRevision)
@@ -310,6 +300,22 @@ class ClocktowerGameSessionTest {
         assertEquals(rulesetRef, snapshot.rulesetRef)
     }
 
+    @Test fun `stale information response cannot mutate the single Session writer`() {
+        val session = ClocktowerGameSession.createProduction("stale-reply", initialState.seed,
+            initialState, semanticHistoryMode = ClocktowerSemanticHistoryMode.GLOBAL_V1)
+        val requested = StorytellerDecisionRevision(session.state.gameStateRevision, session.state.playerInputRevision)
+        session.recordPlayerInput()
+        val before = session.state
+        assertThrows(IllegalStateException::class.java) {
+            session.commitGlobalEpistemicObservation(globalPublicDraft("stale"), requested)
+        }
+        assertSame(before, session.state)
+        session.commitGlobalEpistemicObservation(globalPublicDraft("fresh"),
+            StorytellerDecisionRevision(before.gameStateRevision, before.playerInputRevision))
+        assertEquals(listOf("fresh"), session.state.epistemicObservationLog.records.map { it.recordId })
+        assertEquals(1L, session.state.nextTimelineGlobalSequence)
+    }
+
     private fun newSession(): ClocktowerGameSession = ClocktowerGameSession.create(
         gameId = "game-2026-08-06-001",
         gameSeed = initialState.seed,
@@ -319,7 +325,7 @@ class ClocktowerGameSessionTest {
 
     private fun globalPublicDraft(recordId: String): EpistemicObservationDraft = EpistemicObservationDraft(
         recordId = recordId,
-        phase = StorytellerPhase.DAWN,
+        phase = StorytellerPhase.DAY,
         round = 1,
         sequence = 0,
         sourceSeat = null,

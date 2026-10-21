@@ -20,7 +20,6 @@ class ClocktowerNightVoteOwnershipTest {
     private fun dependents(s: ClocktowerGameSession) {
         commit(s, ActionFactDraft.MayorRedirectChoice("mayor-${s.nextInputSequence}",
             StorytellerPhase.NIGHT, 2, s.nextInputSequence, 1, 3))
-        s.confirmDemonSuccessor(2)
     }
 
     @Test fun `changed upstream confirmation invalidates dependents while same targets preserve them`() {
@@ -37,10 +36,8 @@ class ClocktowerNightVoteOwnershipTest {
             dependents(s)
             commit(s, draft(4))
             assertEquals(kind, 3, s.state.nightTargets.mayorRedirectSeat)
-            assertEquals(kind, 2, s.state.nightTargets.successorSeat)
             commit(s, draft(5))
             assertNull(kind, s.state.nightTargets.mayorRedirectSeat)
-            assertNull(kind, s.state.nightTargets.successorSeat)
         }
     }
 
@@ -56,55 +53,16 @@ class ClocktowerNightVoteOwnershipTest {
         assertEquals(accepted, s.state)
     }
 
-    @Test fun `empty confirmation invalidates dependent choices and successor never changes identity`() {
-        val s = session()
-        commit(s, attack(s, 4))
-        val beforeChoice = s.state
-        dependents(s)
-        assertEquals(beforeChoice.playerInputRevision + 1, s.state.playerInputRevision)
-        // The one game revision belongs to the Mayor fact, not pending succession.
-        assertEquals(beforeChoice.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(base, s.state.gameState)
-        val accepted = s.state
-        s.confirmDemonSuccessor(2)
-        assertEquals(accepted, s.state)
-        s.clearConfirmedNightAttack(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(accepted.gameStateRevision + 1, s.state.gameStateRevision)
-        assertEquals(accepted.actionTimeline, s.state.actionTimeline)
-        commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
-        dependents(s)
-        s.clearConfirmedNightProtection(s.state.gameStateRevision)
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        assertEquals(base, s.state.gameState)
-    }
-
-    @Test fun `night cleanup and new night retain only their intended pending facts`() {
+    @Test fun `night to Day clears transient attack protection and Mayor targets`() {
         val s = session()
         commit(s, attack(s, 4))
         commit(s, ActionFactDraft.Protect("protect", StorytellerPhase.NIGHT, 2, s.nextInputSequence, 3))
         dependents(s)
-        s.finishNightResolution()
-        assertEquals(ClocktowerNightTargets(attackSeat = 4, successorSeat = 2), s.state.nightTargets)
-        s.clearResolvedNightDeath()
-        s.clearPendingDemonSuccessor()
+        assertEquals(ClocktowerNightTargets(attackSeat = 4, monkSeat = 3, mayorRedirectSeat = 3),
+            s.state.nightTargets)
+        commit(s, ActionFactDraft.PhaseAdvance("day", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAY, 2))
         assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-        commit(s, attack(s, 4))
-        commit(s, ActionFactDraft.PhaseAdvance("next-night", StorytellerPhase.DAY, 2,
-            s.nextInputSequence, StorytellerPhase.NIGHT, 3))
-        assertEquals(ClocktowerNightTargets(), s.state.nightTargets)
-    }
-
-    @Test fun `poison expiry at Dawn does not revoke already resolved successor choice`() {
-        val s = session()
-        s.commitConfirmedPoisonTransition(ActionFactDraft.Poison("poison", StorytellerPhase.NIGHT,
-            2, s.nextInputSequence, 4), s.state.gameStateRevision)
-        dependents(s)
-        s.commitConfirmedPoisonTransition(ActionFactDraft.Poison("expiry", StorytellerPhase.NIGHT,
-            2, s.nextInputSequence, null), s.state.gameStateRevision, preserveNightChoices = true)
-        assertEquals(2, s.state.nightTargets.successorSeat)
-        assertEquals(3, s.state.nightTargets.mayorRedirectSeat)
-        assertNull(s.state.confirmedPoisonTargetName(2))
     }
 
     private fun vote(s: ClocktowerGameSession, nominee: Int, count: Int) = ActionFactDraft.Vote(

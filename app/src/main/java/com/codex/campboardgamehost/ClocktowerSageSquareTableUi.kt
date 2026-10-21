@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,12 +8,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,99 +22,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-internal enum class ClocktowerSageResultSourceKind {
-    DisplayOption,
-    LegacyUnreliable,
-    Direct,
+/** Structural seat selection only; no Sage rules or demon-location candidate engine. */
+internal fun clocktowerSageToggledPair(
+    selectedSeats: List<Int>,
+    tappedSeat: Int,
+    seatCount: Int,
+): List<Int> {
+    if (tappedSeat !in 1..seatCount) return selectedSeats
+    return when {
+        tappedSeat in selectedSeats -> selectedSeats - tappedSeat
+        selectedSeats.size >= 2 -> listOf(tappedSeat)
+        else -> selectedSeats + tappedSeat
+    }
 }
 
-internal data class ClocktowerSageResultChoice(
-    val key: String,
-    val subjectSeats: List<Int>,
-    val displayPrimary: String,
-    val selectionLabel: String,
-    val sourceKind: ClocktowerSageResultSourceKind,
-    val displayOption: ClocktowerDisplayOption? = null,
-    val recommended: Boolean = false,
-)
-
-private fun validSageSubjectSeats(
-    seats: List<Int>,
-    seatCount: Int,
-): List<Int>? = seats
-    .takeIf { it.size == 2 && it.distinct().size == 2 && it.all { seat -> seat in 1..seatCount } }
-    ?.sorted()
-
-/**
- * Projects already-created Sage information choices into typed spatial presentation. The projector
- * never parses displaySecondary. In particular, unreliable options may carry typed seat identity
- * while deliberately keeping proposition == null.
- */
-internal fun clocktowerSageResultChoices(
-    step: ClocktowerNightStepUi,
-    seatCount: Int,
-    allowRuleDeterminedAutoUi: Boolean,
-    automaticDisplayOption: ClocktowerDisplayOption?,
-    recommendedOptionIds: Set<String> = emptySet(),
-): List<ClocktowerSageResultChoice> {
-    if (step.roleEnName != "Sage" || step.actor == null || !step.isRealAction || seatCount <= 0) return emptyList()
-
-    fun fromOptions(
-        options: List<ClocktowerDisplayOption>,
-        sourceKind: ClocktowerSageResultSourceKind,
-    ): List<ClocktowerSageResultChoice> {
-        if (options.isEmpty()) return emptyList()
-        return options.map { option ->
-            if (option.displayKind != ClocktowerDisplayKind.EitherOne) return emptyList()
-            val seats = validSageSubjectSeats(option.presentationSubjectSeats, seatCount) ?: return emptyList()
-            val primary = option.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
-            ClocktowerSageResultChoice(
-                key = "${clocktowerInformationCandidateId(option)}|presentation:${seats.joinToString(":")}",
-                subjectSeats = seats,
-                displayPrimary = primary,
-                selectionLabel = option.label.takeIf { it.isNotBlank() }
-                    ?: seats.joinToString(" + ") { seat -> "P$seat" },
-                sourceKind = sourceKind,
-                displayOption = option,
-                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
-                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-            )
-        }.distinctBy { it.key }
-    }
-
-    if (allowRuleDeterminedAutoUi) {
-        automaticDisplayOption?.let { option ->
-            return fromOptions(
-                options = listOf(option),
-                sourceKind = ClocktowerSageResultSourceKind.DisplayOption,
-            )
-        }
-    } else if (step.displayOptions.isNotEmpty()) {
-        return fromOptions(
-            options = step.displayOptions,
-            sourceKind = ClocktowerSageResultSourceKind.LegacyUnreliable,
-        )
-    } else if (step.recommendedDisplayOptions.isNotEmpty()) {
-        return fromOptions(
-            options = step.recommendedDisplayOptions,
-            sourceKind = ClocktowerSageResultSourceKind.DisplayOption,
-        )
-    }
-
-    if (step.displayKind != ClocktowerDisplayKind.EitherOne) return emptyList()
-    val seats = validSageSubjectSeats(step.presentationSubjectSeats, seatCount) ?: return emptyList()
-    val primary = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
-    return listOf(
-        ClocktowerSageResultChoice(
-            key = "direct|${seats.joinToString(":")}|$primary",
-            subjectSeats = seats,
-            displayPrimary = primary,
-            selectionLabel = seats.joinToString(" + ") { seat -> "P$seat" },
-            sourceKind = ClocktowerSageResultSourceKind.Direct,
-            recommended = true,
-        ),
-    )
-}
+internal fun clocktowerSageValidPair(seats: List<Int>, seatCount: Int): Boolean =
+    seats.size == 2 && seats.distinct().size == 2 && seats.all { it in 1..seatCount }
 
 internal fun clocktowerSageSeatPresentation(
     seatNumber: Int,
@@ -128,159 +47,121 @@ internal fun clocktowerSageSeatPresentation(
     targetState = when (seatNumber) {
         subjectSeats.getOrNull(0) -> ClocktowerSquareTableSeatState.SelectedFirst
         subjectSeats.getOrNull(1) -> ClocktowerSquareTableSeatState.SelectedSecond
-        else -> ClocktowerSquareTableSeatState.Neutral
+        else -> ClocktowerSquareTableSeatState.Selectable
     },
     isCurrentActor = seatNumber == actorSeat,
 )
 
+/**
+ * AI advice is a preselection. A human can instead tap any two actual seats;
+ * neither path needs an exhaustive list of supposedly legal Sage pairs.
+ */
 @Composable
 internal fun ClocktowerSageSquareTableDialog(
+    interactionKey: String,
     seats: List<HostSeatPresentation>,
     actorSeat: Int?,
     wakeInstruction: String?,
-    choices: List<ClocktowerSageResultChoice>,
+    recommendedSeats: List<Int>?,
+    lastPreviewSeats: List<Int>?,
+    automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
-    onConfirm: (ClocktowerSageResultChoice) -> Unit,
+    onConfirmRecommended: () -> Unit,
+    onConfirmManual: (List<Int>) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
-    if (choices.isEmpty()) return
-    val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
-        clocktowerRuleOnlyCompactChoice(choices) != null
-    ) {
-        ClocktowerBeginnerReadOnlyRevealDialog(
-            seats = seats,
-            actorSeat = actorSeat,
-            wakeInstruction = wakeInstruction,
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-            onShow = { onConfirm(initialChoice) },
-        )
-        return
+    val hasRecommendation = recommendedSeats?.let { clocktowerSageValidPair(it, seats.size) } == true
+    var manualSelection by remember(interactionKey, actorSeat, seats.size, automaticOnly) {
+        mutableStateOf(!automaticOnly && (!hasRecommendation ||
+            (lastPreviewSeats != null && lastPreviewSeats != recommendedSeats)))
     }
-    val recommendations = choices.filter { it.recommended }.take(1)
-    val manualChoices = choices.filterNot { it in recommendations }
-    var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
-        mutableStateOf(recommendations.isEmpty())
+    var manualSeats by remember(interactionKey, actorSeat, seats.size, automaticOnly) {
+        mutableStateOf(lastPreviewSeats ?: recommendedSeats.orEmpty())
     }
-    var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
-    var menuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
-    val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
-
+    val shownSeats = if (manualSelection) manualSeats else lastPreviewSeats ?: recommendedSeats.orEmpty()
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
-        enabled = false,
+        enabled = manualSelection,
         language = language,
         seatPresentation = { seatNumber ->
-            clocktowerSageSeatPresentation(
-                seatNumber = seatNumber,
-                actorSeat = actorSeat,
-                subjectSeats = selectedChoice.subjectSeats,
-            )
+            clocktowerSageSeatPresentation(seatNumber, actorSeat, shownSeats)
         },
-        onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+        onSeatSelected = { seat ->
+            if (manualSelection) {
+                val next = clocktowerSageToggledPair(manualSeats, seat, seats.size)
+                if (next != manualSeats) {
+                    manualSeats = next
+                    onDraftChanged()
+                }
+            }
+        },
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp),
+            modifier = Modifier.fillMaxSize().padding(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                ClocktowerNightActionWakeInstruction(wakeInstruction)
+            ClocktowerNightActionWakeInstruction(wakeInstruction)
+            Text(
+                text = if (language == "en") "Sage · Choose two seats" else "贤者 · 选择两名玩家",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                text = if (language == "en") "Tap two seats to show to the Sage" else "轻点方桌上两个座位，向贤者展示",
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = shownSeats.joinToString(" + ") { "P$it" }.ifEmpty {
+                    if (language == "en") "No seats selected" else "尚未选择座位"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+            if (automaticOnly && !hasRecommendation) {
                 Text(
-                    text = if (language == "en") "Sage" else "贤者",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
+                    if (language == "en") "Waiting for a current AI suggestion" else "等待 AI 确定当前信息",
+                    style = MaterialTheme.typography.bodyMedium,
                 )
-                Text(
-                    text = if (language == "en") {
-                        "One highlighted player is the Demon"
-                    } else {
-                        "高亮的两名玩家中有一名是恶魔"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(8.dp))
-
-                if (!manualSelection) {
-                    ClocktowerSingleRecommendationButtons(
-                        recommendations = recommendations,
-                        language = language,
-                        labelOf = { choice -> choice.selectionLabel },
-                        onConfirm = onConfirm,
-                        onManualSelection = if (manualChoices.isNotEmpty()) {
-                            { manualSelection = true }
-                        } else {
-                            null
-                        },
-                    )
-                } else {
-                    Text(
-                        text = if (language == "en") "Manual selection" else "手动选择",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick = { menuExpanded = true },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(selectedChoice.selectionLabel, maxLines = 1)
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false },
-                        ) {
-                            choices.forEach { choice ->
-                                DropdownMenuItem(
-                                    text = { Text(choice.selectionLabel) },
-                                    onClick = {
-                                        selectedKey = choice.key
-                                        menuExpanded = false
-                                    },
-                                )
-                            }
-                        }
+            } else if (manualSelection) {
+                Button(
+                    enabled = clocktowerSageValidPair(manualSeats, seats.size),
+                    onClick = { onConfirmManual(manualSeats.sorted()) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (language == "en") "Show this pair" else "展示这两名玩家") }
+                if (hasRecommendation) {
+                    OutlinedButton(onClick = {
+                        manualSeats = recommendedSeats.orEmpty()
+                        onDraftChanged()
+                        manualSelection = false
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Return to AI suggestion" else "返回 AI 推荐")
                     }
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = selectedChoice.subjectSeats.joinToString(" + ") { seat -> "P$seat" },
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Button(
-                        onClick = { onConfirm(selectedChoice) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(if (language == "en") "Show this information" else "展示此信息")
-                    }
-                    TextButton(onClick = { manualSelection = false }) {
-                        Text(if (language == "en") "Use recommendations" else "返回推荐")
+                }
+            } else {
+                Button(onClick = onConfirmRecommended, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (language == "en") "Show AI-selected pair" else "向玩家展示推荐信息")
+                }
+                if (!automaticOnly) {
+                    OutlinedButton(onClick = {
+                        manualSeats = shownSeats
+                        manualSelection = true
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Choose seats manually" else "手动选择座位")
                     }
                 }
             }
         }
     }
 }
+

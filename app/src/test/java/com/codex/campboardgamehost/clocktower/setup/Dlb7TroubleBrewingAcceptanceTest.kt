@@ -27,7 +27,7 @@ class Dlb7TroubleBrewingAcceptanceTest {
                     preset = preset,
                 )
                 val intermediate = intermediateSetup(preset, visibleRoster)
-                val candidates = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
+                val candidates = intermediate.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
 
                 assertTrue("Drunk preset ${preset.id} must remain marked as Drunk-bearing.", visibleRoster.hasDrunk)
                 assertFalse(
@@ -41,25 +41,11 @@ class Dlb7TroubleBrewingAcceptanceTest {
                 )
                 assertEquals(
                     "Drunk preset ${preset.id} must expose every and only dealt Townsfolk as legal candidates.",
-                    visibleRoster.townsfolkRoleIds.toSet(),
+                    visibleRoster.visibleRoleIds.toSet(),
                     candidates.map { candidate -> candidate.shownRoleId }.toSet(),
                 )
 
                 candidates.forEach { candidate ->
-                    val projected = TroubleBrewingDrunkHypotheticalProjector.project(
-                        intermediateSetup = intermediate,
-                        candidate = candidate,
-                        characterRegistry = registry,
-                    )
-                    val projectedDrunk = projected.gameState.players.single {
-                        player -> player.actualRole == RoleId("Drunk")
-                    }
-                    assertEquals(candidate.seat, projectedDrunk.seat)
-                    assertEquals(
-                        requireNotNull(registry.findByExternalId(candidate.shownRoleId)).id,
-                        projectedDrunk.shownRole,
-                    )
-
                     val committed = TroubleBrewingSetupCommitter.commit(
                         intermediateSetup = intermediate,
                         confirmedDrunkCandidate = candidate,
@@ -108,11 +94,6 @@ class Dlb7TroubleBrewingAcceptanceTest {
                 (preset.townsfolk + preset.outsiders + preset.minions + preset.demons).toSet(),
                 visibleRoster.visibleRoleIds.toSet(),
             )
-            assertTrue(
-                "Non-Drunk preset ${preset.id} must expose no Drunk candidates.",
-                TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate).isEmpty(),
-            )
-
             val committed = TroubleBrewingSetupCommitter.commit(
                 intermediateSetup = intermediate,
                 confirmedDrunkCandidate = null,

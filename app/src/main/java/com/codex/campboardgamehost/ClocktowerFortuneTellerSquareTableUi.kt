@@ -28,29 +28,16 @@ internal fun clocktowerFortuneTellerSeatState(
     else -> ClocktowerSquareTableSeatState.Disabled
 }
 
-internal fun clocktowerFortuneTellerResultActions(
-    legalResults: Set<Boolean>,
+/** Both Boolean answers remain confirmable; an AI recommendation only changes display order. */
+internal fun clocktowerFortuneTellerResultActions(recommendedResult: Boolean?): List<Boolean> =
+    if (recommendedResult == null) listOf(true, false) else listOf(recommendedResult, !recommendedResult)
+
+/** Automatic mode cannot display an answer that AI has not chosen. */
+internal fun clocktowerFortuneTellerVisibleResults(
     recommendedResult: Boolean?,
-): List<Boolean> {
-    if (legalResults.isEmpty()) return emptyList()
-
-    return buildList {
-        recommendedResult
-            ?.takeIf { it in legalResults }
-            ?.let(::add)
-        legalResults
-            .asSequence()
-            .filterNot { it == recommendedResult }
-            .sortedDescending()
-            .forEach(::add)
-    }
-}
-
-/** Only a Host-unique legal result is automatically presentable; a UI recommendation is not authority. */
-internal fun ruleDeterminedFortuneTellerResult(
-    allowRuleDeterminedAutoUi: Boolean,
-    legalResults: Set<Boolean>,
-): Boolean? = if (allowRuleDeterminedAutoUi) legalResults.singleOrNull() else null
+    automaticOnly: Boolean,
+): List<Boolean> = if (automaticOnly) listOfNotNull(recommendedResult)
+else clocktowerFortuneTellerResultActions(recommendedResult)
 
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
@@ -61,23 +48,20 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     actorSeat: Int? = null,
     wakeInstruction: String? = null,
     redHerringSeat: Int? = null,
-    legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    allowRuleDeterminedAutoUi: Boolean,
+    lastPreviewResult: Boolean?,
+    automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
     onResultSelected: (Boolean) -> Unit,
-    onAutomaticResultSelected: (Boolean) -> Unit,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = if (enabled) {
@@ -120,12 +104,11 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
         ClocktowerFortuneTellerCenterControls(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
-            legalResults = legalResults,
             recommendedResult = recommendedResult,
-            allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
+            lastPreviewResult = lastPreviewResult,
+            automaticOnly = automaticOnly,
             language = language,
             onResultSelected = onResultSelected,
-            onAutomaticResultSelected = onAutomaticResultSelected,
         )
     }
 }
@@ -134,87 +117,55 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
 private fun ClocktowerFortuneTellerCenterControls(
     wakeInstruction: String?,
     selectedSeats: List<Int>,
-    legalResults: Set<Boolean>,
     recommendedResult: Boolean?,
-    allowRuleDeterminedAutoUi: Boolean,
+    lastPreviewResult: Boolean?,
+    automaticOnly: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
-    onAutomaticResultSelected: (Boolean) -> Unit,
 ) {
-    val actions = clocktowerFortuneTellerResultActions(
-        legalResults = legalResults,
-        recommendedResult = recommendedResult,
-    )
+    val choices = clocktowerFortuneTellerVisibleResults(recommendedResult, automaticOnly)
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
-    val ruleDeterminedResult = ruleDeterminedFortuneTellerResult(
-        allowRuleDeterminedAutoUi, legalResults,
-    )
-
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(6.dp),
+        modifier = Modifier.fillMaxSize().padding(6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         ClocktowerNightActionWakeInstruction(wakeInstruction)
         if (completePair) {
-            when {
-                actions.isEmpty() -> {
-                    Text(
-                        text = if (language == "en") "No legal result" else "无可用结果",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-
-                ruleDeterminedResult != null -> {
-                    val result = ruleDeterminedResult
+            if (automaticOnly && choices.isEmpty()) {
+                Text(
+                    if (language == "en") "Waiting for AI result" else "等待 AI 确定当前信息",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            choices.forEachIndexed { index, result ->
+                Text(
+                    text = if (result == lastPreviewResult) {
+                        if (language == "en") "Last preview" else "最近预览"
+                    } else if (recommendedResult != null && result == recommendedResult) {
+                        if (language == "en") "Recommended" else "推荐"
+                    } else {
+                        if (language == "en") "Other option" else "另一个选项"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                )
+                if (result == lastPreviewResult || (lastPreviewResult == null && result == recommendedResult)) {
                     Button(
-                        onClick = { onAutomaticResultSelected(result) },
+                        onClick = { onResultSelected(result) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(clocktowerFortuneTellerResultLabel(result, language))
+                    }
+                } else {
+                    OutlinedButton(
+                        onClick = { onResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(clocktowerFortuneTellerResultLabel(result, language))
                     }
                 }
-
-                actions.size == 1 -> {
-                    Button(
-                        onClick = { onResultSelected(actions.single()) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(clocktowerFortuneTellerResultLabel(actions.single(), language))
-                    }
-                }
-
-                else -> actions.forEachIndexed { index, value ->
-                    Text(
-                        text = if (index == 0 && value == recommendedResult) {
-                            if (language == "en") "Recommended" else "推荐"
-                        } else {
-                            if (language == "en") "Other option" else "另一个选项"
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        textAlign = TextAlign.Center,
-                    )
-                    if (index == 0 && value == recommendedResult) {
-                        Button(
-                            onClick = { onResultSelected(value) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(clocktowerFortuneTellerResultLabel(value, language))
-                        }
-                    } else {
-                        OutlinedButton(
-                            onClick = { onResultSelected(value) },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(clocktowerFortuneTellerResultLabel(value, language))
-                        }
-                    }
-                    if (index != actions.lastIndex) Spacer(Modifier.height(4.dp))
-                }
+                if (index != choices.lastIndex) Spacer(Modifier.height(4.dp))
             }
         }
         Spacer(Modifier.height(6.dp))

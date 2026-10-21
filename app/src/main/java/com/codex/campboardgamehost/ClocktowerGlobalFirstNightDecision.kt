@@ -1,52 +1,44 @@
 package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
-import com.codex.campboardgamehost.clocktower.recommendation.dynamic.InformationReliability
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.session.FirstNightInformationFamily
-import com.codex.campboardgamehost.clocktower.session.PairInformationDecisionBoundary
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequestIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.usesAuthoritativePairDomain
 
-/**
- * Shared Host rules boundary for the existing playable first-night pair interactions.
- * It delegates the complete legal domain to the engine; no AI selector or role policy.
- */
+/** Current pair recipient/ability identity for AI; Host does not calculate possible answers. */
 internal fun pendingGlobalFirstNightPairDecision(
     step: ClocktowerNightStepUi,
     phase: ClocktowerPhase,
     round: Int,
     cards: List<PlayerCard>,
-    context: TroubleBrewingFirstNightPairDecisionContext?,
+    game: GameState,
+    gameId: String,
+    revision: StorytellerDecisionRevision,
 ): PendingPairInformationDecision? {
-    if (phase != ClocktowerPhase.FirstNight || context == null) return null
+    if (phase != ClocktowerPhase.FirstNight || round != 1 || !step.isRealAction ||
+        game.script.value != "trouble_brewing") return null
     val family = FirstNightInformationFamily.entries.firstOrNull {
         it.role.value == step.roleEnName
     }?.takeIf { it.usesAuthoritativePairDomain() } ?: return null
     val actor = step.actor ?: return null
-    val seat = cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
-        ?: return null
-    val position = context.snapshot.position
-    val gameRevision = (position.gameStateRevision as? SnapshotField.Known<Long>)?.value
-        ?: return null
-    val inputRevision = (position.playerInputRevision as? SnapshotField.Known<Long>)?.value
-        ?: return null
-    val reliability = when (step.informationReliability) {
-        InformationReliability.RELIABLE -> ReliabilityState.RELIABLE
-        InformationReliability.DRUNK -> ReliabilityState.DRUNK
-        InformationReliability.POISONED -> ReliabilityState.POISONED
+    require(game.players.sortedBy { it.seat }.map { it.name } == cards.map { it.name }) {
+        "UI card order diverged from canonical Host seats."
     }
-    return PairInformationDecisionBoundary.create(
+    val source = game.players.singleOrNull { it.name == actor.name } ?: return null
+    val seat = source.seat
+    require((source.shownRole ?: source.actualRole) == family.role) {
+        "Pair-information source role differs from the canonical Host identity."
+    }
+    val reliability = step.informationReliability
+    return PendingPairInformationDecision(
         requestIdentity = StorytellerDecisionRequestIdentity(
-            gameId = context.snapshot.gameId,
+            gameId = gameId,
             requestId = "first-night:${phase.name}:$round:${family.name}:$seat",
         ),
-        revision = StorytellerDecisionRevision(gameRevision, inputRevision),
-        game = context.naturalPairGameState,
-        roleDefinitions = context.roleDefinitions,
+        revision = revision,
         sourceSeat = seat,
         abilityRole = family.role,
         reliability = reliability,

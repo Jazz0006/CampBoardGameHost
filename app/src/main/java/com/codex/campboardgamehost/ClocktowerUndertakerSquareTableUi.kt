@@ -9,9 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -30,22 +29,6 @@ import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 internal data class ClocktowerUndertakerTypedResult(
     val executedSeat: Int,
     val roleId: RoleId,
-)
-
-internal enum class ClocktowerUndertakerResultSourceKind {
-    DisplayOption,
-    LegacyUnreliable,
-    Direct,
-}
-
-internal data class ClocktowerUndertakerResultChoice(
-    val key: String,
-    val executedSeat: Int,
-    val roleId: RoleId?,
-    val displayLabel: String,
-    val sourceKind: ClocktowerUndertakerResultSourceKind,
-    val displayOption: ClocktowerDisplayOption? = null,
-    val recommended: Boolean = false,
 )
 
 internal data class ClocktowerUndertakerSeatVisual(
@@ -60,84 +43,7 @@ internal fun clocktowerUndertakerTypedResult(
 ): ClocktowerUndertakerTypedResult? {
     val roleAt = proposition as? InformationProposition.RoleAt ?: return null
     if (roleAt.seat !in 1..seatCount) return null
-    return ClocktowerUndertakerTypedResult(
-        executedSeat = roleAt.seat,
-        roleId = roleAt.role,
-    )
-}
-
-internal fun clocktowerUndertakerResultChoices(
-    step: ClocktowerNightStepUi,
-    seatCount: Int,
-    allowRuleDeterminedAutoUi: Boolean,
-    automaticDisplayOption: ClocktowerDisplayOption?,
-    resultFirstRegistrationCandidates: List<ClocktowerDisplayOption>,
-    recommendedOptionIds: Set<String> = emptySet(),
-): List<ClocktowerUndertakerResultChoice> {
-    if (step.roleEnName != "Undertaker") return emptyList()
-    val anchor = clocktowerRoleRevealAnchor(
-        proposition = step.displayProposition,
-        expectedSeat = (step.displayProposition as? InformationProposition.RoleAt)?.seat,
-        seatCount = seatCount,
-    ) ?: return emptyList()
-
-    fun choicesFrom(
-        options: List<ClocktowerDisplayOption>,
-        sourceKind: ClocktowerUndertakerResultSourceKind,
-    ): List<ClocktowerUndertakerResultChoice> {
-        if (options.isEmpty()) return emptyList()
-        return options.map { option ->
-            val projected = clocktowerRoleRevealChoiceProjection(
-                option = option,
-                targetSeat = anchor.targetSeat,
-                seatCount = seatCount,
-            ) ?: return emptyList()
-            ClocktowerUndertakerResultChoice(
-                key = clocktowerInformationCandidateId(option),
-                executedSeat = projected.targetSeat,
-                roleId = projected.roleId,
-                displayLabel = projected.displayLabel,
-                sourceKind = sourceKind,
-                displayOption = option,
-                recommended = clocktowerInformationCandidateId(option) in recommendedOptionIds ||
-                    (recommendedOptionIds.isEmpty() && option.isDefaultRecommendation),
-            )
-        }.distinctBy { it.key }
-    }
-
-    if (allowRuleDeterminedAutoUi) {
-        automaticDisplayOption?.let { option ->
-            return choicesFrom(
-                options = listOf(option),
-                sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption,
-            )
-        }
-    } else {
-        if (resultFirstRegistrationCandidates.isNotEmpty()) {
-            return choicesFrom(
-                options = resultFirstRegistrationCandidates,
-                sourceKind = ClocktowerUndertakerResultSourceKind.DisplayOption,
-            )
-        }
-        if (step.displayOptions.isNotEmpty()) {
-            return choicesFrom(
-                options = step.displayOptions,
-                sourceKind = ClocktowerUndertakerResultSourceKind.LegacyUnreliable,
-            )
-        }
-    }
-
-    val displayLabel = step.displayPrimary?.takeIf { it.isNotBlank() } ?: return emptyList()
-    return listOf(
-        ClocktowerUndertakerResultChoice(
-            key = "direct|${anchor.targetSeat}|${anchor.roleId.value}",
-            executedSeat = anchor.targetSeat,
-            roleId = anchor.roleId,
-            displayLabel = displayLabel,
-            sourceKind = ClocktowerUndertakerResultSourceKind.Direct,
-            recommended = true,
-        ),
-    )
+    return ClocktowerUndertakerTypedResult(roleAt.seat, roleAt.role)
 }
 
 internal fun clocktowerUndertakerSeatVisual(
@@ -146,30 +52,25 @@ internal fun clocktowerUndertakerSeatVisual(
     executedSeat: Int,
     language: String,
 ): ClocktowerUndertakerSeatVisual = ClocktowerUndertakerSeatVisual(
-    state = if (seatNumber == executedSeat) {
-        ClocktowerSquareTableSeatState.HighlightedInformation
-    } else {
-        ClocktowerSquareTableSeatState.Neutral
-    },
+    state = if (seatNumber == executedSeat) ClocktowerSquareTableSeatState.HighlightedInformation
+        else ClocktowerSquareTableSeatState.Neutral,
     badge = if (seatNumber == executedSeat) {
         if (language == "en") "EX" else "处"
-    } else {
-        null
-    },
+    } else null,
     isCurrentActor = seatNumber == actorSeat,
 )
 
 internal fun clocktowerUndertakerPlayerDisplayStep(
     displayStep: ClocktowerNightStepUi,
-    choice: ClocktowerUndertakerResultChoice,
+    choice: ClocktowerDirectRoleRevealChoice,
     cards: List<PlayerCard>,
     language: String,
 ): ClocktowerNightStepUi {
-    val executedName = cards.getOrNull(choice.executedSeat - 1)?.name.orEmpty()
+    val executedName = cards.getOrNull(choice.targetSeat - 1)?.name.orEmpty()
     val executedLabel = if (language == "en") {
-        "P${choice.executedSeat} $executedName".trim()
+        "P${choice.targetSeat} $executedName".trim()
     } else {
-        "${choice.executedSeat}号 $executedName".trim()
+        "${choice.targetSeat}号 $executedName".trim()
     }
     val lead = if (language == "en") {
         "Yesterday's executed player, $executedLabel, was"
@@ -182,155 +83,130 @@ internal fun clocktowerUndertakerPlayerDisplayStep(
         displayPrimary = choice.displayLabel,
         displaySecondary = null,
         displayFooter = null,
-        displayProposition = choice.roleId?.let { shownRole ->
-            InformationProposition.RoleAt(choice.executedSeat, shownRole)
-        },
+        displayProposition = InformationProposition.RoleAt(choice.targetSeat, choice.roleId),
     )
 }
 
+/** Render one confirmed execution target and direct manual role input or a single typed AI choice. */
 @Composable
 internal fun ClocktowerUndertakerSquareTableDialog(
+    interactionKey: String,
     seats: List<HostSeatPresentation>,
+    step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
-    choices: List<ClocktowerUndertakerResultChoice>,
+    scriptRoles: List<ClocktowerRole>,
+    recommendedOption: ClocktowerDisplayOption?,
+    lastPreviewRoleId: String?,
+    automaticOnly: Boolean = false,
+    roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
-    onConfirm: (ClocktowerUndertakerResultChoice) -> Unit,
+    onConfirm: (ClocktowerDirectRoleRevealChoice) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
-    if (choices.isEmpty()) return
-    val initialChoice = choices.firstOrNull { it.recommended } ?: choices.first()
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
-        clocktowerRuleOnlyCompactChoice(choices) != null
-    ) {
-        ClocktowerBeginnerReadOnlyRevealDialog(
-            seats = seats,
-            actorSeat = actorSeat,
-            wakeInstruction = wakeInstruction,
-            language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
-            onHostTools = onHostTools,
-            onNext = onNext,
-            onShow = { onConfirm(initialChoice) },
-        )
-        return
+    val executedSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)?.subjectSeat
+        ?.takeIf { it in 1..seats.size } ?: return
+    val advised = clocktowerDirectRecommendedRoleReveal(
+        step, executedSeat, seats.size, scriptRoles, recommendedOption,
+    )
+    var editing by remember(interactionKey, executedSeat, automaticOnly) {
+        mutableStateOf(!automaticOnly && (advised == null ||
+            (lastPreviewRoleId != null && lastPreviewRoleId != advised.roleId.value)))
     }
-    val recommendations = choices.filter { it.recommended }.take(1)
-    val manualChoices = choices.filterNot { it in recommendations }
-    var manualSelection by remember(choices.map { it.key }, recommendations.map { it.key }) {
-        mutableStateOf(false)
+    var selectedRole by remember(interactionKey, executedSeat, automaticOnly) {
+        mutableStateOf(lastPreviewRoleId ?: advised?.roleId?.value)
     }
-    var selectedKey by remember(choices.map { it.key }) { mutableStateOf(initialChoice.key) }
-    var roleMenuExpanded by remember(choices.map { it.key }) { mutableStateOf(false) }
-    val selectedChoice = choices.firstOrNull { it.key == selectedKey } ?: initialChoice
-
+    fun changeRole(roleId: String) {
+        if (selectedRole != roleId) {
+            selectedRole = roleId
+            onDraftChanged()
+        }
+    }
+    var roleMenuExpanded by remember(executedSeat) { mutableStateOf(false) }
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
         interactionMode = ClocktowerSquareTableInteractionMode.ReadOnly,
         seatUiModel = { seat ->
             val content = hostSeatContentPresentation(seat, language)
             val visual = clocktowerUndertakerSeatVisual(
-                seatNumber = seat.seatId.number,
-                actorSeat = actorSeat,
-                executedSeat = selectedChoice.executedSeat,
-                language = language,
+                seat.seatId.number, actorSeat, executedSeat, language,
             )
             ClocktowerSquareTableSeatUiModel(
-                seatId = seat.seatId.renderKey(),
-                seatNumber = seat.seatId.number,
-                label = content.primaryLabel,
-                detailLabels = content.detailLabels,
-                isAlive = seat.isAlive,
-                hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                state = visual.state,
-                isCurrentActor = visual.isCurrentActor,
-                badge = visual.badge,
+                seatId = seat.seatId.renderKey(), seatNumber = seat.seatId.number,
+                label = content.primaryLabel, detailLabels = content.detailLabels,
+                isAlive = seat.isAlive, hasUnspentGhostVote = seat.hasUnspentGhostVote,
+                state = visual.state, isCurrentActor = visual.isCurrentActor, badge = visual.badge,
             )
         },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Column(Modifier.fillMaxSize().padding(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                Modifier.fillMaxWidth().weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
-
-                if (!manualSelection) {
+                if (!editing && advised != null) {
                     ClocktowerSingleRecommendationButtons(
-                        recommendations = recommendations,
+                        recommendations = listOf(advised),
                         language = language,
                         labelOf = { choice ->
-                            if (language == "en") {
-                                "Show: ${choice.displayLabel}"
-                            } else {
-                                "展示：${choice.displayLabel}"
-                            }
+                            if (language == "en") "Show: ${choice.displayLabel}" else "展示：${choice.displayLabel}"
                         },
                         onConfirm = onConfirm,
-                        onManualSelection = if (manualChoices.isNotEmpty()) {
-                            { manualSelection = true }
-                        } else {
-                            null
-                        },
+                        onManualSelection = if (automaticOnly) null else ({
+                            selectedRole = lastPreviewRoleId ?: advised.roleId.value
+                            editing = true
+                        }),
+                    )
+                } else if (automaticOnly) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI recommendation" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 } else {
-                    Text(
-                        text = if (language == "en") "Manual selection" else "手动选择",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick = { roleMenuExpanded = true },
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(selectedChoice.displayLabel, maxLines = 1)
+                    Box(Modifier.fillMaxWidth()) {
+                        OutlinedButton(onClick = { roleMenuExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text(selectedRole?.let(roleLabel) ?:
+                                if (language == "en") "Choose character" else "选择角色", maxLines = 1)
                         }
                         DropdownMenu(
-                            expanded = roleMenuExpanded,
-                            onDismissRequest = { roleMenuExpanded = false },
+                            expanded = roleMenuExpanded, onDismissRequest = { roleMenuExpanded = false },
                         ) {
-                            choices.forEach { choice ->
+                            scriptRoles.distinctBy { it.enName }.forEach { role ->
                                 DropdownMenuItem(
-                                    text = { Text(choice.displayLabel) },
-                                    onClick = {
-                                        selectedKey = choice.key
-                                        roleMenuExpanded = false
-                                    },
+                                    text = { Text(roleLabel(role.enName)) },
+                                    onClick = { changeRole(role.enName); roleMenuExpanded = false },
                                 )
                             }
                         }
                     }
                     Spacer(Modifier.height(6.dp))
-                    Button(
-                        onClick = { onConfirm(selectedChoice) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(if (language == "en") "Show to player" else "展示给玩家", maxLines = 1)
+                    val actual = selectedRole?.let {
+                        clocktowerDirectRoleRevealChoice(
+                            step, executedSeat, seats.size, it, scriptRoles, roleLabel,
+                        )
                     }
-                    TextButton(onClick = { manualSelection = false }) {
-                        Text(if (language == "en") "Use recommendations" else "返回推荐")
+                    Button(
+                        onClick = { actual?.let(onConfirm) },
+                        enabled = actual != null, modifier = Modifier.fillMaxWidth(),
+                    ) { Text(if (language == "en") "Show to player" else "展示给玩家") }
+                    if (advised != null) {
+                        TextButton(onClick = {
+                            changeRole(advised.roleId.value)
+                            editing = false
+                        }) { Text(if (language == "en") "Use recommendation" else "恢复推荐") }
                     }
                 }
             }
         }
     }
 }
+

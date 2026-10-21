@@ -1,11 +1,6 @@
 package com.codex.campboardgamehost
 
-/**
- * Persistent-table presentation state for the Slayer's public claimant -> target flow.
- *
- * The domain continues to own whether a Slayer shot is effective. This state only projects the
- * already-authorized claimant/target candidates onto stable physical seat identity.
- */
+/** Public claimant and target mapped onto physical seats; no Host ability eligibility menu. */
 internal data class ClocktowerSlayerTableState(
     val seats: List<HostSeatPresentation>,
     val interaction: HostTableInteractionState,
@@ -30,8 +25,6 @@ internal data class ClocktowerSlayerTableState(
 
 internal fun clocktowerSlayerTableState(
     seats: List<HostSeatPresentation>,
-    claimantCandidateNames: Set<String>,
-    alivePlayerNames: Set<String>,
     claimantName: String?,
     targetName: String?,
 ): ClocktowerSlayerTableState {
@@ -40,32 +33,20 @@ internal fun clocktowerSlayerTableState(
         "Slayer table requires unique player names for the existing Host name-based action state"
     }
     val knownNames = seatsByName.keys
-    require(claimantCandidateNames.all { it in knownNames }) {
-        "Slayer claimant candidates must reference known physical seats"
+    require(claimantName == null || claimantName in knownNames) {
+        "Slayer claimant must reference an existing seat"
     }
-    require(alivePlayerNames.all { it in knownNames }) {
-        "Slayer target candidates must reference known physical seats"
-    }
-    require(claimantName == null || claimantName in claimantCandidateNames) {
-        "Selected Slayer claimant must remain an eligible claimant"
+    require(targetName == null ||
+        (targetName in knownNames && claimantName != null && targetName != claimantName)) {
+        "Slayer target must be another existing seat after the claimant"
     }
 
     val claimantSeatId = claimantName?.let { seatsByName.getValue(it).seatId }
-    val targetCandidateNames = if (claimantName == null) {
-        emptySet()
-    } else {
-        alivePlayerNames - claimantName
-    }
-    require(targetName == null || targetName in targetCandidateNames) {
-        "Selected Slayer target must be a living player other than the claimant"
-    }
+    val targetCandidateNames = if (claimantName == null) emptySet() else knownNames - claimantName
     val targetSeatId = targetName?.let { seatsByName.getValue(it).seatId }
 
-    val selectableSeatIds = if (claimantSeatId == null) {
-        claimantCandidateNames.mapTo(mutableSetOf()) { name -> seatsByName.getValue(name).seatId }
-    } else {
-        targetCandidateNames.mapTo(mutableSetOf()) { name -> seatsByName.getValue(name).seatId }
-    }
+    val selectableSeatIds = (if (claimantSeatId == null) knownNames else targetCandidateNames)
+        .mapTo(mutableSetOf()) { name -> seatsByName.getValue(name).seatId }
     val selectedSeatIds = buildList {
         claimantSeatId?.let(::add)
         targetSeatId?.let(::add)

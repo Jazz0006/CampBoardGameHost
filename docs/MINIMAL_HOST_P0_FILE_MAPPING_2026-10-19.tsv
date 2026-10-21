@@ -1,0 +1,228 @@
+path	decision	replacement_or_retention_condition	evidence_depth
+app/src/main/java/com/codex/campboardgamehost/AppClocktowerLandingScreen.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/AppDealScreens.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/AppGameModels.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/AppGameReviewScreens.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/AppSettingsScreen.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/BotcAiTrace.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApp.kt	REWRITE_COORDINATION	Thin adapter to Session and existing AI; file <=50k	Audited
+app/src/main/java/com/codex/campboardgamehost/CampBoardGameHostApplication.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/BuiltInClocktowerRulesetCatalog.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerCatalogModels.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptJsonParser.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptNormalizer.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/ClocktowerScriptValidation.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/LegacyRulesetCatalogAdapter.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/NoGreaterJoyOfficialCharacterMetadata.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/catalog/OfficialReminderTokenMetadata.kt	KEEP_BUILTIN_CATALOG_REVIEW	TB/NGJ metadata and official script loading; optional dynamic import review	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ActionFact.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ClocktowerGameStateAdapter.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/ClocktowerSemanticHistoryMode.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/CommittedClocktowerSetup.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/DecisionTypes.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/DynamicDecisionModels.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/GameSnapshot.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/GameState.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/InformationModels.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/MurmurHash3.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/RoleCatalogAdapter.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/RulesetRef.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerPlayerContext.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderContractV1.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/StorytellerProviderHistoryPrefixV1.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/domain/TroubleBrewingGameSnapshot.kt	KEEP_CORE_REVIEW	Canonical GameState, action/observation semantics; inspect snapshot write authority	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactDraft.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/ActionFactTimeline.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicContracts.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationDraft.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicObservationLog.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticJson.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/EpistemicSemanticModel.kt	KEEP_HISTORY_PRIVACY_REVIEW	Recipient-scoped actual observations and ordered events; remove redundant projection	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerFlowPlanner.kt	REPLACE_THEN_RETIRE	Script + nextStep(Session)	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerHostInteraction.kt	KEEP_OR_SIMPLIFY	Host->UI step data contract	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerHostInteractionProjector.kt	REPLACE_THEN_RETIRE	Session driven next step, no external caller facts	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionFirstNightFlow.kt	REPLACE_THEN_RETIRE	Script order in Host nextStep	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionNightStepIdentity.kt	KEEP_OR_SIMPLIFY	Stable session round role trigger occurrence step ID	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerProductionOtherNightFlow.kt	REPLACE_THEN_RETIRE	Script order in Host nextStep	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/flow/ClocktowerResolvedFlowFacts.kt	REPLACE_THEN_RETIRE	Derived directly from confirmed ordered events	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/persistence/ClocktowerRulesetPersistence.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/AbilityFunctioningSemantics.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/ClocktowerEffectiveNightState.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/ClocktowerOptionalNightSourceChronology.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/CurrentDemonAuthority.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/DemonNightAttackSemantics.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/DemonSuccessionSemantics.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/PoisonEffectLifecycle.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetContentHasher.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetJsonLoader.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/rules/RulesetKnowledge.kt	REVIEW_DETERMINATE	Keep narrow validated forced mechanics; retire universal candidate domains	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/BotcAiWireTrace.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSession.kt	REWRITE_KEEP_CORE	One writer Session, ordered confirmed events, one pending, atomic persistence	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionAliveBoundaries.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionPoisonBoundaries.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerGameSessionRoleIdentityBoundaries.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerNightCheckpoint.kt	REPLACE_THEN_RETIRE	Session-owned step + pending not UI cursor checkpoint	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerNightTargets.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/ClocktowerVoteStanding.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/DawnCommitIdentity.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/FirstNightInformationLifecycle.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/FirstNightInformationMigration.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/HostCurrentOpenDecisionInventoryV2.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/InitialJointOpeningDirectV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/InitialOpeningRequestV2.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/MayorRedirectDecisionBoundary.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/NoGreaterJoyKlutzHistoryProducerV1.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/OpeningRecommendationV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/PendingPairInformationDecision.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/PersonalDirectOpenAiV1.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerDecisionFoundation.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerGlobalEventProjectionV1.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerProviderGameContextBuilderV1.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerProviderHistoryPrefixMaterializerV1.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerProviderRequestFactoryV1.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerResidualPackageGateV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerStrategicChangeCheckpointV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/StorytellerStrategicContinuationV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/session/TroubleBrewingRuntimeGameProjector.kt	REWRITE_SESSION_REVIEW	One Session ownership or AI adapter, no shadow writer	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupDistribution.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/ClocktowerSetupProvider.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/GeneratedSetupCandidateSource.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/NoGreaterJoyProductionSetupPreparer.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupDiversityHistory.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupDiversitySelector.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupShownIdentityCommitment.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/SetupShownIdentityPolicy.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TemplateRepository.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingDealRoleResolver.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingDrunkSelectionRouter.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingGameSnapshotProjector.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingIntermediateSetup.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingProductionSetupPreparer.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupCommitter.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupDealPlanner.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupPresetJson.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupPresetModels.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupPresetValidator.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupRotationHistory.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/setup/TroubleBrewingSetupRotationRecordFactory.kt	KEEP_SETUP_REVIEW	Two independent across-game anti-repeat contracts protected	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/TroubleBrewingGameSnapshotJsonCodec.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistInteraction.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerArtistTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayOverviewTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDayTableScaffoldUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerDrunkSelectionScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerHostScreen.kt	REWRITE_UI	Render Host-issued step; remove own gameplay cursor/rule checks	Audited
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerKlutzTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNightScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerNominationInteraction.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerPendingNominationTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerResultsScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSetupScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerInteraction.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerSlayerTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/ClocktowerVoteTableUi.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/clocktower/ui/StorytellerAutoPauseScreen.kt	REWRITE_UI_REVIEW	Render/collect input only; remove sequencing/judgement	Package reviewed
+app/src/main/java/com/codex/campboardgamehost/ClocktowerAppModels.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerArtistTableState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerCompactNightUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerBeginnerNightGuidance.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidPresentationSemantics.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidSquareTableUi.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerChambermaidStepMaterializer.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerContrastPolicy.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerCurrentDemonAuthority.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerCurrentResidualScopeV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDayNominationGesture.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDayOverviewTableState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonAttackProductionAdapter.kt	REPLACE_THEN_RETIRE	Host timed Imp outcome/death trigger; preserve narrow attack semantics	Audited
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDirectBooleanResult.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDirectNumericResultUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDirectPairInformation.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDirectRoleReveal.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerDynamicNightAdvance.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerEvilInfoSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerFirstNightEvilInformationPresentation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerFirstNightInformationRequest.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerFortuneTellerSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVoteAuthority.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerGhostVotePresentation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightDecision.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerGlobalFirstNightScalarDecision.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostBottomInsetPolicy.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostFullScreenScaffold.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSeatContentPresentation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSquareTableScaffold.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableContract.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableGameStateProjection.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableLayout.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableReorder.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableSurfaceLayout.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerHostTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerInformationStepBuilder.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerJointOpeningDisplayMatcherV2.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerJointOpeningReviewScreen.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerKlutzTableState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightActionSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightFullScreenOwnership.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightHostProjection.kt	REPLACE_THEN_RETIRE	Host nextStep(Session) pure pending preview, not authority	Audited
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightPresentationRole.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightResultConfirmation.kt	REPLACE_THEN_RETIRE	Immediate private death + dawn publish via Session	Audited
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepMaterializerRegistry.kt	REPLACE_THEN_RETIRE	Thin step display after Host step cutover	Family review
+app/src/main/java/com/codex/campboardgamehost/ClocktowerNightStepUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPairInformationSquareTableUi.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPairPlayerRevealPresentation.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPhaseStorytellerAdapter.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPlainInformationSquareTableUi.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayResolution.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerRevealHandoff.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationRoleCatalog.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerPresentationTheme.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRavenkeeperSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRecurringInformationStepMaterializers.kt	REPLACE_THEN_RETIRE	Thin step information renderer	Family review
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationInteractionState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerResidualDisplayMatcherV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerResidualRequestIdentityV2.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleLocalization.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerRoleRevealChoiceProjection.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSageSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSageStepMaterializer.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberBadge.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSeatNumberLabel.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSessionPlayerCards.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleNumericChoiceUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleRecommendationChoiceUi.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionPresentation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSingleTargetInteractionUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSlayerTableState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableLifeMarkers.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableSeatDensityPolicy.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerStructuredInformationPreparation.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerTableVoteState.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerUndertakerSquareTableUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/ClocktowerVoteHistoryRecord.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/CommonPlayersDefaultPolicy.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/debug/DebugFlightRecorder.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/debug/DebugFlightRecorderCore.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/HostBottomActionBar.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/HostInteractionUi.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/HostSeatingRoster.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/HostSeatingSetupFlow.kt	KEEP_SETUP_REVIEW	Protect cross-game diversity, verify current consumer	Filename-level
+app/src/main/java/com/codex/campboardgamehost/MainActivity.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/persistence/AppPreferencesStore.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/persistence/GatewayTokenEnvelopeV1.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/persistence/PersonalOpenAiSettingsStore.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/persistence/StorytellerGatewayConnectionStore.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/persistence/TroubleBrewingSetupRotationHistoryStore.kt	KEEP_SETUP_REVIEW	Protect cross-game diversity, verify current consumer	Filename-level
+app/src/main/java/com/codex/campboardgamehost/PlayerExperiencePicker.kt	REVIEW_REQUIRED	Product responsibility and all consumers to audit, no automatic deletion	Filename-level
+app/src/main/java/com/codex/campboardgamehost/SeatingFirstSetupUi.kt	KEEP_SETUP_REVIEW	Protect cross-game diversity, verify current consumer	Filename-level
+app/src/main/java/com/codex/campboardgamehost/StorytellerAiSettingsPanel.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level
+app/src/main/java/com/codex/campboardgamehost/StorytellerOperationMode.kt	KEEP_AI_REVIEW	Preserve live initial/later recommendation, parser, memory, modes, preselection	Filename-level

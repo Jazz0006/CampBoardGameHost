@@ -25,14 +25,35 @@ internal fun ClocktowerSessionState.confirmedPoisonTargetName(round: Int): Strin
         }.name
     }
 
-/** Commit the rules planner's carry/expiry; it cannot choose a different poison victim. */
-internal fun ClocktowerGameSession.commitDawnPoisonCarry(
-    intent: DawnPoisonCarryIntent,
-    expectedGameStateRevision: Long,
-): Boolean {
-    check(state.phase == StorytellerPhase.NIGHT) { "Dawn poison settles from Night." }
-    require(intent.targetSeat == null || intent.targetSeat == intent.previousTargetSeat)
-    return settlePoison(intent.targetSeat, intent.previousTargetSeat, expectedGameStateRevision)
+/** Finalize one confirmed death/role exit before its state can be saved or observed. */
+internal fun ClocktowerSessionState.expirePoisonAfterConfirmedSourceExit(
+    previous: ClocktowerSessionState,
+): ClocktowerSessionState {
+    val source = previous.gameState.players.singleOrNull { it.alive && it.actualRole.value == "Poisoner" }
+        ?: return this
+    if (gameState.playerAt(source.seat)?.let { it.alive && it.actualRole.value == "Poisoner" } == true ||
+        confirmedPoisonTargetSeat(round) == null) return this
+    // A raw state edit is not evidence of an actual death or identity change.
+    val exit = actionTimeline.entries.lastOrNull { entry ->
+        entry.point.globalSequence >= previous.nextTimelineGlobalSequence && when (val fact = entry.fact) {
+            is ActionFact.Death -> fact.targetSeat == source.seat
+            is ActionFact.Execution -> fact.targetSeat == source.seat
+            is ActionFact.RoleChange -> fact.targetSeat == source.seat
+            else -> false
+        }
+    } ?: return this
+    check(gameStateRevision < Long.MAX_VALUE && nextTimelineGlobalSequence < Int.MAX_VALUE)
+    val expired = ClocktowerGameSession.commitGlobalActionFact(
+        semanticHistoryMode, actionTimeline, epistemicObservationLog, nextTimelineGlobalSequence,
+        ActionFactDraft.Poison("poison-source-ended:$gameId:${exit.fact.actionId}", phase, round,
+            nextTimelineGlobalSequence.toInt() + 1, null),
+    )
+    return copy(
+        gameState = gameState.copy(players = gameState.players.map { it.copy(poisoned = false) }),
+        gameStateRevision = gameStateRevision + 1,
+        actionTimeline = expired.actionTimeline,
+        nextTimelineGlobalSequence = expired.nextTimelineGlobalSequence,
+    )
 }
 
 /** The outgoing Day owns expiry, before the next Night phase is committed. */
@@ -82,14 +103,14 @@ private fun ClocktowerGameSession.gameStateWithPoisonTarget(targetSeat: Int?): G
 }
 
 /**
- * One confirmed Host poison transition: explicit night choice, Dawn carry/expiry or outgoing
- * Day expiry. Mechanical flags, revision and globally sequenced fact commit together.
+ * One confirmed Host poison transition: a real night choice or outgoing Day expiry.
+ * Night poison persists naturally into Day; no separate carry/clear decision exists.
+ * Mechanical flags, revision and globally sequenced fact commit together.
  * A semantic expiry can be a fact even if the poisoned seat was already killed.
  */
 internal fun ClocktowerGameSession.commitConfirmedPoisonTransition(
     draft: ActionFactDraft.Poison,
     expectedGameStateRevision: Long,
-    // Dawn carry/expiry resolves an existing choice; it must not revoke pending succession.
     preserveNightChoices: Boolean = false,
 ): TimelineBoundActionFact {
     require(draft.phase in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT, StorytellerPhase.DAY)) {

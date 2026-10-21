@@ -1,685 +1,112 @@
+**2026-10-21 MINIMUM COMPLETE GAME — implementation complete, Cloud full 654 / 147 suites / 38 UI, APK and R2 shell pass; exact production code e73e4807 full Android CI #4503 / R2 #4079 SUCCESS; STAGE 1 CLOSED:** Actual CampBoardGameHostApp tests now cover Landing → player/seating/script setup → production dealing → first night → real nomination drag/vote/day end → later-night death → private-file App recreation → terminal result/reveal → restored quick restart, for TB and NGJ. A third test covers interrupted dealing from the same saved Session. Fixed the two actual blockers: late initial save and missing pre-game seating on restored quick restart. No new game/state/recovery object. Only randomness is injectable; all setup/game callbacks/storage are production. New 3 tests failed before the fix and pass after it. Exact full/CI validation has passed; stage 1 is CLOSED; next is whole-tree traversal and large deletion, with UI details postponed. See docs/MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md. Do not resume indefinite local UI refinement or report the earlier actual-entry gap as still open.
+
+**2026-10-21 SINGLE GAME OBJECT clarification:** Complete games must run on the ONE ClocktowerGameSession; no parallel game facts/progress or different legacy prerequisites. This batch removes SessionView/App projection storage and NightCheckpoint wiring; live/restored card presentation no longer needs setup cards. UI redraw tick and input drafts are not game authority. Catalog, AI DTOs and persistence are adapters to the same Session, never another game. Stage order remains minimum complete games → whole-tree deletion → UI detail optimization. Cloud full 651 (146 suites / 35 UI), APK and original R2 shell pass; exact production code 3268440f full Android CI #4501 and R2 #4077 SUCCESS; see roadmap/handoff for exact acceptance and remaining actual-entry gaps.
+
+**2026-10-21 LATEST OWNER PRIORITY — supersedes earlier P0-first / P4 refinement ordering:** Finish the complete game flow with the minimum playable implementation FIRST; THEN traverse the entire codebase and delete obsolete/redundant features at scale; optimize UI and detailed interactions AFTER cleanup. Stage 1 fixes actual play blockers, wrong mechanical progression/results, confirmed-record/privacy corruption and unsafe continuation. Do not spend this stage on cosmetic/detail UI, speculative abstractions, exhaustive combinations or shrinking oversized files as a prerequisite. Keep one Session, ordered confirmed facts, atomic/idempotent confirmation, D2 semantics, both builtins, current AI and both inter-game diversity requirements. Replace necessary paths and delete superseded consumers together; no permanent dual stack. The <=50000B final source requirement belongs to cleanup acceptance, not a gate before the playable loop. Next action: assess actual creation→first night→day→later nights→ending→safe reload gaps, then implement the highest-impact blocker. Current roadmap/handoff define stage exit criteria. Production code remains 9b3cee4c / full 646 / CI #4498 / R2 #4074; this route adjustment is docs only.
+
+**2026-10-21 Night P4 follow-up:** From 9ec8b969, JudgeScreen and actual Imp confirmation now read one Session self-kill/succession decision in existing RoleIdentityBoundaries; UI no longer calculates protection/Scarlet/Minion eligibility. Shared first/later-night role materializers, canonical waking actors and Session identity/revision draft keys replace duplicated UI paths. Production net -86 lines/-4651B, no files deleted; App 118438B and Night Host 63094B remain oversized, Session 48526B. New 3 real Host UI + 3 Session cases; Cloud full 646 (146 suites / 33 UI), APK and original R2 shell pass; exact production code 9b3cee4c full Android CI #4498 and R2 #4074 SUCCESS. Continue information/AI confirmation, save/reload and file-size audit. Current roadmap/handoff take precedence over historical entries below.
+
+**2026-10-21 independent audit:** Settings now gate connection editing until stored values arrive (inherited load/edit race); 3 real UI regressions added, Cloud full 629/APK and exact code 23590475 CI #4493/R2 #4069 pass. A further reviewed fix clears current-request busy in finally when live credential changes cause stale exits; it preserves newer-key ownership; final code bc263581 passes full Android CI #4494 and R2 #4070, Cloud full 629/APK. The confirmed Poisoner source-exit bug is now fixed in the sole Session publication boundary: actual Death/Execution/RoleChange ends its active poison atomically. Cloud full 640 (30 UI), APK and R2 shell pass; exact production code 6a76a57c passes full Android CI #4496 and R2 #4072. Continue remaining Night UI/AI ownership and file-size convergence; full rebuild/device acceptance remains incomplete. See `docs/MINIMAL_HOST_P4_REVIEW_2026-10-21.md`.
+
 # CampBoardGameHost AI Development Instructions
 
-## Current product authority: minimal Host (2026-10-17, supersedes prior rules-engine requirements)
-
-The owner has explicitly changed the product boundary: build a minimal Host for current game
-state, one authoritative game record, and basic operations. Remove Host game-rule legality
-validation, clue computation, legal-candidate enumeration, registration-witness inference,
-and manual rule/clue assistance. AI provides recommendations; the Storyteller is responsible
-for game-rule correctness. A confirmed result such as “Empath received 1” is recorded and
-shown as that result, without reconstructing why it is legal.
-
-Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, `docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md`,
-and `docs/NEXT_DEVELOPMENT_HANDOFF.md` before continuing. The old behavior-preserving D5
-extraction plan is suspended. Start the next campaign with a deletion-boundary audit, not
-further extraction of rule machinery that is now intended for removal.
-
-Retain data integrity: one game-truth owner, ordered confirmed facts, real player/seat/game
-identity, atomic state/record updates, duplicate prevention, rejection of stale AI responses,
-and private-information protection. These are NOT game-rule legality checks. AI suggestions
-remain proposals until explicitly confirmed or processed through a separately specified
-authorized execution flow; this correction does not authorize arbitrary AI writes.
-
-Delete first; event coverage, crash continuation and recap may remain explicit gaps. Do not
-restore an independent save system, exact UI reconstruction, duplicate textual history,
-compatibility scaffolding, or a new generic AI execution framework. Basic manual entry and
-state editing remain necessary even though rule assistance is removed. **Undercover retirement (owner instruction, 2026-10-18):** Undercover is explicitly in scope for complete deletion. Remove its game mode, words/roles, game screens, startup, outcome logic, settings, resources and exclusive tests, retaining only Clocktower. This overrides earlier directions to preserve Undercover.
+**2026-10-21 Cloud follow-up:** AI connection preference lifecycle is owned by `StorytellerAiSettings`, remembered at the app root; per-game mode and Session remain separate. Retired unused DemonNightAttackSemantics/PoisonEffectLifecycle and exclusive tests after production-consumer audit. Cloud full 626 (27 UI), APK and original R2 shell pass; exact code f852b04f passed full Android CI #4492 and R2 #4068. Current roadmap/handoff describe this batch and remaining oversized App/Night Host.
 
-This section overrides conflicting older instructions anywhere in this repository to preserve
-Host legality, rules semantics, legal domains, inferred witnesses or rule-specific regression
-coverage. Such production code and tests may be retired together after consumer/dependency
-audit. Security, privacy, data-integrity tests and applicable CI/R2 remain required; update
-obsolete architecture guards rather than retaining deleted product behavior to satisfy them.
-Older recovery/architecture documents below are historical where they conflict with this section.
-Local Codex work reads and writes the local project directly; Mini MCP is not required.
+## CURRENT AUTHORITATIVE PLAN — Minimal Host Architecture Rebuild (approved 2026-10-19)
 
-## Evidence-first validation policy (2026-10-15; current authority)
-
-- **Default to evidence-first delivery, not mandatory TDD.** Before changing code, define the user-observable acceptance criterion, risk, owning boundary, and cheapest independent proof. Do **not** require a new test file, artificial RED, or RED/GREEN trace for each new feature, bug fix, source edit, or intermediate wiring step.
-- Choose evidence by risk: existing regression tests, focused deterministic assertions, integration tests, Android Studio/ADB real-device flows, inspected API request/response and Host verdict, logs, compile/static checks, or reviewed diff. AI-authored tests alone do not prove a feature works; compare against independently defined requirements and real observations.
-- Write and retain durable automated tests when they efficiently protect a stable, meaningful invariant or demonstrated recurring defect. Test-first remains **optional and encouraged when useful** for deterministic rules, authorization, identity, persistence, concurrency, security, and Host legitimacy; never an unconditional sequence requirement.
-- For UI, Storyteller prompt/strategy quality, model timing, interaction and multi-night flow, prefer representative end-to-end/device and controlled real-model evidence. Do not encode one speculative model answer as a golden result. Real paid calls need explicit separate budget approval and cannot run implicitly in CI.
-- Do not weaken Host legality/fact authority, safety, security, user-data integrity, privacy, or necessary automated regression coverage to avoid testing. Retire obsolete/duplicated tests only after checking remaining contract coverage. Existing CI/R2, independent diff review, exact-head and merge gates remain in force.
-- This section supersedes any older mandatory 'new behavior -> RED -> GREEN' wording in this file or ancillary documentation; `docs/TESTING_STRATEGY.md` supplies evidence tiers and execution cadence, not an obligation to manufacture RED.
-
-## Purpose-before-implementation / anti-overengineering (2026-10-16; permanent rule)
-
-- **Clarify the real purpose before implementing.** For every feature or data model first state who consumes it, what concrete user outcome it enables, and the *smallest sufficient* acceptance example. If a field/event/API/test does not directly support that outcome or a demonstrably required rule/recovery invariant, do not add it. Do not infer a need for exhaustive technical logging, exact event sourcing, speculative extensibility or perfect reconstruction from a request for a simple AI-readable game record.
-- **Audit and delete instead of accumulating.** First examine existing data and consumers. Prefer deriving one concise record from confirmed Session truth rather than creating separate durable audit/event sources. Delete obsolete writers/types and redundant entries together with their legacy consumers when safe. For required mechanical internals, identify their rule/recovery owner and keep them **out of the player/AI log**; retire them after a verified Session-state replacement, not via blind removal.
-- **Learned failure mode:** A1 history expansion implemented extra technical facts before confirming the actual goal: *one minimal confirmed game log for incremental AI advice and final player recap*. Never repeat purpose-blind feature expansion.
+**2026-10-21 code checkpoint:** `f4d78d5c70c55be988c1daf29558fde2e0c82305` is pushed on Draft #335 (P3 B/C, main Day/ending consumers, single-Session AtomicFile persistence/relaunch). Local fast 612/full 639 (27 UI), APK and original R2 script pass; exact full Android CI #4490 and R2 #4066 both succeed. The prior in-progress Artist test compilation failure is fixed and source is committed. Day/ending facts belong to Session; EndConfirm/KlutzLearned and their old controllers/tests are physically retired. Session is <=50000B, but App/Night HostScreen remain oversized; P0/P5 whole-tree review, remaining UI/AI responsibility and physical-device/process-kill acceptance are incomplete. Preserve original untracked package files. Follow current roadmap/handoff; do not claim the entire rebuild accepted or merge/retarget/rebase/force-push.
 
-## Single-authority / replace-and-retire / practical recovery policy (2026-10-16; current authority)
-
-- **One reliable current Session object + one logically ordered typed game history.** For Clocktower, the Session is the sole authority for all accepted roles, status, phase/progress and rulings; typed action and actual player-observation logs share global chronology. UI/PlayerCard, AI plans and strategic memories, snapshots, archive and Recovery are views, drafts or consumers, never independently mutable facts.
-- **One minimal game log, not a technical history.** Record only confirmed player actions, Host decisions/outcomes, actual player-received information, and Storyteller-entered public identity claims, with necessary night/day context. Never annotate an accepted event by AI recommendation versus human override: `seat 3 Empath received 1` is the same event in every mode. Drunk selection is a confirmed first-night event, NOT merely part of the proposed initial setup; only Host-accepted Drunk truth may be logged or sent to AI. A player's publicly claimed identity is a *claim*, never actual-role truth. No unaccepted proposals, drafts, UI transitions, repeat publications, poison-expiry/carry calculations, internal phase substeps, timestamps or redundant audit trails in the AI/game-review record. Internal cursors/state may remain solely for safety and rules, not as extra user-facing history.
-- **Replace AND retire.** Before creating or migrating to a unified API, inventory every old API, field, writer, reader, projection, recovery field and test that it replaces. Migrate real production consumers, verify behavior, then **delete superseded implementations promptly**. No indefinite old/new dual tracks, shadow compatibility, duplicate state or synchronization layers. Temporary migration bridges must have explicit removal criteria; do not delete still-required Host rules or legal verification based on misleading names.
-- **Commit at the real confirmed step, not at recommendation arrival.** Usually the UI Next action, but explicit confirmation or actual player-information publication is also a commit boundary. Host validates and Session atomically commits accepted state + ordered typed fact; drafts and unaccepted AI plans are not game truth. Reject stale or duplicate commits. Initial joint AI planning is retained, while one-click whole-opening/whole-residual adoption and associated production state machines are retired through a controlled migration. Assisted preselects one step; automatic commits each safe legal current step without adoption UI; manual uses the same pipeline.
-- **Practical crash recovery, not perfect historical replay.** A reopened game must show the correct grimoire, preserve what players were actually told, and resume from a safe game step. It need not restore exact UI inputs, animations, provider hidden reasoning, or arbitrary historical GameState. Uncommitted work may be re-entered; never silently revise already confirmed roles, deaths or revealed information. Keep recovery minimal and derived from the same Session; no old-format compatibility obligations while the app is in development.
-- **Emergency Recovery is strictly an immediate interruption safeguard (permanent owner decision, 2026-10-17).** It exists only so players can continue the **same active game after an accidental app exit/process loss**, not for long-term or deliberate Save/Load. The existing current-format/token and <=4-hour stale-data guard are upper-bound hygiene, not a promised four-hour save feature. Reopen with the correct grimoire, already-shared information and a safe step; abandon incomplete drafts or let the Host re-confirm them. Never develop next-day/archival unfinished-game restore, past-release/legacy format fallback, precise UI re-entry, arbitrary historical replay, comprehensive chronology proof, or duplicate persisted mechanics solely for Recovery. Before adding any Recovery field or validator, identify a currently reachable crash-resume consumer and explain why Session/current confirmed facts cannot supply it. Delete unused fields, codec keys, validators, and tests together instead of building compatibility layers. Do not compromise current-game identity, published-information integrity or safe resumption to achieve smaller code.
-- **Undo is optional:** edit uncommitted drafts freely; do not build a general undo/event-sourcing engine. A bounded last-step correction is a later nonblocking convenience only if it cannot contradict actual player knowledge or existing AI history.
-- **Scope and precedence:** [current ARCH-CLEANUP-2 contract](docs/ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) supersedes older arbitrary-time replay / exact UI restore / bundle-adoption acceptance requirements; historical audit evidence remains valid. Treat this section as a long-lived engineering rule for future features, not just this cleanup.
-
-> Role: **NORMATIVE / PROJECT-LEVEL AI WORKING AGREEMENT**  
-> Effective: 2026-09-23  
-> Applies to: ChatGPT, Codex/Luna, and other AI development agents working on this repository.
+**Current execution environment (owner correction 2026-10-21):** Codex Cloud checkout at `/workspace/CampBoardGameHost`; read and edit all source files, including large files, directly in this environment. Run tests/builds here after configuring the required toolchain and dependencies. Use Git directly for authorized fetch, branch synchronization, commits and pushes; use GitHub tools for PR operations and independent exact-SHA CI review. MiniMCP and the Windows development machine are not required. Before Gradle commands, source `/workspace/.cloud-setup/activate.sh` in the same shell to reuse the preinstalled Android SDK and Gradle cache. Historical Windows paths and local test counts below describe prior evidence, not this environment. Preserve existing Draft/merge/history-rewrite and paid-API authorization boundaries.
 
-## 1. Decision authority and division of work
+**Latest cleanup implementation (2026-10-20):** Code `311191a30d6b0d83b5cf2d6de2a67905b526e596` is on Draft #335. The owner authorized dead-path deletion followed immediately by whole-night control migration. Session facts now choose the current night interaction; UI index/start/pendingAdvance, Dynamic/Fixed resolvers and old Planner/Projector chain were physically retired. Local fast 593/full 616 tests (23 UI) and APK pass; exact full Android CI #4486 and R2 #4062 both pass. See the current audit/roadmap/handoff; this is not full-tree, process-recovery, file-size or all-role/device acceptance. Do not execute the older “continue D2 before replacing the night router” instruction below. No merge/retarget/rebase/force-push authorization.
 
-The default collaboration model is:
+**Read FIRST:** [docs/MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md](docs/MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md) and the **latest human decisions** [docs/MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md](docs/MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md), then `docs/CURRENT_DEVELOPMENT_ROADMAP.md`, `docs/NEXT_DEVELOPMENT_HANDOFF.md`, and `docs/TESTING_STRATEGY.md`. This current design OVERRIDES old F12/ARCH-CLEANUP/P1 and any conflicting historical entries below. Keep older status as historical evidence, never execute obsolete instructions.
 
-```text
-ChatGPT / Chat
-  = architecture / ownership / product semantics
-  = scope / slice / invariant decisions
-  = implementation specification
-  = test strategy and acceptance criteria
-  = final diff / CI / result analysis
+**2026-10-20 LATEST OWNER DECISION — D2 private-information flow (supersedes older D text everywhere; partially implemented and CI-verified):** Information-role screen selects AI/manual option; "Show to player" opens fullscreen preview; Back returns to SAME role, highlights last preview, allows changing candidate and preview again; only "Next" commits ONE final last-previewed Observation through Session and advances Host step, no historical records for provisional previews. An interrupted/unconfirmed step can simply restart/reselect/reveal on relaunch; no pixel-perfect recovery or persistent UI pending. Confirmed Next is atomic/idempotent and no cross-role Previous. Auto AI chooses Storyteller discretion but cannot substitute for human player choices or actual display. The representative Poisoner→Monk→Imp→Butler Session-confirmed cutover is already complete. The owner subsequently reported the flow runnable on a device and authorized cleanup plus the Session-based whole-night router cutover; continue from the latest implementation checkpoint, not this older sequencing note. The prior requirement 'publish on open / auto advance on dismiss' is explicitly revoked. Preserve actual production AI and both builtin scripts.
 
-GitHub Connector
-  = default repository and remote-control interface
-  = ordinary read/search/edit work
-  = branch / PR / CI / R2 / review audit
-  = normal post-implementation acceptance workflow
+**Approved execution (revised 2026-10-21):** Minimum complete game flow → whole-tree audit and large deletion → UI/flow-detail optimization. Old P0–P5 labels are responsibility/history references, not the current execution order. Preserve A/B/C/D2 and one-writer facts; focused consumer inspection and replacement deletion remain required for each actual change, while exhaustive inventory/size convergence is stage 2. Validate real behavior at the risk level of the change, without polishing every role UI before the loop works.
 
-Mini MCP + Codex CLI
-  = supplemental complete-local-context path
-  = primarily large/truncated-file editing
-  = optional full-context local analysis when design genuinely requires it
+**Sole game authority (FINAL, owner-approved 2026-10-20):** one Session/GameState + confirmed ordered events + stable step identity; **no persistent pending operation, no cross-role Night Previous, no second writable GameState**. Confirming the **current** Night step commits its action/mechanical effects immediately and advances; information previews are UI-only, and the current role's explicit Next commits exactly one final Observation and advances (D2 supersedes the earlier reveal-on-open/dismiss-advances contract). No night Start/Ready screen: immediately present the first actionable step, including first night. No separate Dawn/public-death broadcast transaction: private Night Death immediately affects later wakes; Day table displays confirmed deaths. No separate Day EndConfirm page: confirm end-of-day on the shared Day table once. NGJ Klutz pending real choice is derived from Death/Execution facts, **not** a standalone KlutzLearned/announcement event. UI drafts are not authority. Atomic persistence supports safe continuation with file-failure and actual App recreation regressions (physical-device process-kill acceptance remains separate); never resurrect stage-on-Next/back-one-step or a separate recovery engine.
 
-GitHub
-  = canonical remote repository / PR / CI / review state
-  = normal Android validation / independent acceptance surface
-```
+**Host decides all determinate rule-driven flow/effects** (night order, wake/skip, protection, poison time, death, trigger, succession, day nomination/vote/execution, winning, unique clue values); only genuine player inputs and permissible discretionary results go to human/AI. Do NOT restore broad Host candidate domains, world enumeration, scores, old vetoes, or parallel authoritative UI state. Preserve TB 5–15, NGJ 5–6, actual AI opening/later-night/prompt/parser/memory/modes, two inter-game anti-repetition behaviors, real shown-information privacy/chronology and security. Optional custom/Homebrew is not a current product requirement. No paid API without explicit approval.
 
-Architecture, decomposition boundaries, product semantics, test strategy, remote audit and checkpoint acceptance are made in Chat unless the user explicitly delegates a decision.
+**Latest verified code (2026-10-20):** `af35cee951539df689552fb3c3ff97b7b2b5861e` / Draft PR #335; full Android CI #4484 and R2 #4060 SUCCESS (Android full/APK, ASP/Clingo and gate). Local fast 671 / full 692 tests, including 21 real Compose interaction regressions; APK built. D2 system Back returns to the current role, all full-screen Next buttons share the Host preview gate, explicit advice retry is not blocked by stale explanatory text, and a real typed player query with advanced input revision can request advice before its Observation without inventing facts. See docs/D2_INTERACTION_ACCEPTANCE_2026-10-20.md for the exact component vs Host/Session coverage. Code/automated interaction checkpoint is verified; physical-device/pixel/field acceptance and paid API testing are not claimed. NGJ retains its existing MANUAL new-game mode boundary. Whole-night nextStep, old UI cursor/handoff retirement, action explicit-Next convergence, B/C, persistence and P5 remain incomplete.
 
-The project uses three explicit local-model authority levels:
+**Previous code baseline and historical scope (latest above):** `refactor/minimal-night-flow-20261019` / PR #335 (Draft, stacked on #334) at `35a2c880646b3b2d1af8d3bd69a2636e57db9001`; Android CI #4479 SUCCESS and R2 #4055 SUCCESS, including Android tests/Debug APK. Codex Windows local checkout was safely fast-forwarded from code `35a2c88` to docs-only `cf3dd516`; MiniMCP is not used in this session. Changes through this SHA include D2 UI-only fullscreen preview/back, sole Observation on Next, current-step stale checks, three-mode candidate/wait/retry improvements, live FT/Chambermaid/Ravenkeeper target revalidation, reliable typed numeric shortcut, and Washerwoman/Librarian/Investigator pair last-preview highlight restoration. A Kotlin compilation error in `e0426d5` CI #4478 was repaired at `35a2c88`; only the latter's passing CI is acceptance. Remaining D2: role-by-role device visual/interaction acceptance, stale/retry end-to-end behavior, other specialist highlights, and broader uniquely determined clue production. **Whole-night `nextStep(Session)`, removal of `nightStepIndexState`/`nightStartedState`/`pendingNightAdvance`/old resolvers, B/C day flow, full TB/NGJ coverage and practical interruption recovery remain unverified/unimplemented.** Next sequence: finish demonstrable D2 gaps, then do a consumer-complete Host step-router cutover and delete replaced UI flow in the same verified batch. Historic entries below are evidence only; no merge/rebase/force-push without approval. Any docs-only CI must not be counted as a new code build.
 
-- **L2 — ChatGPT architecture authority:** always active; owns design, scope, owner selection, invariants and acceptance.
-- **L1 — strong Codex read-only analysis:** optional only when complete local context is materially required before Chat can design safely; return ownership/code-path/risk/patch-plan analysis to Chat before implementation.
-- **L0 — Luna mechanical execution:** default local implementation mode after Chat has fixed the design; read the complete file/worktree, apply the approved change, inspect the diff and make only implementation-local adjustments required by that design.
+### Legacy development history (non-authoritative where conflicting)
 
-Luna must not independently redesign a requested slice, broaden scope, substitute a different architecture, perform remote PR acceptance, or choose a different semantic implementation merely because it is easier locally. If the approved plan becomes ambiguous against the real code, stop and report rather than inventing a new design.
+The dated instructions below describe earlier decisions, source-audit ledgers and CI evidence. Preserve still-applicable security, AI, test and tooling practices, but **do not resume old F12 ordering, narrow-only #335 night fixes, historical recovered-Rules work or incompatible commit-on-Next design**. The approved rebuild contract above is the only current decision hierarchy.
 
-### Repository workspace rule
+**Owner's latest execution decision, superseding the earlier deletion-retrospective requirement:** Stop auditing or restoring already-deleted gameplay-rule calculators; continue clean net deletion where appropriate. Deferred, minimal Host determinate clue outputs (e.g. Chef/Empath/Fortune Teller and pair unique-answer exceptions) can be rebuilt **later**, without reusing the old general Rules candidate/validity engine. **EXCEPTION: night GAME FLOW must work NOW**: Host alone chooses fixed script night order, conditional wake/skip (including a Fortune Teller killed before her turn), death-trigger abilities, refreshed cursor, and real Storyteller choice boundaries such as Mayor redirect or Demon successor. Neither a player nor AI may decide *whether* to wake Fortune Teller or Undertaker. Preserve Session authority and current AI; DO NOT treat current preview-only death projection as fully committed GameState death. Keep Draft PR #335 and all other cleanup paused. Current night-flow code change `47ce60da` is awaiting exact Android CI/R2 verification; no claim of complete session-time death integration yet.
 
-- Use the **GitHub Connector by default** for ordinary repository work and GitHub-native control-plane work when the target can be read/edited safely through that interface.
-- Use Mini MCP + Codex CLI primarily when connector truncation or the need for complete local context makes a large-file edit unsafe or inefficient through the connector.
-- For a large/truncated file whose design is already clear, Chat specifies the exact owner/scope/behavior/forbidden changes and Luna L0 performs the complete-file mechanical implementation locally.
-- If complete local context is required before design is safe, use strong Codex L1 for **analysis only**, return the findings to Chat, then let Chat choose the design before Luna L0 implements.
-- After Mini MCP/Codex large-file work is committed and made visible on the remote branch, return immediately to GitHub Connector for exact remote diff/parent/scope audit, PR/CI/R2/review inspection and result analysis.
-- Mini MCP's local Git path may be used only as needed to materialize the approved local large-file commit remotely; Mini MCP's GitHub/CI tools are recovery/cross-check tools, not the default project control plane.
-- GitHub Actions one-shot patching remains an exceptional fallback when local Mini MCP/Codex editing is unavailable or an exact locked remote mutation is uniquely safer.
-- Always inspect the complete local diff before any local commit. Never stage unrelated working-tree changes.
+**Latest owner priority 2026-10-19 (overrides general F12-L execution order):** Pause the other whole-repository Host Rules cleanup work. Finish the **minimal night-game-flow architecture first**, exclusively in Draft PR #335 (`refactor/minimal-night-flow-20261019`). The desired model is **one built-in script order + canonical Session GameState + confirmed ordered events -> actionable night steps -> Host UI / confirmed events**. No second writable game object or new generic dependency/sort/projection frameworks. **2026-10-19 later owner correction: Host DOES execute determinate game rules (death/protection, wake/skip, fixed truthful information) using one canonical state and script; only genuinely non-unique rule-authorized choices go to AI or a human Storyteller. Previous 'no host gameplay-rule adjudication' is revoked.** Preserve current AI recommendation code, TB/NGJ built-ins, Night UI, Session safety, and all actual player information/event history. Critical unfinished boundary: old predicted Demon attack/death in `ClocktowerNightHostProjection` still drives Mayor/Ravenkeeper/Sage conditional steps, while explicit actual death confirmation is currently only at night-end. Replace blanket *pre-trigger* manual actual-outcome confirmation: apply **deterministic** attacks and resulting wake/skip immediately and privately; pause for AI/human only at genuine rule-choice boundaries (e.g. functioning Mayor redirect, uncertain registration). Preserve optional explicit correction of a real misplay as a separate recorded fact. Never mistake the attack selection alone for a death without evaluating protection, poison, role and redirect; do not publicly announce deaths before dawn. Leave PR #334 and unrelated cleanup unchanged. Three code commits in PR #335 through `0b9f83b2477a2991fbdfac3b09f62e28a603e250` have Android CI #4419 / R2 #3999 success but **do not constitute completion** of the whole minimal flow.
 
-## 2. Execution-path priority
+**Historical read-first list (superseded):** The currently required first read is `docs/MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md` followed by roadmap, handoff and testing. Older Host Rules documents are evidence/context only.
 
-Choose the simplest safe path that preserves architecture, exact remote state, testing, diff review and merge governance.
+**Owner correction 2026-10-18 (supersedes earlier AI retirement plan):** The cleanup target is excessive **Host-owned gameplay-rule legality checking**, NOT the already developed AI storyteller recommendation product. Restore any AI recommendation path accidentally disabled by B3 before resuming Host Rules cleanup. Never delete working AI functionality merely because it uses an old candidate adapter; isolate such adapters from Host fact-commit gates, and replace only when an equivalent working AI path is verified.
 
-### Path A — GitHub Connector default
+The owner distinguishes the **current two-module cleanup target (minimal Host + existing AI)** from a **possible future third, greenfield read-only Rules module ONLY after all old Rules implementation/callers/tests are deleted**. The future module is not a reason to retain or partially rebuild any existing Rules code:
 
-Use for ordinary repository reads/searches, small/medium safe edits, branch/PR state, CI/R2/review inspection and result analysis.
+- Host Core: sole authoritative GameState, ordered events and **minimal deterministic rules executor** for all known fixed outcomes (night order, valid actor wake/skip, Imp attack/protection/death, truthful forced clue), plus safety, privacy, atomic commits, deduplication and recoverability. Android, WebHost and EvidenceLab eventually share state/event semantics. Host decides only what rules uniquely determine; it neither invents Storyteller choices nor silently alters information actually shown to players. Real-world misplays/corrections can still be explicitly recorded separately from the computed canonical outcome.
+- Rules distinction: **do NOT delete necessary deterministic gameplay execution** under the banner of retiring the old Rules system. Remove broad legal-domain enumeration, scoring, world-search, duplicate/shadow state, overgeneralized frameworks and redundant rule vetoes. Reuse or simplify proved-correct narrow fixed-outcome logic where practical; no independent third Rules service is required now. If a future optional read-only Rules advisory module is built, it must not become another writable GameState. Do not retrospectively audit or restore deleted legacy rule engines now; only preserve or simplify necessary existing Host night-flow execution, and rebuild other forced-outcome computation independently when prioritized.
+- AI Clues: **preserve** opening/later-night recommendations, prompts, transport, parser, strategic memory, preselection and both AI modes. Only request AI/human judgement when rules leave more than one genuinely permissible outcome (including Drunk/poisoned misinformation, Recluse/Spy discretionary registration, Mayor redirect, setup strategy); Host computes and commits unique forced results without an AI request. AI plans from canonical Host facts and confirmed events, not a huge Host-enumerated candidate-domain payload; Host may check that a suggested discretionary choice fits the narrow rule boundary. Identity/revision/privacy/atomic safety remain Host responsibilities. No paid API calls without authorization.
 
-GitHub remains canonical remote truth.
+**Corrected phases:** R0 repair B3 AI pair recommendation and validate; P1 **completely retire the old Host Rules engine and all its non-essential coupling**, without disabling existing AI; P2 selectively retire obsolete experiments/duplicates/optional features; P3 converge exactly one Host GameState/Session and ordered event record; P4 responsibility-led UI reduction and **every source file <=50,000 bytes**; P5 finish whole-tree audit, cross-project state/event contract and tests. **A fresh Rules module can be considered only in a subsequent, separately approved phase after old Rules removal; it is not an objective of this cleanup phase.**
 
-### Path B — Chat design -> Mini MCP/Codex large-file execution
+Routine gameplay must **not** ask a human or AI to choose the answer when the active rules uniquely fix it; Host computes the result. Maintain a distinct, explicit misplay/correction recording path so a real piece of misinformation can be recorded exactly as shown instead of falsifying canonical calculation. UI convenience controls do not justify restoring old universal candidate enumeration; narrow deterministic attack/role wake logic is in scope NOW; Chef/Empath/Fortune Teller forced clues can be implemented in a later separate phase, subject to poison, Drunk and registration choices.
 
-Use when connector truncation or complete-file context makes direct editing unsafe.
+## Every-file review and deletion policy
 
-Default:
+**Full-tree-first, largest obsolete modules first, is the required primary workflow (owner reiterated 2026-10-18).** Owner-approved order for this cleanup: retire old standalone web/, remove the obsolete world-enumeration/Exact/Topology part of epistemic/ while preserving event/observation/security primitives, **then** disconnect and remove Host candidate/legality machinery without disabling current AI. The web/ and old epistemic world modules were deleted in F5, with full Android CI #4355 and R2 #3935 success; do not reconstruct them. Read the untruncated real Git tree, classify **all** source modules horizontally by Host fact/security, active AI, obsolete Host Rules, dead experimentation, and undecided product scope. Record conclusions in the existing full-source audit ledger; do not traverse one legacy call path and mistake that for a full repository audit. Verify consumers of each deletion candidate before actually deleting it. **Owner product-necessity rule (2026-10-19): an existing production caller is evidence of coupling, NOT a reason to preserve that feature. First decide whether a game can proceed with the existing Host/AI core if the entire feature and its call chain disappear. If there is an existing shared UI, a manual Storyteller action, or a direct Session/AI path, disconnect callers and delete the obsolete module, helper, redundant presentation and exclusive tests. Only preserve a function that is indispensable to play continuity, committed facts/events, AI recommendation, security/privacy, identity or atomic state. Avoid adding low-probability edge-case UI/algorithms merely to avoid retiring old features.** For each module decide:
+1. necessary Host state/event/operation, transport/security or platform adaptation: retain minimal responsibility;
+2. Generalized Host candidate/legality engines, redundant verdict algorithms, unused experiments and duplicate states: delete if they do not provide essential fixed rules. **Before deleting any rule outcome, classify as forced, discretionary or unverified and retain/replace necessary forced execution plus behavioral tests**; preserve AI recommendation producers/consumers;
+3. mixed files: first disconnect retired consumers, delete obsolete responsibilities, then keep only narrow real ownership;
+4. uncertainty: prepare a short user-review item with evidence, deletion risk and recommendation. Favor clean deletion followed by eventual greenfield replacement over long-lived compatibility wrappers.
 
-```text
-Chat audits owner/fanout/invariants and fixes the design
--> Mini MCP controls local execution
--> Luna L0 reads the complete file and mechanically applies the approved change
--> inspect local diff
--> commit only approved paths
--> make the exact commit visible remotely through the controlled local Git path when needed
--> return to GitHub Connector
--> audit exact remote head / parent / scope / semantic diff
--> inspect CI / R2 / reviews
-```
+Do not treat obsolete tests as proof that Host legality checks must remain. **Do treat production AI recommendation consumers as features to protect**, not collateral deletions; preserve their functionality while replacing Host-only rule barriers. Never fabricate facts from legal outcomes, e.g. a shown result does not imply an unchosen Spy/Recluse registration.
 
-Do not use this path to transfer architecture authority to Luna.
+No independent Recovery, parallel historical archive, second textual replay, duplicate writable GameState, generalized Context/Manager facade, artificial one-function-per-file extraction, mechanical fix of source-string tests, or reintroduction of old legality validators. **Approved Spy flow (2026-10-19):** no separate "Show Grimoire" control, Grimoire snapshot/ReminderToken mirror or special poisoning-display branch. At Spy's first/later night step, show "Wake seat X" on the existing Storyteller square table; Storyteller passes the phone, takes it back, and taps Next. The already-authoritative table shows actual seats/identities; do not infer another shadow GameState or reintroduce a special Spy display. The general poison status/role facts remain, with unusual Spy poisoning handled manually for now. UI transient state is not canonical game truth. The final <=50,000-byte size is a **hard requirement**, not a guideline; prioritize code removal, then cohesive responsibility extraction. A large intact Host file cannot be grandfathered under older growth policies.
 
-### Path C — strong Codex read-only analysis
+**Owner-required setup variety (2026-10-19 correction): preserve BOTH (1) avoidance of consecutive repeated opening role compositions/visible rosters and (2) avoidance of giving the same returning player the same starting identity/role across games. These are confirmed user-facing game-quality requirements, not obsolete rule-checking gates. Do NOT delete or silently replace the existing SetupDiversitySelector/SetupDiversityHistory/TemplateRepository, TroubleBrewing rotation records/history/store or role-assignment rotation planner merely because game startup could technically still execute without variety. An uncommitted tentative deletion of this chain was fully reverted on the development machine; preserve existing tests/seed determinism until an equivalent implementation is explicitly approved and proven. Other redundant Host rule-only authority, tests and unused shadow projections remain cleanup targets.**
 
-Use only when Chat cannot design safely from bounded connector context.
+**Optional future dynamic scripts (owner clarification, 2026-10-19):** Custom/homebrew/dynamically imported scripts are **not required for the current minimal Host**. If their import, normalization, custom-character or jinx/special handling creates complexity, remove those branches and their exclusive tests rather than preserving them for possible future use. The current `ClocktowerScriptJsonParser` and `ClocktowerScriptNormalizer` also serve **built-in** script loading; keep or replace the narrow built-in Trouble Brewing and No Greater Joy format/role lookup, do not delete both built-in game scripts or introduce a new compatibility layer to keep homebrew. Keep confirmed inter-game roster diversity and same-player role rotation.
 
-```text
-Chat defines the question/boundaries
--> strong Codex L1 reads complete local context
--> return owner map / code paths / constraints / patch proposal / risks
--> Chat chooses the design
--> Luna L0 implements
--> GitHub Connector resumes normal remote/CI work
-```
+## Operational workflow and tools
 
-### Path D — GitHub Actions one-shot exceptional patch
+- The user's explicit latest instructions override older plans. Current authority is this file and the dated Host/Rules/AI plan, then the current roadmap/handoff and testing strategy; Git and source are factual implementation evidence. Historical/archive documents are not new task instructions.
+- Inspect live GitHub main, PR head/base and exact-SHA CI/R2, then local branch/HEAD/worktree before changes. #330–#333 are merged; #334 (codex/minimal-host-full-scan-20261018) and stacked #335 (refactor/minimal-night-flow-20261019) remain Draft. Recheck live values each session.
+- Use the Codex local checkout directly for source reads, edits and validation; do not use MiniMCP. Inspect exact branch/HEAD/status and remote divergence first, preserve unrelated work, then audit pushed diff and exact-SHA CI independently through GitHub. PR metadata and remote CI remain GitHub evidence.
+- Define the targeted module, all relevant production consumers and affected canonical facts before deletion. Prefer sizeable complete deletion slices over many shallow adapters, but don't combine unrelated changes when that obscures validation. Do not let a mechanical subagent redesign semantics without Chat-level/user authority.
+- When removal exposes dependencies, decide whether each dependency belongs to the sole Host fact/operation/safety surface. If not, delete it too. If yes, keep only a narrow typed input/confirmed result and existing Session commit.
+- Retain a single structured chronological fact log and exact observed information with proper recipient scope. One committed event describes what happened; never record two events distinguished only by whether AI or human suggested the action. Protect stable seat identity, event chronology, permission/privacy and stale asynchronous response boundaries.
 
-Use `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` only when the local Mini MCP/Codex path is unavailable or an exact locked remote mutation is uniquely safer.
+## Evidence-first validation (not mandatory TDD)
 
-### Validation environment rule
+Default to evidence-first, risk-based proof. No ritual RED before every source edit and no test created solely for an implementation shape or trivial intermediate change. Keep high-value tests for one-writer Session, event sequence/identity, atomicity, duplicate prevention, receiver confidentiality, stale AI request isolation, basic setup/action/manual game flow and minimum continuity.
 
-The N3150 Android execution-host route is retired from the normal project workflow because measured test time is too slow to justify its operational complexity.
+Tests of **retired generic Host rule-gating implementations** may be removed or narrowed, but retain/rebuild high-value tests for **forced game rules**, accurate clue results, death/protection precedence, timing/wake/skip, and only-when-needed Storyteller-choice boundaries. Keep meaningful tests of AI opening/pair/later-night provider contracts, strategy continuity, response acceptance, preselection, model transport and security; delete only genuinely orphaned experimental tests. Update obsolete architecture guards and CI routing; do not resurrect intentionally removed features to satisfy yesterday's test. The surviving repo source of test task execution is the current Gradle and GitHub workflow definitions, not historical test counts.
 
-Do not block development on syncing or running N3150 unless the user explicitly reopens that experiment.
+- Local/focused Android validation: ./gradlew :app:testFast
+- Full checkpoint: ./gradlew :app:testFull :app:assembleDebug, or actual GitHub CI [full-ci] checkpoint as provided by .github/workflows/ci.yml.
+- Relevant ASP/Clingo tests remain meaningful only for active contracts; retire obsolete oracle gates when their protected engine is deliberately removed.
+- Always check actual CI/R2 for the **exact code HEAD**, distinguishing docs-only success from Android/real compiler success. If failed, inspect job logs and repair code or retire obsolete contract tests. Never claim unrun device or paid API validation.
 
-Oracle task execution is not Android acceptance when the required Android toolchain is unavailable. GitHub CI/R2 is the normal Android execution and independent acceptance surface.
+Every batch must report: deleted production files and exclusive tests, removed producer/consumer chain, actual net code shrinkage, remaining oversized source files, Host state/event risks, CI/R2 IDs/verdict, and unknown owner decisions. No vague “all rules removed” claim unless actual production references are audited.
 
-When a genuine behavior gap requires test-first development, preserve real RED provenance when the current plan requires it. The RED/GREEN execution may occur through GitHub CI/workflow rather than a local Android host. Do not manufacture RED for documentation-only, behavior-preserving or purely structural work.
+## PR, security and governance
 
-The current detailed workflow is `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`. Older Mini MCP-first / connector-Luna / large-file workflow documents are historical where they conflict with this root agreement.
+Keep the current stacked cleanup branches as Draft until the user authorizes merge/retarget. A successful CI is not permission to merge incomplete/cross-scope work. No force push, destructive branch cleanup or unrelated working-tree staging without explicit user approval. Paid OpenAI API experimentation needs explicit budget authorization. Never expose credentials or private game-role data in public logs or player screens.
 
-## 2.5 Developer-memory workflow
+N3150 Android builder is not the default; GitHub CI/R2 is current independent Android acceptance. Android Studio/ADB real-device acceptance is separately planned after major deletions. Mini MCP developer memory is optional and advisory; versioned authority and verified source/PR state override it.
 
-Mini MCP developer memory is an **optional advisory aid**, not a mandatory startup step.
+## Current maintained documents
 
-Use it only when durable prior context can materially reduce repeated work or recover a non-obvious accepted decision. If used:
+- docs/HOST_RULES_AI_REBUILD_AND_SOURCE_PURGE_2026-10-18.md — corrected architecture: Host Rules reduction while preserving existing AI.
+- docs/CURRENT_DEVELOPMENT_ROADMAP.md — sole live priority/status, no stacked old NEXTs.
+- docs/NEXT_DEVELOPMENT_HANDOFF.md — sole live next-batch action and exact tested baseline.
+- docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md — current minimum Host fact contract, revised 2026-10-18.
+- docs/MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv — historical base inventory, not a finished semantic audit.
+- docs/TESTING_STRATEGY.md — retained testing/CI acceptance rules.
 
-1. run one bounded `memory_search` with `repo: "clocktower"` and task-specific operational terms;
-2. inspect summaries/triggers only;
-3. call `memory_get` only for promising results;
-4. verify all mutable facts against live repository/runtime/GitHub state and current authoritative docs.
-
-Do not invoke Mini MCP memory merely because a task is substantive; the default repository/control-plane workflow remains GitHub Connector-first.
-
-At meaningful checkpoints choose `ADD / UPDATE / SUPERSEDE / NONE` for each candidate durable fact. `NONE` should remain common; a normal substantive session should usually create zero to three memories.
-
-Good memory candidates are:
-
-- stable repository/ownership maps;
-- accepted architecture decisions that constrain future work;
-- recurring engineering lessons with causal value;
-- intentional technical debt with a concrete revisit trigger;
-- durable workflow rules;
-- explicit project-owner corrections that future work could otherwise repeat.
-
-Do **not** store branch HEADs, ordinary PR/CI status, every commit/test result, full logs, copied documentation, secrets, personal data, or facts cheaper/safer to verify live.
-
-Memory is advisory only. Authority remains:
-
-~~~text
-explicit current user instruction
--> AGENTS.md
--> current authoritative repository docs
--> live code / Git / runtime / GitHub state
--> developer memory
--> historical/archive material
-~~~
-
-If active memory conflicts with newer authority, follow the newer authority and update/supersede the memory at the checkpoint.
-
-Detailed capture/retrieval rules are authoritative in:
-
-`docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md`.
-
-## 3. Behavior-first, risk-based development and validation cadence
-
-### 3.1 Core rule: evidence first, not RED ceremony
-
-The repository uses **evidence-first, risk-based validation**, not mandatory RED/GREEN or “a new RED test for every production edit.”
-
-The objective is to protect stable behavior, regressions, invariants, and architectural boundaries with the cheapest reliable evidence. A production change does **not** automatically require a newly created failing test.
-
-**Small default/configuration/enum adjustments:** first inspect the full producer/consumer fan-out, directly edit the authoritative defaults, and update only existing tests whose assertions intentionally depended on the old default. Do **not** add one test per field/phase/adapter or run ceremonial RED for a simple default change. Add a fresh test only when an uncovered, durable cross-component contract or demonstrated regression risk warrants its ongoing maintenance. Independent CI/compile and existing regression suites are still required at the normal checkpoint. Measure test value, not test count.
-
-Before choosing tests, first classify both the **change type** and the **ownership boundary**. Test strategy follows architecture; it must not be chosen independently of it.
-
-Use this implementation pre-flight:
-
-1. What kind of change is this: bug fix, new/changed behavior, behavior-preserving refactor, UI/presentation-only change, architecture/ownership change, or mechanical move/rename?
-2. Which module is the authoritative owner of the behavior or invariant being protected?
-3. What is the narrowest durable callable seam that proves the intended contract?
-4. Does useful existing coverage already protect that contract?
-5. If no durable callable seam exists, is that because the architecture genuinely lacks one, or only because the current implementation is coupled?
-6. What is the cheapest reliable evidence for this slice: RED/GREEN, existing baseline, typed characterization, integration test, compile/static check, architecture guard, or exact diff audit?
-
-### 3.1.1 Shared-contract / fan-out gate
-
-Before changing a shared model, presentation contract, renderer, projector, persistence DTO, domain result, or any other fan-out seam, the implementation pre-flight **MUST** also map the full production fan-out:
-
-1. Find every production producer, constructor, adapter, mapper, and direct builder of the changed contract.
-2. Find every production consumer of the changed field or behavior.
-3. Classify each path as **must inherit** or **intentionally exempt**; every exemption needs an explicit reason.
-4. Prefer fixing the common semantic / projection / ownership boundary over caller-specific patches.
-5. If callers bypass the intended common projection, migrate them to it or explicitly document and test why separate construction remains necessary.
-6. Verify every relevant product phase or mode (for example Setup / Day / Night, beginner / expert, restored / fresh) rather than only the screen that exposed the issue.
-7. Re-run the producer/consumer search after implementation so no direct path silently relies on a default value, stale adapter, or incomplete projection.
-
-A shared renderer does **not** imply shared ownership. **"Shared renderer without shared projection" is an architecture smell** when callers independently assemble incomplete semantic state. Move the derivation toward the authoritative shared projection/owner instead of teaching each screen how to reconstruct it.
-
-For cross-cutting UI state, visual state and interaction eligibility are separate contracts unless the domain explicitly couples them. A shared visual marker must not silently become a rule-level disabled/selectable decision.
-
-The default evidence mapping is:
-
-```text
-bug fix / new stable behavior / changed stable behavior
-  -> define independent acceptance evidence and inspect existing coverage
-  -> choose the cheapest reliable verification (typed/integration, real device/API, or other proof)
-  -> implementation + appropriate validation
-  -> add a durable regression test when its ongoing value justifies it
-
-behavior-preserving refactor / ownership extraction
-  -> identify existing owning tests
-  -> establish GREEN baseline when useful
-  -> add durable characterization only if a real behavior gap exists
-  -> refactor
-  -> rerun focused evidence + compile/static/diff checks
-
-UI/presentation-only change
-  -> test durable interaction/presentation behavior when valuable
-  -> otherwise use focused compile/static/UI evidence and exact diff review
-  -> do not invent domain REDs for visual restructuring
-
-mechanical move / rename / formatting
-  -> existing baseline + compile/static/diff evidence
-  -> no manufactured RED
-
-new architectural seam that becomes a durable contract
-  -> test the seam at its true ownership boundary
-  -> do not require every intermediate extraction step to have an independent RED
-```
-
-A durable automated test is warranted when new or changed behavior leaves an important repeatable contract unprotected; write it before or after implementation as useful, not to satisfy a mandatory RED sequence. Typical high-value candidates include:
-
-- a bug fix that can be reproduced deterministically;
-- new or changed gameplay/rules behavior;
-- a new externally observable feature behavior;
-- an algorithm, persistence, transaction, history, identity, concurrency, or recommendation invariant that is not already covered;
-- a regression gap where existing tests would have allowed the defect.
-
-When early deterministic tests materially help, an optional test-first cycle is:
-
-```text
-define stable behavior / invariant
--> create or modify the smallest durable typed test
--> exact T0 RED when the RED is meaningful and executable
--> production implementation
--> exact T0 GREEN
--> git diff --check
--> commit + push
--> ChatGPT remote parent/diff/scope audit
-```
-
-A **new RED is not required** merely because production source will change. In particular, do not create a new test solely for:
-
-- internal refactoring with intentionally unchanged behavior;
-- function/file extraction, movement, renaming, visibility adjustment, or decomposition;
-- mechanical rewrites or dependency-neutral cleanup;
-- an intermediate wiring step whose final behavior is already protected by a stable typed/integration test;
-- temporary construction order or local implementation shape;
-- making one implementation micro-step independently “test-first.”
-
-For such changes, establish the relevant existing GREEN baseline when useful, make the change, then re-run the smallest affected evidence plus compile/static/diff checks as appropriate.
-
-### 3.2 Test-value and ownership rule
-
-Before adding a test, ask:
-
-> If the implementation is substantially refactored later but the intended behavior remains correct, should this test still pass and still be valuable?
-
-Also ask:
-
-> Is this test attached to the module that should own the contract, or is it reaching across layers because the current architecture is coupled?
-
-If the first answer is no, the proposed test is probably protecting implementation shape rather than a durable contract. If the second answer reveals cross-layer reach-through, prefer moving proof toward the true owner rather than cementing the accidental dependency.
-
-Prefer a higher-value typed behavior/integration test, an explicit architecture guard, compile/static validation, or exact diff audit over incidental source-shape assertions.
-
-**Do not introduce a production seam, helper, adapter, visibility expansion, or abstraction solely to satisfy a process requirement for a new RED.** Introduce seams because they improve ownership/testability of a durable contract, not because every intermediate edit needs an independently failing test.
-
-A seam introduced for architectural reasons may become a useful test boundary. In that case, test the resulting stable contract once it exists; do not redesign production code around an artificial test seam that has no ownership value.
-
-### 3.3 Existing coverage is valid validation evidence
-
-Existing tests already protect intended behavior and are valid independent evidence. New tests need a distinct ongoing value; no test chronology is required.
-
-For a behavior-preserving refactor the preferred cycle is:
-
-```text
-identify existing owning tests / characterization
--> identify the intended post-refactor owner
--> confirm baseline when needed
--> add durable characterization only for uncovered stable behavior
--> refactor toward the intended owner/seam
--> run affected tests / compile checks
--> retire or narrow superseded source-shape tests
--> exact diff and invariant audit
-```
-
-Do not deliberately break or rewrite a correct test just to manufacture RED provenance.
-
-For decomposition work, the owning test surface should normally move **downward toward the extracted responsibility**, not upward into a broader Host/screen source test. A successful extraction should reduce the amount of production source shape that tests need to know.
-
-### 3.4 Test retirement is allowed and expected
-
-The suite is a maintained engineering asset, not an append-only archive. Tests **MAY and SHOULD** be deleted or narrowed when they are demonstrably low-value, superseded, duplicated, or coupled only to an obsolete implementation path.
-
-A test retirement must satisfy all applicable conditions:
-
-- identify what behavior/invariant the test originally protected;
-- confirm that the behavior is no longer required **or** is protected by a more stable test/evidence layer;
-- ensure the removed assertion is not the only regression proof for a real product contract;
-- delete obsolete production scaffolding that existed only to satisfy that test when safe and in scope;
-- run the affected suite after retirement.
-
-When a refactor creates a typed seam that proves the same behavior more directly, migrate coverage to that seam and retire source-string or cross-layer assertions that only protect the old ownership shape.
-
-Do not retain a test merely because it already exists, because historical test counts are expected to monotonically increase, or because deleting it would lower a numeric coverage count.
-
-### 3.5 Broad-test and CI cadence
-
-- T0 is the smallest directly relevant evidence; choose test-first only where it helps prove a deterministic gap. For UI/model interactions it may instead be device/API evidence, and for refactors existing characterization/contract tests or compile/static checks.
-- `:app:testFast` is T1 and belongs at a logical checkpoint, not automatically after every small commit.
-- At logical checkpoints, run T1 plus triggered T2/T3 validation as defined by `docs/TESTING_STRATEGY.md`.
-- Related micro-slices may continue after focused GREEN/evidence + remote diff audit; **do not wait for old-head GitHub CI after every small push**.
-- The latest logical checkpoint head gets the GitHub CI/R2 gate.
-- Persistence/schema, transaction boundaries, shared projector/chronology, build/Gradle/CI configuration, or insufficient focused coverage may justify earlier escalation.
-- PR/full validation uses T4; `:app:testFull` is the complete Android JVM entry point and must preserve all **currently intentional** Android JVM tests.
-- Local validation never replaces GitHub CI/R2 before merge.
-
-Luna instructions must explicitly say when an expected JUnit/assertion failure counts as RED PASS and execution should continue **only when a RED is actually required**. If Luna already ran the exact requested focused test with `--rerun-tasks` and reported `BUILD SUCCESSFUL`, ChatGPT **MUST NOT** rerun the identical command merely to duplicate evidence. Do not treat `UP-TO-DATE` or `FROM-CACHE` as proof that a required test executed.
-
-The detailed tier and subsystem mapping is authoritative in `docs/TESTING_STRATEGY.md`.
-
-In Codex/Luna sandboxed local worktrees, use task-local Gradle state when needed, e.g. `GRADLE_USER_HOME="$PWD/.gradle-codex"`.
-
-## 4. Source-wiring test policy
-
-Source-level tests are **not an ordinary test-first mechanism**. They are allowed only as explicit architecture/ownership guards or temporary migration tools when a production boundary cannot reasonably be exercised through a callable typed seam.
-
-### Mandatory preference
-
-When a callable typed seam exists or can reasonably be introduced for a durable contract, business/rules behavior **MUST** be tested through that seam instead of by reading production `.kt` source text.
-
-Preferred proof order:
-
-```text
-typed pure/domain behavior
--> typed reducer/planner/session behavior
--> typed adapter/integration behavior
--> minimal architecture/ownership source guard only where runtime proof is impractical
-```
-
-### Temporary wiring tests
-
-A source-string behavior/wiring test may remain only while it protects a unique production wiring gap that typed lower-layer tests cannot prove. It must have a clear retirement trigger.
-
-A source-string test **MUST NOT** be created solely to force an intermediate production-wiring step through RED before GREEN.
-
-When the corresponding production path is cut over to a typed/integration seam, the superseded source-string assertion **MUST** be deleted or narrowed in the same campaign. Do not preserve a legacy helper, local variable name, inline expression, formatting, or call spelling merely to keep an obsolete source-string test GREEN.
-
-If a deliberate typed-seam refactor makes a source-string test fail while the owning typed behavior tests remain GREEN, first assess whether the string assertion has been superseded. Do not automatically change correct production code to restore the old source shape.
-
-### Long-lived architecture guards
-
-Source inspection remains acceptable for explicit coarse architecture/ownership invariants, such as preventing App root from reclaiming an extracted responsibility. These tests should protect ownership boundaries rather than local variable names, exact whitespace, exact formatted calls, or incidental implementation order.
-
-For any retained source-based guard:
-
-Prefer:
-
-- unique function/block anchors;
-- multiple independent structural tokens;
-- explicit absence checks for forbidden legacy ownership paths.
-
-Avoid:
-
-- ambiguous first textual occurrences;
-- exact whitespace/line-break matching;
-- complete formatted call strings;
-- exact local variable names when a coarser ownership assertion is possible;
-- changing correct production formatting or inserting meaningless comments solely to satisfy a source-string test.
-
-If several assertions in one source-wiring test share the same brittle assumption, repair or retire the whole affected test section rather than discovering the same defect one assertion at a time.
-
-Current retirement inventory and SNE-specific triggers are tracked in `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md`. The inventory should be periodically re-audited for tests that protect only obsolete intermediate source paths.
-
-## 5. Source-decomposition principle
-
-File size is a maintainability signal, not an architecture by itself.
-
-For Clocktower decomposition work:
-
-- prefer handwritten production files at or below roughly 50 KiB when a natural ownership boundary supports it;
-- do **not** introduce poor abstractions, giant parameter bags, state-lifetime changes, or unnecessary `internal` exposure merely to satisfy a byte threshold;
-- cohesion, stable ownership, transaction ordering, and future feature isolation outrank the numeric size target;
-- decomposition should stop when further extraction would increase coupling or regression risk more than it improves maintainability.
-
-### AI-first architecture guardrails
-
-The primary optimization target is **local reasoning**: a developer or agent should be able to make a normal feature change by understanding a small, cohesive set of files rather than loading a broad application surface. File count and line count are secondary signals. Track the practical **change context radius**: how much code and how many owners must be understood to safely change one feature.
-
-Before adding substantial production behavior, perform a short architecture pre-flight:
-
-1. Which existing module owns this behavior?
-2. Which mutable state does it read or change, and who is the authoritative owner of each state value?
-3. Does it perform domain/rules decisions, presentation preparation, rendering, persistence/I/O, telemetry, or another side effect?
-4. What is the narrowest stable input/result boundary for the new behavior?
-5. Does the proposed change add a new responsibility to an already broad file, screen, Host, controller, ViewModel, session object, or repository?
-6. Can the change be implemented while preserving a clear dependency direction and keeping the normal change context radius small?
-
-If the answers expose mixed ownership or a new responsibility, establish the boundary before expanding the feature implementation.
-
-#### Recorded architecture pre-flight gate
-
-For any substantial production edit that touches a protected/core handwritten file or a handwritten production source above roughly 1000 LOC, the architecture pre-flight **MUST be recorded before production editing begins**. The active implementation specification, audit, roadmap, or handoff must contain at least:
-
-```text
-Architecture pre-flight:
-- current owner:
-- proposed responsibility:
-- authoritative state owner(s):
-- narrow typed input/output seam:
-- keep in current owner / extract:
-- reason:
-```
-
-If this record is absent, substantial production editing is a stop condition until the pre-flight is completed. This is an execution gate, not a requirement to create a permanent standalone document for every micro-slice. Small bug fixes, mechanical edits, and already-approved implementation continuations do not require a new record unless they introduce or move responsibility.
-
-#### Soft complexity triggers
-
-These are **audit triggers, not automatic failure thresholds**:
-
-- roughly 400–700 LOC in a handwritten production file: check whether responsibilities are still cohesive;
-- above roughly 700 LOC: before adding a substantial feature, perform a decomposition/ownership check;
-- above roughly 1000 LOC: do not add a new responsibility by default; justify why the existing owner is still correct;
-- a function around 80–120+ LOC: check whether it mixes state read, decision, effects, and rendering;
-- a function/composable with roughly 8–10+ parameters: check whether ownership or the input contract is unclear;
-- an interaction surface with roughly 5–6+ callbacks: check whether an interaction/event boundary is missing;
-- a core file growing by about 30% over a short feature campaign: perform a fresh architecture audit before further growth.
-
-Do not mechanically split code to satisfy these numbers. A cohesive 900-line owner may be healthier than ten 90-line files that must all be opened for one change.
-
-#### Ownership and dependency rules
-
-- Every mutable state value must have one authoritative owner. Other layers may observe or request changes; they must not become competing sources of truth.
-- Prefer the conceptual flow `state/input -> domain or decision operation -> result -> side effects -> rendering` over callbacks that directly mutate several states, call services, update revisions, persist data, and render results in one block.
-- UI may decide **how** to render a legal result. UI must not become the authority for domain legality, rules semantics, candidate legality, transaction validity, or persistence identity.
-- New modules should depend on narrow data/interfaces or typed inputs/results, not on the whole Host, screen, controller, ViewModel, session object, or a giant shared context.
-- A parameter object is acceptable only when it represents a real cohesive concept. Replacing 30 parameters with a 30-field `Context`, `State`, `Args`, or `Environment` object is not decomposition.
-- Do not widen `private -> internal -> public` solely because extracted code cannot otherwise reach an implementation detail. First ask whether a narrower input/result boundary should exist.
-
-#### Forbidden false-decomposition patterns
-
-Agents must not treat any of the following as architectural success by themselves:
-
-- moving code into `Utils`, `Helpers`, `Manager`, `Common`, `Misc`, or similarly vague dumping-ground modules;
-- replacing a long parameter list with a God Context/God State object;
-- moving a function to another file while it still depends on the entire former owner;
-- creating one file per tiny function/model when a feature then requires understanding many files at once;
-- extracting UI components that still receive the same broad domain/service dependency surface as the original screen;
-- increasing visibility or adding adapters whose only purpose is to satisfy a source-shape test or a file-size target.
-
-New `Utils`, `Helpers`, `Manager`, `Common`, or broad `Context` modules require explicit ownership justification.
-
-#### Abstraction discipline
-
-Avoid both duplication panic and premature generalization.
-
-- First similar implementation: note the pattern.
-- Second similar implementation: compare semantics and lifecycle; duplication may still be cheaper than a wrong abstraction.
-- Extract a shared abstraction when the common ownership/contract is stable, not merely because two blocks look syntactically similar.
-- Prefer domain- or responsibility-named abstractions such as `PairInformationLegalDomain`, `NightCheckpointReducer`, or `InformationDecisionCoordinator` over generic helpers.
-
-#### Generalization / anti-fixture policy rule
-
-When a product rule or policy is conceptually shared across roles, scenarios, player counts, phases, or scripts, implementation **MUST** target the shared semantic/ownership boundary rather than encode the currently discussed example.
-
-Before accepting a branch keyed to a named role, exact seat, fixture ID, known setup, or one regression scenario, ask:
-
-1. Does this condition represent a genuine game-rule distinction?
-2. Or is it compensating for a missing shared abstraction/policy owner?
-3. Would another role/scenario with the same semantic shape inherit the behavior automatically?
-4. Is the test proving a durable generic contract, or only the exact example that motivated the change?
-
-If the behavior is policy-level rather than rules-level, prefer a shared typed model over named-role conditionals.
-
-Examples in design discussions are **evidence and acceptance probes**, not permission to implement example-specific branches.
-
-A change is incomplete if the implementation passes the motivating example but semantically equivalent cases still require separate patches.
-
-#### Interaction and callback discipline
-
-A growing callback list is an ownership signal. If an interaction needs many independent `onSelectX`, `onConfirmX`, `onChangeY`, and `onCancelZ` callbacks, check whether a cohesive interaction owner and a typed intent/result contract should exist.
-
-Do not overcorrect by creating one application-wide `AppIntent` or event object containing every possible action. Intent/event types should follow the smallest cohesive interaction owner.
-
-UI-local transient state should remain with the lowest cohesive UI owner. Do not hoist drawer/overlay/expanded/temporary selection state into application/session state merely to centralize state.
-
-#### Change-scope discipline
-
-For risky or architecture-sensitive work, keep the main dimension of change explicit:
-
-- behavior/product change;
-- architecture/ownership change;
-- mechanical move/rename/formatting.
-
-Do not casually combine all three in one slice. A feature PR may contain necessary structural work, but unrelated cleanup, broad renaming, and speculative abstraction should be split out when they enlarge the review or regression surface.
-
-#### Architecture maintenance cadence
-
-After roughly 5–10 feature PRs in the same subsystem, or when a protected/core file grows materially, perform a lightweight architecture audit. Check at least:
-
-- largest handwritten production files;
-- functions with unusually large parameter/callback surfaces;
-- high fan-in/fan-out or broad dependency surfaces;
-- shared mutable state and unclear authoritative owners;
-- cross-layer dependencies and UI-owned domain decisions;
-- duplicated semantic interpretation in different layers;
-- source-string tests that may now protect obsolete implementation shape;
-- visibility expansion caused by extraction;
-- God Context / Utils / Helpers / Manager growth;
-- practical change context radius for common feature changes.
-
-The audit may conclude that no decomposition is needed. Its purpose is to catch ownership drift before a file becomes the default destination for unrelated future work.
-
-#### AI precedent and architecture-document drift
-
-AI agents tend to copy existing repository patterns. A large or poorly-owned file is **not** automatically an approved pattern merely because similar code already exists. When extending an unhealthy legacy area, prefer the intended architectural direction documented here and in current architecture/handoff documents instead of cloning the legacy shape.
-
-Keep architecture documentation lightweight and current. If a current `ARCHITECTURE.md`, roadmap, handoff, or ownership document disagrees materially with live code, report the drift and resolve it rather than silently following a stale document or treating the current code accident as the intended architecture.
-
-### Post-PR #43 Host growth rule
-
-`ClocktowerHostScreen.kt` is a protected orchestration owner. It may remain substantially larger than 50 KiB, but it must not become the default destination for new feature implementation.
-
-For new Clocktower work:
-
-- new algorithms belong in domain / epistemic / history / recommendation / session owners as appropriate;
-- new role/interaction presentation should prefer dedicated materializer/UI owners when a cohesive seam exists;
-- new persistence/history/session behavior must not be embedded into Host merely because current state is available there;
-- Host changes should normally be limited to derived orchestration state, phase routing, wiring and protected transaction/callback boundaries;
-- if a feature would add hundreds of lines of new policy/UI/algorithm code to Host, stop and identify a natural owner before implementation.
-
-This is a **growth freeze on new responsibility**, not a byte freeze and not a mandate to mechanically shrink the current file.
-
-### App-root / Host decomposition status
-
-The broad D6 decomposition campaign is historical and closed. Its R3 transaction-application NO-GO and setup-effect-owner NO-GO remain active architectural constraints.
-
-The 2026-09-28 live-state audit re-opened only a **bounded maintenance opportunity**, not D6 wholesale. The current product route is `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md`: Drunk late-binding / staged first-night sequencing is the mainline behavior change, while decomposition is a guardrail.
-
-- A1 preferences storage and A2 archive storage may run only as independent maintenance slices.
-- H1 first-night evil-information presentation is deferred until the DLB-5 dependency lifecycle is established.
-- H2 runtime recommendation-state projection and A3 presentation catalog require re-audit after the relevant DLB boundaries stabilize.
-- Do not use DLB as a reason to revive a generic App transaction controller, generic setup-effect owner, God context/state object, or second session authority.
-
-Substantial DLB edits to App/Host must follow the recorded architecture pre-flight in the current DLB route before production editing begins.
-
-## 6. Protected architectural invariants
-
-Unless a task explicitly changes product behavior, preserve:
-
-- Blood on the Clocktower rule semantics and precedence;
-- explicit documentation of any intentional product/house-rule deviation from official rules;
-- recommendation ranking and selection ordering;
-- rules legality as an upstream authority separate from recommendations;
-- stable seat/interaction identity independent of filtered views;
-- draft selection vs confirmed mechanical fact boundaries;
-- registration semantics and impairment ordering;
-- information-decision lifecycle;
-- persistence/history identity;
-- `ClocktowerGameSession` authority for global timeline identity/sequence;
-- `ClocktowerGameSession` / its owned session aggregate as the single mutable Clocktower game-truth authority; UI/`PlayerCard`, replay and recommendation state are projections or transient inputs, not competing canonical state;
-- Setup generation as a replaceable pre-runtime boundary: it may decide setup composition / Drunk presence but must not own seating, final Drunk-seat choice or runtime progression;
-- Storyteller recommendation as read-only decision support over already-legal candidates and typed current-context projections; accepted choices return through the authoritative game/session transition path;
-- any future trained/model-based recommender remains a replaceable policy/replay consumer after legality and canonical-context projection; Host must not turn unchosen legal candidates into evidence-backed negatives or absorb model-training infrastructure into the runtime authority;
-- Compose state lifetime and effect lifetime;
-- callback / audit / commit ordering in stateful transactions.
-
-A structural refactor must not become a hidden product change.
-
-## 7. Remote acceptance and merge governance
-
-Before implementation, re-check live `main`, PR head, and target branch when the slice depends on live state.
-
-After every push through any authorized path, ChatGPT must independently verify GitHub actual state through the **GitHub Connector by default**. Mini MCP's GitHub audit surface is recovery/cross-check only:
-
-```text
-expected parent
-branch / PR head
-changed-file allowlist
-exact semantic diff
-no unrelated churn
-relevant test evidence
-CI only when current cadence says CI is a gate
-```
-
-Mini MCP local `git_status` / `git_diff`, Codex/Luna reports, workflow logs, and user-reported local results are implementation evidence; none is the canonical remote source of truth. GitHub Connector reads of the actual remote branch/PR/check state are the default independent acceptance interface. Required GitHub CI/R2 remains mandatory where the test strategy requires it.
-
-A pushed commit is not by itself sufficient for merge. The PR must first satisfy the slice's required acceptance gates.
-
-**Standing merge authorization (2026-09-29):** once the current task/PR is complete, its exact head has passed the required validation, the PR is mergeable, the changed-file/semantic diff is within the approved scope, documentation is converged, and there are no unresolved review/correctness issues, ChatGPT may mark the PR ready and merge it without requesting a separate per-PR authorization message.
-
-This standing authorization does **not** permit merging incomplete, failing, conflicted, scope-drifted, or intentionally paused work. Rebase, force-push, destructive history changes, or broadening the active PR still require explicit user authorization unless separately granted.
-
-## 8. Current project documents and precedence
-
-Read these when relevant:
-
-1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current execution authority;
-2. newest `docs/NEXT_DEVELOPMENT_HANDOFF_*.md` for the active campaign;
-3. `docs/DLB_AND_APP_HOST_DECOMPOSITION_IMPLEMENTATION_ROUTE_2026-09-29.md` — current Drunk late-binding / staged first-night implementation and decomposition authority;
-4. `docs/CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md` — long-horizon Setup / Game Engine / Storyteller Recommendation / canonical-state convergence guardrail; not a broad-refactor authorization;
-5. `docs/HOST_ML_READINESS_MODELLAB_BOUNDARY_AUDIT_2026-10-03.md` — long-horizon EvidenceLab / Host / ModelLab ownership and ML-readiness guardrail; HOST-ML1 deferred until C5-D;
-6. `docs/TESTING_STRATEGY.md` — authoritative test tiers, evidence model, and subsystem mapping;
-7. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` — **current GitHub Connector-first / Mini MCP+Codex large-file workflow**;
-8. `docs/MINI_MCP_DEVELOPMENT_WORKFLOW_AND_MEMORY_ADOPTION_2026-09-25.md` — superseded historical Mini MCP-first adoption record;
-9. `docs/AI_DEVELOPMENT_WORKFLOW_V2_2026-08-27.md` — superseded historical connector/Luna workflow;
-10. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` — exceptional remote one-shot fallback only;
-11. `docs/DEVELOPMENT_LESSONS_2026-08-27_SAME_NIGHT_CAMPAIGN.md` — known failure patterns and proven improvements;
-12. `docs/SAME_NIGHT_EFFECTIVE_STATE_DECISIONS_2026-08-27.md` — current same-night product/architecture decisions;
-13. `docs/SOURCE_STRING_TEST_RETIREMENT_2026-08-27.md` — source-string debt and retirement triggers.
-
-If documents disagree, apply this precedence:
-
-1. newest explicit user instruction;
-2. this root `AGENTS.md`;
-3. `docs/TESTING_STRATEGY.md` for test-tier and evidence definitions;
-4. current roadmap/handoff and the current DLB implementation route for active-state/product-lifecycle specifics;
-5. `docs/AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md` for the current execution-path split where not already incorporated here;
-6. older workflow and campaign documents only where non-conflicting.
-
-For repository work, use the GitHub Connector by default. Use Mini MCP + Codex CLI when complete local context is required for large/truncated-file analysis or implementation, then return to the GitHub Connector for remote-state, PR, CI/R2 and acceptance work. Use Mini MCP developer memory only when it materially helps; correct stale docs/memories instead of silently carrying conflicts forward.
+Older architecture, recovery, rules/domain and AI-prompts notes remain historical reference only where they do not conflict with the current authority.

@@ -69,85 +69,11 @@ class AbilityFunctioningSemanticsTest {
     }
 
     @Test
-    fun `committed Monk selection requires a functioning Monk to protect`() {
-        assertTrue(
-            AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-                subject("Monk"), "Monk", selectionMatches = true,
-            ),
-        )
-        assertFalse(
-            AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-                subject("Monk", poisoned = true), "Monk", selectionMatches = true,
-            ),
-        )
-        assertFalse(
-            AbilityFunctioningSemantics.selectedMechanicalEffectApplies(
-                subject("Drunk", "Monk"), "Monk", selectionMatches = true,
-            ),
-        )
-    }
-
-    @Test
     fun `representative information role preserves interaction and reliability contract`() {
         val role = "Empath"
         assertEquals(AbilityFunctioningState.FUNCTIONING, AbilityFunctioningSemantics.stateFor(subject(role), role))
         assertEquals(AbilityFunctioningState.POISONED, AbilityFunctioningSemantics.stateFor(subject(role, poisoned = true), role))
         assertEquals(AbilityFunctioningState.DRUNK, AbilityFunctioningSemantics.stateFor(subject("Drunk", role), role))
-    }
-
-    @Test
-    fun `poisoned Slayer spends the apparent one-shot without applying its effect`() {
-        val decision = AbilityFunctioningSemantics.oneShotDecision(
-            subject = subject("Slayer", poisoned = true),
-            role = "Slayer",
-            alreadyUsed = false,
-        )
-
-        assertEquals(AbilityFunctioningState.POISONED, decision.state)
-        assertTrue(decision.mayAttempt)
-        assertTrue(decision.consumesUse)
-        assertFalse(decision.effectApplies)
-    }
-
-    @Test
-    fun `healthy Slayer first shot consumes and applies while a second shot is unavailable`() {
-        val first = AbilityFunctioningSemantics.oneShotDecision(
-            subject = subject("Slayer"),
-            role = "Slayer",
-            alreadyUsed = false,
-        )
-        val second = AbilityFunctioningSemantics.oneShotDecision(
-            subject = subject("Slayer"),
-            role = "Slayer",
-            alreadyUsed = true,
-        )
-
-        assertTrue(first.mayAttempt)
-        assertTrue(first.consumesUse)
-        assertTrue(first.effectApplies)
-        assertFalse(second.mayAttempt)
-        assertFalse(second.consumesUse)
-        assertFalse(second.effectApplies)
-    }
-
-    @Test
-    fun `Drunk shown Slayer spends an apparent one-shot without mechanical effect`() {
-        val first = AbilityFunctioningSemantics.oneShotDecision(
-            subject = subject("Drunk", shown = "Slayer"),
-            role = "Slayer",
-            alreadyUsed = false,
-        )
-        val second = AbilityFunctioningSemantics.oneShotDecision(
-            subject = subject("Drunk", shown = "Slayer"),
-            role = "Slayer",
-            alreadyUsed = true,
-        )
-
-        assertEquals(AbilityFunctioningState.DRUNK, first.state)
-        assertTrue(first.mayAttempt)
-        assertTrue(first.consumesUse)
-        assertFalse(first.effectApplies)
-        assertFalse(second.mayAttempt)
     }
 
     @Test

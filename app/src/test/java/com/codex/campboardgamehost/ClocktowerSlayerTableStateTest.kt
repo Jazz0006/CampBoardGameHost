@@ -5,86 +5,50 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/** Player gesture structure, never Slayer ability eligibility or hidden rules. */
 class ClocktowerSlayerTableStateTest {
-    @Test
-    fun `claimant step exposes only unused claimant seats and locks the rest`() {
-        val state = clocktowerSlayerTableState(
-            seats = testSeats(),
-            claimantCandidateNames = setOf("Player 2", "Player 5"),
-            alivePlayerNames = setOf("Player 1", "Player 2", "Player 3", "Player 5"),
-            claimantName = null,
-            targetName = null,
-        )
-
+    @Test fun `claimant step exposes every known physical seat regardless of a legacy role menu`() {
+        val state = clocktowerSlayerTableState(testSeats(), null, null)
         assertTrue(state.choosingClaimant)
-        assertEquals(
-            setOf(ClocktowerSeatId(2), ClocktowerSeatId(5)),
-            state.interaction.selectableSeatIds,
-        )
-        assertEquals(
-            setOf(ClocktowerSeatId(1), ClocktowerSeatId(3), ClocktowerSeatId(4)),
-            state.interaction.lockedSeatIds,
-        )
+        assertEquals((1..5).map(::ClocktowerSeatId).toSet(), state.interaction.selectableSeatIds)
+        assertTrue(state.interaction.lockedSeatIds.isEmpty())
         assertEquals(HostTableInteractionMode.Selection, state.interaction.mode)
     }
 
-    @Test
-    fun `target step keeps claimant first and allows only other living players`() {
-        val state = clocktowerSlayerTableState(
-            seats = testSeats(),
-            claimantCandidateNames = setOf("Player 2", "Player 5"),
-            alivePlayerNames = setOf("Player 1", "Player 2", "Player 3", "Player 5"),
-            claimantName = "Player 2",
-            targetName = null,
-        )
-
+    @Test fun `target follows claimant in stable ordered selection`() {
+        val state = clocktowerSlayerTableState(testSeats(), "Player 2", "Player 5")
         assertFalse(state.choosingClaimant)
-        assertEquals(listOf(ClocktowerSeatId(2)), state.interaction.selectedSeatIds)
-        assertEquals(
-            setOf(ClocktowerSeatId(1), ClocktowerSeatId(3), ClocktowerSeatId(5)),
-            state.interaction.selectableSeatIds,
-        )
-        assertEquals(setOf(ClocktowerSeatId(4)), state.interaction.lockedSeatIds)
+        assertEquals(listOf(ClocktowerSeatId(2), ClocktowerSeatId(5)),
+            state.interaction.selectedSeatIds)
+        assertEquals("Player 2", state.claimantName)
+        assertEquals("Player 5", state.targetName)
+        assertEquals("Player 5", state.playerNameForSeat(ClocktowerSeatId(5)))
         assertFalse(ClocktowerSeatId(2) in state.interaction.selectableSeatIds)
         assertEquals(HostTableInteractionMode.OrderedSelection, state.interaction.mode)
     }
 
-    @Test
-    fun `chosen target is second ordered selection while claimant remains stable`() {
-        val state = clocktowerSlayerTableState(
-            seats = testSeats(),
-            claimantCandidateNames = setOf("Player 2", "Player 5"),
-            alivePlayerNames = setOf("Player 1", "Player 2", "Player 3", "Player 5"),
-            claimantName = "Player 2",
-            targetName = "Player 5",
-        )
-
-        assertEquals(
-            listOf(ClocktowerSeatId(2), ClocktowerSeatId(5)),
-            state.interaction.selectedSeatIds,
-        )
-        assertEquals("Player 2", state.claimantName)
-        assertEquals("Player 5", state.targetName)
-        assertEquals("Player 5", state.playerNameForSeat(ClocktowerSeatId(5)))
+    @Test fun `dead seat can be recorded as a public target without Host legality rejection`() {
+        val state = clocktowerSlayerTableState(testSeats(), "Player 2", "Player 4")
+        assertEquals("Player 4", state.targetName)
+        assertEquals(ClocktowerSeatId(4), state.targetSeatId)
+        assertTrue(ClocktowerSeatId(4) in state.interaction.selectedSeatIds)
     }
 
-    @Test(expected = IllegalArgumentException::class)
-    fun `dead target is rejected instead of silently becoming selectable`() {
-        clocktowerSlayerTableState(
-            seats = testSeats(),
-            claimantCandidateNames = setOf("Player 2"),
-            alivePlayerNames = setOf("Player 1", "Player 2", "Player 3", "Player 5"),
-            claimantName = "Player 2",
-            targetName = "Player 4",
-        )
-    }
-
-    private fun testSeats(): List<HostSeatPresentation> =
-        (1..5).map { number ->
-            HostSeatPresentation(
-                seatId = ClocktowerSeatId(number),
-                playerName = "Player $number",
-                isAlive = number != 4,
-            )
+    @Test fun `only structural unknown and duplicate seats are rejected`() {
+        for (pair in listOf("Unknown" to null, "Player 2" to "Unknown",
+            "Player 2" to "Player 2", null to "Player 3")) {
+            org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+                clocktowerSlayerTableState(testSeats(), pair.first, pair.second)
+            }
         }
+    }
+
+    private fun testSeats(): List<HostSeatPresentation> = (1..5).map { number ->
+        HostSeatPresentation(
+            seatId = ClocktowerSeatId(number),
+            playerName = "Player $number",
+            isAlive = number != 4,
+        )
+    }
 }
+

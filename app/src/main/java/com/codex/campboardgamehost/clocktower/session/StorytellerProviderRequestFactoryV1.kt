@@ -1,7 +1,5 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidateV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCoordinationHorizonV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionIdentityV1
@@ -41,17 +39,6 @@ internal object StorytellerProviderRequestFactoryV1 {
             sourceRevision = decision.revision.toProviderRevision(),
             state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
             decisionContext = context,
-            legalCandidates = decision.legalCandidates.map { candidate ->
-                StorytellerProviderCandidateV1(
-                    candidateId = candidate.candidateId,
-                    payload = StorytellerProviderCandidatePayloadV1.PairInformation(
-                        shownRoleId = candidate.outcome.shownRole?.value,
-                        candidateSeats = candidate.outcome.candidateSeats.toList(),
-                        semanticTruth = candidate.semanticTruth,
-                        registrations = candidate.registrations.toList(),
-                    ),
-                )
-            },
             gameContext = gameContext,
             coordinationHorizon = coordinationHorizon,
         )
@@ -67,7 +54,6 @@ internal object StorytellerProviderRequestFactoryV1 {
         kind: StorytellerProviderScalarKindV1,
         metric: String,
         subjectSeats: List<Int>,
-        legalCandidates: List<StorytellerProviderCandidateV1>,
         snapshot: TroubleBrewingGameSnapshotV1,
         gameContext: StorytellerProviderGameContextV1,
     ): StorytellerProviderRequestV1 {
@@ -82,7 +68,6 @@ internal object StorytellerProviderRequestFactoryV1 {
             sourceRevision = revision.toProviderRevision(),
             state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
             decisionContext = context,
-            legalCandidates = legalCandidates,
             gameContext = gameContext,
         )
     }
@@ -110,14 +95,6 @@ internal object StorytellerProviderRequestFactoryV1 {
             sourceRevision = decision.revision.toProviderRevision(),
             state = StorytellerProviderGameStateV1.TroubleBrewing(snapshot),
             decisionContext = context,
-            legalCandidates = decision.pending.legalCandidates.map { candidate ->
-                StorytellerProviderCandidateV1(
-                    candidateId = candidate.candidateId,
-                    payload = StorytellerProviderCandidatePayloadV1.SeatTarget(
-                        seat = candidate.payload,
-                    ),
-                )
-            },
             gameContext = gameContext,
             coordinationHorizon = coordinationHorizon,
         )

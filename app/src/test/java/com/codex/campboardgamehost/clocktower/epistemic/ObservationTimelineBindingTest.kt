@@ -1,11 +1,6 @@
 package com.codex.campboardgamehost.clocktower.epistemic
 
-import com.codex.campboardgamehost.clocktower.domain.Alignment
-import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
-import com.codex.campboardgamehost.clocktower.domain.ScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -15,25 +10,6 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 class ObservationTimelineBindingTest {
-    private val ruleset = RulesetRef(
-        ScriptId("trouble-brewing"),
-        "0123456789abcdef0123456789abcdef",
-        "trouble-brewing-v1",
-        "official-2026-08-11",
-        RuleCoverage.PARTIAL,
-    )
-    private val formal = FormalGameState(
-        snapshotId = "snapshot-r6-observation-timeline",
-        gameId = "game-r6-observation-timeline",
-        gameStateRevision = 3,
-        rulesetRef = ruleset,
-        phase = StorytellerPhase.NIGHT,
-        round = 2,
-        players = listOf(
-            FormalPlayerState(1, RoleId("Chef"), Alignment.GOOD, CharacterType.TOWNSFOLK),
-        ),
-    )
-
     @Test fun `global records canonicalize by global sequence across round boundaries`() {
         val globallyFirst = globalRecord(
             recordId = "night-two-first",
@@ -140,40 +116,10 @@ class ObservationTimelineBindingTest {
 
     @Test fun `bindTo and observation json preserve global timeline identity`() {
         val point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 5, globalSequence = 33)
-        val bound = globalRecord("bind-global", point).bindTo(formal)
+        val bound = globalRecord("bind-global", point).bindTo("snapshot-r6-observation-timeline")
 
         assertEquals(ObservationTimelineBinding.Global(point), bound.timelineBinding)
         assertEquals(bound, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(bound)))
-    }
-
-    @Test fun `player world identity remains unchanged when only timeline migration binding changes`() {
-        val point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 5, globalSequence = 33)
-        val globalObservation = globalRecord("identity-observation", point).bindTo(formal)
-        val legacyObservation = globalObservation.copy(timelineBinding = ObservationTimelineBinding.LegacyLocal)
-        val globalKnowledge = PlayerKnowledgeSnapshot(
-            knowledgeSnapshotId = "knowledge-global",
-            formalSnapshotId = formal.snapshotId,
-            recipientSeat = 1,
-            perceivedRole = RoleId("Chef"),
-            publicObservations = listOf(globalObservation),
-        )
-        val legacyKnowledge = globalKnowledge.copy(
-            knowledgeSnapshotId = "knowledge-legacy",
-            publicObservations = listOf(legacyObservation),
-        )
-
-        val globalIdentity = PlayerWorldSetIdentity.create(
-            ruleset,
-            globalKnowledge,
-            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        )
-        val legacyIdentity = PlayerWorldSetIdentity.create(
-            ruleset,
-            legacyKnowledge,
-            EpistemicHypothesis.MECHANICALLY_CREDIBLE,
-        )
-
-        assertEquals(globalIdentity.value, legacyIdentity.value)
     }
 
     private fun legacyRecord(recordId: String): RecordedEpistemicObservation = RecordedEpistemicObservation(

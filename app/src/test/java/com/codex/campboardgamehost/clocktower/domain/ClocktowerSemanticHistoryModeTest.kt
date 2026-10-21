@@ -111,7 +111,7 @@ class ClocktowerSemanticHistoryModeTest {
 
     private fun legacyRecord(): RecordedEpistemicObservation = RecordedEpistemicObservation(
         recordId = "legacy-record",
-        phase = StorytellerPhase.DAWN,
+        phase = StorytellerPhase.DAY,
         round = 1,
         sequence = 0,
         sourceSeat = null,
@@ -124,7 +124,7 @@ class ClocktowerSemanticHistoryModeTest {
 
     private fun globalRecord(globalSequence: Long): RecordedEpistemicObservation = RecordedEpistemicObservation(
         recordId = "global-record-$globalSequence",
-        phase = StorytellerPhase.DAWN,
+        phase = StorytellerPhase.DAY,
         round = 1,
         sequence = 0,
         sourceSeat = null,
@@ -135,7 +135,7 @@ class ClocktowerSemanticHistoryModeTest {
         proposition = InformationProposition.AliveAt(1, false),
         timelineBinding = ObservationTimelineBinding.Global(
             TimelinePoint(
-                phase = StorytellerPhase.DAWN,
+                phase = StorytellerPhase.DAY,
                 round = 1,
                 sequence = 0,
                 globalSequence = globalSequence,

@@ -18,19 +18,47 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
         plan: HostOpeningSemanticValueV2,
         currentSourceSeat: Int,
         currentOptions: List<ClocktowerDisplayOption>,
+        question: ClocktowerInformationQuestion? = null,
     ): ClocktowerDisplayOption? {
         if (plan.sourceSeat != currentSourceSeat) return null
-        val safeMatches = currentOptions.filter { candidate ->
-            // Do not turn a possible registration explanation into a forced witness.
-            candidate.spyRegistersGood == null &&
-                candidate.spyRegisteredRoleEnName == null &&
-                candidate.recluseRegistersEvil == null &&
-                candidate.recluseRegisteredRoleEnName == null &&
-                candidate.proposition?.let { proposition ->
-                    compatible(plan, proposition)
-                } == true
+        val template = currentOptions.firstOrNull()
+        val proposition = when (plan.observationKind) {
+            "NUMBER" -> {
+                val numericQuestion = question as? ClocktowerInformationQuestion.Number ?: return null
+                val number = plan.number?.takeIf { it >= 0 } ?: return null
+                InformationProposition.NumericResult(numericQuestion.metric, currentSourceSeat, numericQuestion.subjectSeats, number)
+            }
+            "ROLE" -> {
+                if (plan.subjectMode != "EVIDENCE_PAIR" || plan.subjectSeats.size != 2) return null
+                val role = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).singleOrNull {
+                    normalize(it.enName) == normalize(plan.roleId.orEmpty())
+                } ?: return null
+                InformationProposition.AnyOf(plan.subjectSeats.sorted().map {
+                    InformationProposition.RoleAt(it, com.codex.campboardgamehost.clocktower.domain.RoleId(role.enName))
+                })
+            }
+            "ZERO_OUTSIDERS" -> InformationProposition.AllOf(
+                clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
+                    .filter { it.team == ClocktowerTeam.Outsider }.map {
+                        InformationProposition.RoleInPlay(com.codex.campboardgamehost.clocktower.domain.RoleId(it.enName), false)
+                    })
+            else -> return null // Player query must first provide its actual subjects.
         }
-        return safeMatches.singleOrNull()
+        val value = when (proposition) {
+            is InformationProposition.NumericResult -> proposition.value.toString()
+            is InformationProposition.AnyOf -> plan.roleId
+            else -> "No Outsiders"
+        }
+        return ClocktowerDisplayOption(
+            label = value.orEmpty(),
+            displayKind = if (proposition is InformationProposition.NumericResult) ClocktowerDisplayKind.Number
+                else ClocktowerDisplayKind.EitherOne,
+            displayTitle = template?.displayTitle ?: plan.abilityRoleId,
+            displayPrimary = value,
+            displaySecondary = plan.subjectSeats.takeIf { it.isNotEmpty() }?.joinToString(" / "),
+            displayFooter = null, proposition = proposition,
+            presentationSubjectSeats = plan.subjectSeats,
+        )
     }
 
     private fun normalize(name: String): String =

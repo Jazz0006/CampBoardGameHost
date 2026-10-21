@@ -39,6 +39,10 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -55,32 +59,21 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    testImplementation(composeBom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
 afterEvaluate {
-    val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
-    val sde2D4ScaleBenchmark =
-        "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4ScaleBenchmarkTest"
-    val sde2D5FExpertObservedCalibrationExperiment =
-        "com.codex.campboardgamehost.clocktower.review.Sde2D5FExpertObservedCalibrationExperiment"
-
-    val manualCostExperiments = listOf(
-        "com.codex.campboardgamehost.clocktower.epistemic.Sde2D4TopologyBundlePerformanceTest",
-    )
-
-    // Remaining explicit scale, calibration and topology evidence harnesses are not
-    // ordinary regression tests. Keep FULL bounded; run these through dedicated tasks.
-    debugUnitTest.configure {
-        filter {
-            manualCostExperiments.forEach { excludeTestsMatching(it) }
-            excludeTestsMatching(sde2D4ScaleBenchmark)
-            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
-        }
+    tasks.withType<Test>().configureEach {
+        systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
     }
+    val debugUnitTest = tasks.named<Test>("testDebugUnitTest")
 
     tasks.register("testFull") {
         group = "verification"
-        description = "Runs the complete bounded Android debug JVM regression suite."
+        description = "Runs the complete Android debug JVM regression suite."
         dependsOn(debugUnitTest)
     }
 
@@ -90,53 +83,6 @@ afterEvaluate {
         val sourceTask = debugUnitTest.get()
         testClassesDirs = sourceTask.testClassesDirs
         classpath = sourceTask.classpath
-
-        filter {
-            // testFast is a separate Test task and does not inherit debugUnitTest's filter.
-            manualCostExperiments.forEach { excludeTestsMatching(it) }
-            excludeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
-            excludeTestsMatching("com.codex.campboardgamehost.clocktower.epistemic.ZddPlayerWorldSetTest")
-            excludeTestsMatching(sde2D4ScaleBenchmark)
-        }
+        exclude("**/ClocktowerD2UiTest*")
     }
-
-    tasks.register<Test>("testCostExperiments") {
-        group = "verification"
-        description = "Runs historical topology performance experiments explicitly."
-        val sourceTask = debugUnitTest.get()
-        testClassesDirs = sourceTask.testClassesDirs
-        classpath = sourceTask.classpath
-        filter { manualCostExperiments.forEach { includeTestsMatching(it) } }
-        outputs.upToDateWhen { false }
-    }
-
-    tasks.register<Test>("sde2D4ScaleBenchmark") {
-        group = "verification"
-        description = "Runs the explicit SDE-2D4 raw-enumerator scale evidence harness."
-        val sourceTask = debugUnitTest.get()
-        testClassesDirs = sourceTask.testClassesDirs
-        classpath = sourceTask.classpath
-
-        filter {
-            includeTestsMatching(sde2D4ScaleBenchmark)
-        }
-
-        outputs.upToDateWhen { false }
-    }
-
-    tasks.register<Test>("sde2D5FExpertObservedCalibration") {
-        group = "verification"
-        description = "Runs the explicit SDE-2D5F-B4 expert-observed evidence workload."
-        val sourceTask = debugUnitTest.get()
-        testClassesDirs = sourceTask.testClassesDirs
-        classpath = sourceTask.classpath
-
-        filter {
-            includeTestsMatching(sde2D5FExpertObservedCalibrationExperiment)
-        }
-
-        outputs.upToDateWhen { false }
-    }
-
-
 }

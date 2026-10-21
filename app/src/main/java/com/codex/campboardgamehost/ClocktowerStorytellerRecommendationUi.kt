@@ -106,6 +106,7 @@ internal fun ClocktowerStorytellerRecommendationScreen(
                     onNext = onStartNight,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     previousEnabled = onPrevious != null,
+                    previousVisible = onPrevious != null,
                     nextEnabled = startEnabled,
                 )
             }

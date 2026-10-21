@@ -193,7 +193,6 @@ class SetupShownIdentityPolicyResolverTest {
             characterIds = characters.map(ClocktowerCharacterDefinition::id),
             firstNightOverride = null,
             otherNightOverride = null,
-            bootleggerRules = emptyList(),
             source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
             contentHash = "6".repeat(32),
         ),

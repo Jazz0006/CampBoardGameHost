@@ -34,7 +34,7 @@ class TroubleBrewingDealRoleResolverTest {
                 TroubleBrewingShownSeatAssignment(5, "E", "imp"),
             ),
         )
-        val candidate = TroubleBrewingDrunkCandidateDomain.legalCandidates(intermediate)
+        val candidate = intermediate.shownSeatAssignments.map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
             .single { it.shownRoleId == "washerwoman" }
         val committed = TroubleBrewingSetupCommitter.commit(
             intermediateSetup = intermediate,

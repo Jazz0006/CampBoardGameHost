@@ -9,14 +9,12 @@ import org.junit.Test
 class ClocktowerResidualRequestIdentityV2Test {
     private fun key(
         mode: StorytellerOperationMode,
-        choices: List<String> = listOf("n0", "n1"),
         revision: Long = 3,
         sequence: Long = 9,
     ) = ClocktowerResidualRequestIdentityV2.build(
         gameId = "same-game", round = 2, stepIndex = 3,
         requestId = "host-open-current", gameStateRevision = revision,
-        playerInputRevision = 5, exclusiveGlobalSequence = sequence,
-        legalCandidateIds = choices, mode = mode,
+        playerInputRevision = 5, exclusiveGlobalSequence = sequence, mode = mode,
     )
 
     @Test fun modeSwitchAlwaysInvalidatesPreviouslyAcceptedJointPackage() {
@@ -29,8 +27,6 @@ class ClocktowerResidualRequestIdentityV2Test {
 
     @Test fun HostCandidateAndChronologyChangesInvalidateRequestIdentity() {
         val original = key(StorytellerOperationMode.AI_AUTOMATIC)
-        assertNotEquals(original, key(StorytellerOperationMode.AI_AUTOMATIC,
-            choices = listOf("n0", "n2")))
         assertNotEquals(original, key(StorytellerOperationMode.AI_AUTOMATIC,
             revision = 4))
         assertNotEquals(original, key(StorytellerOperationMode.AI_AUTOMATIC,

@@ -1,26 +1,21 @@
-# 文档入口
+# 文档入口（2026-10-20，Codex 本地）
 
-更新：2026-10-17（Australia/Sydney）。导航不另行决定优先级。
+## 现行权威与推荐阅读顺序
 
-## 当前必读
+1. [**Minimal Host Architecture Rebuild（已批准的唯一总设计与执行合同）**](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)：唯一 Session + 已确认有序事件 + 稳定步骤 ID；无 persistent Pending/夜间 Previous/Dawn；行动本步 Next 提交，D2 预览返回可改选且仅 Next 记录最后唯一 Observation；整链替换与同批删旧、P0–P5 验收。
+2. [A–D2 最新裁决](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)：预览与最终确认边界、A/B/C 与迁移清单。
+3. [AGENTS](../AGENTS.md)：提交、安全与工程约束；[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[新对话交接](NEXT_DEVELOPMENT_HANDOFF.md)：当前分支、PR、第一批实际任务。
+4. [测试策略](TESTING_STRATEGY.md)：业务行为与退出门槛；[Host 事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)：核心事件语义。
 
-1. [开发规范](../AGENTS.md)：所有权、证据和合并规则。
-2. [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)：唯一执行优先级。
-3. [当前交接](NEXT_DEVELOPMENT_HANDOFF.md)：已做与未做。
-4. [最小游戏状态与记录清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)：本轮产品纠正、代码审计与删除顺序。
-5. [测试策略](TESTING_STRATEGY.md)：证据分级，不要求机械 RED/GREEN。
+**冲突优先级**：新总纲 > AGENTS 最新段 > Roadmap/NEXT 最新段 > 事实合同/测试 > 历史文件。旧三模块新 Rules、旧 P1–P5、局部 F12 和 ARCH-CLEANUP-2 分批指令均只作为当时审计/提交证据，不能再次作为下一步执行命令。
 
-- [第四阶段 App/Host 审计与拆分路线](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)
-- [分支清理结果与恢复入口](BRANCH_CLEANUP_RESULT_2026-10-17.md)
+## 只作为库存和历史证据，不给出新的开发优先级
 
-## 按需参考
+- [当前扫描源码索引](MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)：原扫描 717 个代码类文件的路径、大小与**初步分类**；需以最新 Git 树更新，不能视为完成逐文件行为审计。
+- [第一轮全仓扫描与删除台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)：包含曾经误设的“Host 不计算规则”与 F12 过程记录，当前按新两职责 Host + 已有 AI 重构合同重新归属；仅保留历史大小与实际删除证据。
+- [2026-10-17 旧最小状态清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)、[D 阶段拆分审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)、[旧 ARCH-CLEANUP-2 / Recovery](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) 均是历史。
+- [历史归档](archive/README.md) 和 Git 提交保留设计追溯。旧 Rules 完整合法性、恢复/历史影子、多路径开发 NEXT 不再是生产必须保持的合同。
 
-- [核心模块所有权目标](CLOCKTOWER_CORE_ENGINE_BOUNDARY_TARGET_ARCHITECTURE_2026-09-30.md)：Setup、Game Engine、推荐分离；旧多份历史/恢复保留要求由本轮清理规格覆盖。
-- [既有 App/Host 拆分审计](APP_HOST_POST_RES5_DECOUPLING_AUDIT_2026-10-08.md)：历史边界与经验；尺寸、候选和完成状态须以代码重查。
-- [专家说书人规划原则](PROD_GLOBAL_3B2_EXPERT_STORYTELLER_PLANNING_PRINCIPLE_2026-10-12.md)、[联合开局规划](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md)、[Host 语义校验](PROD_GLOBAL_3B3D_HOST_SEMANTIC_GATE_ROUTE_2026-10-12.md)：AI 方向保留，当前不优先扩展。
-- [历史捕捉审计](GSP_R1A_CANONICAL_HISTORY_CAPTURE_PREFIX_COVERAGE_AUDIT_2026-10-08.md)：当时的覆盖证据，不是当前实现清单。
-- [旧 Recovery 范围决策](GSP_MEMORY_RECOVERY_SCOPE_DECISION_2026-10-09.md) 和 [旧最小恢复审计](CURRENT_ONLY_RECOVERY_MINIMAL_STATE_AUDIT_2026-09-28.md)：历史方案，不再授权保留独立恢复体系。
-- [工作流](AI_DEVELOPMENT_WORKFLOW_CURRENT_2026-09-27.md)：本轮本地读写按用户明确覆盖执行；独立验收规则仍有效。
-- [历史归档](archive/README.md)：既有记录，不从旧 NEXT 推导新任务。
+新任务只维护顶部现行状态和 GitHub 可验证结果；历史旧路线尽量归档而不是不断叠加“最新指令”，不得与现行总纲竞争权威。
 
-当前入口不保留滚动叠加的旧 PR/CI/handoff 快照；需要历史时查 Git 历史或对应专项文档。不得将旧验收结果当作当前工作区的验证。
+当前在 Windows Codex 本地直接读写与验证，不使用 MiniMCP。开放 PR 只有 Draft #334（base main）和 #335（base #334）；每次从当前交接取得精确 HEAD/CI，而非沿旧快照执行。旧路线和交接已分别归档为 [路线历史](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_LOCAL_D2_2026-10-20.md) / [交接历史](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_LOCAL_D2_2026-10-20.md)。

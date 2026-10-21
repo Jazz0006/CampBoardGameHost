@@ -2,8 +2,6 @@ package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
@@ -14,33 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-/** Embedded square-table controls for Experienced-mode Spy registration decisions. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ClocktowerSpyRegistrationDecisionControls(
-    legalRoles: List<Pair<String, String>>,
-    registersGood: Boolean,
-    registeredRoleEnName: String?,
-    enabled: Boolean,
-    language: String,
-    onRegistersGoodChange: (Boolean) -> Unit,
-    onRoleChange: (String) -> Unit,
-) {
-    ClocktowerRegistrationDecisionControls(
-        legalRoles = legalRoles,
-        usesSpecialRegistration = registersGood,
-        registeredRoleEnName = registeredRoleEnName,
-        enabled = enabled,
-        language = language,
-        specialLabelEn = "Register good",
-        specialLabelZh = "登记为善良",
-        disabledTextEn = "The Spy is poisoned; registration cannot change.",
-        disabledTextZh = "间谍已中毒，本次不能改变登记身份。",
-        onUsesSpecialRegistrationChange = onRegistersGoodChange,
-        onRoleChange = onRoleChange,
-    )
-}
 
 /** Virgin looks at a Townsfolk CHARACTER TYPE, never an arbitrary first good role. */
 @Composable
@@ -59,9 +30,7 @@ internal fun ClocktowerSpyTownsfolkTypeDecisionControls(
         )
     }
     ClocktowerRegistrationDecisionControls(
-        legalRoles = emptyList(),
         usesSpecialRegistration = registersAsTownsfolk,
-        registeredRoleEnName = null,
         enabled = enabled,
         language = language,
         specialLabelEn = "Register as Townsfolk",
@@ -69,51 +38,12 @@ internal fun ClocktowerSpyTownsfolkTypeDecisionControls(
         disabledTextEn = "The Spy cannot use special registration in this interaction.",
         disabledTextZh = "间谍当前不能在本次交互中特殊登记。",
         onUsesSpecialRegistrationChange = onRegistersAsTownsfolkChange,
-        onRoleChange = {},
     )
 }
 
-/** Embedded square-table controls for Experienced-mode Recluse registration decisions. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun ClocktowerRecluseRegistrationDecisionControls(
-    legalRoles: List<Pair<String, String>>,
-    registersEvil: Boolean,
-    registeredRoleEnName: String?,
-    enabled: Boolean,
-    language: String,
-    hasExplicitChoice: Boolean = true,
-    onRegistersEvilChange: (Boolean) -> Unit,
-    onRoleChange: (String) -> Unit,
-) {
-    if (!hasExplicitChoice) {
-        Text(
-            if (language == "en") "No ruling selected; actual registration is only the default."
-            else "尚未明确裁定；界面默认按真实身份显示，不代表已登记。",
-            style = MaterialTheme.typography.bodySmall,
-        )
-    }
-    ClocktowerRegistrationDecisionControls(
-        legalRoles = legalRoles,
-        usesSpecialRegistration = registersEvil,
-        registeredRoleEnName = registeredRoleEnName,
-        enabled = enabled,
-        language = language,
-        specialLabelEn = "Register evil",
-        specialLabelZh = "登记为邪恶",
-        disabledTextEn = "The Recluse is poisoned and must register normally.",
-        disabledTextZh = "隐士已中毒，本次只能按真实身份登记。",
-        onUsesSpecialRegistrationChange = onRegistersEvilChange,
-        onRoleChange = onRoleChange,
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ClocktowerRegistrationDecisionControls(
-    legalRoles: List<Pair<String, String>>,
     usesSpecialRegistration: Boolean,
-    registeredRoleEnName: String?,
     enabled: Boolean,
     language: String,
     specialLabelEn: String,
@@ -121,7 +51,6 @@ private fun ClocktowerRegistrationDecisionControls(
     disabledTextEn: String,
     disabledTextZh: String,
     onUsesSpecialRegistrationChange: (Boolean) -> Unit,
-    onRoleChange: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
@@ -168,19 +97,5 @@ private fun ClocktowerRegistrationDecisionControls(
             }
         }
 
-        if (usesSpecialRegistration && legalRoles.isNotEmpty()) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                legalRoles.forEach { (roleEnName, roleLabel) ->
-                    if (registeredRoleEnName == roleEnName) {
-                        Button(onClick = { onRoleChange(roleEnName) }) { Text(roleLabel) }
-                    } else {
-                        OutlinedButton(onClick = { onRoleChange(roleEnName) }) { Text(roleLabel) }
-                    }
-                }
-            }
-        }
     }
 }

@@ -1,50 +1,26 @@
-# 当前开发交接：进入最小 Host 新轮次
+# 当前交接 — 最小完整流程已验收，下一阶段全仓清理（2026-10-21）
 
-更新：2026-10-17（Australia/Sydney）。先读 AGENTS.md 顶部与 [产品合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)，再读 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。不得按旧 D5 NEXT 继续拆分规则模块。
+## 接续结论与立即任务
 
-## 已有基线
+最小实现的真实整局流程已跑通：两剧本均从首页、安排玩家/座位、选剧本和生产发牌，到首夜、真实提名手势/投票/日结、后夜死亡、私有文件恢复、正式终局/揭晓，以及恢复后原班再开一局。新增发牌中断回归。最后 Cloud full 654（147 suites / 38 UI，零失败/跳过）、APK 与原 R2 shell 通过；生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；第一阶段已关闭。
 
-本轮生产末端为 #328 `db16d38c`；它包含 #315–#327 的全部提交。#315–#328 各最新 head 的 CI/R2 已核对成功。收尾集成分支为 `codex/minimal-host-handoff`，面向 main 整合现有链和新权威文档；最终合并状态以 GitHub 为准。下一轮必须从该收尾已合并的 main 建立新分支，不能从旧 main `770ed32f` 开始。
+后续主任务是**全仓未截断源码遍历和大规模删除**，不再返回“真实开局还没检查”或局部 UI 精修。保留闭环作为删除的行为基线；每批按完整责任删除 producer/consumer/独占测试，报告净量和必要验证。两个大文件与全源码 <=50000B 在此阶段收敛。清理完成后才优化界面/流程细节。
 
-已删除独立 Recovery、重复文字/整局归档及部分状态副本；Session 是现有游戏事实单源。App 3,768 行 / 212,701 bytes，Host 2,616 行 / 159,659 bytes；Host 仍有 90 参数、40 个操作回调，大文件治理未完成。
+完整证据与限制见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md) 和 [路线](CURRENT_DEVELOPMENT_ROADMAP.md)。代表性 App 轨迹不等于全部阵容穷举或真机/实际杀进程/付费模型验收。
 
-## 最新产品决定（覆盖旧文档）
+## 本批修复与唯一对象
 
-删除 Host 游戏规则校验、线索计算、合法候选枚举、登记解释推导和手动规则/线索辅助。AI 推荐什么，实际确认什么，就记录并展示什么。保留玩家/座位/对局身份、原子记录、重复确认防护、过期响应隔离和私密信息保护；规则正确性由说书人承担。
+- 删除首次保存的 screen 门槛、effect screen key 和 activeGameSaveAttached；Session 创建后即绑定原 AtomicFile。
+- 首夜尚无任何确认动作/信息时，恢复同一 Session，从第一位安全重新发牌；无额外持久游标/恢复引擎。
+- quick restart 先从当前 Session 读取规范名单，再确认下一局座位并新建下一局；修复恢复后 `Production start requires confirmed seating`。
+- 只把原 UUID seed 函数移动成内部 App 可传参数，默认随机行为不变；测试固定真实生产准备器的 seed 34 / 26，不替换 GameState、路由、Session、回调或存储。
 
-旧信息发布函数会按角色从准备变量回推记录；下一轮应重新审计并删除这种不必要的耦合，不把它原样包装成新模块。旧 candidate/semantic gate/provider 请求结构有深层依赖，必须成链清理。现有 AI 自动模式不因新方向而获得任意改状态权限。
+新增 `ClocktowerCompleteAppUiTest` 3 项，修复前 3 失败，修复后全通过；其他 651 项历史回归与最终全量验收见报告。生产净 +3 行/+316B（App 116000B），测试新增 160 行，无生产/专属测试文件删除，Night Host 63787B、Session 47578B。
 
-## 2026-10-18 真实实施检查点
+## 环境与授权边界
 
-- **M0 已通过**：#330 `codex/minimal-host-reset` HEAD `946b23b`，CI #4312 与 R2 #3892 成功；Undercover（谁是卧底）全链已删除，净 -1039 行，含独立选择页。Draft 尚未合并 main。
-- **M1a 已实施，待最新 Android CI 最终验收**：堆叠 Draft PR #331，基于 #330，分支 `codex/minimal-host-m1-publication-20261018`。删除信息展示前 Spy/Recluse 合法登记见证解释与阻断、App 层登记规则写入回调、无消费者的 `ClocktowerAutomaticRegistrationEffect.kt` 及其旧 R2 守卫和对应无效测试。真实私密展示仍通过 Session 的 confirmed observation 入口，保留去重、旧查询不冲突、过期响应隔离、私密性。
-- 本次使用 GitHub Connector 直接小步提交；本地开发机 `clocktower` 可保持在 M0 工作树，**不能仅凭旧 HEAD 断言 M1 的本地 Git 状态**。
+分支 `refactor/minimal-night-flow-20261019` / Draft #335，base #334 `76be7e17` 不变；本批基线 `1e7fbc6d`（前一生产 `3268440f`）。接续先核对最新真实 HEAD/远端/工作区与精确代码 CI，docs-only 不能冒充新代码验收。
 
-## M1b Session 第一批实施与风险（2026-10-18）
+Cloud `/workspace/CampBoardGameHost` 直接读写，不需要 MiniMCP/Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`，原 R2 shell `/workspace/work/r2-current.sh`。本批日志 `/workspace/work/app-complete/{red-final,focused,full}.log`；临时 seed 探针已删除，不计正式测试。
 
-Draft PR #332 基于 #331、代码分支 `codex/minimal-host-m1b-session-20261018`。已删除 `ClocktowerConfirmedRegistrationPublicationV1.kt`、`ClocktowerConfirmedRegistrationHostWriterV1.kt`、`StorytellerRegistrationRulingProducerV1.kt` 和相关专属旧测试；`ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 已移除，App 直接通过现有唯一 `commitGlobalEpistemicObservation` 提交。并清理不再使用的手动登记见证匹配函数及其测试。保留 Session 事实记录、去重和时间线结构防护，不将“显示的值”反推为登记见证。
-
-首个代码 HEAD `8f9ac02` 完整 CI #4318/R2 #3898 均成功；补充 HEAD `c124e70` 的 CI #4319 与 R2 #3899 以实际最新结果为准。新分支尚未合并 #331、#330；这三个 Draft PR 均为堆叠结构。
-
-下一任务 M1b 第二轮必须处理所有人工信息结果形态（数字、Yes/No、角色、两座位信息），让说书人的最终输入独立于 Host 真实答案和旧合法候选池。当前 `ClocktowerNightStepUi`、`ClocktowerInformationStepBuilder`、`ClocktowerFirstNightInformationRequest`、各类方桌 UI 仍保留旧合法候选/真值语义。审查时特别防止将人工选择的数值误记为“Host 证明的真实/虚假”结果；语义需只记录被确认的展示事实。迁移完所有生产消费者后整条删旧计算与测试。禁止重新建立并行 Session/存档/规则助手。
-
-## 立即下一项任务
-
-1. 核查 #331 最新 HEAD 的 CI/R2；Android 若失败直接读取失败 job log 并修复直至通过，不把旧测试重新引入。
-2. M1b 从人工最小流程入手：数值、布尔、角色、两座位信息由说书人直接确认并发布，无 Host 计算真实答案或按合法候选限制；迁移全部消费者后删除 `ClocktowerInformationStepBuilder` 的规则候选调用和相关旧 UI。
-3. 删除仍存在于 `ClocktowerGameSession.commitConfirmedPrivateInformationPublication` 中的可选 registration/witness 事务、`ClocktowerConfirmedRegistrationHostWriterV1`、`ClocktowerConfirmedRegistrationPublicationV1` 及纯旧规则测试；区分真实行动事实与自动推导登记，不复活第二权威状态。
-4. 后续 M2–M5 清理 AI 旧候选协议和规则结算链。避免把多条旧接口长期并存。
-
-## M1c 下一步交接（2026-10-18）
-
-堆叠 Draft PR #333 `codex/minimal-host-m1c-direct-number-20261018`，基于已完成 Session 双轨清理的 #332。代码新增 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerDirectBooleanResult.kt` 及两项关键行为测试，并修改 `ClocktowerNightStepUi.kt` 与首夜历史语义适配。Manual/AI_ASSISTED 的数字及占卜师真假不再受 Host 的合法候选过滤。使用严格的输入类型与查询座位身份，只记录说书人决定展示的实际结果，未做规则真假核定不自动写 TRUE/FALSE。请先核对 #333 最后代码 CI、R2，必要时读 Android job log 直接修复。
-
-下阶段依次清除 Chambermaid 查询后数字、各类角色揭示、洗衣妇/图书管理员/调查员二座位线索的 Host 计算与合法候选 UI。更重要的是迁移完消费者后应彻底删除旧 `ClocktowerInformationStepBuilder` 候选域生产、`ClocktowerRegistrationOptionPreparation` 登记见证枚举及 `ClocktowerFirstNightInformationRequest` 中余下按合法语义检验的路径；不能长期叠两套 UI。暂不处理 AI_AUTOMATIC 任意自由写状态，不恢复已删除的独立 Recovery 或 Undercover。
-
-## 已知缺口与权限
-
-仍无退出恢复、完整复盘或跨局归档；事件覆盖不完整。没有真机和付费模型验收。旧设备数据不迁移、不擦除。Undercover 已按用户最新指令整体退休。
-
-持续授权仍包括本轮后续本地提交、codex/* 推送、Draft PR 创建/更新、CI/R2。所有者另于本次收尾明确授权必要同步、合并和 PR 清理，以及建立新的分支/环境；此授权用于本轮收尾，不自动成为下一轮所有 PR 的无条件合并授权。强制推送不在授权内。删除远端分支不是收尾必要条件，保留历史引用不影响关闭旧 PR。
-
-在新的独立 worktree 使用 `codex/minimal-host-reset`（从收尾后 origin/main 创建）。不要复制旧 .gradle/build 缓存或未跟踪文件。新会话先验证目录、分支、HEAD 和工作区干净，再按上述任务开始。不要修改另一个工作区的未提交内容。
+保留唯一 Session、A/B/C/D2、现有 AI 与双跨局轮换、顺序/隐私/幂等/原子性。继续 Draft，不合并/改 base/重写历史/删分支/付费 API。无新增所有者决策阻塞。

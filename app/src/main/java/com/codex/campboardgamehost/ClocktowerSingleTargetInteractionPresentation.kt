@@ -19,7 +19,6 @@ internal fun clocktowerSingleTargetConfirmationEnabled(
 internal sealed interface ClocktowerSingleTargetEvent {
     data class SelectSeat(val seat: Int) : ClocktowerSingleTargetEvent
     data object ShowResult : ClocktowerSingleTargetEvent
-    data object Previous : ClocktowerSingleTargetEvent
     data object Next : ClocktowerSingleTargetEvent
 }
 
@@ -58,8 +57,6 @@ internal data class ClocktowerNightRulingPresentation(
     val action: ClocktowerNightAction,
     val selection: ClocktowerSingleTargetSelection,
     val mayorSeat: Int?,
-    val explanation: String,
-    val automatic: Boolean,
 ) {
     val confirmationEnabled: Boolean
         get() = clocktowerSingleTargetConfirmationEnabled(
@@ -73,30 +70,16 @@ internal data class ClocktowerNightRulingPresentation(
 internal fun clocktowerNightRulingPresentation(
     action: ClocktowerNightAction,
     selection: ClocktowerSingleTargetSelection,
-    automatic: Boolean,
     mayorSeat: Int?,
-    explanation: String,
 ): ClocktowerNightRulingPresentation? {
     return when (action) {
         ClocktowerNightAction.MayorRedirect -> ClocktowerNightRulingPresentation(
             action,
             selection.copy(
-                selectableSeats = if (!automatic && mayorSeat != null) selection.selectableSeats else emptySet(),
-                enabled = !automatic && selection.enabled && mayorSeat != null,
+                selectableSeats = if (mayorSeat != null) selection.selectableSeats else emptySet(),
+                enabled = selection.enabled && mayorSeat != null,
             ),
             mayorSeat,
-            explanation,
-            automatic,
-        )
-        ClocktowerNightAction.DemonSuccessor -> ClocktowerNightRulingPresentation(
-            action,
-            selection.copy(
-                selectableSeats = if (automatic) emptySet() else selection.selectableSeats,
-                enabled = !automatic && selection.enabled,
-            ),
-            null,
-            explanation,
-            automatic,
         )
         else -> null
     }

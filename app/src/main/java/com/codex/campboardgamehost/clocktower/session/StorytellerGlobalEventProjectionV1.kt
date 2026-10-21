@@ -90,11 +90,11 @@ internal object StorytellerGlobalEventProjectionV1 {
 
     private fun dayOrNight(phase: StorytellerPhase): String = when (phase) {
         StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT -> "N"
-        StorytellerPhase.DAY, StorytellerPhase.DAWN -> "D"
+        StorytellerPhase.DAY -> "D"
     }
 
     private fun action(fact: ActionFact): JSONObject? = when (fact) {
-        // Expiry and Dawn carry are Host mechanics, not separate Storyteller history.
+        // Dusk poison expiry is a Host mechanical transition, not a new player choice.
         is ActionFact.Poison -> fact.targetSeat?.let {
             JSONObject().put("type", "poison").put("target", it)
         }
@@ -105,14 +105,20 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.NoExecution -> JSONObject().put("type", "no_execution")
         is ActionFact.SlayerShot -> JSONObject().put("type", "slayer")
             .put("seat", fact.claimantSeat).put("target", fact.targetSeat)
-            .put("hit", fact.hit)
+            .put("hit", fact.hit).also { event ->
+                fact.targetRegistersAsDemon?.let { event.put("targetRegistersAsDemon", it) }
+            }
         is ActionFact.Nomination -> JSONObject().put("type", "nomination")
-            .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
+            .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat).also { event ->
+                fact.nominatorRegistersAsTownsfolk?.let { event.put("nominatorRegistersAsTownsfolk", it) }
+            }
         is ActionFact.Vote -> JSONObject().put("type", "vote")
             .put("seat", fact.nominatorSeat).put("target", fact.nomineeSeat)
             .put("voters", JSONArray(fact.voterSeats))
         // Private ability-trigger bookkeeping is not a second public/player event.
-        is ActionFact.KlutzLearnedDeath -> null
+        is ActionFact.ArtistAnswer -> null // Private answer is carried by its actual Observation.
+        is ActionFact.GameEnded -> JSONObject().put("type", "game_ended").put("reason", fact.reason.name)
+        is ActionFact.NightWake -> null
         is ActionFact.KlutzChoice -> JSONObject().put("type", "klutz_choice")
             .put("seat", fact.klutzSeat).put("target", fact.chosenSeat)
         is ActionFact.RoleChange -> JSONObject().put("type", "role_change")

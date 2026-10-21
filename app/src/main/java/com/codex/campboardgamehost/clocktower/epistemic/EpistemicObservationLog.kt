@@ -34,39 +34,6 @@ internal val ObservationTimelineBinding.timelineMode: ObservationTimelineMode
     }
 
 /**
- * Canonicalizes already-bound observations using the same whole-history timeline contract as the
- * durable log. Direct knowledge/world-set builders use this so they cannot silently reintroduce
- * legacy round/local-sequence ordering after a Global observation has been persisted.
- */
-internal fun Collection<EpistemicObservation>.canonicalTimelineOrder(): List<EpistemicObservation> {
-    val values = toList()
-    if (values.isEmpty()) return values
-    require(values.map { it.timelineBinding.timelineMode }.distinct().size <= 1) {
-        "Observation replay cannot mix LegacyLocal and Global timeline records."
-    }
-    return when (values.first().timelineBinding) {
-        ObservationTimelineBinding.LegacyLocal ->
-            values.sortedWith(compareBy<EpistemicObservation>({ it.round }, { it.sequence }, { it.observationId }))
-        is ObservationTimelineBinding.Global -> {
-            val globalSequences = values.map {
-                (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence
-            }
-            require(globalSequences.distinct().size == globalSequences.size) {
-                "Observation replay cannot contain duplicate global timeline sequences."
-            }
-            values.sortedWith(compareBy<EpistemicObservation>(
-                { (it.timelineBinding as ObservationTimelineBinding.Global).point.globalSequence },
-                { it.observationId },
-            ))
-        }
-    }
-}
-
-/** Shared chronology consumed by exact A3, ZDD shadow, and future time-aware world replay. */
-internal fun PlayerKnowledgeSnapshot.worldReplayObservationsInTimelineOrder(): List<EpistemicObservation> =
-    (publicObservations + privateObservations).canonicalTimelineOrder()
-
-/**
  * A durable statement of information that was actually shown or publicly established in a game.
  *
  * Unlike [EpistemicObservation], this record deliberately has no formal snapshot ID. A game state
@@ -97,8 +64,6 @@ data class RecordedEpistemicObservation(
         require(visibility != ObservationVisibility.PUBLIC || recipientSeats.isEmpty())
         timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
     }
-
-    fun bindTo(formal: FormalGameState): EpistemicObservation = bindTo(formal.snapshotId)
 
     fun bindTo(formalSnapshotId: String): EpistemicObservation {
         require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
@@ -166,8 +131,6 @@ class EpistemicObservationLog(
         }
         return copy(records = (records + record).canonical())
     }
-
-    fun bindTo(formal: FormalGameState): List<EpistemicObservation> = bindTo(formal.snapshotId)
 
     fun bindTo(formalSnapshotId: String): List<EpistemicObservation> {
         require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }

@@ -5,14 +5,9 @@ import com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteractionKind
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 
-/**
- * Stateless production adapter from canonical planner interactions to lazily-built night UI steps.
- *
- * The planner/projector remains the authority for which interactions exist and their order. This
- * registry only binds stable interaction identities to current production step materializers.
- * Compose state/effect lifetime and transaction ordering intentionally remain outside this owner.
- */
+/** Pure renderer of Session-selected stable interactions; no ordering, wake or death decisions. */
 internal class ClocktowerNightStepMaterializerRegistry(
     private val phase: ClocktowerNightFlowPhase,
     entries: Iterable<Entry>,
@@ -49,20 +44,10 @@ internal class ClocktowerNightStepMaterializerRegistry(
             "Clocktower projected materialization interaction IDs must be unique."
         }
 
-        return actionableInteractions.mapNotNull { interaction ->
-            val step = requireNotNull(byInteractionId[interaction.id]) {
+        return actionableInteractions.map { interaction ->
+            requireNotNull(byInteractionId[interaction.id]) {
                 "Missing Clocktower night-step materializer for '${interaction.id.value}'."
             }.invoke().copy(interactionId = interaction.id)
-
-            // The planner projects the night's ordering skeleton before same-night deaths resolve.
-            // By materialization time, normal later-night role lookup is cursor-relative and returns
-            // no actor when that role has already become mechanically dead. Death-trigger roles such
-            // as Ravenkeeper/Sage explicitly supply their trigger actor, so they remain materialized.
-            step.takeUnless {
-                phase == ClocktowerNightFlowPhase.OTHER_NIGHT &&
-                    interaction.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION &&
-                    step.actor == null
-            }
         }
     }
 }

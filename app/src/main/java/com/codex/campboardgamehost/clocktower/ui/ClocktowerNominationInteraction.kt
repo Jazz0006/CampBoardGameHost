@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
+import com.codex.campboardgamehost.clocktower.session.*
 
 /** A pending pair, not a confirmed nomination or vote. Host retains it across both screens. */
 internal class ClocktowerNominationDraft {
@@ -22,18 +22,13 @@ internal class ClocktowerNominationDraft {
         nominatorName = null
         nomineeName = null
     }
-    fun confirmVote(vote: ClocktowerConfirmedVoteRecord, onConfirm: (String, String, ClocktowerConfirmedVoteRecord) -> Unit) {
-        onConfirm(requireNotNull(nominatorName), requireNotNull(nomineeName), vote)
-        clear()
-    }
+
 }
 
 /** The UI requests confirmation; App remains the owner of the accepted facts. */
 internal data class ClocktowerNominationConfirmation(
     val nominator: String,
     val nominee: String,
-    val firstVirginNomination: Boolean,
-    val virginExecutes: Boolean,
     val explicitSpyRegistration: Boolean?,
 )
 
@@ -42,12 +37,10 @@ internal fun ClocktowerNominationInteraction(
     draft: ClocktowerNominationDraft,
     cards: List<PlayerCard>,
     tableState: ClocktowerDayOverviewTableState,
-    registration: ClocktowerRegistrationProjection,
     registrationState: ClocktowerRegistrationInteractionState,
     round: Int,
     executionThreshold: Int,
-    poisonTarget: String?,
-    virginUsed: Boolean,
+    sessionState: ClocktowerSessionState,
     actionsEnabled: Boolean,
     onHostTools: () -> Unit,
     onConfirm: (ClocktowerNominationConfirmation) -> Unit,
@@ -59,20 +52,13 @@ internal fun ClocktowerNominationInteraction(
     val nomineeName = draft.nomineeName
     val spyCard = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }
     fun registrationKey(ability: String, subject: String) = "${ClocktowerPhase.Day.name}:$round:$ability:$subject"
-    val nominatorCard = cards.firstOrNull { it.name == nominatorName }
-    val nomineeCard = cards.firstOrNull { it.name == nomineeName }
-    val virginFirstNomination = nomineeCard?.let {
-        AbilityFunctioningSemantics.interactsAs(it.abilitySubject(poisonTarget), "Virgin")
-    } == true && !virginUsed
-    val virginAbilityWorks = nomineeCard?.let {
-        AbilityFunctioningSemantics.functionsAs(it.abilitySubject(poisonTarget), "Virgin")
-    } == true && virginFirstNomination
-    val virginRegistrationKey = nominatorCard
-        ?.takeIf { it.name == spyCard?.name && virginFirstNomination }
-        ?.let { registrationKey("Virgin", it.name) }
-    val virginSpyRegistersGood = registration.spyRegistersGood(virginRegistrationKey, "Virgin")
-    val virginExecutes = virginAbilityWorks &&
-        (nominatorCard?.clocktowerTeam == ClocktowerTeam.Townsfolk || virginSpyRegistersGood)
+    val nominatorSeat = sessionState.gameState.players.firstOrNull { it.name == nominatorName }?.seat
+    val nomineeSeat = sessionState.gameState.players.firstOrNull { it.name == nomineeName }?.seat
+    val virginRegistrationKey = nominatorName?.takeIf { it == spyCard?.name }?.let { registrationKey("Virgin", it) }
+    val result = if (nominatorSeat != null && nomineeSeat != null) sessionState.virginNomination(
+        nominatorSeat, nomineeSeat, registrationState.explicitChoice(virginRegistrationKey)) else null
+    val virginFirstNomination = result?.first == true
+    val virginExecutes = result?.executes == true
     val specialNotice = when {
         virginExecutes -> text(
             "${playerSeatLabel(cards, nomineeName)} 首次被登记为镇民的玩家提名：不进行投票，提名者将立即被处决。",
@@ -99,18 +85,16 @@ internal fun ClocktowerNominationInteraction(
             virginFirstNomination -> text("记录能力，进入投票", "Record ability and continue")
             else -> text("开始投票", "Start voting")
         },
-        actionsEnabled = actionsEnabled,
+        actionsEnabled = actionsEnabled && result?.needsSpyChoice != true,
         onHostTools = onHostTools,
         onContinue = {
             val chosenNominator = nominatorName
             val chosenNominee = nomineeName
             if (chosenNominator != null && chosenNominee != null) {
-                val explicitSpyRuling = registrationState.explicitChoice(
-                    ClocktowerRegistrationSubject.SPY, virginRegistrationKey,
-                )?.takeIf { virginAbilityWorks && registration.spyCanRegister("Virgin") }
+                val explicitSpyRuling = registrationState.explicitChoice(virginRegistrationKey)
                 onConfirm(ClocktowerNominationConfirmation(
-                    chosenNominator, chosenNominee, virginFirstNomination, virginExecutes,
-                    explicitSpyRuling?.usesSpecialRegistration,
+                    chosenNominator, chosenNominee,
+                    explicitSpyRuling,
                 ))
             }
         },
@@ -119,11 +103,11 @@ internal fun ClocktowerNominationInteraction(
             onCancel()
         },
         specialContent = {
-            if (virginRegistrationKey != null && spyCard != null) {
+            if (virginFirstNomination && virginRegistrationKey != null && spyCard != null) {
                 ClocktowerSpyTownsfolkTypeDecisionControls(
-                    registersAsTownsfolk = registration.spyRegistersGood(virginRegistrationKey, "Virgin"),
+                    registersAsTownsfolk = registrationState.spyIsGood(virginRegistrationKey),
                     hasExplicitChoice = registrationState.spyHasExplicitChoice(virginRegistrationKey),
-                    enabled = registration.spyCanRegister("Virgin"),
+                    enabled = actionsEnabled,
                     language = language,
                     onRegistersAsTownsfolkChange = { chosen ->
                         registrationState.chooseSpy(virginRegistrationKey, chosen)

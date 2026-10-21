@@ -28,23 +28,23 @@ internal fun ClocktowerChambermaidSquareTableDialog(
     wakeInstruction: String? = null,
     recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
+    automaticOnly: Boolean = false,
     language: String,
-    canGoPrevious: Boolean,
     onSeatSelected: (Int) -> Unit,
-    onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
-    onPrevious: () -> Unit,
+    numericInput: (@Composable () -> Unit)? = null,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
 ) {
-    if (clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
+    if (!automaticOnly && numericInput == null &&
+        clocktowerUsesBeginnerCompactNightGuidance(wakeInstruction) &&
         resultOptions.distinctBy(::clocktowerInformationCandidateId).size <= 1
     ) {
         val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
         val orderedOptions = resultOptions.sortedBy { option -> if (option.isDefaultRecommendation) 0 else 1 }
         val reveal: (() -> Unit)? = when {
             !completePair -> null
-            orderedOptions.isEmpty() -> onShowDeterminedResult
+            orderedOptions.isEmpty() -> null
             else -> ({ onResultSelected(orderedOptions.single()) })
         }
         ClocktowerBeginnerTwoTargetRevealDialog(
@@ -55,9 +55,9 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             enabled = enabled,
             wakeInstruction = wakeInstruction,
             language = language,
-            canGoPrevious = canGoPrevious,
+
             onSeatSelected = onSeatSelected,
-            onPrevious = onPrevious,
+
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = reveal,
@@ -77,18 +77,17 @@ internal fun ClocktowerChambermaidSquareTableDialog(
             )
         },
         onSeatSelected = onSeatSelected,
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
-        ClocktowerChambermaidCenterControls(
+        if (numericInput != null) numericInput() else ClocktowerChambermaidCenterControls(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             recommendedResultOptions = recommendedResultOptions,
             resultOptions = resultOptions,
+            automaticOnly = automaticOnly,
             language = language,
-            onShowDeterminedResult = onShowDeterminedResult,
             onResultSelected = onResultSelected,
         )
     }
@@ -100,8 +99,8 @@ private fun ClocktowerChambermaidCenterControls(
     selectedSeats: List<Int>,
     recommendedResultOptions: List<ClocktowerDisplayOption>,
     resultOptions: List<ClocktowerDisplayOption>,
+    automaticOnly: Boolean,
     language: String,
-    onShowDeterminedResult: () -> Unit,
     onResultSelected: (ClocktowerDisplayOption) -> Unit,
 ) {
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
@@ -154,11 +153,17 @@ private fun ClocktowerChambermaidCenterControls(
             Spacer(Modifier.height(6.dp))
 
             if (recommendations.isEmpty() && manualOptions.isEmpty()) {
-                Button(
-                    onClick = onShowDeterminedResult,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(if (language == "en") "Check and show" else "查询并展示")
+                if (automaticOnly) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI result" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Text(
+                        if (language == "en") "Enter the actual number before showing information."
+                        else "请先输入实际要展示的数字。",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             } else {
                 if (recommendations.isNotEmpty()) {

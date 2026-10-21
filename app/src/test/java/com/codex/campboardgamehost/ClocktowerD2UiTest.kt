@@ -1,0 +1,648 @@
+package com.codex.campboardgamehost
+
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import org.junit.Rule
+import org.junit.Test
+import org.junit.Assert.assertEquals
+import com.codex.campboardgamehost.clocktower.domain.*
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import androidx.compose.ui.test.onAllNodesWithText
+import com.codex.campboardgamehost.clocktower.session.*
+import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
+import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/** Exercises real Compose event handlers and unmount/recomposition, without a paid provider. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [35], qualifiers = "en-rUS-w480dp-h960dp-mdpi")
+class ClocktowerD2UiTest {
+    @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
+
+    @Test fun numericNextUsesCurrentHostPreviewGate() {
+        ui.setContent {
+            ClocktowerDarkTheme {
+                CompositionLocalProvider(LocalClocktowerNightNextEnabled provides false) {
+                    ClocktowerDirectNumericResultUi(
+                        title = "Chef", subjectSeats = listOf(1, 2), actorLabel = "P1",
+                        wakeInstruction = null, language = "en", onHostTools = {}, onNext = {},
+                        onConfirm = {}, draftKey = "g:first:Chef",
+                    )
+                }
+            }
+        }
+        ui.onNodeWithText("Next").assertIsNotEnabled()
+    }
+
+    @Test fun manualChefPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.MANUAL)
+    @Test fun assistedEmpathPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.AI_ASSISTED, "Empath")
+    @Test fun automaticChefWaitsForActualPreviewAndExplicitNext() = numericHost(StorytellerOperationMode.AI_AUTOMATIC)
+
+    @Test fun manualWasherwomanEditsInvalidatePreview() = pairHost("Washerwoman", StorytellerOperationMode.MANUAL)
+    @Test fun manualLibrarianEditsInvalidatePreview() = pairHost("Librarian", StorytellerOperationMode.MANUAL)
+    @Test fun manualInvestigatorEditsInvalidatePreview() = pairHost("Investigator", StorytellerOperationMode.MANUAL)
+    @Test fun assistedPairRetainsManualEditWhenAdviceChanges() = pairHost("Investigator", StorytellerOperationMode.AI_ASSISTED)
+    @Test fun automaticPairWaitsForDisplayAndNext() = pairHost("Washerwoman", StorytellerOperationMode.AI_AUTOMATIC)
+
+    private fun pairHost(role: String, mode: StorytellerOperationMode) {
+        val host = Host(role, mode)
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        if (mode != StorytellerOperationMode.MANUAL) {
+            ui.onNode(hasClickAction() and hasText("P2 + P3", substring = true)).performClick()
+        } else {
+            ui.onNode(hasClickAction() and hasText("Choose character")).performClick()
+            ui.onNodeWithText("Chef").performClick()
+            ui.onNodeWithText("P2").performClick()
+            ui.onNodeWithText("P3").performClick()
+            ui.onNodeWithText("Show to player").performClick()
+        }
+        assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        if (mode != StorytellerOperationMode.AI_AUTOMATIC) {
+            if (mode != StorytellerOperationMode.MANUAL) {
+                ui.onNodeWithText("Manual selection").performClick()
+            }
+            ui.onNodeWithText("Chef").performClick()
+            ui.onNodeWithText("Empath").performClick()
+            ui.onNodeWithText("Next →").assertIsNotEnabled()
+            // A late recommendation must not turn this manual edit back into the AI choice.
+            ui.runOnIdle { host.pairRole.value = "Saint" }
+            ui.onNodeWithText("Empath").assertExists()
+            ui.onNodeWithText("P3").performClick()
+            ui.onNodeWithText("P4").performClick()
+            ui.onNodeWithText("Show to player").performClick()
+            ui.onNodeWithText("Close display card").performClick()
+        }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            val observation = host.session.state.epistemicObservationLog.records.single()
+            assertEquals(setOf(1), observation.recipientSeats)
+            val pair = (observation.proposition as InformationProposition.AnyOf).alternatives
+                .map { it as InformationProposition.RoleAt }
+            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) listOf(2, 3) else listOf(3, 4), pair.map { it.seat })
+            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) "Chef" else "Empath", pair.first().role.value)
+        }
+    }
+
+    @Test fun automaticFailureRetryAndLateResponseStayOnCurrentRevision() {
+        val host = Host("Chef", StorytellerOperationMode.AI_AUTOMATIC)
+        host.openingEnabled.value = false
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Retry AI information").assertIsEnabled().performClick()
+        ui.runOnIdle { assertEquals(2, host.requests) }
+        val oldKey = host.adviceKey.value
+        val requestId = requireNotNull(host.requestId)
+        ui.runOnIdle { host.session.recordPlayerInput(); host.refresh() }
+        ui.onNodeWithText("Next").assertIsNotEnabled()
+        ui.runOnIdle { host.deliver(oldKey, requestId, "1") }
+        ui.onNodeWithText("Show recommended: 1").assertDoesNotExist()
+        ui.onNodeWithText("Next").assertIsNotEnabled()
+        ui.onNodeWithText("Retry AI information").performClick()
+        ui.runOnIdle { host.deliver(host.adviceKey.value, requireNotNull(host.requestId), "2") }
+        ui.onNodeWithText("Show recommended: 2").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next").performTouchInput { doubleClick() }
+        ui.runOnIdle { assertEquals(2, (host.session.state.epistemicObservationLog.records.single()
+            .proposition as InformationProposition.NumericResult).value) }
+    }
+
+    @Test fun manualUndertakerRestoresPreviewAndRejectsUnshownEdits() = roleReveal("Undertaker", StorytellerOperationMode.MANUAL)
+    @Test fun assistedUndertakerKeepsHumanInputWhenAdviceChanges() = roleReveal("Undertaker", StorytellerOperationMode.AI_ASSISTED)
+    @Test fun automaticUndertakerRequiresPreviewBeforeNext() = roleReveal("Undertaker", StorytellerOperationMode.AI_AUTOMATIC)
+    @Test fun manualRavenkeeperRestoresPreviewAndRejectsUnshownEdits() = roleReveal("Ravenkeeper", StorytellerOperationMode.MANUAL)
+    @Test fun assistedRavenkeeperKeepsHumanInputWhenAdviceChanges() = roleReveal("Ravenkeeper", StorytellerOperationMode.AI_ASSISTED)
+    @Test fun automaticRavenkeeperRequiresPreviewBeforeNext() = roleReveal("Ravenkeeper", StorytellerOperationMode.AI_AUTOMATIC)
+
+    private fun roleReveal(role: String, mode: StorytellerOperationMode) {
+        val f = RoleCard(role, mode)
+        ui.setContent { f.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        if (mode == StorytellerOperationMode.MANUAL) {
+            ui.onNodeWithText("Choose character").performClick()
+            ui.onNodeWithText("Spy").performClick()
+            ui.onNodeWithText("Show to player").performClick()
+        } else ui.onNodeWithText("Show: Spy").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        if (mode != StorytellerOperationMode.AI_AUTOMATIC) {
+            if (mode == StorytellerOperationMode.AI_ASSISTED) ui.onNodeWithText("Manual selection").performClick()
+            ui.onNode(hasClickAction() and hasText("Spy")).performClick()
+            ui.onNodeWithText("Chef").performClick()
+            ui.onNodeWithText("Next →").assertIsNotEnabled()
+            ui.runOnIdle { f.advice.value = f.roleOption("Baron") }
+            ui.onNodeWithText("Chef").assertExists()
+            ui.onNodeWithText("Show to player").performClick()
+            ui.onNodeWithText("Close display card").performClick()
+        }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            assertEquals(InformationProposition.RoleAt(2, RoleId(
+                if (mode == StorytellerOperationMode.AI_AUTOMATIC) "Spy" else "Chef")), f.confirmed.single())
+        }
+    }
+
+    @Test fun manualFortuneTellerClearsPreviewWhenPlayerChangesQuery() = fortuneTeller(StorytellerOperationMode.MANUAL)
+    @Test fun assistedFortuneTellerClearsPreviewWhenPlayerChangesQuery() = fortuneTeller(StorytellerOperationMode.AI_ASSISTED)
+    @Test fun automaticFortuneTellerCannotReuseAnswerForOtherPlayers() = fortuneTeller(StorytellerOperationMode.AI_AUTOMATIC)
+    private fun fortuneTeller(mode: StorytellerOperationMode) {
+        val f = RoleCard("Fortune Teller", mode)
+        ui.setContent { f.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText(if (mode == StorytellerOperationMode.AI_AUTOMATIC) "YES" else "NO").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        ui.onNodeWithText("P2").performClick()
+        ui.onNodeWithText("P4").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        if (mode == StorytellerOperationMode.AI_AUTOMATIC) {
+            ui.onNodeWithText("YES").assertDoesNotExist()
+            ui.runOnIdle { f.advice.value = f.booleanOption(false) }
+        }
+        ui.onNodeWithText("NO").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            assertEquals(listOf(4, 3), (f.confirmed.single() as InformationProposition.BooleanResult).subjectSeats)
+        }
+    }
+
+    @Test fun manualChambermaidReturnsToSelectedNumberAndClearsChangedQuery() {
+        val f = RoleCard("Chambermaid", StorytellerOperationMode.MANUAL)
+        ui.setContent { f.Content() }
+        ui.onNode(hasSetTextAction()).performTextReplacement("2")
+        ui.onNodeWithText("Show manually selected result").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("P2").performClick()
+        ui.onNodeWithText("P4").performClick()
+        ui.onAllNodesWithText("Next →")[0].assertIsNotEnabled()
+        ui.onNode(hasSetTextAction()).performTextReplacement("1")
+        ui.onNodeWithText("Show manually selected result").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            assertEquals(listOf(4, 3), (f.confirmed.single() as InformationProposition.NumericResult).subjectSeats)
+        }
+    }
+
+    @Test fun manualSageRetainsPairAndInvalidatesChangedSeats() {
+        val f = RoleCard("Sage", StorytellerOperationMode.MANUAL)
+        ui.setContent { f.Content() }
+        ui.onNodeWithText("P2").performClick()
+        ui.onNodeWithText("P3").performClick()
+        ui.onNodeWithText("Show this pair").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        ui.onNodeWithText("P2").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("P4").performClick()
+        ui.onNodeWithText("Show this pair").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(listOf(3, 4), clocktowerSagePreviewSeats(f.confirmed.single(), 5)) }
+    }
+
+    /** Real role card + real fullscreen; callbacks expose the chosen result for the shared Host tests above. */
+    private class RoleCard(val role: String, val mode: StorytellerOperationMode) {
+        val cards = listOf(role, "Soldier", "Mayor", "Saint", "Recluse").mapIndexed { index, name ->
+            val identity = requireNotNull(clocktowerRoleByName(name))
+            PlayerCard("P${index + 1}", clocktowerRole = identity, clocktowerShownRole = identity, clocktowerTeam = identity.team)
+        }
+        val first = mutableStateOf<String?>("P2")
+        val second = mutableStateOf<String?>("P3")
+        val preview = mutableStateOf<ClocktowerNightStepUi?>(null)
+        val fullscreen = mutableStateOf(false)
+        val confirmed = mutableListOf<InformationProposition>()
+        private fun subjects() = listOfNotNull(first.value, second.value).map { name -> cards.indexOfFirst { it.name == name } + 1 }
+        private fun step() = ClocktowerNightStepUi(
+            title = role, actor = cards[0], isRealAction = true, reason = "", storytellerAction = "Wake P1",
+            tellPlayer = role, explanation = "", roleEnName = role,
+            action = when (role) {
+                "Fortune Teller" -> ClocktowerNightAction.FortuneTeller
+                "Chambermaid" -> ClocktowerNightAction.Chambermaid
+                "Ravenkeeper" -> ClocktowerNightAction.Ravenkeeper
+                else -> ClocktowerNightAction.None
+            },
+            informationQuestion = when (role) {
+                "Fortune Teller" -> ClocktowerInformationQuestion.Boolean(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, subjects())
+                "Chambermaid" -> ClocktowerInformationQuestion.Number(NumericMetric.PLAYERS_WAKING_FOR_ABILITY, subjects())
+                "Sage" -> null
+                else -> ClocktowerInformationQuestion.Role(2)
+            },
+            displayKind = when(role) {
+                "Fortune Teller" -> ClocktowerDisplayKind.YesNo
+                "Chambermaid" -> ClocktowerDisplayKind.Number
+                "Sage" -> ClocktowerDisplayKind.EitherOne
+                else -> ClocktowerDisplayKind.RoleReveal
+            },
+        )
+        fun roleOption(identity: String) = requireNotNull(clocktowerDirectRoleRevealChoice(
+            step(), 2, cards.size, identity, clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)) { it }).displayOption
+        fun booleanOption(value: Boolean) = ClocktowerDisplayOption("answer", ClocktowerDisplayKind.YesNo,
+            role, if(value) "YES" else "NO", null, null,
+            proposition = InformationProposition.BooleanResult(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, 1, subjects(), value))
+        val advice = mutableStateOf<ClocktowerDisplayOption?>(when(role) {
+            "Fortune Teller" -> booleanOption(true)
+            "Undertaker", "Ravenkeeper" -> roleOption("Spy")
+            else -> null
+        })
+        @Composable fun Content() {
+            val current = step()
+            ClocktowerDarkTheme {
+                if (fullscreen.value) {
+                    ClocktowerPlayerDisplayCardLocalized(requireNotNull(preview.value), cards, onDismiss = { fullscreen.value = false })
+                } else CompositionLocalProvider(LocalClocktowerNightNextEnabled provides (preview.value != null)) {
+                    ClocktowerNightStepCardLocalized(
+                        scriptRoles = clocktowerRolesForScript(if(role in listOf("Sage", "Chambermaid")) ClocktowerScript.NoGreaterJoy else ClocktowerScript.TroubleBrewing),
+                        allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
+                        phase = ClocktowerPhase.Night, gameId = "role-d2", round = 2, sequence = 0,
+                        gameStateRevision = 0, playerInputRevision = 0, informationDecisionKey = "role-d2:$role:2",
+                        cards = cards, ghostVoteAuthority = ClocktowerGhostVoteAuthority(), poisonedPlayerName = null,
+                        aliveCards = cards, chambermaidTargetCards = cards, mayorRedirectTargetCards = emptyList(),
+                        step = current, surfacePlan = clocktowerNightSurfacePlan(current, ClocktowerPhase.Night),
+                        aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
+                        selectedName = "P2", fortuneTellerFirst = first.value, fortuneTellerSecond = second.value,
+                        chambermaidFirst = first.value, chambermaidSecond = second.value, redHerring = null,
+                        onSelectName = {}, onSelectFortuneTellerFirst = { first.value = it.takeUnless { it == first.value }; preview.value = null },
+                        onSelectFortuneTellerSecond = { second.value = it.takeUnless { it == second.value }; preview.value = null },
+                        onSelectChambermaidFirst = { first.value = it.takeUnless { it == first.value }; preview.value = null },
+                        onSelectChambermaidSecond = { second.value = it.takeUnless { it == second.value }; preview.value = null },
+                        onShowPlayerDisplay = { preview.value = it; fullscreen.value = true },
+                        onInformationDraftChanged = { preview.value = null }, lastPreviewProposition = preview.value?.displayProposition,
+                        onHostTools = {},
+                        onNext = { preview.value?.displayProposition?.let(confirmed::add) },
+                    )
+                }
+            }
+        }
+    }
+
+    private fun numericHost(mode: StorytellerOperationMode, role: String = "Chef") {
+        val host = Host(role, mode)
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next").assertIsNotEnabled()
+        assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        if (mode == StorytellerOperationMode.AI_AUTOMATIC) {
+            ui.onNode(hasSetTextAction()).assertDoesNotExist()
+            ui.onNodeWithText("Show recommended: 1").performClick()
+        } else {
+            ui.onNode(hasSetTextAction()).performTextReplacement("2")
+            ui.onNodeWithText("Show manually selected result").performClick()
+        }
+        // The real player display unmounts the host content. Hardware Back must close it.
+        assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        ui.runOnIdle { ui.activity.onBackPressedDispatcher.onBackPressed() }
+        ui.onNodeWithText("Next").assertIsEnabled()
+        if (mode != StorytellerOperationMode.AI_AUTOMATIC) {
+            ui.onNode(hasSetTextAction()).performTextReplacement("3")
+            ui.onNodeWithText("Next").assertIsNotEnabled()
+            ui.onNodeWithText("Show manually selected result").performClick()
+            ui.onNodeWithText("Close display card").performClick()
+        }
+        assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        ui.onNodeWithText("Next").performClick()
+        ui.runOnIdle {
+            val records = host.session.state.epistemicObservationLog.records
+            assertEquals(1, records.size)
+            assertEquals(setOf(1), records.single().recipientSeats)
+            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) 1 else 3,
+                (records.single().proposition as InformationProposition.NumericResult).value)
+        }
+    }
+
+    @Test fun automaticButlerTargetRequiresExplicitNext() = playerTargetRequiresNext("Butler")
+    @Test fun automaticPoisonerTargetRequiresExplicitNext() = playerTargetRequiresNext("Poisoner")
+
+    private fun playerTargetRequiresNext(role: String) {
+        val host = Host(role, StorytellerOperationMode.AI_AUTOMATIC)
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P2").performClick()
+        ui.runOnIdle { org.junit.Assert.assertTrue(host.session.state.actionTimeline.entries.isEmpty()) }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            val actions = host.session.state.actionTimeline.reducerFacts().filterNot { it is ActionFact.PhaseAdvance }
+            assertEquals(1, actions.size)
+            assertEquals(StorytellerPhase.DAY, host.session.state.phase)
+            val fact = actions.single()
+            if (role == "Butler") assertEquals(2, (fact as com.codex.campboardgamehost.clocktower.domain.ActionFact.ButlerMasterChoice).masterSeat)
+            else assertEquals(2, (fact as com.codex.campboardgamehost.clocktower.domain.ActionFact.Poison).targetSeat)
+        }
+    }
+
+    @Test fun dayTableSingleClickRecordsNoExecutionAndEntersNight() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("End day").performClick()
+        ui.runOnIdle {
+            assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
+            assertEquals(2, host.session.state.round)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.NoExecution>().size)
+        }
+    }
+
+    @Test fun dayTableSingleClickExecutesConfirmedHighestVoteWithoutAnotherScreen() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        host.session.confirmNomination(3, 2, null)
+        host.session.confirmVote(3, 2, listOf(1, 2, 3))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("End day").performClick()
+        ui.runOnIdle {
+            assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
+            assertEquals(false, host.session.state.gameState.playerAt(2)!!.alive)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Execution>().size)
+        }
+    }
+
+    @Test fun restoredConfirmedNominationOpensItsRealVoteWithoutTransientDraft() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL)
+        host.enterDay()
+        host.session.confirmNomination(3, 2, null)
+        host.reload()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Confirm vote").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().single().voterSeats.size)
+            assertEquals(null, host.session.state.pendingVote())
+        }
+        ui.onNodeWithText("End day").assertIsEnabled()
+    }
+
+    @Test fun realDeathDirectlyOpensKlutzChoiceAndOnlyConfirmCommitsIt() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, ClocktowerScript.NoGreaterJoy,
+            listOf("Imp", "Klutz", "Artist", "Empath", "Clockmaker"))
+        host.enterDay()
+        host.session.commitConfirmedPlayerDeath(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.Death(
+            "ui-klutz-death", StorytellerPhase.DAY, 1, host.session.nextInputSequence, 2), host.session.state.gameStateRevision)
+        host.reload()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Confirm Klutz choice").assertIsNotEnabled()
+        ui.onNodeWithText("P3").performClick()
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().size) }
+        ui.onNodeWithText("Confirm Klutz choice").performClick()
+        ui.runOnIdle {
+            val choice = host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().single()
+            assertEquals("ui-klutz-death", choice.deathActionId)
+            assertEquals(3, choice.chosenSeat)
+            assertEquals(StorytellerPhase.DAY, host.session.state.phase)
+        }
+    }
+
+    @Test fun selfKillWithMultipleMinionsWaitsForChoiceThenCommitsOnNext() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Spy", "Baron", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmSpyWake(
+            com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+                .ruleset(ClocktowerScript.TroubleBrewing), "other_night:role:Spy")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertExists()
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size) }
+        ui.onNodeWithText("#2 P2").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(false, host.session.state.gameState.playerAt(1)!!.alive)
+            assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(2)!!.actualRole)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+        }
+    }
+
+    @Test fun selfKillUsesForcedScarletWithoutOfferingOtherMinion() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Spy", "Scarlet Woman", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmSpyWake(
+            com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+                .ruleset(ClocktowerScript.TroubleBrewing), "other_night:role:Spy")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(3)!!.actualRole)
+            assertEquals(RoleId("Spy"), host.session.state.gameState.playerAt(2)!!.actualRole)
+        }
+    }
+
+    @Test fun poisonedImpSelfTargetDoesNotOfferOrCommitSuccession() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Poisoner", "Baron", "Chef", "Soldier"))
+        host.enterOtherNight()
+        host.session.confirmNightPoison(1, StorytellerPhase.NIGHT, 2, "other_night:role:Poisoner")
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("P1").performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(true, host.session.state.gameState.playerAt(1)!!.alive)
+            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size)
+            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+        }
+    }
+
+    @Test fun troubleBrewingCompletesFirstNightDayNightAndEndingFromOnlySession() = completeGame(ClocktowerScript.TroubleBrewing)
+    @Test fun noGreaterJoyCompletesFirstNightDayNightAndEndingFromOnlySession() = completeGame(ClocktowerScript.NoGreaterJoy)
+
+    private fun completeGame(script: ClocktowerScript) {
+        val role = if (script == ClocktowerScript.TroubleBrewing) "Chef" else "Clockmaker"
+        val roles = if (script == ClocktowerScript.TroubleBrewing)
+            listOf(role, "Slayer", "Soldier", "Poisoner", "Imp") else
+            listOf(role, "Artist", "Sage", "Baron", "Imp")
+        val host = Host(role, StorytellerOperationMode.MANUAL, script, roles)
+        val original = host.session
+        ui.setContent { host.Content() }
+        if (script == ClocktowerScript.TroubleBrewing) {
+            ui.onNodeWithText("P3").performClick()
+            ui.onNodeWithText("Next →").performClick()
+        }
+        ui.onNode(hasSetTextAction()).performTextReplacement("1")
+        ui.onNodeWithText("Show manually selected result").performClick()
+        ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next").performClick()
+        ui.onNodeWithText("End day").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(original, host.session)
+            assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
+            assertEquals(2, host.session.state.round)
+        }
+        if (script == ClocktowerScript.TroubleBrewing) {
+            ui.onNodeWithText("P3").performClick()
+            ui.onNodeWithText("Next →").performClick()
+        }
+        ui.onNodeWithText("P2").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.onNodeWithText("End day").assertIsEnabled()
+        ui.runOnIdle {
+            assertEquals(original, host.session)
+            assertEquals(false, host.session.state.gameState.playerAt(2)!!.alive)
+            host.reload()
+            assertEquals("d2-ui", host.session.state.gameId)
+            host.session.confirmNomination(1, 5, null)
+            host.refresh()
+        }
+        listOf("P1", "P3", "P4").forEach { ui.onNodeWithText(it).performClick() }
+        ui.onNodeWithText("Confirm vote").performClick()
+        ui.onNodeWithText("End day").performClick()
+        ui.runOnIdle {
+            val ended = host.session.state
+            assertEquals(GameEndReason.NO_DEMON, ended.outcome?.reason)
+            assertEquals(1, ended.actionTimeline.reducerFacts().filterIsInstance<ActionFact.GameEnded>().size)
+            assertEquals(1, ended.epistemicObservationLog.records.size)
+            host.reload()
+            assertEquals(ended, host.session.state)
+            host.session.confirmEndDay(2)
+            assertEquals(ended, host.session.state)
+        }
+    }
+
+    /** Uses the production JudgeScreen and real Session; only external input/provider callbacks are fixtures. */
+    private class Host(role: String, val mode: StorytellerOperationMode,
+        private val script: ClocktowerScript = ClocktowerScript.TroubleBrewing,
+        roles: List<String> = listOf(role, "Soldier", "Mayor", "Saint", "Recluse")) {
+        val openingEnabled = mutableStateOf(true)
+        val pairRole = mutableStateOf("Chef")
+        val adviceKey = mutableStateOf<String?>(null)
+        private val adviceError = mutableStateOf<String?>(null)
+        private val choices = mutableStateOf<Map<String, SemanticResult>>(emptyMap())
+        var requests = 0
+        var requestId: String? = null
+        val cards = roles.mapIndexed { index, name ->
+            val identity = requireNotNull(clocktowerRoleByName(name))
+            PlayerCard("P${index + 1}", clocktowerRole = identity, clocktowerShownRole = identity,
+                clocktowerTeam = identity.team)
+        }
+        private val game = GameState(script.toRecommendationScriptId(), cards.mapIndexed { index, card ->
+            PlayerState(index + 1, card.name, RoleId(requireNotNull(card.clocktowerRole).enName),
+                if(card.clocktowerTeam in setOf(ClocktowerTeam.Demon, ClocktowerTeam.Minion)) Alignment.EVIL else Alignment.GOOD,
+                when(card.clocktowerTeam) {
+                    ClocktowerTeam.Demon -> CharacterType.DEMON
+                    ClocktowerTeam.Minion -> CharacterType.MINION
+                    ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+                    else -> CharacterType.TOWNSFOLK
+                })
+        }, 19L)
+        var session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
+        private val tick = mutableStateOf(0)
+        private val target = mutableStateOf<String?>(null)
+        fun refresh() { tick.value++ }
+        fun enterDay() {
+            session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
+                "ui-day-${session.state.round}", session.state.phase, session.state.round, session.nextInputSequence, StorytellerPhase.DAY, session.state.round), session.state.gameStateRevision)
+            refresh()
+        }
+        fun enterOtherNight() {
+            enterDay()
+            session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
+                "ui-night", StorytellerPhase.DAY, 1, session.nextInputSequence, StorytellerPhase.NIGHT, 2), session.state.gameStateRevision)
+            refresh()
+        }
+        fun reload() {
+            session = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(session.state)))
+            refresh()
+        }
+        fun deliver(key: String?, id: String, value: String) {
+            adviceKey.value = key
+            adviceError.value = null
+            choices.value = mapOf(id to SemanticResult(kind = "SCALAR_RESULT", scalarValue = value))
+        }
+        private fun request(steps: List<ClocktowerNightStepUi>, i: Int) {
+            requests++
+            val current = pendingGlobalNightScalarDecision(steps[i], ClocktowerPhase.FirstNight, 1, i,
+                cards, session.state.gameId, StorytellerDecisionRevision(session.state.gameStateRevision, session.state.playerInputRevision))
+                ?: return
+            requestId = current.requestIdentity.requestId
+            adviceKey.value = ClocktowerResidualRequestIdentityV2.build(session.state.gameId, 1, i,
+                requireNotNull(requestId), session.state.gameStateRevision, session.state.playerInputRevision,
+                session.state.nextTimelineGlobalSequence, mode)
+            choices.value = emptyMap()
+            adviceError.value = "Unavailable fixture"
+        }
+
+        @Composable fun Content() {
+            tick.value
+            val state = session.state
+            ClocktowerJudgeScreen(
+                allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
+                cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"), sessionState = state,
+                globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
+                globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
+                globalAiAdviceKey = adviceKey.value, globalAiAdviceError = adviceError.value,
+                globalResidualRecommendedChoices = choices.value, onRequestGlobalAiAdvice = ::request,
+                jointOpeningSemantics = if (!openingEnabled.value) emptyMap() else mapOf(1 to
+                    if (cards[0].clocktowerRole?.enName in listOf("Washerwoman", "Librarian", "Investigator"))
+                        HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                            "FUNCTIONING", "EVIDENCE_PAIR", listOf(2, 3), "ROLE", roleId = pairRole.value)
+                    else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                        "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
+                demonAttackDraftTarget = target.value, poisonDraftTarget = target.value,
+                monkProtectedDraftTarget = null, mayorRedirectDraftTarget = null,
+                fortuneTellerFirst = null, fortuneTellerSecond = null,
+                chambermaidFirst = null, chambermaidSecond = null, ravenkeeperTarget = null, redHerring = null,
+                recommendedDemonBluffRoleNames = emptyList(), butlerMaster = target.value,
+                onCommitConfirmedPrivateInformationPublication = { draft, revision ->
+                    session.commitGlobalEpistemicObservation(draft, revision)
+                    tick.value++
+                },
+                onHostTools = {}, onSelectNightDeath = { target.value = it }, onConfirmDemonAttack = { step, successor ->
+                    session.confirmNightAttack(cards.indexOfFirst { it.name == target.value } + 1, state.phase, state.round, step,
+                        successor?.let { name -> cards.indexOfFirst { it.name == name } + 1 })
+                    refresh()
+                },
+                onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
+                    session.confirmNightPoison(cards.indexOfFirst { it.name == target.value } + 1, state.phase, state.round, step)
+                    target.value = null
+                    refresh()
+                },
+                onSelectFortuneTellerFirst = {}, onSelectFortuneTellerSecond = {},
+                onSelectChambermaidFirst = {}, onSelectChambermaidSecond = {}, onSelectRavenkeeperTarget = {},
+                onSelectRedHerring = {}, onConfirmRedHerring = {}, onCommitDemonBluffs = {},
+                onSelectButlerMaster = { target.value = it }, onConfirmButlerMaster = { _, _, step ->
+                    session.confirmNightButlerMaster(1, cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
+                    refresh()
+                },
+                onSelectMonkProtectedTarget = {}, onConfirmMonkProtectedTarget = {},
+                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = { session.confirmImpNotification(); refresh() }, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
+                onConfirmKlutzChoice = { chosenName ->
+                    session.confirmKlutzChoice(requireNotNull(session.state.pendingKlutzDeath()).actionId,
+                        cards.indexOfFirst { it.name == chosenName } + 1)
+                    refresh()
+                }, onConfirmArtistQuestion = { _, _, _ -> },
+                onSlayerShot = { _, _, _ -> },
+                onConfirmedNomination = { _, _, _, _ -> false }, onConfirmedVote = { a, b, vote, expectedRound ->
+                    session.confirmVote(cards.indexOfFirst { it.name == a } + 1, cards.indexOfFirst { it.name == b } + 1,
+                        vote.voters.map { v -> cards.indexOfFirst { it.name == v.playerName } + 1 }, expectedRound)
+                    refresh()
+                },
+                onAdvanceFromFirstNight = ::enterDay,
+                onConfirmDay = { expectedRound -> session.confirmEndDay(expectedRound); refresh() }, onCompleteNight = ::enterDay,
+            )
+        }
+    }
+}

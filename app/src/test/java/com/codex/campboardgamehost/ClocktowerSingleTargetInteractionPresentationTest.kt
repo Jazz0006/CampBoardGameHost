@@ -79,81 +79,17 @@ class ClocktowerSingleTargetInteractionPresentationTest {
     }
 
     @Test
-    fun `automatic rulings keep a concrete read only surface while effects settle`() {
-        for (action in listOf(ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.DemonSuccessor)) {
-            val presentation = requireNotNull(
-                clocktowerNightRulingPresentation(action, selection, true, 2, "explanation"),
-            )
-            assertTrue(presentation.automatic)
-            assertFalse(presentation.selection.enabled)
-            assertTrue(presentation.selection.selectableSeats.isEmpty())
-            assertFalse(presentation.confirmationEnabled)
-        }
-    }
-
-    @Test
     fun `Mayor absence disables targets while retaining current selection`() {
-        val missing = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, false, null, ""))
+        val missing = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, null))
         assertFalse(missing.selection.enabled)
         assertTrue(missing.selection.selectableSeats.isEmpty())
         assertEquals(selection.selectedSeat, missing.selection.selectedSeat)
         assertNull(missing.mayorSeat)
         assertFalse(missing.confirmationEnabled)
-        val present = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, false, 2, ""))
+        val present = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.MayorRedirect, selection, 2))
         assertEquals(selection, present.selection)
         assertEquals(2, present.mayorSeat)
         assertTrue(present.confirmationEnabled)
     }
 
-    @Test
-    fun `successor retains supplied eligibility and explanation without Mayor action`() {
-        val model = requireNotNull(clocktowerNightRulingPresentation(ClocktowerNightAction.DemonSuccessor, selection, false, 2, "Choose eligible minion"))
-        assertEquals(selection, model.selection)
-        assertEquals("Choose eligible minion", model.explanation)
-        assertNull(model.mayorSeat)
-        assertFalse(model.confirmationEnabled)
-        assertNull(clocktowerNightRulingPresentation(ClocktowerNightAction.Poison, selection, false, null, ""))
-    }
-
-    @Test
-    fun `real player target cannot advance until Host legal selection exists`() {
-        val legal = setOf("A", "B")
-        for (action in listOf(
-            ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster,
-            ClocktowerNightAction.MonkProtect, ClocktowerNightAction.DemonKill,
-        )) {
-            assertFalse(clocktowerLivePlayerTargetReady(action, true, null, legal))
-            assertFalse(clocktowerLivePlayerTargetReady(action, true, "C", legal))
-            assertTrue(clocktowerLivePlayerTargetReady(action, true, "A", legal))
-            assertTrue(clocktowerLivePlayerTargetReady(action, false, null, legal))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, null, "A", legal, false,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, "A", null, legal, false,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, "A", "B", legal, false,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, "C", "C", legal, false,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, "A", "A", legal, true,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                false, action, true, "A", "A", legal, false,
-            ))
-            assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, false, "A", "A", legal, false,
-            ))
-            assertTrue(clocktowerShouldAutoConfirmFreshPlayerTarget(
-                true, action, true, "A", "A", legal, false,
-            ))
-        }
-        assertTrue(clocktowerLivePlayerTargetReady(ClocktowerNightAction.FortuneTeller, true, null, legal))
-        assertFalse(clocktowerShouldAutoConfirmFreshPlayerTarget(
-            true, ClocktowerNightAction.MayorRedirect, true, "A", "A", legal, false,
-        ))
-    }
 }

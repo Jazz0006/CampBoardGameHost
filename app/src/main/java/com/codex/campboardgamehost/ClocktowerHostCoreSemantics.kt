@@ -1,11 +1,8 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicSemanticJson
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.toClocktowerPlayerStates
-import com.codex.campboardgamehost.clocktower.rules.FixedInformationEvaluator
-import java.security.MessageDigest
 
 /**
  * Stable non-Compose semantics extracted from the legacy Clocktower host monolith.
@@ -24,6 +21,7 @@ internal fun clocktowerDisplayedInformationIsUnreliable(
     step: ClocktowerNightStepUi,
     actorIsUnreliable: (String, PlayerCard?) -> Boolean,
 ): Boolean =
+    step.informationReliability != com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE ||
     step.actor?.clocktowerRole?.enName == "Drunk" ||
         step.roleEnName?.let { roleEnName -> actorIsUnreliable(roleEnName, step.actor) } == true
 
@@ -39,8 +37,7 @@ internal fun clocktowerShownUnreliableProposition(
     empathNeighborSeats: List<Int>,
     fortuneTellerSubjectSeats: List<Int>,
 ): InformationProposition? {
-    val authoritative = step.informationDecisionConfirmation?.draft?.proposition
-        ?: step.displayProposition
+    val authoritative = step.displayProposition
     // Numeric information is compared against the literal number on the player display.
     // A stale truthful proposition cannot be substituted for a different fabricated number.
     if (authoritative != null) {
@@ -103,48 +100,24 @@ internal fun clocktowerPrivateObservationRecordId(
     round: Int,
     roleEnName: String,
     actorSeat: Int,
-    proposition: InformationProposition,
+    stepId: String,
 ): String {
-    val statementKey = MessageDigest
-        .getInstance("SHA-256")
-        .digest(EpistemicSemanticJson.encode(proposition).toByteArray(Charsets.UTF_8))
-        .joinToString("") { byte ->
-            (byte.toInt() and 0xff).toString(16).padStart(2, '0')
-        }
-    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$statementKey"
+    require(stepId.isNotBlank())
+    // A stable role/round/interaction ID prevents a second different result
+    // being written after Next. The selected proposition is event CONTENT,
+    // never part of the identity of this single confirmed step.
+    return "private-$gameId-${phase.name}-$round-$roleEnName-$actorSeat-$stepId"
 }
 
-internal fun clocktowerRedHerringCandidates(aliveCards: List<PlayerCard>): List<PlayerCard> =
-    aliveCards.filter { card -> card.clocktowerTeam?.isLegalRedHerringTeam() == true }
 
 internal fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
     cards.filter { it.clocktowerRole?.enName == enName }
 
-internal fun chefEvilPairs(cards: List<PlayerCard>, isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil): Int {
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.chefEvilPairs(cards.toClocktowerPlayerStates()) { it.seat in evilSeats }
-}
-
 internal fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<PlayerCard> {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return emptyList()
-    val neighborSeats = FixedInformationEvaluator
-        .livingNeighbors(cards.toClocktowerPlayerStates(), sourceSeat)
-        .map { it.seat }
-    return neighborSeats.mapNotNull { seat -> cards.getOrNull(seat - 1) }
-}
-
-internal fun empathEvilNeighborCount(
-    cards: List<PlayerCard>,
-    playerName: String,
-    isEvil: (PlayerCard) -> Boolean = ::isClocktowerEvil,
-): Int {
-    val sourceSeat = cards.indexOfFirst { it.name == playerName } + 1
-    if (sourceSeat <= 0) return 0
-    val evilSeats = cards.mapIndexedNotNull { index, card -> (index + 1).takeIf { isEvil(card) } }.toSet()
-    return FixedInformationEvaluator.empathEvilNeighborCount(cards.toClocktowerPlayerStates(), sourceSeat) {
-        it.seat in evilSeats
-    }
+    val alive = cards.filter { it.eliminatedRound == null }
+    val index = alive.indexOfFirst { it.name == playerName }
+    if (index < 0 || alive.size <= 1) return emptyList()
+    return listOf(alive[(index - 1 + alive.size) % alive.size], alive[(index + 1) % alive.size]).distinctBy { it.name }
 }
 
 internal fun <T> clocktowerFortuneTellerRoleAuthority(
@@ -153,27 +126,17 @@ internal fun <T> clocktowerFortuneTellerRoleAuthority(
     otherNightRole: () -> T?,
 ): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole
 
-internal fun clocktowerOtherNightWakingRoleIds(
-    cards: List<PlayerCard>,
-    pendingSuccessionDemonRoleId: RoleId?,
+/** Night role eligibility reads the one authoritative Session game state, not a second UI card list. */
+internal fun clocktowerNightWakingRoleIds(
+    gameState: GameState,
+    includeDead: Boolean,
 ): Set<RoleId> = buildSet {
-    cards.filter { it.eliminatedRound == null }.forEach { card ->
-        card.clocktowerRole?.enName?.let { add(RoleId(it)) }
-        if (card.clocktowerRole?.enName == "Drunk") {
-            card.clocktowerShownRole?.enName?.let { add(RoleId(it)) }
+    gameState.players.filter { includeDead || it.alive }.forEach { player ->
+        add(player.actualRole)
+        if (player.actualRole == RoleId("Drunk")) {
+            player.shownRole?.let { add(it) }
         }
     }
-    pendingSuccessionDemonRoleId?.let(::add)
 }
 
-internal fun storytellerPairHint(
-    target: PlayerCard,
-    cards: List<PlayerCard>,
-    fallbackPool: List<PlayerCard> = cards,
-    excludeNames: Set<String> = emptySet(),
-): Pair<PlayerCard, PlayerCard>? {
-    val decoy = fallbackPool.firstOrNull { it.name != target.name && it.name !in excludeNames }
-        ?: fallbackPool.firstOrNull { it.name != target.name }
-        ?: return null
-    return target to decoy
-}
+

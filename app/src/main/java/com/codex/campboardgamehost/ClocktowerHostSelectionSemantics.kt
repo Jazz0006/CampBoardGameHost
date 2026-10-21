@@ -1,23 +1,8 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.GameState
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
-import com.codex.campboardgamehost.clocktower.domain.PairInformationOutcome
-import com.codex.campboardgamehost.clocktower.domain.PlayerState
-import com.codex.campboardgamehost.clocktower.domain.QualityTier
-import com.codex.campboardgamehost.clocktower.domain.RegistrationReason
-import com.codex.campboardgamehost.clocktower.domain.RoleDefinition
-import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.recommendation.NaturalPairInformationCandidateGenerator
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedCandidateLegality
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedEpistemicStatus
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionCandidate
-import com.codex.campboardgamehost.clocktower.recommendation.UnifiedSelectionPool
-import com.codex.campboardgamehost.clocktower.rules.FirstNightNumericInformationSemantics
-import com.codex.campboardgamehost.clocktower.rules.PairInformationDisplaySemantics
-import kotlin.math.abs
 
 internal enum class TwoPlayerSelectionAction {
     ToggleFirst,
@@ -42,25 +27,6 @@ internal fun clocktowerLivePlayerTargetReady(
     ClocktowerNightAction.MonkProtect,
     ClocktowerNightAction.DemonKill,
 ) || (selectedName != null && selectedName in legalNames)
-
-/** A retained draft, or a previously visited step, must never trigger automatic confirmation. */
-internal fun clocktowerShouldAutoConfirmFreshPlayerTarget(
-    automaticMode: Boolean,
-    action: ClocktowerNightAction,
-    isRealAction: Boolean,
-    freshTarget: String?,
-    selectedName: String?,
-    legalNames: Set<String>,
-    playerDisplayOpen: Boolean,
-): Boolean = automaticMode && isRealAction && !playerDisplayOpen &&
-    action in setOf(
-        ClocktowerNightAction.Poison,
-        ClocktowerNightAction.ButlerMaster,
-        ClocktowerNightAction.MonkProtect,
-        ClocktowerNightAction.DemonKill,
-    ) &&
-    freshTarget != null && selectedName == freshTarget &&
-    clocktowerLivePlayerTargetReady(action, isRealAction, selectedName, legalNames)
 
 internal fun clocktowerToggledSingleTargetSelection(
     currentSelection: String?,
@@ -100,128 +66,6 @@ internal fun revalidateTwoPlayerSelection(
     )
 }
 
-internal data class ChambermaidSelectionResolution(
-    val selection: RevalidatedTwoPlayerSelection,
-    val wokeCount: Int?,
-)
-
-internal fun resolveChambermaidSelection(
-    first: String?,
-    second: String?,
-    eligibleNames: Set<String>,
-    wokeBecauseOwnAbilityNames: Set<String>,
-): ChambermaidSelectionResolution {
-    val selection = revalidateTwoPlayerSelection(
-        first = first,
-        second = second,
-        eligibleNames = eligibleNames,
-    )
-    val wokeCount = if (selection.isComplete) {
-        listOfNotNull(selection.first, selection.second)
-            .count { it in wokeBecauseOwnAbilityNames }
-    } else {
-        null
-    }
-    return ChambermaidSelectionResolution(
-        selection = selection,
-        wokeCount = wokeCount,
-    )
-}
-
-/**
- * Only a genuinely current, Host-resolved information result may enter the
- * normal reveal flow without a human information-choice click. For player-query
- * steps, the player-selected subjects MUST exist first; choosing those subjects
- * is never an AI decision. Already published results never auto-reveal again.
- * No parallel execution state: the Session history is authority.
- */
-internal fun clocktowerShouldAutoPresentCurrentInformation(
-    automaticMode: Boolean,
-    step: ClocktowerNightStepUi,
-    phase: ClocktowerPhase,
-    round: Int,
-    actorSeat: Int?,
-    hasCurrentLegalResult: Boolean,
-    playerQueryResolved: Boolean = false,
-    confirmedObservations: List<RecordedEpistemicObservation>,
-): Boolean = automaticMode &&
-    step.isRealAction &&
-    (step.action == ClocktowerNightAction.None ||
-        (step.action in setOf(
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.Ravenkeeper,
-        ) && playerQueryResolved)) &&
-    step.actor != null &&
-    actorSeat != null &&
-    step.roleEnName != null &&
-    hasCurrentLegalResult &&
-    confirmedObservations.none { received ->
-        received.phase == phase.toStorytellerPhase() &&
-            received.round == round &&
-            received.visibility == ObservationVisibility.PRIVATE &&
-            received.sourceSeat == actorSeat &&
-            received.sourceAbility?.value == step.roleEnName
-    }
-
-/**
- * Player-chosen targets are drafts until their information is actually shown.
- * Once one result has been published in the Session, it may only be reopened
- * with the identical typed result. A new target/result must not silently add a
- * second incompatible observation for the same actor, ability, phase and night.
- */
-internal enum class ClocktowerLiveQueryRevealDisposition {
-    NEW,
-    REOPEN,
-    CONFLICT,
-}
-
-internal fun clocktowerLiveQueryRevealDisposition(
-    action: ClocktowerNightAction,
-    phase: ClocktowerPhase,
-    round: Int,
-    actorSeat: Int?,
-    roleEnName: String?,
-    shown: InformationProposition?,
-    confirmedObservations: List<RecordedEpistemicObservation>,
-): ClocktowerLiveQueryRevealDisposition {
-    if (action !in setOf(
-            ClocktowerNightAction.FortuneTeller,
-            ClocktowerNightAction.Chambermaid,
-            ClocktowerNightAction.Ravenkeeper,
-        )
-    ) return ClocktowerLiveQueryRevealDisposition.NEW
-    if (shown == null || actorSeat == null || roleEnName == null) {
-        return ClocktowerLiveQueryRevealDisposition.CONFLICT
-    }
-    val previous = confirmedObservations.filter { it.phase == phase.toStorytellerPhase() &&
-        it.round == round && it.visibility == ObservationVisibility.PRIVATE &&
-        it.sourceSeat == actorSeat && it.sourceAbility?.value == roleEnName
-    }
-    if (previous.isEmpty()) return ClocktowerLiveQueryRevealDisposition.NEW
-    return if (previous.all { it.proposition == shown }) {
-        ClocktowerLiveQueryRevealDisposition.REOPEN
-    } else ClocktowerLiveQueryRevealDisposition.CONFLICT
-}
-
-/** A previously published observation never becomes a fresh auto-advance permission
- * just because its player display was manually reopened. */
-internal fun clocktowerShouldAutoAdvanceAfterFreshReveal(
-    automaticMode: Boolean,
-    phase: ClocktowerPhase,
-    currentStep: ClocktowerNightStepUi,
-    revealedStep: ClocktowerNightStepUi,
-    actorSeat: Int?,
-    alreadyPublished: Boolean,
-    handoff: ClocktowerPlayerRevealHandoff,
-): Boolean = automaticMode &&
-    phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-    currentStep.isRealAction && actorSeat != null &&
-    currentStep.actor?.name != null &&
-    currentStep.actor?.name == revealedStep.actor?.name &&
-    currentStep.roleEnName != null && currentStep.roleEnName == revealedStep.roleEnName &&
-    !alreadyPublished && handoff.openReveal && handoff.recordPublication
-
 /** Advice status may suppress only its own exact current Host decision. */
 internal fun clocktowerCurrentAiRequestBlocked(
     currentKey: String?,
@@ -230,32 +74,6 @@ internal fun clocktowerCurrentAiRequestBlocked(
     error: String?,
 ): Boolean = currentKey != null && adviceKey == currentKey &&
     (busy || error != null)
-
-internal fun shouldAutoAdvanceRedHerring(
-    allowRuleDeterminedAutoUi: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    hasSelectedRedHerring: Boolean,
-    acceptedJointOpening: Boolean = false,
-): Boolean = allowRuleDeterminedAutoUi &&
-    isRedHerringStep &&
-    // A real choice is skippable only when the Host already accepted and applied
-    // the single joint opening; an arbitrary manual/legacy selection is not enough.
-    (!isRealAction || (acceptedJointOpening && hasSelectedRedHerring))
-
-internal fun automaticRedHerringSelectionAtBarrier(
-    allowRuleDeterminedAutoUi: Boolean,
-    isRedHerringStep: Boolean,
-    isRealAction: Boolean,
-    currentSelection: String?,
-    recommendedSelection: String?,
-    legalSelections: Set<String>,
-): String? {
-    if (!allowRuleDeterminedAutoUi || !isRedHerringStep || !isRealAction) return null
-    if (currentSelection != null) return null
-    // A legacy UI recommendation has no current Host validation. Only a singleton is deterministic.
-    return legalSelections.singleOrNull()
-}
 
 internal data class ClocktowerDisplayOption(
     val label: String,
@@ -279,7 +97,6 @@ internal data class ClocktowerDisplayOption(
     val recluseRegistersEvil: Boolean? = null,
     val recluseRegisteredRoleEnName: String? = null,
     /** Legal explanations, not committed facts. Result-first choices never set a witness implicitly. */
-    val legalRegistrationWitnesses: List<ClocktowerRegistrationWitness> = emptyList(),
     val isTruthful: Boolean = true,
     val misinformationPressure: Int = 0,
     val isDefaultRecommendation: Boolean = false,
@@ -303,174 +120,3 @@ internal fun clocktowerInformationCandidateId(option: ClocktowerDisplayOption): 
     // Leave every unrelated established candidate ID unchanged.
     option.presentationRoleId?.let { "$baseline|shownRole:$it" } ?: baseline
 }
-
-internal fun projectFirstNightNumericInformationOptions(
-    phase: ClocktowerPhase,
-    roleEnName: String,
-    sourceSeat: Int,
-    players: List<PlayerState>,
-    options: List<ClocktowerDisplayOption>,
-): List<ClocktowerDisplayOption> {
-    if (phase != ClocktowerPhase.FirstNight || roleEnName !in setOf("Chef", "Empath")) return options
-
-    val currentRegisteredValue = options.asSequence()
-        .filter { it.isTruthful }
-        .mapNotNull { option ->
-            (option.proposition as? InformationProposition.NumericResult)
-                ?.takeIf { it.sourceSeat == sourceSeat }
-                ?.value
-        }
-        .firstOrNull()
-        ?: options.asSequence()
-            .mapNotNull { option ->
-                (option.proposition as? InformationProposition.NumericResult)
-                    ?.takeIf { it.sourceSeat == sourceSeat }
-                    ?.value
-            }
-            .firstOrNull()
-        ?: return options
-
-    val truthfulValues = FirstNightNumericInformationSemantics.recommendationTruthValues(
-        players = players,
-        sourceSeat = sourceSeat,
-        currentRegisteredValue = currentRegisteredValue,
-    )
-
-    return options.map { option ->
-        val proposition = option.proposition as? InformationProposition.NumericResult
-            ?: return@map option
-        if (proposition.sourceSeat != sourceSeat) return@map option
-
-        val pressure = truthfulValues.minOfOrNull { truthfulValue ->
-            abs(proposition.value - truthfulValue)
-        } ?: option.misinformationPressure
-        option.copy(
-            isTruthful = proposition.value in truthfulValues,
-            misinformationPressure = pressure,
-        )
-    }
-}
-
-private data class FirstNightPairInformationKey(
-    val shownRole: RoleId?,
-    val candidateSeats: List<Int>,
-)
-
-private data class FirstNightPairInformationTruth(
-    val spyRegisteredRoleEnName: String?,
-    val recluseRegisteredRoleEnName: String?,
-)
-
-private fun PairInformationOutcome.firstNightPairInformationKey(): FirstNightPairInformationKey =
-    FirstNightPairInformationKey(
-        shownRole = shownRole,
-        candidateSeats = candidateSeats,
-    )
-
-private fun InformationProposition.firstNightPairInformationKey(): FirstNightPairInformationKey? = when (this) {
-    is InformationProposition.AnyOf -> {
-        val roleAt = alternatives.map { it as? InformationProposition.RoleAt ?: return null }
-        val shownRole = roleAt.map { it.role }.distinct().singleOrNull() ?: return null
-        FirstNightPairInformationKey(
-            shownRole = shownRole,
-            candidateSeats = roleAt.map { it.seat }.distinct().sorted(),
-        )
-    }
-
-    is InformationProposition.AllOf -> {
-        if (propositions.isEmpty() || propositions.any {
-                val roleInPlay = it as? InformationProposition.RoleInPlay
-                roleInPlay == null || roleInPlay.inPlay
-            }
-        ) {
-            null
-        } else {
-            FirstNightPairInformationKey(shownRole = null, candidateSeats = emptyList())
-        }
-    }
-
-    else -> null
-}
-
-internal fun projectFirstNightPairInformationOptions(
-    phase: ClocktowerPhase,
-    roleEnName: String,
-    sourceSeat: Int,
-    game: GameState,
-    roleDefinitions: List<RoleDefinition>,
-    options: List<ClocktowerDisplayOption>,
-): List<ClocktowerDisplayOption> {
-    if (
-        phase != ClocktowerPhase.FirstNight ||
-        roleEnName !in setOf("Washerwoman", "Librarian", "Investigator")
-    ) {
-        return options
-    }
-
-    val healthyTruths = NaturalPairInformationCandidateGenerator
-        .generateHealthyInformationSpace(
-            game = game,
-            sourceSeat = sourceSeat,
-            abilityRole = RoleId(roleEnName),
-            roleDefinitions = roleDefinitions,
-        )
-        .groupBy { it.outcome.firstNightPairInformationKey() }
-        .mapValues { (_, candidates) ->
-            val semanticCandidate = candidates.firstOrNull { it.registrations.isEmpty() }
-                ?: candidates.minBy { it.candidateId }
-            FirstNightPairInformationTruth(
-                spyRegisteredRoleEnName = semanticCandidate.registrations
-                    .firstOrNull { it.reason == RegistrationReason.SPY_ABILITY }
-                    ?.registeredRole
-                    ?.value,
-                recluseRegisteredRoleEnName = semanticCandidate.registrations
-                    .firstOrNull { it.reason == RegistrationReason.RECLUSE_ABILITY }
-                    ?.registeredRole
-                    ?.value,
-            )
-        }
-
-    return options.map { option ->
-        val key = option.proposition?.firstNightPairInformationKey() ?: return@map option
-        val truth = healthyTruths[key]
-        val spyRegistrationRole = truth?.spyRegisteredRoleEnName
-        val recluseRegistrationRole = truth?.recluseRegisteredRoleEnName
-        option.copy(
-            isTruthful = truth != null,
-            misinformationPressure = if (truth != null) 0 else option.misinformationPressure.coerceAtLeast(1),
-            spyRegistersGood = spyRegistrationRole?.let { true },
-            spyRegisteredRoleEnName = spyRegistrationRole,
-            recluseRegistersEvil = recluseRegistrationRole?.let { true },
-            recluseRegisteredRoleEnName = recluseRegistrationRole,
-        )
-    }
-}
-
-private fun ClocktowerDisplayOption.isLegalFirstNightPairDisplay(familyId: String): Boolean {
-    if (familyId !in setOf("Washerwoman", "Librarian", "Investigator")) return true
-    val key = proposition?.firstNightPairInformationKey() ?: return true
-    val isZeroCharacterOutcome = key.shownRole == null && key.candidateSeats.isEmpty()
-    return !isZeroCharacterOutcome ||
-        PairInformationDisplaySemantics.allowsZeroCharacterOutcome(RoleId(familyId))
-}
-
-internal fun unifiedFirstNightInformationPool(
-    options: List<ClocktowerDisplayOption>,
-    familyId: String,
-): UnifiedSelectionPool<ClocktowerDisplayOption> = UnifiedSelectionPool(
-    options
-        .filter { option -> option.isLegalFirstNightPairDisplay(familyId) }
-        .map { option ->
-            UnifiedSelectionCandidate(
-                candidateId = clocktowerInformationCandidateId(option),
-                familyId = familyId,
-                legality = UnifiedCandidateLegality.LEGAL,
-                epistemicStatus = UnifiedEpistemicStatus.VERIFIED,
-                qualityTier = QualityTier.RECOMMENDED,
-                reasonCodes = emptyList(),
-                warningCodes = option.warningCodes,
-                payload = option,
-            )
-        },
-)
-

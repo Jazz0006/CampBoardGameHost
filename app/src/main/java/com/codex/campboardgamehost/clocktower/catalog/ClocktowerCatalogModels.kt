@@ -18,8 +18,6 @@ internal enum class ClocktowerCatalogTeam {
 
 internal enum class ClocktowerScriptSource {
     BUILTIN_OFFICIAL,
-    IMPORTED_OFFICIAL,
-    IMPORTED_HOMEBREW,
 }
 
 internal sealed interface NightOrderToken {
@@ -32,33 +30,6 @@ internal sealed interface NightOrderToken {
         DAWN,
     }
 }
-
-internal data class ClocktowerJinxDefinition(
-    val targetRoleId: RoleId,
-    val reason: String,
-) {
-    init {
-        require(reason.isNotBlank()) { "Clocktower jinx reason cannot be blank." }
-    }
-}
-
-internal enum class ClocktowerSpecialValueKind {
-    TEXT,
-    NUMBER,
-}
-
-internal data class ClocktowerSpecialValue(
-    val kind: ClocktowerSpecialValueKind,
-    val canonicalValue: String,
-)
-
-internal data class ClocktowerSpecialFeature(
-    val type: String,
-    val name: String,
-    val value: ClocktowerSpecialValue? = null,
-    val time: String? = null,
-    val global: String? = null,
-)
 
 internal data class ClocktowerCharacterDefinition(
     val id: RoleId,
@@ -73,11 +44,8 @@ internal data class ClocktowerCharacterDefinition(
     val reminders: List<String> = emptyList(),
     val globalReminders: List<String> = emptyList(),
     val setup: Boolean = false,
-    val jinxes: List<ClocktowerJinxDefinition> = emptyList(),
-    val specialFeatures: List<ClocktowerSpecialFeature> = emptyList(),
     val behaviorKey: String? = null,
     val automationCoverage: RuleCoverage,
-    val sourceSemanticHash: String? = null,
 ) {
     init {
         require(EXTERNAL_ID_PATTERN.matches(externalId)) {
@@ -88,14 +56,10 @@ internal data class ClocktowerCharacterDefinition(
         require(firstNightOrder.signum() >= 0) { "firstNightOrder cannot be negative." }
         require(otherNightOrder.signum() >= 0) { "otherNightOrder cannot be negative." }
         require(behaviorKey == null || behaviorKey.isNotBlank()) { "behaviorKey cannot be blank." }
-        require(sourceSemanticHash == null || SEMANTIC_HASH_PATTERN.matches(sourceSemanticHash)) {
-            "sourceSemanticHash must be a lowercase SHA-256 hex string."
-        }
     }
 
     private companion object {
         val EXTERNAL_ID_PATTERN = Regex("[a-z0-9]{1,50}")
-        val SEMANTIC_HASH_PATTERN = Regex("[0-9a-f]{64}")
     }
 }
 
@@ -106,7 +70,6 @@ internal data class ClocktowerScriptDefinition(
     val characterIds: List<RoleId>,
     val firstNightOverride: List<NightOrderToken>?,
     val otherNightOverride: List<NightOrderToken>?,
-    val bootleggerRules: List<String>,
     val source: ClocktowerScriptSource,
     val contentHash: String,
 ) {
@@ -117,7 +80,6 @@ internal data class ClocktowerScriptDefinition(
         require(characterIds.distinct().size == characterIds.size) {
             "Clocktower script character IDs must be unique."
         }
-        require(bootleggerRules.all { it.isNotBlank() }) { "Bootlegger rules cannot be blank." }
         require(CONTENT_HASH_PATTERN.matches(contentHash)) {
             "Clocktower script contentHash must be a 128-bit lowercase hexadecimal SHA-256 prefix."
         }
@@ -148,20 +110,6 @@ internal class ClocktowerCharacterRegistry(definitions: Iterable<ClocktowerChara
     fun findByRoleId(roleId: RoleId): ClocktowerCharacterDefinition? = byRoleId[roleId]
 
     fun findByExternalId(externalId: String): ClocktowerCharacterDefinition? = byExternalId[externalId]
-}
-
-internal class ClocktowerScriptCatalog(definitions: Iterable<ClocktowerScriptDefinition>) {
-    val definitions: List<ClocktowerScriptDefinition> = definitions.toList()
-    private val byScriptId: Map<ScriptId, ClocktowerScriptDefinition>
-
-    init {
-        require(this.definitions.map { it.id }.distinct().size == this.definitions.size) {
-            "Clocktower script IDs must be unique."
-        }
-        byScriptId = this.definitions.associateBy { it.id }
-    }
-
-    fun find(scriptId: ScriptId): ClocktowerScriptDefinition? = byScriptId[scriptId]
 }
 
 internal data class ValidatedClocktowerRuleset(

@@ -66,7 +66,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
         val priorRevision = revision(session)
         val before = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(priorState, priorRevision)
         session.commitAcceptedTestAction(
-            ActionFactDraft.Death("death", StorytellerPhase.DAWN, 1, 10, 3),
+            ActionFactDraft.Death("death", StorytellerPhase.NIGHT, 1, 10, 3),
         )
         val after = StorytellerProviderHistoryPrefixMaterializerV1.captureLive(session.state, revision(session))
 
@@ -179,14 +179,6 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
             ),
             seed = 99L,
         )
-        val witnesses = com.codex.campboardgamehost.clocktowerAlignmentRegistrationWitnesses(
-            currentSpyRegistersGood = false, spySelectable = true,
-            currentRecluseRegistersEvil = false, recluseSelectable = true,
-        ).filter { witness ->
-            (if (witness.spyRegistersGood == false) 1 else 0) +
-                (if (witness.recluseRegistersEvil == true) 1 else 0) == 1
-        }
-        assertEquals(2, witnesses.size)
         val session = ClocktowerGameSession.createProduction(
             gameId = "empath-ambiguous",
             gameSeed = game.seed,
@@ -253,7 +245,7 @@ class StorytellerProviderHistoryPrefixMaterializerV1Test {
                 entries = listOf(
                     StorytellerProviderHistoryEntryV1.Action(
                         fact = ActionFact.Death("future", 0L, 2),
-                        point = TimelinePoint(StorytellerPhase.DAWN, 1, 0, 0L),
+                        point = TimelinePoint(StorytellerPhase.NIGHT, 1, 0, 0L),
                     ),
                 ),
             )

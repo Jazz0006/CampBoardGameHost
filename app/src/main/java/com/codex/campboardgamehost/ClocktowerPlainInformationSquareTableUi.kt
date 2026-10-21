@@ -22,6 +22,7 @@ internal data class ClocktowerPlainInformationSquareTablePresentation(
     val wakeInstruction: String?,
     val displayStep: ClocktowerNightStepUi,
     val showPlayerDisplayAction: Boolean,
+    val waitingForAi: Boolean = false,
 )
 
 /**
@@ -32,15 +33,18 @@ internal fun clocktowerPlainInformationSquareTablePresentation(
     step: ClocktowerNightStepUi,
     actorSeat: Int?,
     wakeInstruction: String?,
+    automaticOnly: Boolean = false,
 ): ClocktowerPlainInformationSquareTablePresentation? {
     if (!step.isRealAction || step.displayKind == ClocktowerDisplayKind.None) return null
+    // A visible textual placeholder is not a confirmed answer. Only a typed
+    // Host result or a validated AI/human selection can be previewed.
+    val canShow = step.displayProposition != null
     return ClocktowerPlainInformationSquareTablePresentation(
         actorSeat = actorSeat,
         wakeInstruction = wakeInstruction,
         displayStep = step,
-        showPlayerDisplayAction = step.displayKind != ClocktowerDisplayKind.Grimoire ||
-            (step.tellPlayer != null &&
-                step.displayProposition is com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.GrimoireState),
+        showPlayerDisplayAction = canShow,
+        waitingForAi = automaticOnly && !canShow,
     )
 }
 
@@ -49,8 +53,6 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
     seats: List<HostSeatPresentation>,
     presentation: ClocktowerPlainInformationSquareTablePresentation,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
@@ -63,14 +65,10 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             actorSeat = presentation.actorSeat,
             wakeInstruction = presentation.wakeInstruction,
             language = language,
-            canGoPrevious = canGoPrevious,
-            onPrevious = onPrevious,
+
             onHostTools = onHostTools,
             onNext = onNext,
             onShow = onShowPlayerDisplay,
-            buttonLabel = if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
-                if (language == "en") "Show Grimoire" else "展示魔典"
-            } else null,
         )
         return
     }
@@ -85,8 +83,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
             )
         },
         onSeatSelected = {},
-        canGoPrevious = canGoPrevious,
-        onPrevious = onPrevious,
+
         onHostTools = onHostTools,
         onNext = onNext,
     ) {
@@ -107,7 +104,7 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                     textAlign = TextAlign.Center,
                 )
                 (step.displayPrimary ?: step.tellPlayer)
-                    ?.takeIf { it.isNotBlank() && step.displayKind != ClocktowerDisplayKind.Grimoire }
+                    ?.takeIf { presentation.showPlayerDisplayAction && it.isNotBlank() }
                     ?.let { primary ->
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -117,11 +114,11 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                         textAlign = TextAlign.Center,
                     )
                 }
-                step.displaySecondary?.takeIf { it.isNotBlank() }?.let { secondary ->
+                step.displaySecondary?.takeIf { presentation.showPlayerDisplayAction && it.isNotBlank() }?.let { secondary ->
                     Spacer(Modifier.height(8.dp))
                     Text(text = secondary, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
                 }
-                step.displayFooter?.takeIf { it.isNotBlank() }?.let { footer ->
+                step.displayFooter?.takeIf { presentation.showPlayerDisplayAction && it.isNotBlank() }?.let { footer ->
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = footer,
@@ -130,13 +127,28 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
                         textAlign = TextAlign.Center,
                     )
                 }
+                if (presentation.waitingForAi) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        if (language == "en") "Waiting for the current AI information. Retry from the Host controls if needed."
+                        else "等待当前 AI 信息；必要时请在方桌上重新请求。",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                } else if (step.isRealAction && step.displayKind != ClocktowerDisplayKind.None &&
+                    !presentation.showPlayerDisplayAction
+                ) {
+                    Text(
+                        if (language == "en") "No confirmed structured result is available for display."
+                        else "当前没有可以展示的已确认结构化信息。",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
                 if (presentation.showPlayerDisplayAction) {
                     Spacer(Modifier.height(10.dp))
                     OutlinedButton(onClick = onShowPlayerDisplay, modifier = Modifier.fillMaxWidth()) {
                         Text(
-                            if (step.displayKind == ClocktowerDisplayKind.Grimoire) {
-                                if (language == "en") "Show Grimoire" else "展示魔典"
-                            } else if (language == "en") "Show to player" else "展示给玩家",
+                            if (language == "en") "Show to player" else "展示给玩家",
                         )
                     }
                 }

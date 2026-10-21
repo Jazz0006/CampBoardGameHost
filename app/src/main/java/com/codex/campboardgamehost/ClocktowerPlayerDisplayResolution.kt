@@ -2,8 +2,6 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.session.ConfirmedInformationDecision
-import com.codex.campboardgamehost.clocktower.session.InformationDecisionSnapshot
 
 /**
  * Projects already-selected information without selecting, authorizing or publishing it.
@@ -14,12 +12,6 @@ internal fun resolveClocktowerPlayerDisplay(
     step: ClocktowerNightStepUi,
     option: ClocktowerDisplayOption,
 ): ClocktowerNightStepUi = step.withDisplayOption(option).copy(recommendedDisplayOptions = emptyList())
-
-/** Compatibility path: the legacy unreliable picker clears only its manual display options. */
-internal fun resolveClocktowerLegacyUnreliablePlayerDisplay(
-    step: ClocktowerNightStepUi,
-    option: ClocktowerDisplayOption,
-): ClocktowerNightStepUi = step.withDisplayOption(option)
 
 /**
  * Presentation-only normalization for player display. New-Demon identity is a private role reveal
@@ -38,34 +30,6 @@ internal fun clocktowerPlayerDisplayStep(step: ClocktowerNightStepUi): Clocktowe
     } else {
         step
     }
-
-/** Numeric presentation falls back per field; the confirmed draft remains semantic authority. */
-internal fun resolveClocktowerNumericPlayerDisplay(
-    step: ClocktowerNightStepUi,
-    template: ClocktowerDisplayOption?,
-    value: Int,
-    truthful: Boolean,
-    confirmed: ConfirmedInformationDecision,
-    expectedSnapshot: InformationDecisionSnapshot,
-): ClocktowerNightStepUi = step.copy(
-    tellPlayer = value.toString(),
-    displayKind = ClocktowerDisplayKind.Number,
-    displayTitle = template?.displayTitle ?: step.displayTitle,
-    displayPrimary = value.toString(),
-    displaySecondary = template?.displaySecondary ?: step.displaySecondary,
-    displayFooter = template?.displayFooter ?: step.displayFooter ?: step.explanation,
-    presentationSubjectSeats = template?.presentationSubjectSeats ?: step.presentationSubjectSeats,
-    selectedInformationTruthful = truthful,
-).withConfirmedInformation(confirmed, expectedSnapshot)
-
-/** Without a matching Boolean option, preserve existing text/kind/truth rather than inventing it. */
-internal fun resolveClocktowerBooleanPlayerDisplay(
-    step: ClocktowerNightStepUi,
-    option: ClocktowerDisplayOption?,
-    confirmed: ConfirmedInformationDecision,
-    expectedSnapshot: InformationDecisionSnapshot,
-): ClocktowerNightStepUi = (option?.let { step.withDisplayOption(it) } ?: step)
-    .withConfirmedInformation(confirmed, expectedSnapshot)
 
 private fun ClocktowerNightStepUi.withDisplayOption(
     option: ClocktowerDisplayOption,
@@ -94,14 +58,3 @@ private fun ClocktowerNightStepUi.withDisplayOption(
         displayOptions = emptyList(),
     )
 }
-
-private fun ClocktowerNightStepUi.withConfirmedInformation(
-    confirmed: ConfirmedInformationDecision,
-    expectedSnapshot: InformationDecisionSnapshot,
-): ClocktowerNightStepUi = copy(
-    displayProposition = confirmed.draft.proposition,
-    informationDecisionConfirmation = confirmed,
-    informationDecisionExpectedSnapshot = expectedSnapshot,
-    displayOptions = emptyList(),
-    recommendedDisplayOptions = emptyList(),
-)

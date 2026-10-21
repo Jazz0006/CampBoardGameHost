@@ -5,7 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class ClocktowerDisplayedInformationReliabilityTest {
+class ClocktowerDisplayedReliabilityStateTest {
     @Test
     fun `evil-team introduction without a role ability is safe to display`() {
         val step = ClocktowerNightStepUi(

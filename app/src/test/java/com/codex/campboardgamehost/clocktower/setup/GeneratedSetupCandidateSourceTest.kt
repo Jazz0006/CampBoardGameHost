@@ -168,7 +168,6 @@ class GeneratedSetupCandidateSourceTest {
             characterIds = characters.map(ClocktowerCharacterDefinition::id),
             firstNightOverride = null,
             otherNightOverride = null,
-            bootleggerRules = emptyList(),
             source = ClocktowerScriptSource.BUILTIN_OFFICIAL,
             contentHash = "0".repeat(32),
         ),

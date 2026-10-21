@@ -1,6 +1,10 @@
 package com.codex.campboardgamehost
 
-import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderCandidatePayloadV1
+import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
+import com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric
+import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
@@ -8,14 +12,9 @@ import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraf
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.PendingPairInformationDecision
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
-import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionConfirmation
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
-/**
- * A validated whole-residual candidate becomes only a PRESELECTED current UI
- * option. The Host's original full manual domain remains available for overrides.
- * No ambiguous registration witness is silently committed by this adapter.
- */
+/** Direct semantic advice becomes a UI preselection; only confirmation records a fact. */
 internal object ClocktowerResidualDisplayMatcherV2 {
     private fun normalize(value: String): String =
         value.filter(Char::isLetterOrDigit).lowercase()
@@ -28,12 +27,9 @@ internal object ClocktowerResidualDisplayMatcherV2 {
      */
     fun matchesConfirmedPublication(
         request: StorytellerProviderRequestV1,
-        selectedCandidateId: String,
+        selected: SemanticResult,
         publication: EpistemicObservationDraft,
     ): Boolean {
-        val candidate = request.legalCandidates.singleOrNull {
-            it.candidateId == selectedCandidateId
-        } ?: return false
         val context = request.decisionContext
         val seat = when (context) {
             is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
@@ -50,218 +46,185 @@ internal object ClocktowerResidualDisplayMatcherV2 {
             publication.visibility != ObservationVisibility.PRIVATE ||
             publication.recipientSeats != setOf(seat)
         ) return false
-        return when (val payload = candidate.payload) {
-            is StorytellerProviderCandidatePayloadV1.ScalarResult -> {
+        return when (selected.kind) {
+            "SCALAR_RESULT" -> {
                 if (context !is StorytellerProviderDecisionContextV1.ScalarInformation) false
                 else when (val actual = publication.proposition) {
                     is InformationProposition.NumericResult ->
                         context.metric == actual.metric.name &&
                             context.subjectSeats == actual.subjectSeats &&
                             actual.sourceSeat == seat &&
-                            actual.value.toString() == payload.value
+                            actual.value.toString() == selected.scalarValue
                     is InformationProposition.BooleanResult ->
                         context.metric == actual.metric.name &&
                             context.subjectSeats == actual.subjectSeats &&
                             actual.sourceSeat == seat &&
-                            actual.value.toString() == payload.value
+                            actual.value.toString() == selected.scalarValue
                     is InformationProposition.RoleAt ->
                         context.metric == "REVEALED_CHARACTER" &&
                             context.subjectSeats == listOf(actual.seat) &&
-                            normalize(actual.role.value) == normalize(payload.value)
+                            normalize(actual.role.value) == normalize(selected.scalarValue.orEmpty())
                     else -> false
                 }
             }
-            is StorytellerProviderCandidatePayloadV1.PairInformation -> {
-                if (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation ||
-                    payload.shownRoleId == null) false
-                else {
+            "PAIR_RESULT" -> {
+                if (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation) false
+                else if (selected.pairRoleId == null) {
+                    val actual = publication.proposition as? InformationProposition.AllOf
+                    val team = when (context.abilityRole.value) {
+                        "Washerwoman" -> ClocktowerTeam.Townsfolk
+                        "Investigator" -> ClocktowerTeam.Minion
+                        else -> ClocktowerTeam.Outsider
+                    }
+                    val roles = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
+                        .filter { it.team == team }.map { normalize(it.enName) }.toSet()
+                    val statements = actual?.propositions?.filterIsInstance<InformationProposition.RoleInPlay>().orEmpty()
+                    actual != null && statements.size == actual.propositions.size &&
+                        statements.all { !it.inPlay } && statements.map { normalize(it.role.value) }.toSet() == roles
+                } else {
                     val actual = publication.proposition as? InformationProposition.AnyOf
                     val parts = actual?.alternatives?.filterIsInstance<InformationProposition.RoleAt>()
                         .orEmpty()
                     actual?.alternatives?.size == 2 && parts.size == 2 &&
-                        parts.map { it.seat }.sorted() == payload.candidateSeats.sorted() &&
-                        parts.all { normalize(it.role.value) == normalize(payload.shownRoleId) }
+                        parts.map { it.seat }.sorted() == selected.pairSeats.sorted() &&
+                        parts.all { normalize(it.role.value) == normalize(selected.pairRoleId) }
                 }
             }
             else -> false
         }
     }
 
-    /**
-     * Whole-package automatic safety gate. A legal model choice must also have
-     * exactly one witness-free Host presentation at its current real step.
-     * This never publishes information and never infers a future player target.
-     */
+    /** A response must address one actual current wake; no menu membership or truth check. */
     fun allChoicesCanBePresented(
         requests: List<StorytellerProviderRequestV1>,
-        choices: Map<String, String>,
+        choices: Map<String, SemanticResult>,
         steps: List<ClocktowerNightStepUi>,
         cards: List<PlayerCard>,
     ): Boolean {
-        if (requests.isEmpty() ||
-            requests.map { it.identity.decisionId }.distinct().size != requests.size ||
+        if (requests.isEmpty() || requests.map { it.identity.decisionId }.distinct().size != requests.size ||
             choices.keys != requests.map { it.identity.decisionId }.toSet()) return false
         return requests.all { request ->
-            val id = choices[request.identity.decisionId] ?: return@all false
-            val candidate = request.legalCandidates.singleOrNull { it.candidateId == id }
-                ?: return@all false
+            val result = choices[request.identity.decisionId] ?: return@all false
+            if (runCatching { result.validate(request.decisionContext, cards.size) }.isFailure) return@all false
             val context = request.decisionContext
-            if (context is StorytellerProviderDecisionContextV1.MayorRedirect) {
-                // A SeatTarget is a Host ruling, NOT an information reveal.
-                // The provider candidate is already from the canonical pending
-                // Mayor domain; the live pending boundary validates it again
-                // just before application/commit.
-                val seat = (candidate.payload as?
-                    StorytellerProviderCandidatePayloadV1.SeatTarget)?.seat
-                    ?: return@all false
-                return@all seat in 1..cards.size &&
-                    context.mayorSeat in 1..cards.size &&
-                    steps.count {
-                        it.isRealAction && it.action == ClocktowerNightAction.MayorRedirect
-                    } == 1
-            }
-            val actorSeat = when (context) {
-                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
+            val seat = when (context) {
                 is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.sourceSeat
-                else -> return@all false // no supported automatic Host presentation
-            }
-            val abilityRole = when (context) {
-                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.abilityRole.value
-                is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value
+                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.sourceSeat
+                is StorytellerProviderDecisionContextV1.MayorRedirect -> return@all steps.count {
+                    it.isRealAction && it.action == ClocktowerNightAction.MayorRedirect
+                } == 1
                 else -> return@all false
             }
-            val actorName = cards.getOrNull(actorSeat - 1)?.name ?: return@all false
-            steps.count { step ->
-                if (!step.isRealAction || step.actor?.name != actorName ||
-                    step.roleEnName != abilityRole) return@count false
-                val options = step.manualInformationCandidates.ifEmpty {
-                    step.automaticInformationCandidates
-                }
-                options.filter(::safe).count { option ->
-                    when (val payload = candidate.payload) {
-                        is StorytellerProviderCandidatePayloadV1.ScalarResult -> {
-                            if (context !is StorytellerProviderDecisionContextV1.ScalarInformation) {
-                                false
-                            } else when (val proposition = option.proposition) {
-                                is InformationProposition.NumericResult ->
-                                    proposition.sourceSeat == context.sourceSeat &&
-                                        proposition.metric.name == context.metric &&
-                                        proposition.subjectSeats == context.subjectSeats &&
-                                        proposition.value.toString() == payload.value
-                                is InformationProposition.BooleanResult ->
-                                    proposition.sourceSeat == context.sourceSeat &&
-                                        proposition.metric.name == context.metric &&
-                                        proposition.subjectSeats == context.subjectSeats &&
-                                        proposition.value.toString() == payload.value
-                                is InformationProposition.RoleAt ->
-                                    context.metric == "REVEALED_CHARACTER" &&
-                                        context.subjectSeats == listOf(proposition.seat) &&
-                                        proposition.role.value == payload.value
-                                else ->
-                                    context.metric == "REVEALED_CHARACTER" &&
-                                        option.displayKind == ClocktowerDisplayKind.RoleReveal &&
-                                        option.presentationSubjectSeats == context.subjectSeats &&
-                                        option.presentationRoleId == payload.value
-                            }
-                        }
-                        is StorytellerProviderCandidatePayloadV1.PairInformation -> {
-                            if (context !is StorytellerProviderDecisionContextV1.FirstNightPairInformation) {
-                                false
-                            } else {
-                                val proposition = option.proposition as? InformationProposition.AnyOf
-                                val parts = proposition?.alternatives
-                                    ?.filterIsInstance<InformationProposition.RoleAt>().orEmpty()
-                                parts.size == 2 &&
-                                    parts.map { it.seat }.sorted() == payload.candidateSeats.sorted() &&
-                                    payload.shownRoleId != null &&
-                                    parts.all { normalize(it.role.value) ==
-                                        normalize(payload.shownRoleId) }
-                            }
-                        }
-                        else -> false
-                    }
-                } == 1
-            } == 1
+            val role = when (context) {
+                is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> context.abilityRole.value
+                is StorytellerProviderDecisionContextV1.ScalarInformation -> context.abilityRole.value
+                else -> return@all false
+            }
+            steps.count { it.isRealAction && it.actor?.name == cards.getOrNull(seat - 1)?.name &&
+                it.roleEnName == role } == 1
         }
     }
 
-    private fun safe(option: ClocktowerDisplayOption): Boolean =
-        option.spyRegistersGood == null &&
-            option.spyRegisteredRoleEnName == null &&
-            option.recluseRegistersEvil == null &&
-            option.recluseRegisteredRoleEnName == null
-
-    /**
-     * Bind the current AI SeatTarget to the SAME live Mayor Host decision.
-     * No candidate ID is parsed, no default seat is chosen, and a stale
-     * revision or changed live seat eligibility fails closed.
-     */
     fun matchMayorRedirect(
         decision: PendingMayorRedirectDecision,
-        selectedCandidateId: String?,
+        selected: SemanticResult?,
         currentRevision: StorytellerDecisionRevision,
-        currentLegalSeats: Set<Int>,
+        currentSeats: Set<Int>,
     ): Int? {
-        val candidateId = selectedCandidateId ?: return null
-        val confirmation = decision.confirm(candidateId, currentRevision)
-            as? MayorRedirectDecisionConfirmation.Confirmed ?: return null
-        return confirmation.targetSeat.takeIf { it in currentLegalSeats }
+        if (selected?.kind != "SEAT_TARGET") return null
+        if (decision.revision != currentRevision) return null
+        return selected.seat?.takeIf { it in currentSeats }
     }
 
+    /** Materialize exactly the model's structured result; never choose a Host alternative. */
     fun matchPair(
         decision: PendingPairInformationDecision,
-        selectedCandidateId: String?,
+        selected: SemanticResult?,
         currentOptions: List<ClocktowerDisplayOption>,
+        cards: List<PlayerCard>,
+        language: String,
     ): ClocktowerDisplayOption? {
-        if (selectedCandidateId == null) return null
-        val chosen = decision.legalCandidates.singleOrNull {
-            it.candidateId == selectedCandidateId
-        } ?: return null
-        val role = chosen.outcome.shownRole?.value ?: return null
-        val seats = chosen.outcome.candidateSeats.sorted()
-        if (seats.size != 2) return null
-        return currentOptions.filter(::safe).singleOrNull { option ->
-            val statement = option.proposition as? InformationProposition.AnyOf
-                ?: return@singleOrNull false
-            val parts = statement.alternatives.filterIsInstance<InformationProposition.RoleAt>()
-            parts.size == 2 &&
-                parts.map { it.seat }.sorted() == seats &&
-                parts.all { normalize(it.role.value) == normalize(role) }
+        if (selected?.kind != "PAIR_RESULT") return null
+        val context = StorytellerProviderDecisionContextV1.FirstNightPairInformation(
+            decision.sourceSeat, decision.abilityRole, decision.reliability)
+        if (runCatching { selected.validate(context, cards.size) }.isFailure) return null
+        val role = selected.pairRoleId?.let { id ->
+            clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).singleOrNull {
+                normalize(it.enName) == normalize(id)
+            } ?: return null
         }
+        if (role == null) {
+            val team = when (decision.abilityRole.value) {
+                "Washerwoman" -> ClocktowerTeam.Townsfolk
+                "Investigator" -> ClocktowerTeam.Minion
+                else -> ClocktowerTeam.Outsider
+            }
+            val text = when (team) {
+                ClocktowerTeam.Townsfolk -> if (language == "en") "No Townsfolk" else "没有镇民"
+                ClocktowerTeam.Minion -> if (language == "en") "No Minions" else "没有爪牙"
+                else -> if (language == "en") "No Outsiders" else "没有外来者"
+            }
+            return ClocktowerDisplayOption(text, ClocktowerDisplayKind.EitherOne,
+                decision.abilityRole.value, text, null, null,
+                proposition = InformationProposition.AllOf(
+                    clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).filter { it.team == team }
+                        .map { InformationProposition.RoleInPlay(RoleId(it.enName), false) }))
+        }
+        val seats = selected.pairSeats.sorted()
+        val shown = role.nameFor(language)
+        val names = seats.map { cards[it - 1].name }
+        return ClocktowerDisplayOption(
+            label = "$shown: ${names.joinToString(" / ")}",
+            displayKind = ClocktowerDisplayKind.EitherOne,
+            displayTitle = role.nameFor(language), displayPrimary = shown,
+            displaySecondary = names.joinToString(" / "), displayFooter = null,
+            proposition = InformationProposition.AnyOf(seats.map {
+                InformationProposition.RoleAt(it, RoleId(role.enName))
+            }), presentationSubjectSeats = seats, presentationRoleId = role.enName,
+        )
     }
 
     fun matchScalar(
         decision: PendingGlobalScalarInformationDecision,
-        selectedCandidateId: String?,
+        selected: SemanticResult?,
         currentOptions: List<ClocktowerDisplayOption>,
+        language: String = "en",
     ): ClocktowerDisplayOption? {
-        if (selectedCandidateId == null) return null
-        val chosen = decision.legalCandidates.singleOrNull {
-            it.candidateId == selectedCandidateId
-        }?.payload as? StorytellerProviderCandidatePayloadV1.ScalarResult ?: return null
-        return currentOptions.filter(::safe).singleOrNull { option ->
-            when (val statement = option.proposition) {
-                is InformationProposition.NumericResult ->
-                    statement.sourceSeat == decision.sourceSeat &&
-                        statement.metric.name == decision.metric &&
-                        statement.subjectSeats == decision.subjectSeats &&
-                        statement.value.toString() == chosen.value
-                is InformationProposition.BooleanResult ->
-                    statement.sourceSeat == decision.sourceSeat &&
-                        statement.metric.name == decision.metric &&
-                        statement.subjectSeats == decision.subjectSeats &&
-                        statement.value.toString() == chosen.value
-                is InformationProposition.RoleAt ->
-                    decision.metric == "REVEALED_CHARACTER" &&
-                        decision.subjectSeats == listOf(statement.seat) &&
-                        statement.role.value == chosen.value
-                else -> decision.kind ==
-                    com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE &&
-                    statement == null &&
-                    option.displayKind == ClocktowerDisplayKind.RoleReveal &&
-                    option.presentationSubjectSeats == decision.subjectSeats &&
-                    option.presentationRoleId == chosen.value
+        if (selected?.kind != "SCALAR_RESULT") return null
+        val value = selected.scalarValue ?: return null
+        // Roster and response references were checked at decode/adoption; this only renders.
+        val proposition = when (decision.kind) {
+            StorytellerProviderScalarKindV1.NUMBER -> InformationProposition.NumericResult(
+                NumericMetric.valueOf(decision.metric), decision.sourceSeat,
+                decision.subjectSeats, value.toIntOrNull()?.takeIf { it >= 0 } ?: return null)
+            StorytellerProviderScalarKindV1.BOOLEAN -> InformationProposition.BooleanResult(
+                BooleanMetric.valueOf(decision.metric), decision.sourceSeat,
+                decision.subjectSeats, value.toBooleanStrictOrNull() ?: return null)
+            StorytellerProviderScalarKindV1.ROLE -> {
+                val role = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).singleOrNull {
+                    normalize(it.enName) == normalize(value)
+                } ?: return null
+                InformationProposition.RoleAt(decision.subjectSeats.single(), RoleId(role.enName))
             }
         }
+        val kind = when (decision.kind) {
+            StorytellerProviderScalarKindV1.NUMBER -> ClocktowerDisplayKind.Number
+            StorytellerProviderScalarKindV1.BOOLEAN -> ClocktowerDisplayKind.YesNo
+            StorytellerProviderScalarKindV1.ROLE -> ClocktowerDisplayKind.RoleReveal
+        }
+        val displayValue = when (decision.kind) {
+            StorytellerProviderScalarKindV1.BOOLEAN -> if (value == "true") {
+                if (language == "en") "Yes" else "有"
+            } else if (language == "en") "No" else "没有"
+            StorytellerProviderScalarKindV1.ROLE -> clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
+                .single { normalize(it.enName) == normalize(value) }.nameFor(language)
+            else -> value
+        }
+        return ClocktowerDisplayOption(
+            label = displayValue, displayKind = kind, displayTitle = decision.abilityRole.value,
+            displayPrimary = displayValue, displaySecondary = null, displayFooter = null,
+            proposition = proposition, presentationSubjectSeats = decision.subjectSeats,
+            presentationRoleId = (proposition as? InformationProposition.RoleAt)?.role?.value,
+        )
     }
 }

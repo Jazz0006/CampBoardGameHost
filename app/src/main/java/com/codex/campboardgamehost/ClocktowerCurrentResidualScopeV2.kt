@@ -4,7 +4,6 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderGameContextV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRequestV1
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
-import com.codex.campboardgamehost.clocktower.recommendation.TroubleBrewingFirstNightPairDecisionContext
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
@@ -35,7 +34,6 @@ internal object ClocktowerCurrentResidualScopeV2 {
         ClocktowerNightAction.FortuneTeller,
         ClocktowerNightAction.DemonKill,
         ClocktowerNightAction.MayorRedirect,
-        ClocktowerNightAction.DemonSuccessor,
         ClocktowerNightAction.Ravenkeeper,
         ClocktowerNightAction.RedHerring -> true
         ClocktowerNightAction.None,
@@ -51,7 +49,6 @@ internal object ClocktowerCurrentResidualScopeV2 {
         cards: List<PlayerCard>,
         snapshot: TroubleBrewingGameSnapshotV1,
         gameContext: StorytellerProviderGameContextV1,
-        pairContext: TroubleBrewingFirstNightPairDecisionContext?,
         fortuneTellerSelectedNames: List<String> = emptyList(),
         mayorPending: PendingMayorRedirectDecision? = null,
         redHerringAlreadyChosen: Boolean = false,
@@ -101,7 +98,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
                         produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                             current.requestIdentity, current.revision, current.sourceSeat,
                             current.abilityRole, current.reliability, current.kind,
-                            current.metric, current.subjectSeats, current.legalCandidates,
+                            current.metric, current.subjectSeats,
                             snapshot, gameContext)
                         return Scope(produced, i + 1, "NEXT_INTERACTION_NOT_YET_CONFIRMED")
                     }
@@ -111,7 +108,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
             if (phase !in setOf(StorytellerPhase.FIRST_NIGHT, StorytellerPhase.NIGHT)) continue
             val pair = if (phase == StorytellerPhase.FIRST_NIGHT && round == 1)
                 pendingGlobalFirstNightPairDecision(
-                    step, ClocktowerPhase.FirstNight, round, cards, pairContext)
+                    step, ClocktowerPhase.FirstNight, round, cards, state.gameState, state.gameId, revision)
             else null
             if (pair != null) {
                 produced += StorytellerProviderRequestFactoryV1.fromPairInformation(
@@ -128,7 +125,7 @@ internal object ClocktowerCurrentResidualScopeV2 {
                 produced += StorytellerProviderRequestFactoryV1.fromScalarInformation(
                     scalar.requestIdentity, scalar.revision, scalar.sourceSeat,
                     scalar.abilityRole, scalar.reliability, scalar.kind, scalar.metric,
-                    scalar.subjectSeats, scalar.legalCandidates, snapshot, gameContext)
+                    scalar.subjectSeats, snapshot, gameContext)
             } else if (step.manualInformationCandidates.isNotEmpty()) {
                 // An actual Host information domain exists but this producer does
                 // not understand its typed contract. Never skip it and pretend

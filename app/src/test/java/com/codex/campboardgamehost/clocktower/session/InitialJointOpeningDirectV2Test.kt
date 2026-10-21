@@ -33,7 +33,7 @@ class InitialJointOpeningDirectV2Test {
         }.ruleset(ClocktowerScript.TroubleBrewing)
     }
 
-    private fun build(hasDrunk: Boolean, shown: List<String>): HostOpeningRulesDomainV2 {
+    private fun build(hasDrunk: Boolean, shown: List<String>): InitialOpeningRequestV2 {
         val registry = ruleset.characterRegistry
         val snapshot = TroubleBrewingGameSnapshotV1(
             gameId = "new-game-before-drunk",
@@ -57,8 +57,8 @@ class InitialJointOpeningDirectV2Test {
                 if (hasDrunk) SnapshotField.Uncommitted else SnapshotField.NotApplicable,
             ),
         )
-        return HostOpeningRulesDomainV2.fromHostSnapshot(
-            snapshot, registry, clocktowerRoleDefinitionsForScript(ClocktowerScript.TroubleBrewing),
+        return InitialOpeningRequestV2.fromHostSnapshot(
+            snapshot, registry,
             playerExperience = mapOf(7 to OpeningPlayerExperienceV1.BEGINNER,
                 8 to OpeningPlayerExperienceV1.BEGINNER),
             gameStateRevision = 0, playerInputRevision = 0,
@@ -76,7 +76,7 @@ class InitialJointOpeningDirectV2Test {
         assertTrue(host.getJSONObject("state").getBoolean("hasDrunk"))
         assertEquals("UNCOMMITTED", host.getJSONObject("state").getString("drunkAssignment"))
         assertEquals(0, host.getJSONObject("requestIdentity").getInt("gameStateRevision"))
-        assertEquals(domain.scope.rosterFingerprint,
+        assertEquals(domain.rosterFingerprint,
             host.getJSONObject("requestIdentity").getString("rosterFingerprint"))
         val seats = host.getJSONObject("state").getJSONArray("seats")
         assertEquals(8, seats.length())
@@ -86,9 +86,6 @@ class InitialJointOpeningDirectV2Test {
         assertEquals(3, host.getJSONObject("decisionInventory")
             .getJSONArray("information").length())
         // No legal Drunk options or branch menus are exported to the model.
-        // All four Host-internal candidate branches are still available for
-        // complete post-response verification.
-        assertEquals(4, domain.projections.size)
         assertFalse(host.has("conditionalDecisionContracts"))
         assertFalse(host.has("roleCatalog"))
         assertFalse(host.toString().contains("drunkSeat"))
@@ -114,7 +111,7 @@ class InitialJointOpeningDirectV2Test {
             .getBoolean("strict"))
     }
 
-    @Test fun bothDrunkAndNoDrunkCasesMustBeBoundToTheirOriginalHostDomain() {
+    @Test fun bothDrunkAndNoDrunkRequestsCarryOriginalHostFacts() {
         val drunk = build(true, eight)
         val noDrunk = build(false, eight)
         val inputDrunk = JSONObject(InitialJointOpeningDirectV2.encode(
@@ -125,13 +122,11 @@ class InitialJointOpeningDirectV2Test {
         assertFalse(inputClean.getJSONObject("state").getBoolean("hasDrunk"))
         assertEquals("NOT_APPLICABLE", inputClean.getJSONObject("state")
             .getString("drunkAssignment"))
-        assertEquals(1, noDrunk.projections.size)
-        assertEquals(4, drunk.projections.size)
         assertFalse(inputClean.getJSONObject("decisionInventory")
             .toString().contains("legalCandidates"))
     }
 
-    @Test fun hostMustRejectIncompleteMalformedOrInventedV2PlanAsWhole() {
+    @Test fun hostRejectsIncompleteAndStaleOpeningResponse() {
         val domain = build(true, eight)
         val identity = JSONObject(InitialJointOpeningDirectV2.encode(
             domain, ruleset.characterRegistry)).getJSONObject("requestIdentity")
@@ -212,9 +207,9 @@ class InitialJointOpeningDirectV2Test {
     /**
      * One actual authorized 2026-10-15 Standard Luna synthetic 15-seat output.
      * No raw provider response, encrypted reasoning, PII, or API key.
-     * This tests the same decode/Host legal gate used by the production V2 path.
+     * This tests the production response parser without making a new API call.
      */
-    @Test fun p15StoredRealLunaModelOutputPassesKotlinHostGate() {
+    @Test fun p15StoredRealLunaModelOutputRetainsStrategyAndDeferredActions() {
         val shown = listOf(
             "chef", "fortuneteller", "recluse", "investigator", "poisoner",
             "monk", "washerwoman", "baron", "butler", "undertaker",
@@ -434,5 +429,94 @@ class InitialJointOpeningDirectV2Test {
     }
     /** Actual Luna P1 response from a synthetic eight-seat game: no provider metadata or API credentials. */
     /** Synthetic P1 model-generated plan, NO API key, raw provider body or personal records. */
+
+
+    private fun directPlan(request: InitialOpeningRequestV2): JSONObject {
+        val wire = JSONObject(InitialJointOpeningDirectV2.encode(request, ruleset.characterRegistry))
+        val information = JSONArray()
+        request.information.forEach { (id, seat) ->
+            val role = request.shownRoles.getValue(seat)
+            val waiting = if (role == "fortuneteller") listOf("fortune_teller.targets:seat-$seat") else emptyList()
+            information.put(JSONObject().put("decisionId", id).put("sourceSeat", seat)
+                .put("abilityRoleId", role).put("effectiveAbilityRoleId", role)
+                .put("resolution", if (waiting.isEmpty()) "DECISION" else "DEFERRED")
+                .put("basis", if (waiting.isEmpty()) "FUNCTIONING" else "STATUS_DEPENDENT")
+                .put("subject", JSONObject().put("mode", if (role == "investigator") "EVIDENCE_PAIR" else "NONE")
+                    .put("seats", JSONArray(if (role == "investigator") listOf(8, 7) else emptyList<Int>())))
+                .put("observation", JSONObject().put("kind", when (role) {
+                    "chef" -> "NUMBER"
+                    "investigator" -> "ROLE"
+                    else -> "NONE"
+                }).put("number", if (role == "chef") 999 else JSONObject.NULL)
+                    .put("roleId", if (role == "investigator") "saint" else JSONObject.NULL)
+                    .put("boolean", JSONObject.NULL))
+                .put("waitingForEvents", JSONArray(waiting)))
+        }
+        return JSONObject().put("schemaVersion", 2).put("asOfRevision", request.gameStateRevision)
+            .put("requestIdentity", wire.getJSONObject("requestIdentity"))
+            .put("openingPlan", JSONObject().put("drunkSeat", if (request.hasDrunk) 1 else JSONObject.NULL)
+                .put("redHerringSeat", 8).put("demonBluffRoleIds", JSONArray(listOf("imp", "baron", "chef")))
+                .put("information", information).put("deferredActions", JSONArray().also { actions ->
+                    request.events.forEach { (id, action) -> actions.put(JSONObject().put("decisionId", id)
+                        .put("event", action.first).put("actorSeat", action.second)) }
+                }))
+            .put("strategyMemory", JSONObject().put("tensions", JSONArray(listOf("Keep advice private")))
+                .put("intentions", JSONArray()).put("uncertainties", JSONArray()))
+            .put("tradeoffSummary", "Synthetic structural response; gameplay legality is not a Host gate.")
+    }
+
+    @Test fun directAdviceRetainsValuesOutsideRetiredLegalDomainsWithoutWitnessInference() {
+        val request = build(true, eight)
+        val accepted = InitialJointOpeningDirectV2.decode(directPlan(request).toString(), request)
+        assertEquals(999, accepted.selection.information.getValue(1).number)
+        assertEquals("saint", accepted.selection.information.getValue(5).roleId)
+        assertEquals(listOf(7, 8), accepted.selection.information.getValue(5).subjectSeats)
+        assertEquals(8, accepted.selection.redHerringSeat)
+        assertEquals(listOf("imp", "baron", "chef"), accepted.selection.demonBluffs)
+        assertTrue(accepted.selection.validFor(request))
+        assertFalse(accepted.selection.validFor(build(false, eight)))
+        assertEquals(2, accepted.conditional.size)
+        assertFalse(accepted.selection.information.containsKey(2))
+        assertEquals(SnapshotField.Uncommitted, request.snapshot.setupState.drunkAssignmentSeat)
+        assertEquals(listOf("Keep advice private"), accepted.strategyMemory?.tensions)
+    }
+
+    private fun rejects(edit: (JSONObject) -> Unit) {
+        val request = build(true, eight)
+        val raw = directPlan(request).also(edit)
+        assertTrue(runCatching { InitialJointOpeningDirectV2.decode(raw.toString(), request) }.isFailure)
+    }
+
+    @Test fun rejectsChangedGameRevisionAndRosterIdentity() {
+        rejects { it.getJSONObject("requestIdentity").put("gameId", "another-game") }
+        rejects { it.getJSONObject("requestIdentity").put("gameStateRevision", 1) }
+        rejects { it.getJSONObject("requestIdentity").put("playerInputRevision", 1) }
+        rejects { it.getJSONObject("requestIdentity").put("rosterFingerprint", "changed") }
+        rejects { it.put("asOfRevision", 1) }
+    }
+
+    @Test fun rejectsMissingDuplicateAndInventedInformationOrActions() {
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").remove(0) }
+        rejects { val a = it.getJSONObject("openingPlan").getJSONArray("information"); a.put(a.getJSONObject(0)) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(0).put("sourceSeat", 5) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("deferredActions").remove(0) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("deferredActions").getJSONObject(0).put("actorSeat", 8) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(1)
+            .put("waitingForEvents", JSONArray(listOf("invented.event"))) }
+    }
+
+    @Test fun rejectsUnknownReferencesMalformedTypedValuesAndUnboundedStrategy() {
+        rejects { it.getJSONObject("openingPlan").put("drunkSeat", 99) }
+        rejects { it.getJSONObject("openingPlan").put("redHerringSeat", 99) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(2)
+            .getJSONObject("subject").put("seats", JSONArray(listOf(8, 8))) }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(2)
+            .getJSONObject("observation").put("roleId", "unknown-role") }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(0)
+            .getJSONObject("observation").put("number", "999") }
+        rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(0)
+            .getJSONObject("observation").put("number", 1.5) }
+        rejects { it.getJSONObject("strategyMemory").put("uncertainties", JSONArray(List(4) { "Too many" })) }
+    }
 
 }

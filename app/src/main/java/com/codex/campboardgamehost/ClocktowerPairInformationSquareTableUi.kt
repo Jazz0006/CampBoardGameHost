@@ -26,337 +26,218 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/**
- * Square-table composition for first-night pair information (Washerwoman/Librarian/Investigator).
- *
- * A single externally validated recommendation may be presented; the complete Host-legal
- * domain remains available through explicit manual editing.
- */
+/** First-night pair: one AI proposal or direct human role + two-seat input, never a Host option grid. */
 @Composable
 internal fun ClocktowerPairInformationSquareTableDialog(
     interactionKey: String,
-    presentation: ClocktowerPairManualPresentation,
-    recommendedOptions: List<ClocktowerDisplayOption>,
+    recommendedOption: ClocktowerDisplayOption?,
+    lastPreviewProposition: com.codex.campboardgamehost.clocktower.epistemic.InformationProposition? = null,
+    automaticOnly: Boolean = false,
+    scriptRoles: List<ClocktowerRole>,
+    abilityRoleEnName: String,
     seats: List<HostSeatPresentation>,
     actorSeat: Int? = null,
     wakeInstruction: String? = null,
     abilityLabel: String,
     roleLabel: (String) -> String,
     language: String,
-    canGoPrevious: Boolean,
-    onPrevious: () -> Unit,
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onConfirm: (ClocktowerDisplayOption) -> Unit,
+    onDraftChanged: () -> Unit,
 ) {
-    val canonicalRecommendedOptions = remember(interactionKey, presentation, recommendedOptions) {
-        recommendedOptions
-            .mapNotNull { option -> ClocktowerPairManualAuthority.canonicalManualOption(presentation, option) }
-            .distinct()
-            .take(1)
+    val seatCount = seats.size
+    val validRecommendation = remember(interactionKey, recommendedOption, scriptRoles) {
+        ClocktowerDirectPairSelection.fromRecommendation(
+            recommendedOption, abilityRoleEnName, seatCount, scriptRoles,
+        )
     }
-    val canonicalRecommendedOption = canonicalRecommendedOptions.firstOrNull()
-    val recommendedSelection = remember(interactionKey, presentation, canonicalRecommendedOption) {
-        ClocktowerPairManualSelectionModel.from(presentation, canonicalRecommendedOption)
+    // Opening the player fullscreen temporarily unmounts this square table.
+    // Restore the last *previewed* pair (manual or recommended) on return.
+    val lastPreviewSelection = ClocktowerDirectPairSelection.fromProposition(
+        lastPreviewProposition, abilityRoleEnName, seatCount, scriptRoles,
+    )
+    // An asynchronous AI recommendation must not erase a Storyteller's in-progress edit.
+    var selection by remember(interactionKey, scriptRoles, automaticOnly) {
+        mutableStateOf(lastPreviewSelection ?: validRecommendation ?: ClocktowerDirectPairSelection())
     }
-    var selection by remember(interactionKey, presentation, canonicalRecommendedOption) {
-        mutableStateOf(recommendedSelection)
+    var editing by remember(interactionKey, scriptRoles, automaticOnly) {
+        mutableStateOf(!automaticOnly &&
+            (validRecommendation == null || (lastPreviewSelection != null &&
+                lastPreviewSelection != validRecommendation)))
     }
-    // Legal manual override is always available, regardless of AI operation mode.
-    var editing by remember(interactionKey, presentation, canonicalRecommendedOption) {
-        mutableStateOf(recommendedSelection.resolvedOption == null)
+    // Keep the last preview highlighted until the Storyteller edits or previews again.
+    val highlightedSelection = if (!editing && lastPreviewSelection == null && validRecommendation != null)
+        validRecommendation else selection
+    fun changeSelection(next: ClocktowerDirectPairSelection) {
+        if (next != selection) {
+            selection = next
+            onDraftChanged()
+        }
     }
-
     fun restoreRecommendation() {
-        selection = recommendedSelection
-        editing = recommendedSelection.resolvedOption == null
+        changeSelection(validRecommendation ?: ClocktowerDirectPairSelection())
+        editing = validRecommendation == null && !automaticOnly
     }
 
     ClocktowerHostSquareTableScaffold(
         seats = seats,
         language = language,
-        previousEnabled = canGoPrevious,
-        onPrevious = onPrevious,
+        previousEnabled = false,
+
         onHostTools = onHostTools,
         onNext = onNext,
-        interactionMode = if (editing) {
-            ClocktowerSquareTableInteractionMode.Selectable
-        } else {
-            ClocktowerSquareTableInteractionMode.ReadOnly
-        },
+        interactionMode = if (editing) ClocktowerSquareTableInteractionMode.Selectable
+            else ClocktowerSquareTableInteractionMode.ReadOnly,
         onSeatSelected = { seatNumber ->
-            if (editing) selection = selection.selectSeat(seatNumber)
+            if (editing) changeSelection(selection.chooseSeat(seatNumber, seatCount))
         },
         onBack = {
-            if (editing && recommendedSelection.resolvedOption != null) {
-                restoreRecommendation()
-            } else if (canGoPrevious) {
-                onPrevious()
-            }
+            if (editing && validRecommendation != null) restoreRecommendation()
         },
         seatUiModel = { seat ->
-            val seatPresentation = clocktowerPairInformationSeatPresentation(
-                selection = selection,
-                seatNumber = seat.seatId.number,
-                editing = editing,
-                actorSeat = actorSeat,
-            )
-            val isSelectedCandidate = seat.seatId.number == selection.selectedFirstSeat ||
-                seat.seatId.number == selection.selectedSecondSeat
-            clocktowerPairManualSquareTableSeat(
-                seat = seat,
-                language = language,
-                state = seatPresentation.targetState,
+            val seatNumber = seat.seatId.number
+            val selected = seatNumber == highlightedSelection.firstSeat ||
+                seatNumber == highlightedSelection.secondSeat
+            val state = when {
+                selected -> ClocktowerSquareTableSeatState.SelectedHighlighted
+                editing && selection.roleId != null && !selection.noneSelected ->
+                    ClocktowerSquareTableSeatState.Selectable
+                else -> ClocktowerSquareTableSeatState.Neutral
+            }
+            val content = hostSeatContentPresentation(seat, language)
+            ClocktowerSquareTableSeatUiModel(
+                seatId = seat.seatId.renderKey(),
+                seatNumber = seatNumber,
+                label = content.primaryLabel,
+                detailLabels = content.detailLabels,
+                isAlive = seat.isAlive,
+                hasUnspentGhostVote = seat.hasUnspentGhostVote,
+                state = state,
             ).copy(
-                isCurrentActor = seatPresentation.isCurrentActor,
-                suppressDefaultStateMarker = isSelectedCandidate,
+                isCurrentActor = seatNumber == actorSeat,
+                suppressDefaultStateMarker = selected,
                 stateMarkerOverride = clocktowerPairInformationTruthMarker(
-                    isSelectedCandidate = isSelectedCandidate,
-                    selectedRoleId = selection.selectedRoleId,
-                    actualRoleId = seat.actualRole?.roleId,
-                    selectedOption = selection.resolvedOption,
+                    selected, highlightedSelection.roleId, seat.actualRole?.roleId,
                 ),
             )
         },
     ) {
-        ClocktowerPairInformationCenterControls(
-            wakeInstruction = wakeInstruction,
-            abilityLabel = abilityLabel,
-            selection = selection,
-            recommendedSelection = recommendedSelection,
-            recommendedOptions = canonicalRecommendedOptions,
-            editing = editing,
-            presentation = presentation,
-            roleLabel = roleLabel,
-            language = language,
-            onSelectionChange = { selection = it },
-            onStartEditing = { editing = true },
-            onRestoreRecommendation = ::restoreRecommendation,
-            onConfirm = onConfirm,
-        )
+        if (!editing) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                ClocktowerNightActionWakeInstruction(wakeInstruction)
+                ClocktowerSingleRecommendationButtons(
+                    recommendations = listOfNotNull(recommendedOption).takeIf {
+                        validRecommendation != null
+                    }.orEmpty(),
+                    language = language,
+                    labelOf = { choice ->
+                        val pair = validRecommendation
+                        if (pair?.noneSelected == true) {
+                            if (language == "en") "None in play" else "场上没有对应角色"
+                        } else {
+                            val role = pair?.roleId?.let(roleLabel).orEmpty()
+                            val selectedSeats = listOfNotNull(pair?.firstSeat, pair?.secondSeat)
+                                .joinToString(" + ") { seatNumber ->
+                                    if (language == "en") "P$seatNumber" else "${seatNumber}号"
+                                }
+                            listOf(role, selectedSeats).filter { it.isNotBlank() }
+                                .joinToString(" · ").ifBlank { choice.label }
+                        }
+                    },
+                    onConfirm = onConfirm,
+                    onManualSelection = if (automaticOnly) null else ({
+                        selection = highlightedSelection
+                        editing = true
+                    }),
+                )
+                if (automaticOnly && validRecommendation == null) {
+                    Text(
+                        if (language == "en") "Waiting for a current AI recommendation" else "等待 AI 确定当前信息",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        } else {
+            var expanded by remember { mutableStateOf(false) }
+            Column(
+                modifier = Modifier.fillMaxSize().padding(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                ClocktowerNightActionWakeInstruction(wakeInstruction)
+                Text(abilityLabel, style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(8.dp))
+                Box(Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { expanded = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(selection.roleId?.let(roleLabel) ?: if (selection.noneSelected) {
+                            if (language == "en") "None in play" else "没有对应角色"
+                        } else {
+                            if (language == "en") "Choose character" else "选择角色"
+                        }, maxLines = 1)
+                    }
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        scriptRoles.distinctBy { it.enName }.forEach { role ->
+                            DropdownMenuItem(
+                                text = { Text(roleLabel(role.enName)) },
+                                onClick = {
+                                    changeSelection(selection.chooseRole(role.enName))
+                                    expanded = false
+                                },
+                            )
+                        }
+                        DropdownMenuItem(
+                            text = { Text(if (language == "en") "None" else "没有") },
+                            onClick = {
+                                changeSelection(selection.chooseNone())
+                                expanded = false
+                            },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    when {
+                        selection.noneSelected -> if (language == "en") "No matching character in play" else "场上没有对应角色"
+                        selection.roleId == null -> if (language == "en") "Choose character" else "选择角色"
+                        selection.firstSeat == null -> if (language == "en") "Choose first player" else "选择第一名玩家"
+                        selection.secondSeat == null -> if (language == "en") "Choose second player" else "选择第二名玩家"
+                        else -> if (language == "en") "Ready to show" else "可以展示"
+                    },
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+                val option = selection.toDisplayOption(
+                    abilityRoleEnName, seatCount, scriptRoles, roleLabel, abilityLabel, language,
+                )
+                Button(
+                    onClick = { option?.let(onConfirm) },
+                    enabled = option != null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(if (language == "en") "Show to player" else "展示给玩家") }
+                if (validRecommendation != null) {
+                    TextButton(onClick = ::restoreRecommendation) {
+                        Text(if (language == "en") "Use recommendation" else "恢复推荐")
+                    }
+                }
+            }
+        }
     }
 }
 
-/**
- * Host-private truth cue for pair information. Reliability is deliberately absent from
- * this projection: the check means only that this selected candidate's authoritative actual role
- * equals the role being shown. A poisoned/unreliable result can therefore still carry a check when
- * it happens to be truthful, while a false candidate never receives one.
- */
+/** Host-private truth marker is not a legality filter and never changes the actual selected fact. */
 internal fun clocktowerPairInformationTruthMarker(
     isSelectedCandidate: Boolean,
     selectedRoleId: String?,
     actualRoleId: String?,
-    selectedOption: ClocktowerDisplayOption?,
-): String? {
-    if (!isSelectedCandidate || selectedRoleId == null) return null
-    val directTruth = actualRoleId == selectedRoleId
-    val spyRegistrationTruth = actualRoleId == "Spy" &&
-        selectedOption?.spyRegistersGood == true &&
-        selectedOption.spyRegisteredRoleEnName == selectedRoleId
-    val recluseRegistrationTruth = actualRoleId == "Recluse" &&
-        selectedOption?.recluseRegistersEvil == true &&
-        selectedOption.recluseRegisteredRoleEnName == selectedRoleId
-    return if (directTruth || spyRegistrationTruth || recluseRegistrationTruth) "✓" else null
-}
+): String? = if (isSelectedCandidate && selectedRoleId != null && actualRoleId == selectedRoleId) "✓" else null
 
-/**
- * Recommended mode is read-only: only the recommended pair is accented. Manual mode delegates
- * selectable/selected/disabled projection to the same authority used by the existing pair Manual
- * picker, so legal second-seat continuations remain visually authoritative.
- */
-internal fun clocktowerPairInformationSeatState(
-    selection: ClocktowerPairManualSelectionModel,
-    seatNumber: Int,
-    editing: Boolean,
-): ClocktowerSquareTableSeatState {
-    if (!editing) {
-        return if (
-            seatNumber == selection.selectedFirstSeat ||
-            seatNumber == selection.selectedSecondSeat
-        ) {
-            ClocktowerSquareTableSeatState.SelectedHighlighted
-        } else {
-            ClocktowerSquareTableSeatState.Neutral
-        }
-    }
-    return when (val state = clocktowerPairManualSeatState(selection, seatNumber)) {
-        ClocktowerSquareTableSeatState.SelectedFirst,
-        ClocktowerSquareTableSeatState.SelectedSecond -> ClocktowerSquareTableSeatState.SelectedHighlighted
-        else -> state
-    }
-}
-
-/**
- * The player who must be woken is a separate visual dimension from the players referenced by the
- * information. The square-table card can therefore keep the actor border while also retaining a
- * pair-selection state when those concepts happen to overlap.
- */
-internal fun clocktowerPairInformationSeatPresentation(
-    selection: ClocktowerPairManualSelectionModel,
-    seatNumber: Int,
-    editing: Boolean,
-    actorSeat: Int?,
-): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = clocktowerPairInformationSeatState(
-        selection = selection,
-        seatNumber = seatNumber,
-        editing = editing,
-    ),
-    isCurrentActor = seatNumber == actorSeat,
-)
-
-private fun clocktowerPairRecommendationLabel(
-    option: ClocktowerDisplayOption,
-    presentation: ClocktowerPairManualPresentation,
-    roleLabel: (String) -> String,
-    language: String,
-): String {
-    val model = ClocktowerPairManualSelectionModel.from(presentation, option)
-    if (model.isZeroCaseSelected) {
-        return if (language == "en") "None in play" else "场上没有对应角色"
-    }
-    val role = model.selectedRoleId?.let(roleLabel).orEmpty()
-    val seats = listOfNotNull(model.selectedFirstSeat, model.selectedSecondSeat)
-        .joinToString(" + ") { seat -> if (language == "en") "P$seat" else "${seat}号" }
-    return listOf(role, seats).filter { it.isNotBlank() }.joinToString(" · ")
-        .ifBlank { option.label }
-}
-
-@Composable
-private fun ClocktowerPairInformationCenterControls(
-    wakeInstruction: String?,
-    abilityLabel: String,
-    selection: ClocktowerPairManualSelectionModel,
-    recommendedSelection: ClocktowerPairManualSelectionModel,
-    recommendedOptions: List<ClocktowerDisplayOption>,
-    editing: Boolean,
-    presentation: ClocktowerPairManualPresentation,
-    roleLabel: (String) -> String,
-    language: String,
-    onSelectionChange: (ClocktowerPairManualSelectionModel) -> Unit,
-    onStartEditing: () -> Unit,
-    onRestoreRecommendation: () -> Unit,
-    onConfirm: (ClocktowerDisplayOption) -> Unit,
-) {
-    if (!editing) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ClocktowerNightActionWakeInstruction(wakeInstruction)
-            ClocktowerSingleRecommendationButtons(
-                recommendations = recommendedOptions,
-                language = language,
-                labelOf = { option ->
-                    clocktowerPairRecommendationLabel(option, presentation, roleLabel, language)
-                },
-                onConfirm = onConfirm,
-                onManualSelection = onStartEditing,
-            )
-        }
-        return
-    }
-
-    var roleMenuExpanded by remember { mutableStateOf(false) }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ClocktowerNightActionWakeInstruction(wakeInstruction)
-            Text(
-                text = abilityLabel,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(4.dp))
-
-            if (selection.isZeroCaseSelected) {
-                Text(
-                    text = if (language == "en") "No matching character in play" else "场上没有对应角色",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-            } else {
-                Text(
-                    text = when {
-                        selection.selectedRoleId == null -> if (language == "en") "Choose a character" else "选择角色"
-                        selection.selectedFirstSeat == null -> if (language == "en") "Choose the first player" else "选择第一名玩家"
-                        selection.selectedSecondSeat == null -> if (language == "en") "Choose the second player" else "选择第二名玩家"
-                        else -> if (language == "en") "Ready to show" else "可以展示"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(4.dp))
-
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedButton(
-                        onClick = { roleMenuExpanded = true },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            selection.selectedRoleId?.let(roleLabel)
-                                ?: if (language == "en") "Choose character" else "选择角色",
-                            maxLines = 1,
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = roleMenuExpanded,
-                        onDismissRequest = { roleMenuExpanded = false },
-                    ) {
-                        selection.roleIds.forEach { roleId ->
-                            DropdownMenuItem(
-                                text = { Text(roleLabel(roleId)) },
-                                onClick = {
-                                    onSelectionChange(selection.selectRole(roleId))
-                                    roleMenuExpanded = false
-                                },
-                            )
-                        }
-                        if (selection.hasZeroCase) {
-                            DropdownMenuItem(
-                                text = { Text(if (language == "en") "None" else "没有") },
-                                onClick = {
-                                    onSelectionChange(selection.selectZeroCase())
-                                    roleMenuExpanded = false
-                                },
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            val resolved = selection.resolvedOption
-            Button(
-                onClick = { resolved?.let(onConfirm) },
-                enabled = resolved != null,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(if (language == "en") "Show to player" else "展示给玩家")
-            }
-            if (recommendedSelection.resolvedOption != null) {
-                Spacer(Modifier.height(4.dp))
-                TextButton(onClick = onRestoreRecommendation) {
-                    Text(if (language == "en") "Use recommendation" else "恢复推荐")
-                }
-            }
-        }
-    }
-}

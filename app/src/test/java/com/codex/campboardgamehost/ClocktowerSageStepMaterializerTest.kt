@@ -4,55 +4,49 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ClocktowerSageStepMaterializerTest {
-    @Test
-    fun `Sage option retains actually selected demon candidate seats as a typed proposition`() {
-        val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
-        val options = clocktowerSageDisplayOptions(
-            cards = cards,
-            actor = cards[3],
-            demon = cards[1],
-            truthfulOnly = false,
-            content = sageContent(),
-        )
-
-        assertEquals(6, options.size)
-        val option = options.single { it.presentationSubjectSeats == listOf(1, 2) }
-        assertEquals("1   2", option.displaySecondary)
-        assertEquals(demonClaim(1, 2), option.proposition)
-        assertTrue(option.isTruthful)
-        assertTrue(options.any { !it.isTruthful })
+    @Test fun `Sage return restores typed preview pair and rejects incomplete or unrelated shapes`() {
+        val preview = demonClaim(1, 5)
+        assertEquals(listOf(1, 5), clocktowerSagePreviewSeats(preview, 5))
+        assertEquals(listOf(2, 4), clocktowerSagePreviewSeats(demonClaim(2, 4), 5))
+        assertNull(clocktowerSagePreviewSeats(null, 5))
+        assertNull(clocktowerSagePreviewSeats(demonClaim(1, 1), 5))
+        assertNull(clocktowerSagePreviewSeats(demonClaim(1, 6), 5))
+        assertNull(clocktowerSagePreviewSeats(InformationProposition.RoleAt(1, RoleId("Imp")), 5))
+        assertNull(clocktowerSagePreviewSeats(InformationProposition.AnyOf(listOf(
+            InformationProposition.RoleAt(1, RoleId("Imp")),
+            InformationProposition.RoleAt(5, RoleId("Chef")),
+        )), 5))
     }
 
     @Test
-    fun `truthful-only Sage projection exposes every legal truthful pair without ranking`() {
+    fun `Sage manually confirmed pair is recorded as typed information without rules filtering`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
-
-        val options = clocktowerSageDisplayOptions(
-            cards = cards,
-            actor = cards[3],
-            demon = cards[1],
-            truthfulOnly = true,
-            content = sageContent(),
+        val builder = ClocktowerInformationStepBuilder(
+            cards = cards, language = "en", text = { _, en -> en },
+            roleActor = { null }, roleMissingReason = { "missing" },
+            abilityStateFor = { _, _ -> null },
         )
-
-        assertEquals(3, options.size)
-        assertTrue(options.all { option -> 2 in option.presentationSubjectSeats })
-        assertTrue(options.all { it.isTruthful })
-        assertTrue(options.all { option ->
-            option.proposition == demonClaim(
-                option.presentationSubjectSeats[0], option.presentationSubjectSeats[1],
-            )
-        })
+        val step = clocktowerSageStepMaterializer(
+            builder, cards[3], null, sageContent(),
+        ).build()
+        val shown = requireNotNull(clocktowerSageManualPlayerDisplay(step, listOf(5, 1), cards.size))
+        assertEquals(listOf(1, 5), shown.presentationSubjectSeats)
+        assertEquals("1   5", shown.displaySecondary)
+        assertEquals(demonClaim(1, 5), shown.displayProposition)
+        assertEquals(null, shown.selectedInformationTruthful)
+        assertTrue(shown.displayOptions.isEmpty())
+        assertEquals(null, clocktowerSageManualPlayerDisplay(step, listOf(1, 1), cards.size))
+        assertEquals(null, clocktowerSageManualPlayerDisplay(step, listOf(0, 5), cards.size))
     }
 
     @Test
     fun `Sage materializer builds direct reliable step from prepared Host facts`() {
         val cards = (1..5).map { seat -> sageMaterializerCard("P$seat", seat == 2) }
         val actor = cards[3]
-        val demon = cards[1]
         val builder = ClocktowerInformationStepBuilder(
             cards = cards,
             language = "en",
@@ -60,15 +54,11 @@ class ClocktowerSageStepMaterializerTest {
             roleActor = { null },
             roleMissingReason = { "missing" },
             abilityStateFor = { _, _ -> null },
-            actorIsUnreliable = { _, _ -> false },
         )
 
         val entry = clocktowerSageStepMaterializer(
             builder = builder,
-            cards = cards,
             triggerActor = actor,
-            demon = demon,
-            directPair = demon to cards[4],
             abilityState = null,
             content = sageContent(),
         )
@@ -77,9 +67,9 @@ class ClocktowerSageStepMaterializerTest {
 
         assertEquals("Sage", step.roleEnName)
         assertEquals(actor, step.actor)
-        assertEquals(listOf(2, 5), step.presentationSubjectSeats)
-        assertEquals("2   5", step.displaySecondary)
-        assertEquals(demonClaim(2, 5), step.displayProposition)
+        assertTrue(step.presentationSubjectSeats.isEmpty())
+        assertEquals(null, step.displaySecondary)
+        assertEquals(null, step.displayProposition)
     }
 
     private fun demonClaim(first: Int, second: Int) = InformationProposition.AnyOf(listOf(
@@ -93,7 +83,6 @@ class ClocktowerSageStepMaterializerTest {
         displayPrimary = "Demon",
         displayFooter = "One of these two players",
         hostInstruction = "Wake the Sage and show two players.",
-        highPressureSuffix = " high pressure",
     )
 
     private fun sageMaterializerCard(name: String, demon: Boolean = false) = PlayerCard(
