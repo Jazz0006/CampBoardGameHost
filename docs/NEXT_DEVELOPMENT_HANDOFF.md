@@ -8,7 +8,7 @@ Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemi
 
 不含维护文档共**9文件+26/-1009，净删983行/39695B**，6文件整删（4工具/专属测试、1工作流、1fixture）。Android专属旧入口测试-1，Python退休专属测试-15；现有业务断言迁移，未忽略测试。首次完整审计原待审现存**11路径**；当前**440路径、220有结论、220待审**。共享UI/平台资源有真实消费者则保留；发现contentMode及底部单项策略包装待后续收敛，不把部分修改当全仓完成。
 
-验证：Cloud full **650 tests/146 suites/38 UI，0 failure/error/skipped**及Debug APK通过，精确远端CI待提交后独立核对；R2原脚本、CI 10路由/5门禁和shell语法、零退休符号产品引用、diff检查通过。App115420B、Night Host63787B仍超50000B，Session46770B。两剧本、现有AI、两条跨局防重复、D2、隐私及原子保存合同不变。PR保持Draft，不合并/强推；无新增所有者决策阻塞。
+验证：Cloud full **650 tests/146 suites/38 UI，0 failure/error/skipped**及Debug APK通过；精确代码`8ac04443aa8e1578e8e8252550f8650e400d0554`的[完整Android CI #4513](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39584194981)与[R2 #4088](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39584194745)均SUCCESS，独立核对14路径/逐行diff、full tests、APK构建/上传及CI gate。本次后续提交只记录验收，不替代代码构建；R2原脚本、CI 10路由/5门禁和shell语法、零退休符号产品引用、diff检查通过。App115420B、Night Host63787B仍超50000B，Session46770B。两剧本、现有AI、两条跨局防重复、D2、隐私及原子保存合同不变。PR保持Draft，不合并/强推；无新增所有者决策阻塞。
 
 下一步继续剩余待审源文件，优先审计App/Night Host混合职责及已确认无作用的contentMode/底部策略包装，再与真实消费者同批删除；不要回到界面精修，也不要把测试专用Session方法及其安全测试一次盲删。直接使用Cloud，工具链和保留合同见下方历史交接；当前完整日志`/tmp/campboard-batch3-gradle.log`，测试摘要`/tmp/campboard-batch3-tests.json`。
 
