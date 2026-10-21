@@ -173,22 +173,13 @@ private fun ClocktowerChambermaidCenterControls(
                         fontWeight = FontWeight.SemiBold,
                         textAlign = TextAlign.Center,
                     )
-                    recommendations.forEachIndexed { index, option ->
+                    recommendations.forEach { option ->
                         Spacer(Modifier.height(4.dp))
-                        if (index == 0) {
-                            Button(
-                                onClick = { onResultSelected(option) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(option.label)
-                            }
-                        } else {
-                            OutlinedButton(
-                                onClick = { onResultSelected(option) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(option.label)
-                            }
+                        Button(
+                            onClick = { onResultSelected(option) },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(option.label)
                         }
                     }
                 }

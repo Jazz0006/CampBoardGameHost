@@ -141,31 +141,6 @@ class ClocktowerGlobalObservationCommitTest {
     }
 
     @Test
-    fun `global session rejects direct injection of a prebound durable record`() {
-        val session = newGlobalSession()
-        val before = session.state
-        val externallyBound = RecordedEpistemicObservation(
-            recordId = "externally-bound",
-            phase = StorytellerPhase.DAY,
-            round = 1,
-            sequence = 3,
-            sourceSeat = null,
-            sourceAbility = null,
-            visibility = ObservationVisibility.PUBLIC,
-            recipientSeats = emptySet(),
-            reliability = ObservationReliability.NOT_ABILITY_INFORMATION,
-            proposition = InformationProposition.AliveAt(2, false),
-            timelineBinding = ObservationTimelineBinding.Global(
-                TimelinePoint(StorytellerPhase.DAY, 1, 3, 3L),
-            ),
-        )
-
-        assertFails { session.recordEpistemicObservation(externallyBound) }
-
-        assertSame(before, session.state)
-    }
-
-    @Test
     fun `global cursor exhaustion fails without partial allocation or commit`() {
         val beforeLog = EpistemicObservationLog()
         assertFails {

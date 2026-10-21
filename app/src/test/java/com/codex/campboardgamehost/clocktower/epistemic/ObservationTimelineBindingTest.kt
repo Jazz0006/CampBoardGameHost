@@ -114,14 +114,6 @@ class ObservationTimelineBindingTest {
         }
     }
 
-    @Test fun `bindTo and observation json preserve global timeline identity`() {
-        val point = TimelinePoint(StorytellerPhase.NIGHT, round = 2, sequence = 5, globalSequence = 33)
-        val bound = globalRecord("bind-global", point).bindTo("snapshot-r6-observation-timeline")
-
-        assertEquals(ObservationTimelineBinding.Global(point), bound.timelineBinding)
-        assertEquals(bound, EpistemicSemanticJson.decodeEpistemicObservation(EpistemicSemanticJson.encode(bound)))
-    }
-
     private fun legacyRecord(recordId: String): RecordedEpistemicObservation = RecordedEpistemicObservation(
         recordId = recordId,
         phase = StorytellerPhase.FIRST_NIGHT,

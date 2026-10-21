@@ -1,3 +1,5 @@
+> 2026-10-21 第二阶段清理：本文保留为旧V1候选协议历史；独立Python Gateway、smoke/latency及专属测试/CI已退休。现用Android直连联合开局/续规划V3与会话延续不变。不要按下方旧部署命令恢复双查询流程。
+
 # PROD-GLOBAL-1 — Whole-game AI Storyteller strategy and table UX re-entry (2026-10-09)
 
 > **HISTORICAL DESIGN / SUPERSEDED NEXT (2026-10-11):** This document records PROD-GLOBAL-1/1D/2B evolution, useful code gaps and Host rules. Its earlier separate Drunk request, postcommit analysis/one-shot call, visible issues/alternatives and cross-model testing commands are **not active implementation instructions**. The owner approved [PROD-GLOBAL-3](PROD_GLOBAL_3_UNIFIED_OPENING_STRATEGIC_CONTINUITY_ROUTE_2026-10-11.md): **one initial precommit coordinated opening plan including Drunk, concurrent with identity reveal**, compact private strategyMemory, same Luna, and globally revised remaining decisions. Refer to [current roadmap](CURRENT_DEVELOPMENT_ROADMAP.md)/[handoff](NEXT_DEVELOPMENT_HANDOFF.md) for NEXT. No historical implementation checkpoint here is proof of phone product acceptance.

@@ -71,32 +71,8 @@ internal class SetupShownIdentityPolicy(
     }
 }
 
-/** Durable template metadata lookup identity; actual-role composition remains in SetupCandidate. */
-internal data class TemplateShownIdentityPolicyKey(
-    val providerId: String,
-    val candidateId: String,
-) {
-    init {
-        require(providerId.isNotBlank()) { "Template shown-identity providerId cannot be blank." }
-        require(candidateId.isNotBlank()) { "Template shown-identity candidateId cannot be blank." }
-    }
-}
-
-/** Provider-neutral source of already-normalized template shown-identity metadata. */
-internal fun interface TemplateShownIdentityPolicySource {
-    fun find(key: TemplateShownIdentityPolicyKey): SetupShownIdentityPolicy?
-}
-
-/**
- * Pure S6A resolver from a selected actual-role candidate to legal shown-identity options.
- *
- * The current supported override mechanic is Drunk. The policy representation is intentionally
- * plural so later supported setup-time identity mechanics do not require putting shown roles into
- * SetupCandidate. Unsupported or inconsistent metadata fails closed.
- */
-internal class SetupShownIdentityPolicyResolver(
-    private val templatePolicySource: TemplateShownIdentityPolicySource = TemplateShownIdentityPolicySource { null },
-) {
+/** Shown-role options for the actual generated NGJ setup; TB commits its shown roster separately. */
+internal class SetupShownIdentityPolicyResolver {
     fun resolve(
         candidate: SetupCandidate,
         ruleset: ValidatedClocktowerRuleset,
@@ -118,57 +94,10 @@ internal class SetupShownIdentityPolicyResolver(
             }
         }
 
-        return when (candidate.provenance.sourceKind) {
-            SetupSourceKind.TEMPLATE -> resolveTemplate(
-                candidate = candidate,
-                ruleset = ruleset,
-                drunk = drunk,
-                hasDrunk = hasDrunk,
-            )
-
-            SetupSourceKind.GENERATED -> resolveGenerated(
-                candidate = candidate,
-                ruleset = ruleset,
-                drunk = drunk,
-                hasDrunk = hasDrunk,
-            )
+        require(candidate.provenance.sourceKind == SetupSourceKind.GENERATED) {
+            "Shown-identity options belong to generated setup."
         }
-    }
-
-    private fun resolveTemplate(
-        candidate: SetupCandidate,
-        ruleset: ValidatedClocktowerRuleset,
-        drunk: ClocktowerCharacterDefinition?,
-        hasDrunk: Boolean,
-    ): SetupShownIdentityPolicy {
-        val candidateId = requireNotNull(candidate.provenance.candidateId) {
-            "Template shown-identity resolution requires a durable candidateId."
-        }
-        val key = TemplateShownIdentityPolicyKey(
-            providerId = candidate.provenance.providerId,
-            candidateId = candidateId,
-        )
-        val policy = requireNotNull(templatePolicySource.find(key)) {
-            "No shown-identity metadata exists for template '${key.providerId}/${key.candidateId}'."
-        }
-
-        if (!hasDrunk) {
-            require(policy.overrides.isEmpty()) {
-                "Template without Drunk cannot declare a shown-identity override."
-            }
-            return policy
-        }
-
-        val drunkRole = requireNotNull(drunk).id
-        require(policy.overrides.size == 1 && policy.overrides.single().actualRole == drunkRole) {
-            "Current template shown-identity policy must contain exactly the Drunk override when Drunk is in play."
-        }
-        validateDrunkOptions(
-            options = policy.overrides.single().legalShownRoles,
-            candidate = candidate,
-            ruleset = ruleset,
-        )
-        return policy
+        return resolveGenerated(candidate, ruleset, drunk, hasDrunk)
     }
 
     private fun resolveGenerated(
@@ -199,25 +128,6 @@ internal class SetupShownIdentityPolicyResolver(
                 ),
             ),
         )
-    }
-
-    private fun validateDrunkOptions(
-        options: List<RoleId>,
-        candidate: SetupCandidate,
-        ruleset: ValidatedClocktowerRuleset,
-    ) {
-        val actualRoles = candidate.actualRoles.toSet()
-        options.forEach { shownRole ->
-            val definition = requireNotNull(ruleset.characterRegistry.findByRoleId(shownRole)) {
-                "Template shown role '${shownRole.value}' is not present in the validated ruleset."
-            }
-            require(definition.team == ClocktowerCatalogTeam.TOWNSFOLK) {
-                "Drunk shown role '${shownRole.value}' must be a Townsfolk."
-            }
-            require(shownRole !in actualRoles) {
-                "Drunk shown role '${shownRole.value}' is already an actual in-play role."
-            }
-        }
     }
 
     private companion object {

@@ -44,7 +44,7 @@ class ClocktowerDayFlowTest {
         assertEquals(StorytellerPhase.NIGHT, s.state.phase)
         assertEquals(2, s.state.round)
         assertFalse(s.state.gameState.playerAt(2)!!.alive)
-        assertEquals(1, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Execution>().size)
+        assertEquals(1, s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Execution>().size)
         s.confirmVote(3, 2, listOf(1, 2, 3), 1)
         assertSame(accepted, s.state)
     }
@@ -55,7 +55,7 @@ class ClocktowerDayFlowTest {
         assertNull(s.state.voteStanding.nomineeSeat)
         s.confirmEndDay(1)
         assertTrue(s.state.gameState.players.all { it.alive })
-        assertEquals(1, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.NoExecution>().size)
+        assertEquals(1, s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.NoExecution>().size)
     }
     @Test fun `pending confirmed nomination survives serialization and blocks another nomination or end-day`() {
         val s = session("Imp", "Soldier", "Chef", "Saint", "Empath")
@@ -83,7 +83,7 @@ class ClocktowerDayFlowTest {
         assertThrows(IllegalArgumentException::class.java) { s.confirmVote(4, 5, listOf(1, 2)) }
         assertSame(before, s.state)
         s.confirmVote(4, 5, listOf(1, 3))
-        assertEquals(listOf(2), s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().first().ghostVoterSeats)
+        assertEquals(listOf(2), s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Vote>().first().ghostVoterSeats)
     }
     @Test fun `functioning Butler needs the actual committed master vote`() {
         val s = session("Imp", "Butler", "Chef", "Saint", "Empath")
@@ -92,7 +92,7 @@ class ClocktowerDayFlowTest {
         s.confirmNomination(3, 4, null)
         assertThrows(IllegalArgumentException::class.java) { s.confirmVote(3, 4, listOf(1, 2)) }
         s.confirmVote(3, 4, listOf(2, 3))
-        assertEquals(listOf(2, 3), s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().single().voterSeats)
+        assertEquals(listOf(2, 3), s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Vote>().single().voterSeats)
     }
     @Test fun `Saint execution ends evil immediately but a poisoned Saint does not`() {
         for (poisoned in listOf(false, true)) {
@@ -133,7 +133,7 @@ class ClocktowerDayFlowTest {
         val accepted = s.state
         assertTrue(s.confirmNomination(3, 2, null, 1))
         assertSame(accepted, s.state)
-        assertEquals(0, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().size)
+        assertEquals(0, s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Vote>().size)
     }
     @Test fun `Spy registration is explicit and poisoned Virgin consumes first nomination without executing`() {
         val s = session("Imp", "Virgin", "Spy", "Soldier", "Empath")
@@ -141,11 +141,11 @@ class ClocktowerDayFlowTest {
         assertThrows(IllegalStateException::class.java) { s.confirmNomination(3, 2, null) }
         assertSame(before, s.state)
         assertFalse(s.confirmNomination(3, 2, false))
-        assertEquals(false, s.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Nomination>().single().nominatorRegistersAsTownsfolk)
+        assertEquals(false, s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Nomination>().single().nominatorRegistersAsTownsfolk)
         val poisoned = session("Imp", "Virgin", "Chef", "Soldier", "Empath")
         poison(poisoned, 2)
         assertFalse(poisoned.confirmNomination(3, 2, null))
-        assertTrue(poisoned.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Nomination>().single().firstVirginNomination)
+        assertTrue(poisoned.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Nomination>().single().firstVirginNomination)
     }
     @Test fun `Slayer fixed Demon hit and succession are one idempotent responsibility`() {
         val s = session("Imp", "Scarlet Woman", "Slayer", "Soldier", "Empath")
@@ -192,7 +192,7 @@ class ClocktowerDayFlowTest {
         val answer = restored.state.epistemicObservationLog.records.single()
         assertEquals(setOf(3), answer.recipientSeats)
         assertEquals(ObservationVisibility.PRIVATE, answer.visibility)
-        assertTrue(restored.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.ArtistAnswer>().single().abilityConsumed)
+        assertTrue(restored.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.ArtistAnswer>().single().abilityConsumed)
         assertThrows(IllegalStateException::class.java) { restored.confirmArtistAnswer(3, true, false) }
     }
     @Test fun `failed end-day persistence restores the full pre-confirmation state and no partial outcome`() {

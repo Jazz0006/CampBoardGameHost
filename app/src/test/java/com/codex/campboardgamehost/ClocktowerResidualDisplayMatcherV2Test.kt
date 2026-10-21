@@ -48,13 +48,13 @@ class ClocktowerResidualDisplayMatcherV2Test {
     @Test fun directNumberDoesNotDependOnHostMenuOrRegistrationWitness() {
         val advice = com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult(
             "SCALAR_RESULT", scalarValue = "99")
-        val option = ClocktowerResidualDisplayMatcherV2.matchScalar(decision(), advice, emptyList())!!
+        val option = ClocktowerResidualDisplayMatcherV2.matchScalar(decision(), advice)!!
         assertEquals(99, (option.proposition as InformationProposition.NumericResult).value)
         assertNull(option.spyRegistersGood)
-        assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(decision(), advice.copy(scalarValue = "-1"), emptyList()))
+        assertNull(ClocktowerResidualDisplayMatcherV2.matchScalar(decision(), advice.copy(scalarValue = "-1")))
         val role = decision().copy(kind = StorytellerProviderScalarKindV1.ROLE,
             metric = "REVEALED_CHARACTER", subjectSeats = listOf(4))
-        val result = ClocktowerResidualDisplayMatcherV2.matchScalar(role, advice.copy(scalarValue = "Recluse"), emptyList())!!
+        val result = ClocktowerResidualDisplayMatcherV2.matchScalar(role, advice.copy(scalarValue = "Recluse"))!!
         assertEquals(InformationProposition.RoleAt(4, RoleId("Recluse")), result.proposition)
         assertNull(result.recluseRegistersEvil)
     }

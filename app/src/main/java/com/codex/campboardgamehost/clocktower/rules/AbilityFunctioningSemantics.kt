@@ -18,9 +18,6 @@ internal object AbilityFunctioningSemantics {
     fun perceivedRole(subject: AbilitySubject): String? =
         if (subject.actualRole == "Drunk") subject.shownRole else subject.actualRole
 
-    fun interactsAs(subject: AbilitySubject, role: String): Boolean =
-        subject.isAlive && perceivedRole(subject) == role
-
     /**
      * Resolves functioning state after another authority has already established that this
      * interaction occurs. This deliberately does not require the subject to be alive: death-trigger
@@ -43,8 +40,5 @@ internal object AbilityFunctioningSemantics {
         if (!subject.isAlive) return null
         return stateForEstablishedInteraction(subject, role)
     }
-
-    fun functionsAs(subject: AbilitySubject, role: String): Boolean =
-        stateFor(subject, role) == AbilityFunctioningState.FUNCTIONING
 
 }

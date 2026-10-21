@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,21 +35,12 @@ internal fun <T> ClocktowerSingleRecommendationButtons(
             fontWeight = FontWeight.SemiBold,
         )
         Spacer(Modifier.height(4.dp))
-        visibleRecommendations.forEachIndexed { index, recommendation ->
-            if (index == 0) {
-                Button(
-                    onClick = { onConfirm(recommendation) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(labelOf(recommendation), maxLines = 2)
-                }
-            } else {
-                OutlinedButton(
-                    onClick = { onConfirm(recommendation) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(labelOf(recommendation), maxLines = 2)
-                }
+        visibleRecommendations.forEach { recommendation ->
+            Button(
+                onClick = { onConfirm(recommendation) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(labelOf(recommendation), maxLines = 2)
             }
             Spacer(Modifier.height(4.dp))
         }

@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.pow
 
 class ClocktowerContrastPolicyTest {
     /** Every standard text/background pairing must pass WCAG AA normal-text contrast. */
@@ -23,8 +24,8 @@ class ClocktowerContrastPolicyTest {
         )
         pairs.forEach { (description, pair) ->
             assertTrue(
-                "$description has insufficient WCAG AA contrast: ${p.contrastRatio(pair.first, pair.second)}",
-                p.contrastRatio(pair.first, pair.second) >= 4.5,
+                "$description has insufficient WCAG AA contrast: ${contrastRatio(pair.first, pair.second)}",
+                contrastRatio(pair.first, pair.second) >= 4.5,
             )
         }
     }
@@ -32,7 +33,6 @@ class ClocktowerContrastPolicyTest {
     @Test
     fun `actual shared Material colors are readable on every role surface`() {
         val c = ClocktowerHostColorScheme
-        val p = ClocktowerContrastPolicy
         val pairs = mapOf(
             "host background" to (c.onBackground to c.background),
             "host card" to (c.onSurface to c.surface),
@@ -50,14 +50,31 @@ class ClocktowerContrastPolicyTest {
         )
         pairs.forEach { (name, pair) ->
             assertTrue("$name is not legible at 4.5:1",
-                p.contrastRatio(pair.first, pair.second) >= 4.5)
+                contrastRatio(pair.first, pair.second) >= 4.5)
         }
     }
 
     @Test
     fun `contrast checker detects illegible inherited light-theme text`() {
         val p = ClocktowerContrastPolicy
-        assertTrue(p.contrastRatio(Color.Black, p.background) < 4.5)
-        assertTrue(p.contrastRatio(p.foreground, p.background) >= 4.5)
+        assertTrue(contrastRatio(Color.Black, p.background) < 4.5)
+        assertTrue(contrastRatio(p.foreground, p.background) >= 4.5)
+    }
+    /** 8-bit sRGB foreground/background contrast, including full alpha requirement. */
+    private fun contrastRatio(foreground: Color, background: Color): Double {
+        require(foreground.alpha == 1f && background.alpha == 1f) {
+            "Text contrast requires opaque semantic colors."
+        }
+        fun linear(component: Float): Double {
+            val v = component.toDouble()
+            return if (v <= 0.04045) v / 12.92 else ((v + 0.055) / 1.055).pow(2.4)
+        }
+        fun luminance(color: Color): Double =
+            0.2126 * linear(color.red) +
+                0.7152 * linear(color.green) +
+                0.0722 * linear(color.blue)
+        val first = luminance(foreground)
+        val second = luminance(background)
+        return (maxOf(first, second) + 0.05) / (minOf(first, second) + 0.05)
     }
 }

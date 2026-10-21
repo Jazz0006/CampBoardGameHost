@@ -28,35 +28,6 @@ import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 
-@Composable
-internal fun SettingsScreen(
-    languageMode: LanguageMode,
-    commonPlayers: List<String>,
-    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
-    onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
-    newCommonPlayerName: String,
-    onLanguageModeChange: (LanguageMode) -> Unit,
-    onNewCommonPlayerNameChange: (String) -> Unit,
-    onAddCommonPlayer: () -> Unit,
-    onRemoveCommonPlayer: (String) -> Unit,
-    aiSettingsSection: @Composable () -> Unit,
-    onBack: () -> Unit,
-) {
-    SettingsContent(
-        languageMode = languageMode,
-        commonPlayers = commonPlayers,
-        playerExperienceByName = playerExperienceByName,
-        onPlayerExperienceChange = onPlayerExperienceChange,
-        newCommonPlayerName = newCommonPlayerName,
-        onLanguageModeChange = onLanguageModeChange,
-        onNewCommonPlayerNameChange = onNewCommonPlayerNameChange,
-        onAddCommonPlayer = onAddCommonPlayer,
-        onRemoveCommonPlayer = onRemoveCommonPlayer,
-        aiSettingsSection = aiSettingsSection,
-        onBack = onBack,
-    )
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsContent(

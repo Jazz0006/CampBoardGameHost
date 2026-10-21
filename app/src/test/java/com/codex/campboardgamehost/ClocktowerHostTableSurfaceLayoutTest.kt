@@ -11,13 +11,11 @@ class ClocktowerHostTableSurfaceLayoutTest {
             availableWidth = 360f,
             availableHeight = 520f,
             playerCount = 12,
-            detailedSeatCards = false,
         )
         val thirteenPlayers = resolveHostTableSurfaceLayout(
             availableWidth = 360f,
             availableHeight = 520f,
             playerCount = 13,
-            detailedSeatCards = false,
         )
 
         assertEquals(12, twelvePlayers.layout.slots.size)
@@ -45,29 +43,26 @@ class ClocktowerHostTableSurfaceLayoutTest {
 
     @Test
     fun `setup sized portrait preserves strict capacity for every supported player count`() {
-        for (detailedSeatCards in listOf(false, true)) {
-            for (playerCount in 5..15) {
-                val resolved = resolveHostTableSurfaceLayout(
-                    availableWidth = 360f,
-                    availableHeight = 520f,
-                    playerCount = playerCount,
-                    detailedSeatCards = detailedSeatCards,
-                )
+        for (playerCount in 5..15) {
+            val resolved = resolveHostTableSurfaceLayout(
+                availableWidth = 360f,
+                availableHeight = 520f,
+                playerCount = playerCount,
+            )
 
-                assertEquals(playerCount, resolved.layout.slots.size)
-                assertEquals(
-                    resolved.seatDensity.cardWidth,
-                    resolved.layout.constraints.seatCardWidth,
-                )
-                assertEquals(
-                    resolved.seatDensity.cardHeight,
-                    resolved.layout.constraints.seatCardHeight,
-                )
-                hostTableLayout(
-                    playerCount = playerCount,
-                    constraints = resolved.layout.constraints,
-                )
-            }
+            assertEquals(playerCount, resolved.layout.slots.size)
+            assertEquals(
+                resolved.seatDensity.cardWidth,
+                resolved.layout.constraints.seatCardWidth,
+            )
+            assertEquals(
+                resolved.seatDensity.cardHeight,
+                resolved.layout.constraints.seatCardHeight,
+            )
+            hostTableLayout(
+                playerCount = playerCount,
+                constraints = resolved.layout.constraints,
+            )
         }
     }
 
@@ -77,7 +72,6 @@ class ClocktowerHostTableSurfaceLayoutTest {
             availableWidth = 360f,
             availableHeight = 520f,
             playerCount = 13,
-            detailedSeatCards = false,
         )
 
         val failure = runCatching {

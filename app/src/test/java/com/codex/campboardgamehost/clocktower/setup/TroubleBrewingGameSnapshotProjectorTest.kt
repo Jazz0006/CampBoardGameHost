@@ -2,15 +2,10 @@ package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
-import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
-import com.codex.campboardgamehost.clocktower.domain.CommittedSetupSeat
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
-import com.codex.campboardgamehost.clocktower.domain.SetupProvenance
-import com.codex.campboardgamehost.clocktower.domain.SetupSourceKind
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.TroubleBrewingGameSnapshotJsonCodec
@@ -99,28 +94,6 @@ class TroubleBrewingGameSnapshotProjectorTest {
     }
 
     @Test
-    fun `G10 committed projection resolves the selected Empath seat as known Drunk`() {
-        val registry = canonicalRuleset().characterRegistry
-        val snapshot = TroubleBrewingGameSnapshotProjector.fromCommitted(
-            gameId = "evidence:c1d:g10-game2",
-            committedSetup = g10Game2CommittedSetup(registry),
-            characterRegistry = registry,
-        )
-
-        assertEquals(TroubleBrewingSnapshotStage.SETUP_COMMITTED, snapshot.position.stage)
-        assertEquals(SnapshotField.Known(true), snapshot.setupState.hasDrunk)
-        assertEquals(SnapshotField.Known(1), snapshot.setupState.drunkAssignmentSeat)
-
-        val seatOne = snapshot.grimoireSeats.single { it.seat == 1 }
-        assertEquals(SnapshotField.Known("empath"), seatOne.shownRoleId)
-        assertEquals(SnapshotField.Known("drunk"), seatOne.actualRoleId)
-
-        snapshot.grimoireSeats.drop(1).forEach { seat ->
-            assertEquals(seat.shownRoleId, seat.actualRoleId)
-        }
-    }
-
-    @Test
     fun `runtime projection carries decision position revisions and current mechanical state`() {
         val registry = canonicalRuleset().characterRegistry
         val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
@@ -178,41 +151,6 @@ class TroubleBrewingGameSnapshotProjectorTest {
             gameState = runtimeState,
         )
     }
-
-    private fun g10Game2CommittedSetup(
-        characterRegistry: ClocktowerCharacterRegistry,
-    ): CommittedClocktowerSetup =
-        CommittedClocktowerSetup(
-            script = ScriptId("trouble_brewing"),
-            setupSeed = 20_260_929L,
-            assignments = listOf(
-                committedSeat(characterRegistry, 1, actual = "drunk", shown = "empath"),
-                committedSeat(characterRegistry, 2, actual = "imp", shown = "imp"),
-                committedSeat(characterRegistry, 3, actual = "undertaker", shown = "undertaker"),
-                committedSeat(characterRegistry, 4, actual = "librarian", shown = "librarian"),
-                committedSeat(characterRegistry, 5, actual = "spy", shown = "spy"),
-                committedSeat(characterRegistry, 6, actual = "monk", shown = "monk"),
-                committedSeat(characterRegistry, 7, actual = "mayor", shown = "mayor"),
-                committedSeat(characterRegistry, 8, actual = "virgin", shown = "virgin"),
-                committedSeat(characterRegistry, 9, actual = "butler", shown = "butler"),
-            ),
-            provenance = SetupProvenance(
-                sourceKind = SetupSourceKind.GENERATED,
-                providerId = "evidence-replay",
-                candidateId = "g10-game2",
-            ),
-        )
-
-    private fun committedSeat(
-        characterRegistry: ClocktowerCharacterRegistry,
-        seat: Int,
-        actual: String,
-        shown: String,
-    ): CommittedSetupSeat = CommittedSetupSeat(
-        seat = seat,
-        actualRole = requireNotNull(characterRegistry.findByExternalId(actual)).id,
-        shownRole = requireNotNull(characterRegistry.findByExternalId(shown)).id,
-    )
 
     private fun canonicalRuleset() =
         BuiltInClocktowerRulesetCatalog { assetPath ->

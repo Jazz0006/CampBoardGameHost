@@ -47,7 +47,6 @@ class ClocktowerSessionPlayerCardsTest {
             expectedGameStateRevision = 0L,
         )
         assertEquals(2, cards[0].eliminatedRound)
-        assertEquals(false, cards[0].abilitySubject(null).isAlive)
         assertNull(source[0].eliminatedRound)
         assertNull(cards[1].eliminatedRound)
     }

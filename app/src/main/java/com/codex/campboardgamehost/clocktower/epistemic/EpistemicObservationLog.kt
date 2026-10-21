@@ -36,9 +36,8 @@ internal val ObservationTimelineBinding.timelineMode: ObservationTimelineMode
 /**
  * A durable statement of information that was actually shown or publicly established in a game.
  *
- * Unlike [EpistemicObservation], this record deliberately has no formal snapshot ID. A game state
- * revision creates a new formal snapshot, but it must not make already received information vanish
- * from a player's history. [bindTo] creates the version-bound observation used by a world-set build.
+ * Records retain their confirmed game identity across state revisions; no snapshot-bound
+ * copy is needed for the Session log, AI history or persistence.
  */
 data class RecordedEpistemicObservation(
     val recordId: String,
@@ -65,24 +64,6 @@ data class RecordedEpistemicObservation(
         timelineBinding.requireReplayFieldsMatch(phase, round, sequence)
     }
 
-    fun bindTo(formalSnapshotId: String): EpistemicObservation {
-        require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
-        return EpistemicObservation(
-            observationId = SemanticStableId.create("observation", "$recordId|$formalSnapshotId"),
-            snapshotId = formalSnapshotId,
-            phase = phase,
-            round = round,
-            sequence = sequence,
-            sourceSeat = sourceSeat,
-            sourceAbility = sourceAbility,
-            visibility = visibility,
-            recipientSeats = recipientSeats,
-            reliability = reliability,
-            proposition = proposition,
-            schemaVersion = schemaVersion,
-            timelineBinding = timelineBinding,
-        )
-    }
 }
 
 /** Immutable, ordered history of facts that players have actually received. */
@@ -132,19 +113,11 @@ class EpistemicObservationLog(
         return copy(records = (records + record).canonical())
     }
 
-    fun bindTo(formalSnapshotId: String): List<EpistemicObservation> {
-        require(formalSnapshotId.isNotBlank()) { "formalSnapshotId cannot be blank." }
-        return records.map { it.bindTo(formalSnapshotId) }
-    }
-
     /** Source-compatible value-copy API retained from the previous data-class contract. */
     fun copy(
         records: List<RecordedEpistemicObservation> = this.records,
         schemaVersion: Int = this.schemaVersion,
     ): EpistemicObservationLog = EpistemicObservationLog(records, schemaVersion)
-
-    operator fun component1(): List<RecordedEpistemicObservation> = records
-    operator fun component2(): Int = schemaVersion
 
     override fun equals(other: Any?): Boolean =
         other is EpistemicObservationLog && records == other.records && schemaVersion == other.schemaVersion

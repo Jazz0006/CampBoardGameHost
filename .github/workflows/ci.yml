@@ -24,8 +24,6 @@ jobs:
     outputs:
       android: ${{ steps.classify.outputs.android }}
       android_full: ${{ steps.classify.outputs.android_full }}
-      asp: ${{ steps.classify.outputs.asp }}
-      oracle: ${{ steps.classify.outputs.oracle }}
 
     steps:
       - name: Checkout full history
@@ -41,8 +39,6 @@ jobs:
 
           android=false
           android_full=false
-          asp=false
-          oracle=false
           full_checkpoint=false
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -85,7 +81,7 @@ jobs:
                 [[ -z "$path" ]] && continue
 
                 case "$path" in
-                  docs/*|AGENTS.md|README.md|player/*)
+                  docs/*|AGENTS.md|README.md)
                     continue
                     ;;
                   *)
@@ -106,8 +102,6 @@ jobs:
           if [[ "$full_checkpoint" == true ]]; then
             android=true
             android_full=true
-            asp=true
-            oracle=true
             echo "Full checkpoint selected."
           else
             while IFS= read -r path; do
@@ -115,7 +109,7 @@ jobs:
 
               # Explicitly safe non-executable surfaces.
               case "$path" in
-                docs/*|AGENTS.md|README.md|player/*)
+                docs/*|AGENTS.md|README.md)
                   continue
                   ;;
               esac
@@ -125,22 +119,11 @@ jobs:
                 .github/workflows/*)
                   android=true
                   android_full=true
-                  asp=true
-                  oracle=true
                   continue
                   ;;
               esac
 
               classified=false
-
-              # ASP harness/corpus changes require both Python contracts and the real Oracle.
-              case "$path" in
-                tools/asp_oracle/*)
-                  asp=true
-                  oracle=true
-                  classified=true
-                  ;;
-              esac
 
               # Gradle/build/dependency changes require full Android validation immediately.
               case "$path" in
@@ -160,40 +143,18 @@ jobs:
                   ;;
               esac
 
-              # Exact Clocktower semantic surfaces additionally require Real Clingo cross-validation.
-              case "$path" in
-                app/src/main/java/com/codex/campboardgamehost/clocktower/domain/*|\
-                app/src/main/java/com/codex/campboardgamehost/clocktower/epistemic/*|\
-                app/src/main/java/com/codex/campboardgamehost/clocktower/history/*|\
-                app/src/main/java/com/codex/campboardgamehost/clocktower/rules/*|\
-                app/src/test/java/com/codex/campboardgamehost/clocktower/domain/*|\
-                app/src/test/java/com/codex/campboardgamehost/clocktower/epistemic/*|\
-                app/src/test/java/com/codex/campboardgamehost/clocktower/history/*|\
-                app/src/test/java/com/codex/campboardgamehost/clocktower/rules/*|\
-                app/src/main/java/com/codex/campboardgamehost/Clocktower*Semantics.kt|\
-                app/src/main/assets/rules/*|\
-                app/src/main/assets/scripts/*)
-                  oracle=true
-                  classified=true
-                  ;;
-              esac
-
               # Fail safe: an unknown new repository surface receives complete validation
               # until it is deliberately classified above.
               if [[ "$classified" == false ]]; then
                 android=true
                 android_full=true
-                asp=true
-                oracle=true
               fi
             done < "$RUNNER_TEMP/changed-files.txt"
           fi
 
           echo "android=$android" >> "$GITHUB_OUTPUT"
           echo "android_full=$android_full" >> "$GITHUB_OUTPUT"
-          echo "asp=$asp" >> "$GITHUB_OUTPUT"
-          echo "oracle=$oracle" >> "$GITHUB_OUTPUT"
-          echo "Routing: android=$android android_full=$android_full asp=$asp oracle=$oracle"
+          echo "Routing: android=$android android_full=$android_full"
 
   android-tests:
     name: Android tests
@@ -236,82 +197,11 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  asp-contract-tests:
-    name: ASP contract tests
-    needs: changes
-    if: needs.changes.outputs.asp == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Validate golden corpus
-        run: |
-          python tools/asp_oracle/oracle_harness.py validate \
-            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json
-
-      - name: Run Oracle harness unit tests
-        run: |
-          python -m unittest discover \
-            -s tools/asp_oracle \
-            -p 'test_*.py'
-
-  asp-oracle:
-    name: Real Clingo cross-validation
-    needs: changes
-    if: needs.changes.outputs.oracle == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install Clingo 5.8.0
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install clingo==5.8.0
-          mkdir -p "$RUNNER_TEMP/bin"
-          cat > "$RUNNER_TEMP/bin/clingo" <<'EOF'
-          #!/usr/bin/env bash
-          exec python -m clingo "$@"
-          EOF
-          chmod +x "$RUNNER_TEMP/bin/clingo"
-          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
-
-      - name: Verify Clingo
-        run: clingo --version
-
-      - name: Fetch frozen botc-asp Oracle
-        run: |
-          python tools/asp_oracle/oracle_harness.py fetch \
-            --checkout-dir build/oracles/botc-asp
-
-      - name: Run Oracle cross-validation
-        run: |
-          python tools/asp_oracle/oracle_harness.py run \
-            --fixtures tools/asp_oracle/scenarios/trouble_brewing_a2.json \
-            --botc-asp-dir build/oracles/botc-asp \
-            --report build/reports/asp-oracle-a2.json \
-            --timeout 30
-
   ci-gate:
     name: CI gate
     needs:
       - changes
       - android-tests
-      - asp-contract-tests
-      - asp-oracle
     if: always()
     runs-on: ubuntu-latest
 
@@ -320,14 +210,12 @@ jobs:
         env:
           CHANGES_RESULT: ${{ needs.changes.result }}
           ANDROID_RESULT: ${{ needs.android-tests.result }}
-          ASP_RESULT: ${{ needs.asp-contract-tests.result }}
-          ORACLE_RESULT: ${{ needs.asp-oracle.result }}
         run: |
           set -euo pipefail
 
           [[ "$CHANGES_RESULT" == "success" ]]
 
-          for result in "$ANDROID_RESULT" "$ASP_RESULT" "$ORACLE_RESULT"; do
+          for result in "$ANDROID_RESULT"; do
             if [[ "$result" != "success" && "$result" != "skipped" ]]; then
               echo "Selected validation did not pass: $result"
               exit 1

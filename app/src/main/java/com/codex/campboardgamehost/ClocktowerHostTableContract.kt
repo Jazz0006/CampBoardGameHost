@@ -35,7 +35,6 @@ internal data class HostSeatPresentation(
     val isPoisoned: Boolean = false,
     val actualRole: HostRolePresentation? = null,
     val shownRole: HostRolePresentation? = null,
-    val contentMode: HostSeatContentMode = HostSeatContentMode.IdentityOnly,
 )
 
 /** Bounded table interaction families. Domain legality remains outside this presentation contract. */

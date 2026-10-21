@@ -340,7 +340,7 @@ class ClocktowerD2UiTest {
         ui.runOnIdle { org.junit.Assert.assertTrue(host.session.state.actionTimeline.entries.isEmpty()) }
         ui.onNodeWithText("Next →").performClick()
         ui.runOnIdle {
-            val actions = host.session.state.actionTimeline.reducerFacts().filterNot { it is ActionFact.PhaseAdvance }
+            val actions = host.session.state.actionTimeline.entries.map { it.fact }.filterNot { it is ActionFact.PhaseAdvance }
             assertEquals(1, actions.size)
             assertEquals(StorytellerPhase.DAY, host.session.state.phase)
             val fact = actions.single()
@@ -357,7 +357,7 @@ class ClocktowerD2UiTest {
         ui.runOnIdle {
             assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
             assertEquals(2, host.session.state.round)
-            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.NoExecution>().size)
+            assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.NoExecution>().size)
         }
     }
 
@@ -371,7 +371,7 @@ class ClocktowerD2UiTest {
         ui.runOnIdle {
             assertEquals(StorytellerPhase.NIGHT, host.session.state.phase)
             assertEquals(false, host.session.state.gameState.playerAt(2)!!.alive)
-            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Execution>().size)
+            assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Execution>().size)
         }
     }
 
@@ -383,7 +383,7 @@ class ClocktowerD2UiTest {
         ui.setContent { host.Content() }
         ui.onNodeWithText("Confirm vote").assertIsEnabled().performClick()
         ui.runOnIdle {
-            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Vote>().single().voterSeats.size)
+            assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Vote>().single().voterSeats.size)
             assertEquals(null, host.session.state.pendingVote())
         }
         ui.onNodeWithText("End day").assertIsEnabled()
@@ -399,10 +399,10 @@ class ClocktowerD2UiTest {
         ui.setContent { host.Content() }
         ui.onNodeWithText("Confirm Klutz choice").assertIsNotEnabled()
         ui.onNodeWithText("P3").performClick()
-        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().size) }
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.KlutzChoice>().size) }
         ui.onNodeWithText("Confirm Klutz choice").performClick()
         ui.runOnIdle {
-            val choice = host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.KlutzChoice>().single()
+            val choice = host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.KlutzChoice>().single()
             assertEquals("ui-klutz-death", choice.deathActionId)
             assertEquals(3, choice.chosenSeat)
             assertEquals(StorytellerPhase.DAY, host.session.state.phase)
@@ -421,13 +421,13 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.onNodeWithText("P1").performClick()
         ui.onNodeWithText("Imp self-kill · successor").assertExists()
-        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size) }
+        ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size) }
         ui.onNodeWithText("#2 P2").performClick()
         ui.onNodeWithText("Next →").assertIsEnabled().performClick()
         ui.runOnIdle {
             assertEquals(false, host.session.state.gameState.playerAt(1)!!.alive)
             assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(2)!!.actualRole)
-            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+            assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.RoleChange>().size)
         }
     }
 
@@ -461,8 +461,8 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsEnabled().performClick()
         ui.runOnIdle {
             assertEquals(true, host.session.state.gameState.playerAt(1)!!.alive)
-            assertEquals(1, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.Attack>().size)
-            assertEquals(0, host.session.state.actionTimeline.reducerFacts().filterIsInstance<ActionFact.RoleChange>().size)
+            assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size)
+            assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.RoleChange>().size)
         }
     }
 
@@ -513,7 +513,7 @@ class ClocktowerD2UiTest {
         ui.runOnIdle {
             val ended = host.session.state
             assertEquals(GameEndReason.NO_DEMON, ended.outcome?.reason)
-            assertEquals(1, ended.actionTimeline.reducerFacts().filterIsInstance<ActionFact.GameEnded>().size)
+            assertEquals(1, ended.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.GameEnded>().size)
             assertEquals(1, ended.epistemicObservationLog.records.size)
             host.reload()
             assertEquals(ended, host.session.state)

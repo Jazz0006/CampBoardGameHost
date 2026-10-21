@@ -36,8 +36,8 @@ internal fun StorytellerAutoPauseScreen(
             )
             Text(
                 label(
-                    "当前版本的自动裁量仅覆盖酒鬼选择。首夜其他角色信息、合法登记以及后续操作尚未全部接入统一策略执行器。",
-                    "This build only automates Drunk assignment. Other first-night decisions and downstream choices are not yet connected to the shared strategic executor.",
+                    "本局自动说书人无法安全继续，请人工接管当前步骤。",
+                    "Automatic storytelling cannot safely continue for this game. Take over the current step manually.",
                 ),
             )
             if (!hasGlobalPlan) {
@@ -48,8 +48,8 @@ internal fun StorytellerAutoPauseScreen(
                 )
             }
             Text(
-                label("请人工接管，原有规则引擎仍然独立运行。不会自动编造后续决定。",
-                    "Take over manually; the Host rules engine remains usable. No unsupported action will be invented."),
+                label("人工接管后将从已确认的游戏状态继续。",
+                    "Manual mode continues from the confirmed game state."),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Button(

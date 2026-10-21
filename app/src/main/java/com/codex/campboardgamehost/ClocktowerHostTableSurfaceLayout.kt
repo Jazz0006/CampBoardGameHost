@@ -42,17 +42,14 @@ internal fun resolveHostTableSurfaceLayout(
     availableWidth: Float,
     availableHeight: Float,
     playerCount: Int,
-    detailedSeatCards: Boolean = false,
 ): ResolvedHostTableSurfaceLayout {
     val preferredConstraints = hostTableSurfaceLayoutConstraints(
         availableWidth = availableWidth,
         availableHeight = availableHeight,
-        detailedSeatCards = detailedSeatCards,
         playerCount = playerCount,
     )
     val tierCandidates = clocktowerSquareTableSeatDensityCandidates(
         playerCount = playerCount,
-        detailedSeatCards = detailedSeatCards,
     )
     val compactDensity = tierCandidates.last()
     val scaledCompactCandidates = HOST_TABLE_COMPACT_FALLBACK_SCALES.map { scale ->
