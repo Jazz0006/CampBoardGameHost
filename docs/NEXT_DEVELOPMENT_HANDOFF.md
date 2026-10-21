@@ -1,6 +1,6 @@
 # 当前交接 — F2 投毒来源退出修复（2026-10-21）
 
-本批从 `2dea23bc` 接续 `refactor/minimal-night-flow-20261019` / Draft #335，base 仍为 #334 `76be7e17`。当前 F2 修复已通过 Cloud full/APK，精确提交/远端 CI 待推送核对；前一 `bc263581` 的 CI #4494/R2 #4070 只证明前一代码。接续先重新核对 HEAD、分支、工作区及远端状态。
+本批从 `2dea23bc` 接续 `refactor/minimal-night-flow-20261019` / Draft #335，base 仍为 #334 `76be7e17`。当前 F2 修复 `6a76a57cfa8034363abbf884d1a0326edc1c15a4` 已通过 Cloud full/APK，以及精确完整 Android CI #4496 / R2 #4072（均 SUCCESS）；前一 `bc263581` 的 CI #4494/R2 #4070 只证明前一代码。接续先重新核对 HEAD、分支、工作区及远端状态。
 
 ## 本批实现
 

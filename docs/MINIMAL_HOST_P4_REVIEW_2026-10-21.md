@@ -1,6 +1,6 @@
 # P4 独立审计：AI 设置职责与孤立旧规则删除（2026-10-21）
 
-最终代码 `bc2635817060184e9ab6bb396e991d1a1d392b62`。Cloud full 629（30 UI）与 APK、原 R2 shell 通过；精确完整 Android CI #4494 与 R2 #4070 均 SUCCESS。
+最新生产代码 `6a76a57cfa8034363abbf884d1a0326edc1c15a4` 已包括 F1/F3 及接续 F2 修复。Cloud full 640（146 suites / 30 UI）、APK、原 R2 shell 通过；[完整 Android CI #4496](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39553241174) 与 [R2 #4072](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39553241344) 均 SUCCESS。下文 bc263581 / 629 / #4494 是 F1/F3 历史验收，不替代本批。
 
 审计对象：`ce1c314c` → `f852b04f` 的全部生产改动、删除测试及实际消费者；同时审查尚未提交的路线/交接整理。没有把 CI 绿灯当作完整玩法证明。
 
@@ -22,7 +22,7 @@
 
 审查证据：`acceptDeterministicNightAttack` 的实际死亡 roster 更新与 `commitConfirmedPlayerDeath` 都只清死者自己的 poison 标记；没有清除此死亡来源的持续作用。相关实现与 `ce1c314c` 一致，本批删除的旧 helpers 没有生产消费者，故这不是本批引入的规则回归，但它阻止“全部中毒合同已验收”的结论。
 
-接续修复已在唯一 Session 发布入口统一结束已确认 Death/Execution/RoleChange 来源的持续毒。复用现有 Poison(null) 与同一原子存储；夜间死亡、白天死亡/处决、Imp 继任导致的角色退出、重试/过期隔离及真实文件失败回滚/重读均有耐久回归。旧临时反例已迁入 `ClocktowerPoisonSourceExitTest`；旧“处决 Poisoner 后毒仍到 Dusk”的错误测试改为普通玩家处决仍维持到 Dusk、Poisoner 处决立即结束的两个合同。Cloud full **640 tests / 146 suites / 30 UI，0 failure/error/skipped**、APK 与原 R2 shell 成功。精确 SHA CI 待本批推送后核对，未声明真机、所有规则或整项重构全部验收。
+接续修复已在唯一 Session 发布入口统一结束已确认 Death/Execution/RoleChange 来源的持续毒。复用现有 Poison(null) 与同一原子存储；夜间死亡、白天死亡/处决、Imp 继任导致的角色退出、重试/过期隔离及真实文件失败回滚/重读均有耐久回归。旧临时反例已迁入 `ClocktowerPoisonSourceExitTest`；旧“处决 Poisoner 后毒仍到 Dusk”的错误测试改为普通玩家处决仍维持到 Dusk、Poisoner 处决立即结束的两个合同。Cloud full **640 tests / 146 suites / 30 UI，0 failure/error/skipped**、APK 与原 R2 shell 成功。精确生产 SHA `6a76a57c` 已通过完整 Android CI #4496 / R2 #4072，未声明真机、所有规则或整项重构全部验收。
 
 ### F3：旧 AI 请求因凭据变化退出后保持 busy（中等，本批回归，已修正）
 

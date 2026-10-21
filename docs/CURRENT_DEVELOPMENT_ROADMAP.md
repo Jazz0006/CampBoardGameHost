@@ -11,7 +11,7 @@
 - 状态与毒结束事实一次确认保存，失败整步回滚；真实文件中断/重读后恢复正确下一步。重复/过期确认不重复结束，也不复活旧目标。
 - 旧时间线回归中的“处决投毒者仍中毒到黄昏”预期已纠正，保留普通玩家被处决时中毒持续到黄昏的覆盖。耐久新增来源退出 9 项、真实文件 1 项，并把旧单场景拆成两场景；不恢复已删除的孤立旧规则测试。
 
-Cloud `testFull + assembleDebug` **640 tests / 146 suites / 30 UI，0 failure/error/skipped**，原 R2 shell 与 diff 检查通过。首批 8 个定向场景在修复前有 5 个真实失败。精确代码 CI/R2 待本批提交推送后核对；未做真机/杀进程或付费 API。
+Cloud `testFull + assembleDebug` **640 tests / 146 suites / 30 UI，0 failure/error/skipped**，原 R2 shell 与 diff 检查通过。首批 8 个定向场景在修复前有 5 个真实失败。精确代码 `6a76a57cfa8034363abbf884d1a0326edc1c15a4` 的完整 Android CI #4496、R2 #4072 均 SUCCESS（包含 full tests / Debug APK、ASP / Clingo / gate）；未做真机/杀进程或付费 API。
 
 本批生产 **+33 行 / +1904B**（必要 bug 修复，不伪称净删），删除生产/专属测试文件均为 0；测试净 +187 行。App **118544B**、Night HostScreen **68496B** 仍超 50000B；Session **49453B** 达标。所有入口、保留消费者和证据见 [台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 与 [审计 F2](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
 

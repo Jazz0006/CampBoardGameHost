@@ -1,6 +1,6 @@
-> **F2 接续验证**：投毒来源死亡/身份退出问题已迁入实际 Session 的耐久回归并修复；新增来源 9 项、真实 AtomicFile 1 项，旧时间线回归拆分为两种执行语义。Cloud full 640（146 suites，30 UI）/APK、原 R2 shell 通过，精确代码 CI 待推送。此前临时来源死亡失败证据是已修复前历史，不再是当前已知未修复项。
+> **F2 接续验证**：投毒来源死亡/身份退出问题已迁入实际 Session 的耐久回归并修复；新增来源 9 项、真实 AtomicFile 1 项，旧时间线回归拆分为两种执行语义。Cloud full 640（146 suites，30 UI）/APK、原 R2 shell 通过，精确代码 `6a76a57c` 完整 Android CI #4496 / R2 #4072 SUCCESS。此前临时来源死亡失败证据是已修复前历史，不再是当前已知未修复项。
 
-> **独立审计修正**：新增设置 UI 回归 3 项，修正前 2 失败、修正后 full 629（30 UI）/APK 成功。另一个临时真实 Session 诊断反例证明 Poisoner 死亡后的中毒清除缺陷；它是单列的失败证据，不属于 629 通过数量。后续必须迁入 Session 回归并修复，不能用 CI 绿灯覆盖这一已知缺口。详见审计报告。
+> **独立审计修正**：新增设置 UI 回归 3 项，修正前 2 失败、修正后 full 629（30 UI）/APK 成功。另一个临时真实 Session 诊断反例证明 Poisoner 死亡后的中毒清除缺陷；它是单列的失败证据，不属于 629 通过数量。该反例已由首段 F2 批次迁入 Session 回归并修复；629 是此前数量，当前完整数量为 640。详见审计报告。
 
 > **2026-10-21 Codex Cloud 本批**：最新设置职责收敛与无生产调用规则退休已实跑 full 626（27 UI），0 failure/error/skipped，Debug APK 和原 R2 shell 成功。13 项孤立旧规则测试与生产实现一起退休，真实 Session 规则/私密信息/原子性测试保留。当前工具链先 source `/workspace/.cloud-setup/activate.sh`；只读 home 的 Robolectric 测试使用工作区 user.home 与原代理/CA。下方 Windows/旧数量均为历史，最新远端精确 SHA 验收见当前交接。
 
