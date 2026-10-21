@@ -1,4 +1,4 @@
-> **独立审计跟进**：已修正继承的配置加载覆盖输入竞态，以及本批 live getter 导致 stale AI 请求退出后 busy 不清除的回归；新增 3 项设置 UI 测试；读取门槛版本 `23590475` 的完整回归 629（30 UI）/APK、CI #4493/R2 #4069 均通过，finally 跟进修正以最新精确 SHA 验收。另通过真实 Session 反例确认基线既有“投毒者死亡未解除目标中毒”缺陷，需作为下一独立 Session 批次优先修复。不得据此前绿灯宣称无 BUG。见 [审计报告](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
+> **独立审计跟进**：已修正继承的配置加载覆盖输入竞态，以及本批 live getter 导致 stale AI 请求退出后 busy 不清除的回归；新增 3 项设置 UI 测试；读取门槛版本 `23590475` 的完整回归 629（30 UI）/APK、CI #4493/R2 #4069 均通过，finally 修正 `bc263581` 也已通过完整 CI #4494/R2 #4070 与云端 629 回归/APK。另通过真实 Session 反例确认基线既有“投毒者死亡未解除目标中毒”缺陷，需作为下一独立 Session 批次优先修复。不得据此前绿灯宣称无 BUG。见 [审计报告](MINIMAL_HOST_P4_REVIEW_2026-10-21.md)。
 
 # 当前开发路线 — Minimal Host（2026-10-21）
 
@@ -6,7 +6,7 @@
 
 ## 当前基线
 
-最新生产代码 **`f852b04f81f13fa35b08ecade8f6ccce4018e48f`** 已推送 [Draft #335](https://github.com/Jazz0006/CampBoardGameHost/pull/335)，仍堆叠于 #334 `76be7e17`；main 为 `0abc842e`。本批基线 `ce1c314c`，无合并、改 base 或历史重写。
+最新生产代码 **`bc2635817060184e9ab6bb396e991d1a1d392b62`** 已推送 [Draft #335](https://github.com/Jazz0006/CampBoardGameHost/pull/335)，仍堆叠于 #334 `76be7e17`；main 为 `0abc842e`。本批基线 `ce1c314c`，无合并、改 base 或历史重写。
 
 - 夜间进度由 Session 确认事实与内置夜序派生，旧 UI 游标/Start/交接推进链已退役；行动显式 Next 提交机械结果。
 - D2 信息可全屏预览、返回同角色重选，仅 Next 正式记录最终一条 Observation。预览不是事实，不持久保存。
@@ -19,11 +19,11 @@ AI 连接配置、加载、700ms 安全延迟保存与设置表单归 `Storytell
 
 确认无生产消费者后，物理删除 `DemonNightAttackSemantics`、`PoisonEffectLifecycle` 及两项专属测试文件，另删 Session 无调用的死亡 roster helper。真实攻击、保护、中毒、死亡、市长及继任的 Session 实现与行为测试保留。
 
-计入新增文件，生产 Kotlin **净 -84 行 / -3381B**；专属旧测试 **-146 行 / 13 项**。当前 App **118275B**、Night HostScreen **68496B** 仍超过 50000B；Session **49379B**，新设置文件 **3507B**。完整消费者/删除证据见 [审计台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
+计入新增文件，生产 Kotlin 累计（含审计修正）**净 -75 行 / -2808B**；退休专属旧测试 **-146 行 / 13 项**，另补 3 项设置交互回归。当前 App **118544B**、Night HostScreen **68496B** 仍超过 50000B；Session **49379B**，新设置文件 **3507B**。完整消费者/删除证据见 [审计台账顶部](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
 
 ## 验证
 
-Codex Cloud 实跑 full **626 tests / 144 suites，含 27 UI**，0 failure/error/skipped；Debug APK、原始 R2 shell、diff 检查通过。精确代码 [CI #4492](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39549387016) **SUCCESS**；[R2 #4068](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39549387006) **SUCCESS**。旧 #4490/#4066 属于前一代码，不替代本批证明。
+Codex Cloud 实跑 full **629 tests / 145 suites，含 30 UI**，0 failure/error/skipped；Debug APK、原始 R2 shell、diff 检查通过。精确代码 [CI #4494](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39550998373) **SUCCESS**；[R2 #4070](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39550998375) **SUCCESS**。旧 #4490/#4066 属于前一代码，不替代本批证明。
 
 ## 下一步
 
