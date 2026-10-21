@@ -1,8 +1,8 @@
-## 2026-10-21 真实 App 最小整局：已实现，最后验收中
+## 2026-10-21 真实 App 最小整局：已完成并验收
 
 从 `1e7fbc6d` 接续，仅改 App 首次存储/恢复和 quick restart 接线；生产 +3 行/+316B，新生产文件 0、删除生产/专属测试文件 0，新增 1 测试文件/160 行。移除无用 activeGameSaveAttached 及 screen 保存门槛；没有新状态/恢复框架。App 116000B、Night Host 63787B 仍超限，Session 47578B。
 
-实际 App 的 TB/NGJ 整局及发牌中断 3 项回归先全部失败，前两条在终局恢复后 quick restart 抛旧确认座位异常，第三条缺初始存档；最小修复后三项通过。Cloud full 654（147 suites / 38 UI）、APK 与原 R2 shell 通过；精确代码 CI 待推送核对，见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。通过后下一阶段为全仓遍历/大规模删除，不再把“真实创建/发牌入口待验”当作当前状态；下方旧接续项保留历史。真机/实际杀进程/付费模型未验收。
+实际 App 的 TB/NGJ 整局及发牌中断 3 项回归先全部失败，前两条在终局恢复后 quick restart 抛旧确认座位异常，第三条缺初始存档；最小修复后三项通过。Cloud full 654（147 suites / 38 UI）、APK 与原 R2 shell 通过；生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate，见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)。已进入下一阶段：全仓遍历/大规模删除，不再把“真实创建/发牌入口待验”当作当前状态；下方旧接续项保留历史。真机/实际杀进程/付费模型未验收。
 
 ## 2026-10-21 单一游戏对象的最小整局接线
 

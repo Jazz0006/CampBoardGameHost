@@ -2,7 +2,7 @@
 
 ## 结论与范围
 
-基于唯一 `ClocktowerGameSession` 的最小完整流程已实现。本批从生产首页、玩家/座位设置、真实剧本配置和生产发牌入口验证，补齐了发牌初始存储与恢复后再开局两个阻断。Cloud full 654（147 suites / 38 UI，零失败/错误/跳过）、Debug APK、原 R2 shell 和 diff 检查已通过；精确代码远端 CI 待推送核对；全部通过后第一阶段关闭，下一阶段为全仓遍历/大规模删除，界面细节最后优化。
+基于唯一 `ClocktowerGameSession` 的最小完整流程已实现。本批从生产首页、玩家/座位设置、真实剧本配置和生产发牌入口验证，补齐了发牌初始存储与恢复后再开局两个阻断。Cloud full 654（147 suites / 38 UI，零失败/错误/跳过）、Debug APK、原 R2 shell 和 diff 检查已通过；生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；全部通过，第一阶段已关闭，下一阶段为全仓遍历/大规模删除，界面细节最后优化。
 
 这里的完成指两内置剧本代表性真实 App 路径，以及必要角色分支/人数和保存合同的自动化验收；不等于穷举全部阵容、所有视觉细节或真机/实际杀进程/付费模型验收。不存在本批已确认但未修复的整局阻断。
 
@@ -41,6 +41,6 @@ App composable 重建是本地自动化恢复证据，不冒称 Android 真机�
 
 ## 验证与规模
 
-Cloud full **654 tests / 147 suites / 38 UI，0 failure/error/skipped**、Debug APK、原 R2 shell 与 diff 检查通过；精确生产代码 CI/R2 待推送核对。前一生产基线为 `3268440f` / 651 / CI #4501 / R2 #4077，不替代本批证据。
+Cloud full **654 tests / 147 suites / 38 UI，0 failure/error/skipped**、Debug APK、原 R2 shell 与 diff 检查通过；生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate。前一生产基线为 `3268440f` / 651 / CI #4501 / R2 #4077，不替代本批证据。
 
 本批生产仅 App +15/-12，净 +3 行 / +316B（必要闭环修复）；新增 1 测试文件 / 160 行 / 3 个高价值用例。删除生产/专属测试文件均 0，无新生产文件、持久字段、状态对象或通用框架。App 116000B、Night Host 63787B 仍超 50000B，Session 47578B；这些归全仓清理阶段收敛。原 #335/#334 保持 Draft，不合并/改 base/重写历史/删分支。
