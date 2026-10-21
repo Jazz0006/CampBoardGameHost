@@ -1,5 +1,7 @@
 # 最小完整游戏流程验收（2026-10-21）
 
+> **后续状态**：阶段一的代表性整局自动化验收结论仍有效；此后 #334/#335、全仓清理 #337 均已合并到 `main`（2026-10-21 复核 HEAD `6230b595`）。本页保留当时的验收证据及当时的进度/文件大小作为历史，不表示现行尚需全仓清理。第三阶段缺口见 [当前路线图](CURRENT_DEVELOPMENT_ROADMAP.md) / [独立审计](MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md)。
+
 ## 结论与范围
 
 基于唯一 `ClocktowerGameSession` 的最小完整流程已实现。本批从生产首页、玩家/座位设置、真实剧本配置和生产发牌入口验证，补齐了发牌初始存储与恢复后再开局两个阻断。Cloud full 654（147 suites / 38 UI，零失败/错误/跳过）、Debug APK、原 R2 shell 和 diff 检查已通过；生产代码 `e73e4807691ab974dddfa86532a30efe89973753` 的[完整 Android CI #4503](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618033) 与 [R2 #4079](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39565618124) 均 SUCCESS，已独立核对全量 Android/APK 上传、ASP、Clingo 和 gate；全部通过，第一阶段已关闭，下一阶段为全仓遍历/大规模删除，界面细节最后优化。

@@ -1,13 +1,24 @@
-# 当前交接（2026-10-21）
+# 当前开发交接（2026-10-21，已审计 main）
 
-当前分支`codex/whole-tree-cleanup-20261021`，Draft [#337](https://github.com/Jazz0006/CampBoardGameHost/pull/337)，main基线`40050941efc3`。#334/#335已经合并，历史“两个PR仍Draft”记录过时。
+## 立即使用的真实基线
 
-最后两批清理已完成并验收，**第二阶段已关闭**：第六批`1b850200`完整CI #4519/R2 #4094均SUCCESS；第七批已将最后60个测试/fixture审完，430/430路径有结论，215个生产Kotlin全部≤50000B，App48947B/Session46770B/Host46706B。最终Cloud full639 tests/144 suites/38 UI、APK及原R2/CI门禁通过。精确生产代码`e5ffc4e5e3ccdac5a5d4d3d7845f9754b998dbba`的[完整Android CI #4520](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977318)和[R2 #4095](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977316)均SUCCESS，已独立核对21路径/全部diff（大台账校验前后Git blob）、full tests/APK构建上传与CI gate。后续仅文档提交记录本验收，不替代代码构建。
+- 主线：`main` `6230b5959cf4b64e1c41f08bb48aa66460e13667`（独立审计起点；执行前重新检查远端）。
+- #334/#335：已合并，最小整局阶段关闭；#337：已合并，全仓清理阶段关闭；#336：**仍 open Draft，内容与已合并 #337 重叠，不直接合并**。
+- 最新经过全量代码验收的检查点：`e5ffc4e5e3ccdac5a5d4d3d7845f9754b998dbba`， [Android CI #4520](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977318) / [R2 #4095](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39591977316) SUCCESS；Cloud full 639 / 144 suites / 38 UI、Debug APK。main 上的后续文档提交不等于新 Android 代码测试。
+- 开发机：Oracle VM 上 Mini MCP 仓库别名 `clocktower`；以实时 `git_state` 和远端为准，目标工作树是干净、与远端一致的 `main`。旧 Cloud / Windows 路径与临时日志都不是当前交接的环境要求。
 
-[收尾验收](MINIMAL_HOST_WHOLE_TREE_CLEANUP_ACCEPTANCE_2026-10-21.md)记录最终改动、净量、退役专属测试和CI；[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)定义后续第三阶段。逐路径当前结论在[唯一审计台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)，后面的F12旧架构建议只是历史，不能据此删除现行固定机械或双轮换。
+## 独立审计结果与下一步
 
-App继续创建/存储原唯一Session。新OpeningDraft仅开局前未确认输入；AiConversation仅advisory/receipt/记忆/运输，不持有Session对象，Baseline只比较同一Session不可变快照；SessionHost挂载同一个Session，只有局部草稿。保留两剧本、三种AI模式与当前协议、D2、隐私、原子/幂等保存，以及五局阵容/三局同人身份两项防重复。禁止通用Context/Manager/第二游戏或恢复对象。
+1. **先补最小 Host 确定性信息**：`ClocktowerDirectNumericResultUi.kt:26-56` 允许在缺少 Host typed 结果时直接选择任意数值；`clocktower/ui/ClocktowerHostScreen.kt:450-474` 只在已经有匹配 numeric 结果时绕过 AI。对 Chef/Empath 及有固定真值的其他角色，以 Session 唯一事实、能力是否正常、真实查询目标和登记裁量求结果，禁止把“常规唯一结果”留给 AI。Drunk/poisoned 与登记存在裁量时保留选择；人工误播可明确留痕，不能抹掉实际展示。
+2. **修复提名目标 UI**：`ClocktowerDayNominationGesture.kt:19-31` 和 `clocktower/ui/ClocktowerDayHostScreen.kt:143-153` 将死者从被提名目标排除；规则允许存活玩家提名死者，只有发起人必须活着。Session `clocktower/session/ClocktowerDayFlow.kt:144-159` 未限制被提名者存活。修正 UI 和真实交互测试，切勿重建独立 Day 状态。
+3. **之后有证据地验收**：D2 各角色/三模式、Slayer 目标、强制退出后的真机恢复、AI 提交/重试/过期，实测后才声明通过；所有付费 API 调用需单独明确授权。重点验证新旧调用链替代后同批清掉旧实现。
 
-Cloud直接读写与执行：同一shell先`source /workspace/.cloud-setup/activate.sh`，JDK25与预装Android/Gradle缓存；本次完整构建使用`/tmp/campboard-tests.init.gradle`适配Robolectric私有user.home。日志`/tmp/campboard-final-gradle5.log`，摘要`/tmp/campboard-final-tests.json`。首次临时编译/迁移错误已修复，以最终完整成功为准。
+## 单一对象与不变量
 
-第二阶段已关闭，后续进入界面与流程细节，无需再逐十几个文件发起一批审计。第三阶段可核对Day提名/Slayer目标范围等实际UI限制；不是当前整局阻断或清理待审文件。未做真机/实际进程杀死/付费API；PR保持Draft，不合并、不改历史，无新增所有者决策阻塞。
+`ClocktowerGameSession` 拥有一个 `ClocktowerSessionState`；全部阶段、轮次、角色、死亡、中毒、当前夜间步骤、白天票数/执行、已确认 ActionFact/Observation、终局由此读取、提交、原子落盘。UI draft、开局前 `ClocktowerOpeningDraft`、静态剧本、`GameSnapshot`（只读快照）、展示卡片和 `ClocktowerAiConversation`（建议/会话记忆）不能独立推进或持久化另一场游戏。D2 全屏预览可以返回修改，只有本步 Next 写唯一最终 Observation；已确认动作立即生效、不得回到上一角色。保留 TB/NGJ、AI 三模式/当前 V3/receipt/战略记忆、两项跨局轮换、隐私/stale/幂等/AtomicFile 的现行代码和行为测试。
+
+## 文档与历史入口
+
+- [路线图](CURRENT_DEVELOPMENT_ROADMAP.md) 是进度和下一步唯一入口；[完整设计](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md) 是产品合同。
+- [独立审计](MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md) 列证据/缺口；[清理验收](MINIMAL_HOST_WHOLE_TREE_CLEANUP_ACCEPTANCE_2026-10-21.md) 和 [原路径台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md) 保留可复核历史，不把旧 Draft/CI/阶段状态当现行命令。
+- 只读审计不等于重新跑 CI。禁止任意合并旧 Draft、强推或让文档修改假装业务测试。
