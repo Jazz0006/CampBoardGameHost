@@ -1,34 +1,26 @@
-# 当前交接 — 先最小完整游戏，再全仓清理（2026-10-21）
+# 当前交接 — 最小完整流程验收，下一阶段全仓清理（2026-10-21）
 
-## 2026-10-21 单一游戏对象的最小整局接线
+## 接续结论与立即任务
 
-所有者补充：完整游戏必须基于同一个游戏对象，不拼接不同的事实/进度依赖。当前对象为 `ClocktowerGameSession`；其 `state` 是唯一游戏事实。UI 草稿、静态剧本、AI 推荐/传输和存储适配可存在，但不能有独立的游戏真值或进度，也不为赶进度引入新旧双轨。
+最小实现的真实整局流程已跑通：两剧本均从首页、安排玩家/座位、选剧本和生产发牌，到首夜、真实提名手势/投票/日结、后夜死亡、私有文件恢复、正式终局/揭晓，以及恢复后原班再开一局。新增发牌中断回归。最后 Cloud full 654（147 suites / 38 UI，零失败/跳过）、APK 与原 R2 shell 通过；精确远端 CI/R2 待推送核对；通过后第一阶段关闭。
 
-- 移除 `ClocktowerSessionView` 类型、Session.view 及 App 的可写投影。App 直接读活跃 Session；UI tick 只触发重绘，不承载任何游戏数据/业务版本，阶段/轮次的派生值仍在同一回调中读最新 Session。
-- 删除 `ClocktowerNightCheckpoint.kt` 及其 App 构造/辅助读取链。JudgeScreen 的 script/gameId/phase/round、版本/游标、确认的攻击/毒/保护/市长目标、继任通知、鬼票/处决历史都从同一 SessionState 派生；外部只交未确认的 UI 目标草稿与实际操作回调。
-- 活跃/恢复后的 `ClocktowerSessionPlayerCards` 不再依赖 setupCards 的大小、姓名或身份，也不再复制 setupCard；直接由 Session 构造只读展示。App 恢复不再重建开局卡牌镜像。开局尚无 Session 时仍可编辑准备名单；玩家偏好/下局设置不成为本局事实。
-- 新增 3 项无 setup 镜像的读取/重载/换局回归；两项真实 JudgeScreen 代表性整局从 Session 创建后的首夜输入/预览/最终确认，经 Day1、Night2 真实死亡、Day2 提名/投票/处决，到 NO_DEMON 终局和重读/幂等验证。TB 含两次投毒；两剧本均使用 5 人的内置角色。投票前提名由测试调用同一 Session 的真实边界，非模拟 UI 手势；不是整个 App 发牌页面或真机/所有阵容已验收。
-- 生产 +90/-204，净删 **114 行 / 5281B**；测试净 +81 行。删除生产文件 1 个（NightCheckpoint）、专属测试文件 0 个。App **115684B**、Night Host **63787B** 仍超 50000B，Session **47578B**；不以大小达标阻塞本阶段闭环。
-- 本地验证：首轮定向 54 项通过；最终移除 Checkpoint 后 Cloud `testFull + assembleDebug` **651 tests / 146 suites / 35 UI，0 failure/error/skipped**，原始 R2 shell、diff 检查通过。精确生产代码 `3268440fd312e1bdf9ad3278013207b4f8af24af` 的[完整 Android CI #4501](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39561245755) 与 [R2 #4077](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39561245733) 均 SUCCESS（full tests / Debug APK 上传、ASP、Clingo、gate 均已核对）。未运行真机/实际杀进程/付费 API。
+后续主任务是**全仓未截断源码遍历和大规模删除**，不再返回“真实开局还没检查”或局部 UI 精修。保留闭环作为删除的行为基线；每批按完整责任删除 producer/consumer/独占测试，报告净量和必要验证。两个大文件与全源码 <=50000B 在此阶段收敛。清理完成后才优化界面/流程细节。
 
-当前立即任务是验收本批单一对象接线，再针对真实创建/发牌入口及最小角色分支核对剩余阻断；闭环满足退出标准后直接进入全仓遍历/大规模删除，不转回界面精修。
+完整证据与限制见 [验收报告](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md) 和 [路线](CURRENT_DEVELOPMENT_ROADMAP.md)。代表性 App 轨迹不等于全部阵容穷举或真机/实际杀进程/付费模型验收。
 
-## 最新指令与立即任务
+## 本批修复与唯一对象
 
-所有者已调整路线：**完整游戏流程的最小实现 → 全部代码遍历和大规模删除 → 界面与流程细节优化**。旧 P0-first、P4 局部细化/文件大小优先顺序不再执行。完整定义和退出标准见 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)。
+- 删除首次保存的 screen 门槛、effect screen key 和 activeGameSaveAttached；Session 创建后即绑定原 AtomicFile。
+- 首夜尚无任何确认动作/信息时，恢复同一 Session，从第一位安全重新发牌；无额外持久游标/恢复引擎。
+- quick restart 先从当前 Session 读取规范名单，再确认下一局座位并新建下一局；修复恢复后 `Production start requires confirmed seating`。
+- 只把原 UUID seed 函数移动成内部 App 可传参数，默认随机行为不变；测试固定真实生产准备器的 seed 34 / 26，不替换 GameState、路由、Session、回调或存储。
 
-接续先核对 HEAD/远端/工作区，再从真实创建入口追踪首夜、白天、后夜、终局及安全重载。列出短的“已可用 / 阻断 / 延后优化”清单，直接修最高影响的阻断并证明整局轨迹。不要再优先做局部高亮、按钮统一、普遍职责抽取或两个大文件缩减；没有阻断且最小闭环证据达标时即进入全仓清理。
+新增 `ClocktowerCompleteAppUiTest` 3 项，修复前 3 失败，修复后全通过；其他 651 项历史回归与最终全量验收见报告。生产净 +3 行/+316B（App 116000B），测试新增 160 行，无生产/专属测试文件删除，Night Host 63787B、Session 47578B。
 
-保留唯一 Session、确定机械、A/B/C/D2、隐私与有序事实、幂等/原子确认及安全续局；不能用人工裁量替代强制唤醒/死亡/胜负。保留现有两剧本、实际 AI 及其模式支持范围、双跨局防重复。不新建通用引擎、持久 pending 或第二状态。必要替换仍同批删除旧消费者；全面删除和 <=50000B 的最终达标归第二阶段。当前界面允许粗糙，不把未确认草稿的精确恢复或穷举组合列作闭环前置条件。
+## 环境与授权边界
 
-## 代码基线与已完成证据
+分支 `refactor/minimal-night-flow-20261019` / Draft #335，base #334 `76be7e17` 不变；本批基线 `1e7fbc6d`（前一生产 `3268440f`）。接续先核对最新真实 HEAD/远端/工作区与精确代码 CI，docs-only 不能冒充新代码验收。
 
-分支 `refactor/minimal-night-flow-20261019` / Draft #335，base 为 #334 `76be7e17`。路线调整前文档 HEAD `52cd7931`；最新生产代码 `9b3cee4c5ba8fa405080cd0929726e66ffd6c324`，Cloud full 646（146 suites / 33 UI）、APK、原 R2 shell、精确完整 Android CI #4498 / R2 #4074 全通过。此前投毒来源退出及夜间继任/展示职责收敛已验收。生产逻辑未随路线调整改变；docs-only CI 不替代新代码测试。
+Cloud `/workspace/CampBoardGameHost` 直接读写，不需要 MiniMCP/Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`，原 R2 shell `/workspace/work/r2-current.sh`。本批日志 `/workspace/work/app-complete/{red-final,focused,full}.log`；临时 seed 探针已删除，不计正式测试。
 
-已有夜间 Session 路由、白天/终局、AtomicFile 活动局和真实 UI 回归，但不等于完整游戏、所有角色或真机验收已经完成。App 118438B、Night Host 63094B 超限，Session 48526B；前批细节保留在 [台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)。
-
-## 云端执行与边界
-
-Cloud `/workspace/CampBoardGameHost` 直接读写，不需要 MiniMCP/Windows。每个 shell 先 `source /workspace/.cloud-setup/activate.sh`；完整验证 `./gradlew -I /workspace/work/cloud-tests.init.gradle :app:testFull :app:assembleDebug`。临时 init 使用工作区 Test JVM user.home 并透传已有代理/CA，不改产品构建或 HOME；Gradle 通信需要执行环境网络能力。前批日志 `/workspace/work/night-ownership/full.log`，原 R2 shell `/workspace/work/r2-current.sh`。
-
-保留 Draft，不合并/改 base/重写历史/删分支/调用付费 API。真机/实际杀进程证据须单列，JVM 文件回归不能冒称设备验收。没有新增所有者决策阻塞。
+保留唯一 Session、A/B/C/D2、现有 AI 与双跨局轮换、顺序/隐私/幂等/原子性。继续 Draft，不合并/改 base/重写历史/删分支/付费 API。无新增所有者决策阻塞。

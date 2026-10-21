@@ -174,7 +174,11 @@ internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
     script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy
 
 @Composable
-internal fun CampBoardGameHostApp() {
+internal fun CampBoardGameHostApp(
+    newClocktowerSeed: () -> Long = { UUID.randomUUID().let { uuid ->
+        (uuid.mostSignificantBits xor uuid.leastSignificantBits).takeIf { it != 0L } ?: 1L
+    } },
+) {
     val baseContext = LocalContext.current
     val appPreferencesStore = remember(baseContext) { AppPreferencesStore(baseContext) }
     val aiSettings = rememberStorytellerAiSettings(baseContext)
@@ -186,7 +190,6 @@ internal fun CampBoardGameHostApp() {
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
     val activeGameStore = remember(baseContext) { ClocktowerActiveGameStore.fromContext(baseContext) }
-    var activeGameSaveAttached by remember { mutableStateOf<ClocktowerGameSession?>(null) }
     var activeGameRestoreError by remember { mutableStateOf(false) }
     var activeGameSaveError by remember { mutableStateOf(false) }
     var settingsReturnScreen by remember { mutableStateOf(Screen.Setup) }
@@ -401,10 +404,6 @@ internal fun CampBoardGameHostApp() {
         refreshClocktowerUi()
     }
     val playerCount = playerNames.size
-
-    fun newClocktowerSeed(): Long = UUID.randomUUID().let { uuid ->
-        (uuid.mostSignificantBits xor uuid.leastSignificantBits).takeIf { it != 0L } ?: 1L
-    }
 
     fun troubleBrewingRulesetKnowledge() = runCatching {
         val json = baseContext.assets
@@ -1404,7 +1403,6 @@ internal fun CampBoardGameHostApp() {
         if (cards.isEmpty()) return false
         if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false
         activeGameStore.clear()
-        activeGameSaveAttached = null
         clocktowerGameSession = null
         refreshClocktowerUi()
         showNewGameConfirmation = false
@@ -1422,6 +1420,8 @@ internal fun CampBoardGameHostApp() {
 
     fun restartGame() {
         val restartScript = currentClocktowerScript
+        val restartSeating = confirmHostSeating(requireClocktowerGameSession().state.gameState.players
+            .sortedBy { it.seat }.map { it.name })
         if (!readyForNewClocktowerGame(restartScript)) {
             // Do not leave the old game when the selected AI transport cannot start the next one.
             settingsReturnScreen = screen
@@ -1432,6 +1432,7 @@ internal fun CampBoardGameHostApp() {
         if (!finishCurrentGameForRestart()) return
         // A five/six-player quick restart must not silently switch scripts.
         selectedClocktowerScript = restartScript
+        hostSeatingSetupFlow = HostSeatingSetupFlow(restartSeating)
         startClocktowerGame()
     }
 
@@ -1485,16 +1486,19 @@ internal fun CampBoardGameHostApp() {
             refreshClocktowerUi()
             strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.capture(restored,
                 StorytellerStrategicChangeCheckpointV2.Position(active.state.phase, active.state.round))
-            screen = Screen.ClocktowerJudge
+            // No first-night action was confirmed: repeat dealing from the same roster.
+            // This also safely handles interruption after a preview but before its Next.
+            currentDealIndex = 0
+            screen = if (restored.state.phase == StorytellerPhase.FIRST_NIGHT &&
+                restored.state.actionTimeline.entries.isEmpty() &&
+                restored.state.epistemicObservationLog.records.isEmpty()) Screen.PassPhone else Screen.ClocktowerJudge
         }.onFailure { activeGameRestoreError = true }
     }
-    LaunchedEffect(screen, clocktowerGameSession, openingPlanRecommendation, strategicPolicyCursor,
+    LaunchedEffect(clocktowerGameSession, openingPlanRecommendation, strategicPolicyCursor,
         storytellerOperationMode, canonicalConversationResponseId, canonicalConversationModel) {
         val session = clocktowerGameSession ?: return@LaunchedEffect
-        if (screen != Screen.ClocktowerJudge && activeGameSaveAttached !== session) return@LaunchedEffect
         confirmClocktowerStep {
             session.persistWith { confirmed -> activeGameStore.save(confirmed, activeMetadata()) }
-            activeGameSaveAttached = session
         }
     }
     if (activeGameSaveError) {
@@ -1505,7 +1509,6 @@ internal fun CampBoardGameHostApp() {
                 confirmClocktowerStep {
                     clocktowerGameSession?.let { session ->
                         session.persistWith { confirmed -> activeGameStore.save(confirmed, activeMetadata()) }
-                        activeGameSaveAttached = session
                     }
                 }
             }) { Text(localizedText("重试保存", "Retry save")) } })
