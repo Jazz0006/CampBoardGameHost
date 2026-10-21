@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.setup
 
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
-import com.codex.campboardgamehost.clocktower.domain.CommittedClocktowerSetup
 import com.codex.campboardgamehost.clocktower.domain.GameSnapshot
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.ScriptId
@@ -21,52 +20,6 @@ import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
  * KNOWN. No later setup or first-night decisions are reconstructed here.
  */
 internal object TroubleBrewingGameSnapshotProjector {
-    fun fromCommitted(
-        gameId: String,
-        committedSetup: CommittedClocktowerSetup,
-        characterRegistry: ClocktowerCharacterRegistry,
-    ): TroubleBrewingGameSnapshotV1 {
-        require(committedSetup.script == ScriptId("trouble_brewing")) {
-            "Trouble Brewing snapshot projector only accepts Trouble Brewing committed setup."
-        }
-
-        val drunkSeats = committedSetup.assignments.filter { assignment ->
-            externalRoleId(assignment.actualRole, characterRegistry) == "drunk"
-        }
-        require(drunkSeats.size <= 1) {
-            "Trouble Brewing committed setup cannot contain more than one Drunk."
-        }
-
-        return TroubleBrewingGameSnapshotV1(
-            gameId = gameId,
-            gameSeed = committedSetup.setupSeed,
-            position = TroubleBrewingSnapshotPosition(
-                stage = TroubleBrewingSnapshotStage.SETUP_COMMITTED,
-                phase = SnapshotField.NotApplicable,
-                round = SnapshotField.NotApplicable,
-            ),
-            grimoireSeats = committedSetup.assignments.map { assignment ->
-                TroubleBrewingSnapshotSeat(
-                    seat = assignment.seat,
-                    shownRoleId = SnapshotField.Known(
-                        externalRoleId(assignment.shownRole, characterRegistry),
-                    ),
-                    actualRoleId = SnapshotField.Known(
-                        externalRoleId(assignment.actualRole, characterRegistry),
-                    ),
-                    alive = SnapshotField.Known(true),
-                    poisoned = SnapshotField.Known(false),
-                )
-            },
-            setupState = TroubleBrewingSnapshotSetupState(
-                hasDrunk = SnapshotField.Known(drunkSeats.isNotEmpty()),
-                drunkAssignmentSeat = drunkSeats.singleOrNull()?.let { assignment ->
-                    SnapshotField.Known(assignment.seat)
-                } ?: SnapshotField.NotApplicable,
-            ),
-        )
-    }
-
     fun fromRuntime(
         gameSnapshot: GameSnapshot,
         phase: StorytellerPhase,

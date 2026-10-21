@@ -1,6 +1,11 @@
 package com.codex.campboardgamehost
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -69,7 +74,7 @@ internal fun ClocktowerHostFullScreenScaffold(
                     onHostTools = onHostTools,
                     onNext = onNext,
                     modifier = Modifier
-                        .clocktowerHostBottomNavigationBarPadding()
+                        .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                 )
             }

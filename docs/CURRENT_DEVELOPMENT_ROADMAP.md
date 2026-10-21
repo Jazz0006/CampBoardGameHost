@@ -49,3 +49,13 @@ Session仅退休无生产消费者的LegacyLocal直接append方法recordEpistemi
 不含维护文档共**9文件+26/-1009，净删983行/39695B**，6文件整删（4工具/专属测试、1工作流、1fixture）。Android专属旧入口测试-1，Python退休专属测试-15；现有业务断言迁移，未忽略测试。首次完整审计原待审现存**11路径**；当前**440路径、220有结论、220待审**。共享UI/平台资源有真实消费者则保留；发现contentMode及底部单项策略包装待后续收敛，不把部分修改当全仓完成。
 
 验证：Cloud full **650 tests/146 suites/38 UI，0 failure/error/skipped**及Debug APK通过；精确代码`8ac04443aa8e1578e8e8252550f8650e400d0554`的[完整Android CI #4513](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39584194981)与[R2 #4088](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39584194745)均SUCCESS，独立核对14路径/逐行diff、full tests、APK构建/上传及CI gate。本次后续提交只记录验收，不替代代码构建；R2原脚本、CI 10路由/5门禁和shell语法、零退休符号产品引用、diff检查通过。App115420B、Night Host63787B仍超50000B，Session46770B。两剧本、现有AI、两条跨局防重复、D2、隐私及原子保存合同不变。PR保持Draft，不合并/强推；无新增所有者决策阻塞。
+
+## 2026-10-21 第二阶段第四批：无作用展示合同与旧快照入口删除
+
+从Draft #337 `73299a8c`继续，main仍`40050941efc3`。全局引用核实后移除HostSeatContentMode/contentMode字段及所有构造/专属断言；底部单项策略文件整删，必要navigationBars bottom padding回接既有FullScreenScaffold。对比度算法原样迁回既有测试，全部实际配色和可读性断言保留。
+
+旧FortuneTeller首/后夜投影角色包装、storytellerAiResponseMayApply及专属2测试文件退休；真实FT读Session，App当前异步请求前后模式/凭据/旧响应检查不变。旧fromCommitted快照入口及专属1用例/helper删除；现行开局中间态/运行时AI快照、V3协议、会话延续/记忆、存档schema及兼容枚举均不变。
+
+不含维护文档15文件+29/-323，净删**294行/11391B**，整删1生产策略文件和2专属测试文件，无新文件/框架。Android测试9项只保护已退役入口；身份/隐私/配色实际断言保留。首次完整核查原待审现存**13路径**；台账现为**437路径、232有结论、205待审**。其余修改文件只局部复核则不重计全文审计，未把扫描清单当结论。
+
+验证：Cloud full **641 tests/144 suites/38 UI，0 failure/error/skipped**和Debug APK通过；精确远端CI/R2提交后核对；原R2、10类CI路由/失败门禁及shell语法、退休符号零残余、diff检查通过。两剧本、唯一Session、现有AI、D2、隐私/原子保存、两项跨局防重复保持。App115420B、Night Host63787B仍超50000B，Session46770B；本批不声称解决大文件。下一步继续App/Host真实混合职责和剩余待审源文件，UI细节后置。Draft不合并/强推，无新增所有者决策阻塞。

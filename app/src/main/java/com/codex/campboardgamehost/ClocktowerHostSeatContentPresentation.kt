@@ -1,10 +1,5 @@
 package com.codex.campboardgamehost
 
-internal enum class HostSeatContentMode {
-    IdentityOnly,
-    StorytellerRoleDetail,
-}
-
 internal data class HostSeatContentPresentation(
     val primaryLabel: String,
     val detailLabels: List<String> = emptyList(),
@@ -61,7 +56,6 @@ internal fun PlayerCard.toStorytellerHostSeatPresentation(
     isPoisoned = isPoisoned,
     actualRole = clocktowerRole?.toHostRolePresentation(language),
     shownRole = clocktowerShownRole?.toHostRolePresentation(language),
-    contentMode = HostSeatContentMode.StorytellerRoleDetail,
 )
 
 private fun ClocktowerRole.toHostRolePresentation(language: String): HostRolePresentation =

@@ -107,9 +107,3 @@ internal fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<
     if (index < 0 || alive.size <= 1) return emptyList()
     return listOf(alive[(index - 1 + alive.size) % alive.size], alive[(index + 1) % alive.size]).distinctBy { it.name }
 }
-
-internal fun <T> clocktowerFortuneTellerRoleAuthority(
-    phase: ClocktowerPhase,
-    baseRole: T?,
-    otherNightRole: () -> T?,
-): T? = if (phase == ClocktowerPhase.Night) otherNightRole() else baseRole

@@ -28,7 +28,6 @@ class ClocktowerHostSeatContentPresentationTest {
             playerName = "Alice",
             isAlive = true,
             shownRole = HostRolePresentation(roleId = "Empath", displayName = "共情者"),
-            contentMode = HostSeatContentMode.StorytellerRoleDetail,
         )
 
         val presentation = hostSeatContentPresentation(seat, language = "zh")
@@ -45,7 +44,6 @@ class ClocktowerHostSeatContentPresentationTest {
             isAlive = true,
             actualRole = HostRolePresentation(roleId = "Monk", displayName = "Monk"),
             shownRole = HostRolePresentation(roleId = "Monk", displayName = "Monk"),
-            contentMode = HostSeatContentMode.StorytellerRoleDetail,
         )
 
         val presentation = hostSeatContentPresentation(seat, language = "en")
@@ -62,7 +60,6 @@ class ClocktowerHostSeatContentPresentationTest {
             isAlive = false,
             actualRole = HostRolePresentation(roleId = "Drunk", displayName = "Drunk"),
             shownRole = HostRolePresentation(roleId = "Empath", displayName = "Empath"),
-            contentMode = HostSeatContentMode.StorytellerRoleDetail,
         )
         val chineseSeat = englishSeat.copy(
             actualRole = HostRolePresentation(roleId = "Drunk", displayName = "酒鬼"),
@@ -104,7 +101,6 @@ class ClocktowerHostSeatContentPresentationTest {
         val seat = card.toStorytellerHostSeatPresentation(seatNumber = 4, language = "zh")
 
         assertEquals(ClocktowerSeatId(4), seat.seatId)
-        assertEquals(HostSeatContentMode.StorytellerRoleDetail, seat.contentMode)
         assertEquals("Drunk", seat.actualRole?.roleId)
         assertEquals("酒鬼", seat.actualRole?.displayName)
         assertEquals("Empath", seat.shownRole?.roleId)
