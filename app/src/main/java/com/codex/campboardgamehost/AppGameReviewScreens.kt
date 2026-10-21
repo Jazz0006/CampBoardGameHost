@@ -31,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -210,7 +209,7 @@ internal fun HostGameToolsScreen(
                     ) {
                         Text(
                             text("结束当前游戏并开始新一局", "End current game and start a new one"),
-                            color = Color(0xFFC9574A),
+                            color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Black,
                         )
                     }
@@ -283,7 +282,7 @@ private fun HostRolesList(
                     }
                     Text(
                         card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-                        color = if (card.eliminatedRound == null) Color(0xFF2F7A57) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (card.eliminatedRound == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                     )

@@ -29,6 +29,8 @@ class ClocktowerVisualContractTest {
             assertTrue(contrast(scheme.onBackground, scheme.background) >= 4.5)
             assertTrue(contrast(scheme.onSurface, scheme.surface) >= 4.5)
             assertTrue(contrast(scheme.onSurfaceVariant, scheme.surfaceVariant) >= 4.5)
+            assertTrue(contrast(scheme.primary, scheme.surface) >= 4.5)
+            assertTrue(contrast(scheme.error, scheme.surface) >= 4.5)
         }
     }
 
