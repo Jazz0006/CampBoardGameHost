@@ -736,10 +736,6 @@ internal class ClocktowerGameSession private constructor(
         return attack.entry
     }
 
-    private fun playersAfterConfirmedNightDeath(seat: Int) = state.gameState.players.map { player ->
-        if (player.seat == seat) player.copy(alive = false, poisoned = false) else player
-    }
-
     /**
      * The Imp's irreversible step boundary. The selected target is a UI draft until this
      * invocation. Attack and forced Death become facts in the SAME Session update.

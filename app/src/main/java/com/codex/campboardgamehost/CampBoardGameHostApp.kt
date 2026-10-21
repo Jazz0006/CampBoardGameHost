@@ -179,12 +179,7 @@ internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
 internal fun CampBoardGameHostApp() {
     val baseContext = LocalContext.current
     val appPreferencesStore = remember(baseContext) { AppPreferencesStore(baseContext) }
-    val gatewayConnectionStore = remember(baseContext) {
-        StorytellerGatewayConnectionStore(baseContext)
-    }
-    val personalOpenAiStore = remember(baseContext) {
-        PersonalOpenAiSettingsStore(baseContext)
-    }
+    val aiSettings = rememberStorytellerAiSettings(baseContext)
     val activeGameClocktowerRulesetCatalog = remember(baseContext) {
         BuiltInClocktowerRulesetCatalog.fromContext(baseContext)
     }
@@ -200,75 +195,9 @@ internal fun CampBoardGameHostApp() {
     var pendingTroubleBrewingDrunkSelection by remember {
         mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
     }
-    var preferredStorytellerOperationMode by remember {
-        mutableStateOf(appPreferencesStore.loadStorytellerOperationMode())
-    }
-    // Per-game mode can change for manual takeover; never overwrite the saved new-game default.
-    var storytellerOperationMode by remember { mutableStateOf(preferredStorytellerOperationMode) }
-    // Mode-derived, constrained to Host rule-deterministic UI paths; multi-choice remains manual.
+    // Per-game takeover stays separate from the saved default for future games.
+    var storytellerOperationMode by remember { mutableStateOf(aiSettings.preferredMode) }
     val allowRuleDeterminedAutoUi = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC
-    var storytellerGatewayEndpoint by remember { mutableStateOf("") }
-    var storytellerGatewayToken by remember { mutableStateOf("") }
-    var gatewayConfigurationLoaded by remember { mutableStateOf(false) }
-    var gatewayCredentialSaveFailed by remember { mutableStateOf(false) }
-    var personalDirectEnabled by remember { mutableStateOf(false) }
-    var personalDirectKey by remember { mutableStateOf("") }
-    var personalDirectModel by remember {
-        mutableStateOf(PersonalDirectOpenAiV1.DEFAULT_MODEL)
-    }
-    var personalDirectLoaded by remember { mutableStateOf(false) }
-    var personalDirectSaveFailed by remember { mutableStateOf(false) }
-    LaunchedEffect(personalOpenAiStore) {
-        val restored = withContext(Dispatchers.IO) {
-            Triple(personalOpenAiStore.loadEnabled(),
-                personalOpenAiStore.loadModel(), personalOpenAiStore.loadKey())
-        }
-        personalDirectEnabled = restored.first
-        personalDirectModel = restored.second
-        personalDirectKey = restored.third
-        personalDirectLoaded = true
-    }
-    LaunchedEffect(personalDirectLoaded, personalDirectEnabled, personalDirectModel, personalDirectKey) {
-        if (!personalDirectLoaded) return@LaunchedEffect
-        delay(700)
-        val enabled = personalDirectEnabled
-        val model = personalDirectModel
-        val key = personalDirectKey
-        val saved = withContext(Dispatchers.IO) {
-            runCatching {
-                personalOpenAiStore.saveEnabled(enabled)
-                personalOpenAiStore.saveModel(model)
-                personalOpenAiStore.saveKey(key)
-            }.getOrDefault(false)
-        }
-        personalDirectSaveFailed = !saved
-    }
-    val aiEndpoint = if (personalDirectEnabled) PersonalDirectOpenAiV1.ENDPOINT
-        else storytellerGatewayEndpoint
-    val aiToken = if (personalDirectEnabled) personalDirectKey else storytellerGatewayToken
-    val aiDirectModel = if (personalDirectEnabled) personalDirectModel.trim() else null
-    LaunchedEffect(gatewayConnectionStore) {
-        val restored = withContext(Dispatchers.IO) {
-            gatewayConnectionStore.loadEndpoint() to gatewayConnectionStore.loadToken()
-        }
-        storytellerGatewayEndpoint = restored.first
-        storytellerGatewayToken = restored.second
-        gatewayConfigurationLoaded = true
-    }
-    LaunchedEffect(gatewayConfigurationLoaded, storytellerGatewayEndpoint, storytellerGatewayToken) {
-        if (!gatewayConfigurationLoaded) return@LaunchedEffect
-        // Do not run AndroidKeyStore AES/GCM on every keystroke or on the UI thread.
-        delay(700)
-        val endpoint = storytellerGatewayEndpoint
-        val token = storytellerGatewayToken
-        val saved = withContext(Dispatchers.IO) {
-            runCatching {
-                gatewayConnectionStore.saveEndpoint(endpoint)
-                gatewayConnectionStore.saveToken(token)
-            }.getOrDefault(false)
-        }
-        gatewayCredentialSaveFailed = !saved
-    }
     var pendingJointOpening by remember { mutableStateOf<PendingTroubleBrewingJointOpening?>(null) }
     var jointOpeningResult by remember { mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null) }
     // Opaque provider IDs are provisional until Host accepts the opening. Never
@@ -798,8 +727,8 @@ internal fun CampBoardGameHostApp() {
         liveAiAdviceError = null
         // An older in-flight response belongs to a different key and cannot own this state.
         liveAiAdviceBusy = false
-        if (!aiEndpoint.startsWith("https://") ||
-            aiToken.isBlank()
+        if (!aiSettings.endpoint.startsWith("https://") ||
+            aiSettings.token.isBlank()
         ) {
             liveAiAdviceError = "AI unavailable: configure the selected AI connection."
             return
@@ -848,14 +777,14 @@ internal fun CampBoardGameHostApp() {
         val wholeCursor = strategicPolicyCursor
         val wholeBaseline = strategicLastReviewedHost
         if (requestedOperationMode == StorytellerOperationMode.AI_AUTOMATIC &&
-            (!personalDirectEnabled || wholeOpening == null ||
+            (!aiSettings.directEnabled || wholeOpening == null ||
                 wholeCursor == null || wholeBaseline == null)
         ) {
             liveAiAdviceError = "Whole-game strategy is not available; automatic AI paused. Use Host manual decisions."
             DebugFlightRecorder.record("RESIDUAL_AUTO_NO_WHOLE_CONTEXT")
             return
         }
-        if (personalDirectEnabled && wholeOpening != null &&
+        if (aiSettings.directEnabled && wholeOpening != null &&
             wholeCursor != null && wholeBaseline != null
         ) {
             val phasePosition = StorytellerStrategicChangeCheckpointV2.Position(
@@ -943,8 +872,8 @@ internal fun CampBoardGameHostApp() {
                 wholeCursor.version, phasePosition.phase.name, phasePosition.round)
             // This is only a provider context hint; the Host frozen snapshot
             // remains complete and authoritative even when a chain is usable.
-            val requestedModel = requireNotNull(aiDirectModel)
-            val requestedToken = aiToken
+            val requestedModel = requireNotNull(aiSettings.model)
+            val requestedToken = aiSettings.token
             val previousResponseId = canonicalConversationResponseId?.takeIf {
                 canonicalConversationModel == requestedModel
             }
@@ -956,7 +885,7 @@ internal fun CampBoardGameHostApp() {
                     session.state !== currentHost.state ||
                     strategicPolicyCursor != wholeCursor ||
                     storytellerOperationMode != requestedOperationMode ||
-                    aiDirectModel != requestedModel || aiToken != requestedToken ||
+                    aiSettings.model != requestedModel || aiSettings.token != requestedToken ||
                     session.state.nextNightInteraction(requestedNightRuleset)?.id != step.interactionId) return@launch
                 val result = runCatching {
                     StorytellerStrategicContinuationV2.recommendWithReceipt(
@@ -971,7 +900,7 @@ internal fun CampBoardGameHostApp() {
                     round != phasePosition.round ||
                     strategicPolicyCursor != wholeCursor ||
                     storytellerOperationMode != requestedOperationMode ||
-                    aiDirectModel != requestedModel || aiToken != requestedToken
+                    aiSettings.model != requestedModel || aiSettings.token != requestedToken
                 ) return@launch
                 liveAiAdviceBusy = false
                 result.onSuccess { receipt ->
@@ -1127,14 +1056,14 @@ internal fun CampBoardGameHostApp() {
     fun requestJointOpening(pending: PendingTroubleBrewingJointOpening) {
         if (pendingJointOpening !== pending || jointOpeningBusy ||
             storytellerOperationMode == StorytellerOperationMode.MANUAL ||
-            !personalDirectEnabled) return
-        if (aiToken.isBlank() || !aiEndpoint.startsWith("https://")) {
+            !aiSettings.directEnabled) return
+        if (aiSettings.token.isBlank() || !aiSettings.endpoint.startsWith("https://")) {
             jointOpeningError = "AI credentials unavailable. You can continue manually."
             return
         }
         val requestedMode = storytellerOperationMode
-        val requestedKey = aiToken
-        val requestedModel = aiDirectModel ?: PersonalDirectOpenAiV1.DEFAULT_MODEL
+        val requestedKey = aiSettings.token
+        val requestedModel = aiSettings.model ?: PersonalDirectOpenAiV1.DEFAULT_MODEL
         pendingOpeningResponseId = null
         pendingOpeningModel = null
         jointOpeningSerial += 1
@@ -1159,7 +1088,7 @@ internal fun CampBoardGameHostApp() {
             // Precommit has NO committed session. Never compare against a
             // fake session state; bind directly to this immutable pending game.
             if (serial != jointOpeningSerial || pendingJointOpening !== pending ||
-                storytellerOperationMode != requestedMode || !personalDirectEnabled ||
+                storytellerOperationMode != requestedMode || !aiSettings.directEnabled ||
                 screen !in setOf(Screen.ClocktowerJointPass,
                     Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)
             ) return@launch
@@ -1319,8 +1248,8 @@ internal fun CampBoardGameHostApp() {
         // A legacy Gateway configuration must NOT fall through into the paid
         // Drunk-only request followed by a second global analysis.
         if (storytellerOperationMode != StorytellerOperationMode.MANUAL &&
-            (!personalDirectEnabled || !personalDirectLoaded || aiToken.isBlank() ||
-                aiDirectModel.isNullOrBlank())
+            (!aiSettings.directEnabled || !aiSettings.directLoaded || aiSettings.token.isBlank() ||
+                aiSettings.model.isNullOrBlank())
         ) return
         // Invalidate any prior asynchronous callback before preparing the next setup.
         jointOpeningSerial += 1
@@ -1374,7 +1303,7 @@ internal fun CampBoardGameHostApp() {
             recentSetupRotationHistory = rotationHistory,
             recentPlayerStartingIdentityHistory = playerRotationHistory,
         )
-        if (personalDirectEnabled &&
+        if (aiSettings.directEnabled &&
             storytellerOperationMode != StorytellerOperationMode.MANUAL
         ) {
             val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
@@ -1435,14 +1364,14 @@ internal fun CampBoardGameHostApp() {
 
     fun readyForNewClocktowerGame(script: ClocktowerScript): Boolean =
         storytellerNewGameConfigurationReady(
-            mode = storytellerModeForNewGame(preferredStorytellerOperationMode, script),
-            directEnabled = personalDirectEnabled,
-            directLoaded = personalDirectLoaded,
-            directModel = personalDirectModel,
-            directKey = personalDirectKey,
-            gatewayLoaded = gatewayConfigurationLoaded,
-            gatewayEndpoint = storytellerGatewayEndpoint,
-            gatewayToken = storytellerGatewayToken,
+            mode = storytellerModeForNewGame(aiSettings.preferredMode, script),
+            directEnabled = aiSettings.directEnabled,
+            directLoaded = aiSettings.directLoaded,
+            directModel = aiSettings.directModel,
+            directKey = aiSettings.directKey,
+            gatewayLoaded = aiSettings.gatewayLoaded,
+            gatewayEndpoint = aiSettings.gatewayEndpoint,
+            gatewayToken = aiSettings.gatewayToken,
         )
 
     fun startClocktowerGame() {
@@ -1456,7 +1385,7 @@ internal fun CampBoardGameHostApp() {
         if (!canStartClocktowerScript(script) || !readyForNewClocktowerGame(script)) return
         // Reapply the global preference on every new game, including a quick restart
         // after the previous game's AI pause/manual takeover.
-        storytellerOperationMode = storytellerModeForNewGame(preferredStorytellerOperationMode, script)
+        storytellerOperationMode = storytellerModeForNewGame(aiSettings.preferredMode, script)
 
         if (script == ClocktowerScript.TroubleBrewing) {
             startTroubleBrewingGame()
@@ -1548,27 +1477,7 @@ internal fun CampBoardGameHostApp() {
         reopenSeatingSetup()
     }
 
-    val aiSettingsSection: @Composable () -> Unit = {
-        StorytellerAiSettingsPanel(
-            preferredMode = preferredStorytellerOperationMode,
-            onPreferredModeChange = { mode ->
-                preferredStorytellerOperationMode = mode
-                appPreferencesStore.saveStorytellerOperationMode(mode)
-            },
-            directEnabled = personalDirectEnabled,
-            onDirectEnabledChange = { personalDirectEnabled = it },
-            directModel = personalDirectModel,
-            onDirectModelChange = { personalDirectModel = it },
-            directKey = personalDirectKey,
-            onDirectKeyChange = { personalDirectKey = it },
-            directSaveFailed = personalDirectSaveFailed,
-            gatewayEndpoint = storytellerGatewayEndpoint,
-            onGatewayEndpointChange = { storytellerGatewayEndpoint = it },
-            gatewayToken = storytellerGatewayToken,
-            onGatewayTokenChange = { storytellerGatewayToken = it },
-            gatewaySaveFailed = gatewayCredentialSaveFailed,
-        )
-    }
+    val aiSettingsSection: @Composable () -> Unit = { StorytellerAiSettingsPanel(aiSettings) }
 
     fun activeMetadata() = ClocktowerActiveGameMetadata.encode(storytellerOperationMode, clocktowerRulesetRef,
         committedTroubleBrewingSetupRotationRecord, openingPlanRecommendation, strategicPolicyCursor,
@@ -1703,7 +1612,7 @@ internal fun CampBoardGameHostApp() {
                         step = clocktowerSetupStep,
                         onStepChange = { clocktowerSetupStep = it },
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
-                        preferredOperationMode = preferredStorytellerOperationMode,
+                        preferredOperationMode = aiSettings.preferredMode,
                         aiConfigurationReady = readyForNewClocktowerGame(
                             if (playerCount in 5..6) selectedClocktowerScript
                                 ?: defaultClocktowerScriptFor(playerCount)

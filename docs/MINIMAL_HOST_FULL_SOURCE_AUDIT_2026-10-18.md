@@ -1,3 +1,13 @@
+## 2026-10-21 Codex Cloud：P4 AI 配置职责收敛与无调用规则退休
+
+在 `ce1c314c` 基线上实施，沿用 Draft #335，不改 base、不合并。当前执行环境为 Codex Cloud；每个 shell 先 `source /workspace/.cloud-setup/activate.sh`。SDK/Gradle 已预装，不依赖 MiniMCP 或 Windows 开发机。
+
+- App 的 AI 默认模式、direct/gateway 连接字段、异步加载、700ms 延迟安全保存及表单绑定统一由 `StorytellerAiSettings` 和原设置面板负责；App 根部保留该生命周期，离开设置页不取消保存。本局模式与持久默认仍分开，开局/后夜请求、旧响应校验、Session 及私密记录未迁入设置对象。原表单 16 参数接口与 App 内重复接线已替换，不留双轨。凭据仍使用原 Keystore 存储。
+- 全部生产 Kotlin 符号库存筛查后，核对 `DemonNightAttackSemantics` 与 `PoisonEffectLifecycle` 的生产/测试/CI 消费者：两者均已无生产调用，旧攻击 Context/Outcome 与两套实现及专属测试共 4 文件删除。Session 仍承担真实攻击/死亡/保护/市长/继任、中毒生效与到期；ConfirmedNightAttack、ConfirmedNightOperation、ClocktowerPoisonSettlement、NightFlow 等真实行为测试保留。额外删除 Session 无调用的私有死亡 roster helper。
+- 计入新增设置文件，本批生产 Kotlin **净 -84 行 / -3381B**；专属旧测试 **-146 行（13 项）**。App **118275B**、Night HostScreen **68496B** 仍超限，Session **49379B**，设置新文件 **3507B**。这是一个完整的设置职责与孤立旧链清理批，不是全树零遗留结论。
+- Codex Cloud 实跑 `:app:testFull :app:assembleDebug` 成功：**626 tests / 144 suites / 27 UI，0 failure/error/skipped**；工作流原始 R2 shell 与 `git diff --check` 通过。测试首次启动遇到只读 home 的 Robolectric 锁文件，使用工作区临时 Gradle init 将 Test JVM `user.home` 定向至 `/workspace/work/java-user`，并传递现有代理与 CA 配置后通过；未改产品构建来绕过测试。未运行新 APK 真机、杀进程或付费 API。
+- 远端精确 SHA CI/R2 尚待本批提交推送后核对；此前 #4490/#4066 只证明旧代码。下一批继续夜间 Host 展示/机械职责、所有提交与恢复入口及角色合同审计，先净删再内聚整理两个超限文件，最后补 P0/P5 全树及设备证据。
+
 ## 2026-10-21 已实施：Session 白天/胜负迁移、B/C 退役与原子活动局
 
 当前代码 **`f4d78d5c70c55be988c1daf29558fde2e0c82305`** 已推送原 Draft #335；[完整 Android CI #4490](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956510) **SUCCESS**，[R2 #4066](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39496956507) **SUCCESS**。本地 fast **612**、full **639**（27 UI）、APK、工作流原始 R2 脚本均通过。前一节“在途、Artist 编译失败、代码未推送”保留为历史，已不代表当前。最终全树/文件大小/真机验收仍未完成。
