@@ -3,6 +3,7 @@ package com.codex.campboardgamehost
 import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -93,6 +95,8 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val badgeTone: ClocktowerSquareTableBadgeTone = ClocktowerSquareTableBadgeTone.Default,
     val isAlive: Boolean = true,
     val hasUnspentGhostVote: Boolean = false,
+    val isDrunk: Boolean = false,
+    val isPoisoned: Boolean = false,
     val actualAlignment: com.codex.campboardgamehost.clocktower.domain.Alignment? = null,
 )
 
@@ -545,13 +549,12 @@ private fun ClocktowerSquareTableSeat(
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
         seat.isInteractionEnabled
-    val palette = clocktowerSquareTableSeatPalette(seat.state, seat.actualAlignment)
+    val palette = clocktowerSquareTableSeatPalette(seat.state, seat.actualAlignment, seat.isAlive)
     val lifeMarkers = clocktowerSquareTableLifeMarkers(
         isAlive = seat.isAlive,
         hasUnspentGhostVote = seat.hasUnspentGhostVote,
     )
-    val deathMarkerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.72f)
-    val ghostVoteMarkerColor = MaterialTheme.colorScheme.error
+    val ghostVoteMarkerColor = Color(0xFFFFD56B)
     val clickModifier = if (canSelect) {
         Modifier.clickable { onSeatClick(seat.seatId) }
     } else {
@@ -565,40 +568,20 @@ private fun ClocktowerSquareTableSeat(
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
         contentColor = palette.content,
-        border = if (seat.isCurrentActor) {
-            BorderStroke(4.dp, Color(0xFFFFD56B))
-        } else {
-            BorderStroke(palette.borderWidth, palette.border)
-        },
-        tonalElevation = when {
-            seat.isCurrentActor -> 4.dp
-            canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral -> 2.dp
-            else -> 0.dp
-        },
+        border = BorderStroke(palette.borderWidth, palette.border),
+        tonalElevation = if (canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral) 2.dp else 0.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
-            if (lifeMarkers.showDeathCross) {
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(5.dp),
-                ) {
-                    val strokeWidth = 4.dp.toPx()
-                    drawLine(
-                        color = deathMarkerColor,
-                        start = Offset.Zero,
-                        end = Offset(size.width, size.height),
-                        strokeWidth = strokeWidth,
-                    )
-                    drawLine(
-                        color = deathMarkerColor,
-                        start = Offset(size.width, 0f),
-                        end = Offset(0f, size.height),
-                        strokeWidth = strokeWidth,
-                    )
-                }
+            if (lifeMarkers.showDeathMark) {
+                Text(
+                    text = "亡",
+                    color = Color(0xFFFFD56B),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(end = 3.dp, top = 2.dp),
+                )
             }
 
             if (lifeMarkers.showUnspentGhostVote) {
@@ -606,10 +589,39 @@ private fun ClocktowerSquareTableSeat(
                     val markerInset = 7.dp.toPx()
                     drawCircle(
                         color = ghostVoteMarkerColor,
-                        radius = 4.dp.toPx(),
-                        center = Offset(size.width / 2f, markerInset),
+                        radius = 4.5.dp.toPx(),
+                        center = Offset(size.width - markerInset, size.height - markerInset),
                     )
                 }
+            }
+
+            if (seat.isDrunk) {
+                Box(
+                    Modifier.align(Alignment.CenterStart).padding(start = 2.dp)
+                        .width(3.dp).height((density.cardHeight - 8f).dp)
+                        .background(Color(0xFFAC72E0)),
+                )
+                Text(
+                    text = "醉",
+                    color = Color(0xFFE5C7FF),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.align(Alignment.BottomStart).padding(start = 5.dp, bottom = 1.dp),
+                )
+            }
+            if (seat.isPoisoned) {
+                Box(
+                    Modifier.align(Alignment.CenterEnd).padding(end = 2.dp)
+                        .width(3.dp).height((density.cardHeight - 8f).dp)
+                        .background(Color(0xFFB8D957)),
+                )
+                Text(
+                    text = "毒",
+                    color = Color(0xFFE2F59C),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(end = 9.dp, bottom = 1.dp),
+                )
             }
 
             Text(
@@ -631,9 +643,11 @@ private fun ClocktowerSquareTableSeat(
                     text = marker,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Black,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(end = 3.dp, top = 2.dp),
+                    modifier = if (seat.isAlive) {
+                        Modifier.align(Alignment.TopEnd).padding(end = 3.dp, top = 2.dp)
+                    } else {
+                        Modifier.align(Alignment.BottomCenter).padding(bottom = 1.dp)
+                    },
                 )
             }
 
@@ -718,6 +732,7 @@ private data class ClocktowerSquareTableSeatPalette(
 private fun clocktowerSquareTableSeatPalette(
     state: ClocktowerSquareTableSeatState,
     alignment: com.codex.campboardgamehost.clocktower.domain.Alignment?,
+    isAlive: Boolean,
 ): ClocktowerSquareTableSeatPalette {
     val colors = MaterialTheme.colorScheme
     val statePalette = when (state) {
@@ -790,7 +805,8 @@ private fun clocktowerSquareTableSeatPalette(
         ClocktowerSquareTableSeatState.Disabled -> Color(0xFF8E97A3)
         ClocktowerSquareTableSeatState.Neutral -> Color(0xFFCBD5E1)
     }
-    return statePalette.copy(container = alignmentColor, content = Color.White, border = actionBorder)
+    val displayedAlignmentColor = if (isAlive) alignmentColor else lerp(alignmentColor, Color(0xFF282A35), 0.28f)
+    return statePalette.copy(container = displayedAlignmentColor, content = Color.White, border = actionBorder)
 }
 
 private fun clocktowerSquareTableStateMarker(

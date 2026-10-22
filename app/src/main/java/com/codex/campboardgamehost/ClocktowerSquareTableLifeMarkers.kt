@@ -1,7 +1,7 @@
 package com.codex.campboardgamehost
 
 internal data class ClocktowerSquareTableLifeMarkers(
-    val showDeathCross: Boolean,
+    val showDeathMark: Boolean,
     val showUnspentGhostVote: Boolean,
 )
 
@@ -9,6 +9,6 @@ internal fun clocktowerSquareTableLifeMarkers(
     isAlive: Boolean,
     hasUnspentGhostVote: Boolean,
 ): ClocktowerSquareTableLifeMarkers = ClocktowerSquareTableLifeMarkers(
-    showDeathCross = !isAlive,
+    showDeathMark = !isAlive,
     showUnspentGhostVote = !isAlive && hasUnspentGhostVote,
 )

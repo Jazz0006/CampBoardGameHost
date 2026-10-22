@@ -36,15 +36,10 @@ internal fun ClocktowerHostSquareTableScaffold(
     ) {
         ClocktowerSquareTableSeatSurface(
             seats = seats.map { seat ->
-                val model = seatUiModel(seat)
-                if (seat.isPoisoned) {
-                    model.copy(
-                        badge = listOfNotNull("☠", model.badge).joinToString(" "),
-                        badgeTone = ClocktowerSquareTableBadgeTone.Warning,
-                    )
-                } else {
-                    model
-                }
+                seatUiModel(seat).copy(
+                    isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
+                    isPoisoned = seat.isPoisoned,
+                )
             },
             modifier = Modifier.fillMaxSize(),
             interactionMode = interactionMode,

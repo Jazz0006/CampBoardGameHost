@@ -57,10 +57,7 @@ internal fun HostTableShell(
                 motionKey = seatMotionKey(frame.seat),
                 neutralSelectionChrome = neutralSelectionChrome,
                 interactionMode = interaction.mode,
-                badge = listOfNotNull(
-                    "☠".takeIf { frame.seat.isPoisoned },
-                    seatBadge(frame.seat),
-                ).joinToString(" ").takeIf { it.isNotBlank() },
+                badge = seatBadge(frame.seat),
                 hasUnspentGhostVote = seatHasUnspentGhostVote(frame.seat),
                 language = language,
             )
@@ -140,6 +137,8 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         },
         isAlive = seat.isAlive,
         hasUnspentGhostVote = hasUnspentGhostVote,
+        isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
+        isPoisoned = seat.isPoisoned,
         isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,
         badge = badge,
