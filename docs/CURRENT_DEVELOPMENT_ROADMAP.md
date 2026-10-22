@@ -12,9 +12,9 @@
 | Stage 4 — 洗衣妇 / 图书管理员 / 调查员 Pair UI | 先选两个座位、当前查询角色短名单与来源分区、AI 三模式 | 待实施 |
 | Stage 5 — 钟表匠 / 侍女及全局验收 | 后续补精确能力语义与真实设备/交互验收 | 待实施 |
 
-**立即实施 Stage 3：** 从最新 `main`（已包含 #343/#344；至少 `d3a75c99`）派生干净 Stage 3 分支，先检查实时 HEAD/工作树。先逐个审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`ClocktowerSessionHost.kt`、`clocktowerDeterminedNumericResult` 与 D2 唯一 Observation。让正常确定结果只出现一个“展示给玩家：N”，多种真裁量提供单选并高亮当前可靠的 AI 建议，严守当前查询和预览失效/重预览/Next。正式完成迁移同批删除任意非负数文本输入与废弃分支/测试。只增高价值行为回归，提交推送运行准确 SHA 的完整 Android CI/R2，继续 Draft，不擅自合并/改写历史。
+**立即实施 Stage 3：** 从最新 `main`（已包含 #343/#344/#345/#346；至少 `b66f8fe3`）派生干净 Stage 3 分支，先检查实时 HEAD/工作树。先逐个审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`ClocktowerSessionHost.kt`、`clocktowerDeterminedNumericResult` 与 D2 唯一 Observation。让正常确定结果只出现一个“展示给玩家：N”，多种真裁量提供单选并高亮当前可靠的 AI 建议，严守当前查询和预览失效/重预览/Next。正式完成迁移同批删除任意非负数文本输入与废弃分支/测试。只增高价值行为回归，提交推送运行准确 SHA 的完整 Android CI/R2，继续 Draft，不擅自合并/改写历史。
 
-**分支关系：** #343、#344 已先后 squash 合并入 main；#342 的权威设计已通过本轮新文档集成移入主线，原 Draft 应在确认后关闭；#341 酒鬼方桌与新的 Renderer 发生语义冲突，需要迁移后单独验收；#336 旧拆分仍冲突，先审核独有代码再处置。独立未修复 P1：活人提名死人、占卜师固定布尔真值；均不要误认为 Stage 3 已完成。CI ≠ 真机；付费 API 需授权。
+**PR 清理已经完成：** #343/#344/#345/#346 已 squash 合并 main；#342 由 #345 替代并关闭，#341 由 #346 兼容改写替代并关闭，#336 旧冲突拆分已审计并关闭（其独有模块未直接移植）。当前开放 PR 为 0，详见 [收敛记录](HOST_PR_CONSOLIDATION_2026-10-22.md)。独立未修复 P1：活人提名死人、占卜师固定布尔真值；均不要误认为 Stage 3 已完成。CI ≠ 真机；付费 API 需授权。
 
 **证据与完整交接：** [第二批验收与第三批入口](HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)、[下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md)、[测试策略](TESTING_STRATEGY.md)。
 
