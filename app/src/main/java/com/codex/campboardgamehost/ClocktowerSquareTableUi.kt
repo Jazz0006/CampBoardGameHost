@@ -45,18 +45,6 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
-internal enum class ClocktowerSquareTableSeatState {
-    Neutral,
-    Selectable,
-    SelectedFirst,
-    SelectedSecond,
-    Selected,
-    SelectedHighlighted,
-    HighlightedInformation,
-    RegistrationHint,
-    Disabled,
-}
-
 internal enum class ClocktowerSquareTableEdge {
     Top,
     Right,
@@ -79,18 +67,15 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val seatNumber: Int,
     val label: String,
     val detailLabels: List<String> = emptyList(),
-    val state: ClocktowerSquareTableSeatState = ClocktowerSquareTableSeatState.Neutral,
+    // Temporary interaction cues never replace the permanent alignment / life / impairment layers.
+    val isCandidate: Boolean = false,
+    val isSpecialCandidate: Boolean = false,
+    val isSelected: Boolean = false,
+    val selectionOrder: Int? = null,
     val isCurrentActor: Boolean = false,
-    val isInteractionEnabled: Boolean = state in setOf(
-        ClocktowerSquareTableSeatState.Selectable,
-        ClocktowerSquareTableSeatState.SelectedFirst,
-        ClocktowerSquareTableSeatState.SelectedSecond,
-        ClocktowerSquareTableSeatState.Selected,
-        ClocktowerSquareTableSeatState.SelectedHighlighted,
-    ),
+    val isInteractionEnabled: Boolean = isCandidate || isSelected || selectionOrder != null,
     val motionKey: String = seatId,
-    val stateMarkerOverride: String? = null,
-    val suppressDefaultStateMarker: Boolean = false,
+    val contextMarker: String? = null,
     val badge: String? = null,
     val badgeTone: ClocktowerSquareTableBadgeTone = ClocktowerSquareTableBadgeTone.Default,
     val isAlive: Boolean = true,
@@ -99,6 +84,15 @@ internal data class ClocktowerSquareTableSeatUiModel(
     val isPoisoned: Boolean = false,
     val actualAlignment: com.codex.campboardgamehost.clocktower.domain.Alignment? = null,
 )
+
+/** No parallel mutable state: derive candidate stroke directly from this frame's inputs. */
+internal fun clocktowerSquareTableCandidateDashDp(seat: ClocktowerSquareTableSeatUiModel): List<Float>? =
+    when {
+        seat.isSelected || seat.selectionOrder != null -> null
+        seat.isSpecialCandidate -> listOf(5f, 4f)
+        seat.isCandidate -> listOf(12f, 6f)
+        else -> null
+    }
 
 internal data class ClocktowerSquareTableSeatPlacement(
     val seat: ClocktowerSquareTableSeatUiModel,
@@ -549,7 +543,7 @@ private fun ClocktowerSquareTableSeat(
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
         seat.isInteractionEnabled
-    val palette = clocktowerSquareTableSeatPalette(seat.state, seat.actualAlignment, seat.isAlive)
+    val palette = clocktowerSquareTableSeatPalette(seat.actualAlignment, seat.isAlive)
     val lifeMarkers = clocktowerSquareTableLifeMarkers(
         isAlive = seat.isAlive,
         hasUnspentGhostVote = seat.hasUnspentGhostVote,
@@ -568,12 +562,30 @@ private fun ClocktowerSquareTableSeat(
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
         contentColor = palette.content,
-        border = BorderStroke(palette.borderWidth, palette.border),
-        tonalElevation = if (canSelect && seat.state != ClocktowerSquareTableSeatState.Neutral) 2.dp else 0.dp,
+        border = BorderStroke(
+            if (seat.isSelected || seat.selectionOrder != null) 3.dp else 1.5.dp,
+            if (seat.isSelected || seat.selectionOrder != null) Color(0xFFFFD56B) else palette.border,
+        ),
+        tonalElevation = if (canSelect) 2.dp else 0.dp,
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
         ) {
+            // One stroke renderer for the supplied local candidate facts.
+            clocktowerSquareTableCandidateDashDp(seat)?.let { dash ->
+                Canvas(Modifier.fillMaxSize()) {
+                    drawRoundRect(
+                        color = if (seat.isSpecialCandidate) Color(0xFF53D9EC) else Color(0xFFFFD56B),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx()),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 2.5.dp.toPx(),
+                            pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
+                                dash.map { it.dp.toPx() }.toFloatArray(),
+                            ),
+                        ),
+                    )
+                }
+            }
             if (lifeMarkers.showDeathMark) {
                 Text(
                     text = "亡",
@@ -636,9 +648,13 @@ private fun ClocktowerSquareTableSeat(
                     .padding(start = 4.dp, top = 2.dp),
             )
 
-            val stateMarker = seat.stateMarkerOverride
-                ?: if (seat.suppressDefaultStateMarker) null else clocktowerSquareTableStateMarker(seat.state)
-            stateMarker?.let { marker ->
+            val selectionMarker = when (seat.selectionOrder) {
+                1 -> "①"
+                2 -> "②"
+                null -> if (seat.isSelected) "✓" else null
+                else -> seat.selectionOrder.toString()
+            }
+            (selectionMarker ?: seat.contextMarker)?.let { marker ->
                 Text(
                     text = marker,
                     fontSize = 14.sp,
@@ -684,15 +700,7 @@ private fun ClocktowerSquareTableSeat(
                     overflow = TextOverflow.Ellipsis,
                     fontSize = density.primaryFontSizeSp.sp,
                     lineHeight = density.primaryLineHeightSp.sp,
-                    fontWeight = if (seat.isCurrentActor || seat.state in setOf(
-                            ClocktowerSquareTableSeatState.SelectedFirst,
-                            ClocktowerSquareTableSeatState.SelectedSecond,
-                            ClocktowerSquareTableSeatState.Selected,
-                            ClocktowerSquareTableSeatState.SelectedHighlighted,
-                            ClocktowerSquareTableSeatState.HighlightedInformation,
-                            ClocktowerSquareTableSeatState.RegistrationHint,
-                        )
-                    ) {
+                    fontWeight = if (seat.isCurrentActor || seat.isSelected || seat.selectionOrder != null) {
                         FontWeight.Black
                     } else {
                         FontWeight.SemiBold
@@ -725,100 +733,17 @@ private data class ClocktowerSquareTableSeatPalette(
     val container: Color,
     val content: Color,
     val border: Color,
-    val borderWidth: androidx.compose.ui.unit.Dp,
 )
 
 @Composable
 private fun clocktowerSquareTableSeatPalette(
-    state: ClocktowerSquareTableSeatState,
     alignment: com.codex.campboardgamehost.clocktower.domain.Alignment?,
     isAlive: Boolean,
 ): ClocktowerSquareTableSeatPalette {
     val colors = MaterialTheme.colorScheme
-    val statePalette = when (state) {
-        ClocktowerSquareTableSeatState.Neutral -> ClocktowerSquareTableSeatPalette(
-            container = colors.surfaceVariant,
-            content = colors.onSurfaceVariant,
-            border = colors.outline,
-            borderWidth = 1.5.dp,
-        )
-        ClocktowerSquareTableSeatState.Selectable -> ClocktowerSquareTableSeatPalette(
-            container = colors.surface,
-            content = colors.onSurface,
-            border = colors.primary,
-            borderWidth = 2.dp,
-        )
-        ClocktowerSquareTableSeatState.SelectedFirst -> ClocktowerSquareTableSeatPalette(
-            container = colors.primaryContainer,
-            content = colors.onPrimaryContainer,
-            border = colors.primary,
-            borderWidth = 3.dp,
-        )
-        ClocktowerSquareTableSeatState.SelectedSecond -> ClocktowerSquareTableSeatPalette(
-            container = colors.secondaryContainer,
-            content = colors.onSecondaryContainer,
-            border = colors.secondary,
-            borderWidth = 3.dp,
-        )
-        ClocktowerSquareTableSeatState.Selected -> ClocktowerSquareTableSeatPalette(
-            container = colors.primaryContainer,
-            content = colors.onPrimaryContainer,
-            border = colors.primary,
-            borderWidth = 3.dp,
-        )
-        ClocktowerSquareTableSeatState.SelectedHighlighted -> ClocktowerSquareTableSeatPalette(
-            container = colors.tertiaryContainer,
-            content = colors.onTertiaryContainer,
-            border = colors.primary,
-            borderWidth = 3.5.dp,
-        )
-        ClocktowerSquareTableSeatState.HighlightedInformation -> ClocktowerSquareTableSeatPalette(
-            container = colors.tertiaryContainer,
-            content = colors.onTertiaryContainer,
-            border = colors.tertiary,
-            borderWidth = 3.dp,
-        )
-        ClocktowerSquareTableSeatState.RegistrationHint -> ClocktowerSquareTableSeatPalette(
-            container = colors.errorContainer.copy(alpha = 0.72f),
-            content = colors.onErrorContainer,
-            border = colors.error.copy(alpha = 0.78f),
-            borderWidth = 3.dp,
-        )
-        ClocktowerSquareTableSeatState.Disabled -> ClocktowerSquareTableSeatPalette(
-            container = colors.surfaceVariant.copy(alpha = 0.55f),
-            content = colors.onSurfaceVariant.copy(alpha = 0.72f),
-            border = colors.outline.copy(alpha = 0.72f),
-            borderWidth = 1.5.dp,
-        )
-    }
-    // Alignment is stable visual identity; selection changes only border/marker.
     val alignmentColor = alignment?.let(::clocktowerAlignmentSeatColor)
-        ?: return statePalette // Seating before the actual game exists
-    val actionBorder = when (state) {
-        ClocktowerSquareTableSeatState.SelectedFirst,
-        ClocktowerSquareTableSeatState.Selected,
-        ClocktowerSquareTableSeatState.SelectedHighlighted,
-        ClocktowerSquareTableSeatState.HighlightedInformation -> Color(0xFFFFD56B)
-        ClocktowerSquareTableSeatState.SelectedSecond -> Color(0xFF85E3D4)
-        ClocktowerSquareTableSeatState.RegistrationHint -> Color(0xFFFFC27A)
-        ClocktowerSquareTableSeatState.Selectable -> Color(0xFFE5EAF0)
-        ClocktowerSquareTableSeatState.Disabled -> Color(0xFF8E97A3)
-        ClocktowerSquareTableSeatState.Neutral -> Color(0xFFCBD5E1)
-    }
-    val displayedAlignmentColor = if (isAlive) alignmentColor else lerp(alignmentColor, Color(0xFF282A35), 0.28f)
-    return statePalette.copy(container = displayedAlignmentColor, content = Color.White, border = actionBorder)
+        ?: return ClocktowerSquareTableSeatPalette(colors.surfaceVariant, colors.onSurfaceVariant, colors.outline)
+    val background = if (isAlive) alignmentColor else lerp(alignmentColor, Color(0xFF282A35), 0.28f)
+    return ClocktowerSquareTableSeatPalette(background, Color.White, Color(0xFFCBD5E1))
 }
 
-private fun clocktowerSquareTableStateMarker(
-    state: ClocktowerSquareTableSeatState,
-): String? = when (state) {
-    ClocktowerSquareTableSeatState.Neutral -> null
-    ClocktowerSquareTableSeatState.Selectable -> "○"
-    ClocktowerSquareTableSeatState.SelectedFirst -> "①"
-    ClocktowerSquareTableSeatState.SelectedSecond -> "②"
-    ClocktowerSquareTableSeatState.Selected -> "✓"
-    ClocktowerSquareTableSeatState.SelectedHighlighted -> "✓★"
-    ClocktowerSquareTableSeatState.HighlightedInformation -> "★"
-    ClocktowerSquareTableSeatState.RegistrationHint -> null
-    ClocktowerSquareTableSeatState.Disabled -> "×"
-}

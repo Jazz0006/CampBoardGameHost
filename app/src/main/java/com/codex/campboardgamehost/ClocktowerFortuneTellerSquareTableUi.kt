@@ -18,15 +18,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-internal fun clocktowerFortuneTellerSeatState(
+internal fun clocktowerFortuneTellerSeatPresentation(
     seatNumber: Int,
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
-): ClocktowerSquareTableSeatState = when {
-    seatNumber in selectedSeats -> ClocktowerSquareTableSeatState.SelectedHighlighted
-    seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
-    else -> ClocktowerSquareTableSeatState.Disabled
-}
+): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
+    isCandidate = seatNumber in selectableSeats,
+    isSelected = seatNumber in selectedSeats,
+    selectionOrder = selectedSeats.indexOf(seatNumber).takeIf { it >= 0 }?.plus(1),
+)
 
 /** Both Boolean answers remain confirmable; an AI recommendation only changes display order. */
 internal fun clocktowerFortuneTellerResultActions(recommendedResult: Boolean?): List<Boolean> =
@@ -82,13 +82,12 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
                 actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive,
                 hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                state = clocktowerFortuneTellerSeatState(
-                    seatNumber = seat.seatId.number,
-                    selectedSeats = selectedSeats,
-                    selectableSeats = if (enabled) selectableSeats else emptySet(),
-                ),
+                isCandidate = enabled && seat.seatId.number in selectableSeats,
+                isSelected = isSelected,
+                selectionOrder = selectedSeats.indexOf(seat.seatId.number)
+                    .takeIf { it >= 0 }?.plus(1),
+                isInteractionEnabled = enabled && (isSelected || seat.seatId.number in selectableSeats),
                 isCurrentActor = seat.seatId.number == actorSeat,
-                suppressDefaultStateMarker = isSelected,
                 badge = if (isRedHerring) {
                     if (language == "en") "RH" else "鲱"
                 } else {

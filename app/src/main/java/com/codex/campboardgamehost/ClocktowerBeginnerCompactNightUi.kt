@@ -62,7 +62,6 @@ internal fun clocktowerBeginnerNeutralSeatPresentation(
     seatNumber: Int,
     actorSeat: Int?,
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = ClocktowerSquareTableSeatState.Neutral,
     isCurrentActor = seatNumber == actorSeat,
 )
 

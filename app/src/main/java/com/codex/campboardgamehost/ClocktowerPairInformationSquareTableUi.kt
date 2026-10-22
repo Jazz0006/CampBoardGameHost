@@ -99,12 +99,6 @@ internal fun ClocktowerPairInformationSquareTableDialog(
             val seatNumber = seat.seatId.number
             val selected = seatNumber == highlightedSelection.firstSeat ||
                 seatNumber == highlightedSelection.secondSeat
-            val state = when {
-                selected -> ClocktowerSquareTableSeatState.SelectedHighlighted
-                editing && selection.roleId != null && !selection.noneSelected ->
-                    ClocktowerSquareTableSeatState.Selectable
-                else -> ClocktowerSquareTableSeatState.Neutral
-            }
             val content = hostSeatContentPresentation(seat, language)
             ClocktowerSquareTableSeatUiModel(
                 seatId = seat.seatId.renderKey(),
@@ -114,13 +108,15 @@ internal fun ClocktowerPairInformationSquareTableDialog(
                 actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive,
                 hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                state = state,
-            ).copy(
+                isSelected = selected,
+                selectionOrder = when (seatNumber) {
+                    highlightedSelection.firstSeat -> 1
+                    highlightedSelection.secondSeat -> 2
+                    else -> null
+                },
+                isCandidate = editing && selection.roleId != null && !selection.noneSelected,
+                isInteractionEnabled = editing && selection.roleId != null && !selection.noneSelected,
                 isCurrentActor = seatNumber == actorSeat,
-                suppressDefaultStateMarker = selected,
-                stateMarkerOverride = clocktowerPairInformationTruthMarker(
-                    selected, highlightedSelection.roleId, seat.actualRole?.roleId,
-                ),
             )
         },
     ) {
@@ -234,11 +230,4 @@ internal fun ClocktowerPairInformationSquareTableDialog(
         }
     }
 }
-
-/** Host-private truth marker is not a legality filter and never changes the actual selected fact. */
-internal fun clocktowerPairInformationTruthMarker(
-    isSelectedCandidate: Boolean,
-    selectedRoleId: String?,
-    actualRoleId: String?,
-): String? = if (isSelectedCandidate && selectedRoleId != null && actualRoleId == selectedRoleId) "✓" else null
 

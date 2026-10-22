@@ -44,11 +44,9 @@ internal fun clocktowerSageSeatPresentation(
     actorSeat: Int?,
     subjectSeats: List<Int>,
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = when (seatNumber) {
-        subjectSeats.getOrNull(0) -> ClocktowerSquareTableSeatState.SelectedFirst
-        subjectSeats.getOrNull(1) -> ClocktowerSquareTableSeatState.SelectedSecond
-        else -> ClocktowerSquareTableSeatState.Selectable
-    },
+    isCandidate = true,
+    isSelected = seatNumber in subjectSeats,
+    selectionOrder = subjectSeats.indexOf(seatNumber).takeIf { it >= 0 }?.plus(1),
     isCurrentActor = seatNumber == actorSeat,
 )
 

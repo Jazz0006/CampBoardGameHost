@@ -18,24 +18,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-internal fun clocktowerSingleTargetSeatState(
-    seatNumber: Int,
-    selectedSeat: Int?,
-    selectableSeats: Set<Int>,
-): ClocktowerSquareTableSeatState = when {
-    selectedSeat == seatNumber -> ClocktowerSquareTableSeatState.SelectedFirst
-    seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
-    else -> ClocktowerSquareTableSeatState.Disabled
-}
-
 internal val LocalClocktowerNightProgress = compositionLocalOf<String?> { null }
 // Read-only presentation of the current Host confirmation gate, including full-screen roles.
 internal val LocalClocktowerNightNextEnabled = compositionLocalOf { true }
 
+/** Orthogonal interaction projection. Actor identity never replaces a selected target. */
 internal data class ClocktowerNightActionSeatPresentation(
-    val targetState: ClocktowerSquareTableSeatState,
-    val isCurrentActor: Boolean,
-)
+    val isCandidate: Boolean = false,
+    val isSelected: Boolean = false,
+    val selectionOrder: Int? = null,
+    val isCurrentActor: Boolean = false,
+    val contextMarker: String? = null,
+) {
+    val isInteractionEnabled: Boolean get() = isCandidate || isSelected
+}
 
 internal fun clocktowerSingleTargetSeatPresentation(
     seatNumber: Int,
@@ -43,24 +39,11 @@ internal fun clocktowerSingleTargetSeatPresentation(
     selectedSeat: Int?,
     selectableSeats: Set<Int>,
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = clocktowerSingleTargetSeatState(
-        seatNumber = seatNumber,
-        selectedSeat = selectedSeat,
-        selectableSeats = selectableSeats,
-    ),
+    isCandidate = seatNumber in selectableSeats,
+    isSelected = selectedSeat == seatNumber,
+    selectionOrder = if (selectedSeat == seatNumber) 1 else null,
     isCurrentActor = seatNumber == actorSeat,
 )
-
-internal fun clocktowerTwoTargetSeatState(
-    seatNumber: Int,
-    selectedSeats: List<Int>,
-    selectableSeats: Set<Int>,
-): ClocktowerSquareTableSeatState = when {
-    selectedSeats.getOrNull(0) == seatNumber -> ClocktowerSquareTableSeatState.SelectedFirst
-    selectedSeats.getOrNull(1) == seatNumber -> ClocktowerSquareTableSeatState.SelectedSecond
-    seatNumber in selectableSeats -> ClocktowerSquareTableSeatState.Selectable
-    else -> ClocktowerSquareTableSeatState.Disabled
-}
 
 internal fun clocktowerTwoTargetSeatPresentation(
     seatNumber: Int,
@@ -68,11 +51,9 @@ internal fun clocktowerTwoTargetSeatPresentation(
     selectedSeats: List<Int>,
     selectableSeats: Set<Int>,
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = clocktowerTwoTargetSeatState(
-        seatNumber = seatNumber,
-        selectedSeats = selectedSeats,
-        selectableSeats = selectableSeats,
-    ),
+    isCandidate = seatNumber in selectableSeats,
+    isSelected = seatNumber in selectedSeats,
+    selectionOrder = selectedSeats.indexOf(seatNumber).takeIf { it >= 0 }?.plus(1),
     isCurrentActor = seatNumber == actorSeat,
 )
 
@@ -266,7 +247,11 @@ internal fun ClocktowerNightActionSquareTableDialog(
                 actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive,
                 hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                state = presentation.targetState,
+                isCandidate = presentation.isCandidate,
+                isSelected = presentation.isSelected,
+                selectionOrder = presentation.selectionOrder,
+                isInteractionEnabled = presentation.isInteractionEnabled,
+                contextMarker = presentation.contextMarker,
                 isCurrentActor = presentation.isCurrentActor,
             )
         },

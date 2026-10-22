@@ -78,7 +78,6 @@ internal fun ClocktowerPlainInformationSquareTableDialog(
         language = language,
         seatPresentation = { seatNumber ->
             ClocktowerNightActionSeatPresentation(
-                targetState = ClocktowerSquareTableSeatState.Neutral,
                 isCurrentActor = seatNumber == presentation.actorSeat,
             )
         },

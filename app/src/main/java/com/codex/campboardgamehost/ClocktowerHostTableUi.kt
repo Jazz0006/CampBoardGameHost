@@ -130,11 +130,12 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         label = content.primaryLabel,
         detailLabels = content.detailLabels,
         actualAlignment = seat.actualAlignment,
-        state = if (neutralSelectionChrome) {
-            ClocktowerSquareTableSeatState.Neutral
-        } else {
-            squareTableSeatState(interactionMode)
-        },
+        // Setup's neutral chrome affects hint borders, not click targets or permanent facts.
+        isCandidate = !neutralSelectionChrome && !isLocked && isSelectable &&
+            interactionMode != HostTableInteractionMode.ReadOnly,
+        isSelected = isSelected,
+        selectionOrder = selectionOrder?.takeIf { isSelected },
+        contextMarker = if (isHighlighted && !isSelected) "•" else null,
         isAlive = seat.isAlive,
         hasUnspentGhostVote = hasUnspentGhostVote,
         isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
@@ -145,21 +146,4 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
     )
 }
 
-private fun HostTableSeatFrame.squareTableSeatState(
-    interactionMode: HostTableInteractionMode,
-): ClocktowerSquareTableSeatState = when {
-    isLocked -> ClocktowerSquareTableSeatState.Disabled
-    interactionMode == HostTableInteractionMode.MultiSelection && isSelected && isHighlighted ->
-        ClocktowerSquareTableSeatState.SelectedHighlighted
-    interactionMode == HostTableInteractionMode.MultiSelection && isSelected ->
-        ClocktowerSquareTableSeatState.Selected
-    interactionMode == HostTableInteractionMode.MultiSelection && isHighlighted ->
-        ClocktowerSquareTableSeatState.HighlightedInformation
-    selectionOrder == 1 -> ClocktowerSquareTableSeatState.SelectedFirst
-    selectionOrder == 2 -> ClocktowerSquareTableSeatState.SelectedSecond
-    isSelected -> ClocktowerSquareTableSeatState.SelectedFirst
-    isCurrent -> ClocktowerSquareTableSeatState.HighlightedInformation
-    isHighlighted -> ClocktowerSquareTableSeatState.HighlightedInformation
-    isSelectable -> ClocktowerSquareTableSeatState.Selectable
-    else -> ClocktowerSquareTableSeatState.Neutral
-}
+

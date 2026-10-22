@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 
 internal data class ClocktowerUndertakerSeatVisual(
-    val state: ClocktowerSquareTableSeatState,
     val badge: String?,
     val isCurrentActor: Boolean,
 )
@@ -37,8 +36,6 @@ internal fun clocktowerUndertakerSeatVisual(
     executedSeat: Int,
     language: String,
 ): ClocktowerUndertakerSeatVisual = ClocktowerUndertakerSeatVisual(
-    state = if (seatNumber == executedSeat) ClocktowerSquareTableSeatState.HighlightedInformation
-        else ClocktowerSquareTableSeatState.Neutral,
     badge = if (seatNumber == executedSeat) {
         if (language == "en") "EX" else "处"
     } else null,
@@ -128,7 +125,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                 label = content.primaryLabel, detailLabels = content.detailLabels,
                 actualAlignment = seat.actualAlignment,
                 isAlive = seat.isAlive, hasUnspentGhostVote = seat.hasUnspentGhostVote,
-                state = visual.state, isCurrentActor = visual.isCurrentActor, badge = visual.badge,
+                isCurrentActor = visual.isCurrentActor, badge = visual.badge,
             )
         },
     ) {
