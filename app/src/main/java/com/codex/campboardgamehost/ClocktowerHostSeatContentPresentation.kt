@@ -19,7 +19,12 @@ internal fun hostSeatContentPresentation(
 ): HostSeatContentPresentation {
     val primaryLabel = seat.playerName
     val actualRole = seat.actualRole
-        ?: return HostSeatContentPresentation(primaryLabel = primaryLabel)
+        ?: return HostSeatContentPresentation(
+            primaryLabel = primaryLabel,
+            // Pre-Session seating has confirmed displayed identities only.
+            // Do not invent an actual role before Drunk selection is committed.
+            detailLabels = listOfNotNull(seat.shownRole?.displayName),
+        )
     val shownRole = seat.shownRole
     val detailLabels = when {
         shownRole == null || shownRole.roleId == actualRole.roleId -> listOf(actualRole.displayName)
