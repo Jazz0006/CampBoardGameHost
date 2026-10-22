@@ -13,6 +13,7 @@
 2. 在 Android 真机上检查三工作模式、角色全屏展示→返回修改→再次展示→Next，以及中途来电/切后台/进程被杀后，仅用已记录的游戏事实能安全继续。用户要的是**能继续游戏的实用恢复**，不要求精确恢复未确认 UI 草稿；不引入独立存档/回放写入机制。
 3. 未经批准不实际调用付费 LLM API。若当前无法访问真机/ADB，只在文档里记录**待人工设备验收**，不得伪称自动测试等于真机测试。
 4. 独立 P1 不属于已合并的五批：**活人提名死人**的 Day UI；**健康 Fortune Teller 固定布尔线索**的 Host 求值。另立有界任务核实/修复，不借此重建旧 Rules/候选/评分或第二份游戏状态。
+5. **Host UI 职责重构（计划已写，未实施）：** 见 [HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)。`ClocktowerHostScreen.kt` 当前 51,102 B 超出 50,000 B 硬限制；按 Batch 1→5 逐个 PR 实施，先做单一夜晚步骤草稿与 Host/AI 分离，再接 P1 修复。不改 Session API/JSON 格式。
 
 **请先读：** [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[五批合同](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)、[Stage 5 验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md)、[方桌视觉合同](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)、[测试策略](TESTING_STRATEGY.md)。继续修改前重新审计当时 main、工作树、PR 与 CI，勿把下方历史阶段原话当成最新指令。
 
