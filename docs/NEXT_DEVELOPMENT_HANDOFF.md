@@ -1,6 +1,23 @@
-# 当前开发交接（2026-10-21，已审计 main）
+# 当前开发交接（2026-10-22，第三批 Chef/Empath UI 实施入口）
 
-> **2026-10-22 UI 长期设计合同**：[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。方桌稳定；Session Day Light、FirstNight/Night Dark；Session actualAlignment 善蓝恶红；交互仅边框/标记，文字高对比。第一/第二批只修改主题与阵营卡；第三批酒鬼/数字手选回方桌尚未实施。共享 Theme/Seat Renderer 承担唯一实现；提交与 CI 以实际产物为准。
+## 下一轮必须直接执行（当前权威）
+
+**开发仓库** `Jazz0006/CampBoardGameHost`；Oracle VM Mini MCP alias `clocktower`。实时核对工作树/远端/PR，开发分支为 `feature/host-information-resolvers-20261022`，Stage 2 最后已验证的**生产代码提交**是 `bb024f42442e464fe168e59af6ebd4a945840cb8`，之后另有本轮 docs-only 更新提交；开始前以最新实时 HEAD 为准（上次状态 Clean、与远端一致）。代码 [Draft PR #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 是叠加 [Draft #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 的第二批，不是 `main` 独立工作；若建立 Stage 3 分支，应从上述 Stage 2 HEAD 派生，保留只读求值与共享渲染。#342 是独立 [权威五批规划](https://github.com/Jazz0006/CampBoardGameHost/blob/docs/host-table-information-rebuild-20261022/docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) Draft，文件尚未存在于此开发分支；#341 酒鬼方桌另有独立 Draft，勿覆盖其变更，也不要自动合并任何 PR。
+
+**实际代码 / 验收：** Stage 1 `1ea2c918` Android CI #4543 / R2 #4110 SUCCESS；Stage 2 `bb024f42` Android CI #4544 / R2 #4111 SUCCESS。第二批只新增 `clocktower/session/HostInformationResolvers.kt` 和 `HostInformationResolversTest.kt`，支持 Chef `ADJACENT_EVIL_PAIRS`（环形首尾）、Empath `LIVING_EVIL_NEIGHBOURS`（最近存活邻座）及 Washerwoman/Librarian/Investigator 当前 Pair 座位查询；查询时区分信息源 Drunk/poisoned、被检查 Spy/Recluse 特殊登记及是否自身中毒；Washerwoman 划分实际在场与 Session 已确认恶魔伪装、Librarian 有零外来者、NGJ 与 TB 剧本隔离。接口 `NumericInformationResolver.resolve(sessionState, metric, sourceSeat)` 返回 `values`、`subjectSeats`、`sourceAbility`、`relevantSpecialSeats`、`productShortlist`；当前建议核验 `acceptsCurrentAdvice`。**未接入任何生产数字或 Pair 页面，UI 任意文本输入仍在，不能说玩家已经获得唯一 Host 数字。**
+
+**立即实施 Stage 3：厨师 / 共情者统一数字信息 UI（不要只做规划）。**
+1. 先读本交接、[Roadmap](CURRENT_DEVELOPMENT_ROADMAP.md)、[测试](TESTING_STRATEGY.md)、[本批验收](HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md) 与上述五批合同；审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`ClocktowerSessionHost.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`clocktowerDeterminedNumericResult` 和最新预览/Next/AI 消费者，确认真实的数据如何沿现有 Session 流经页面，不增第二份可写状态。
+2. 当前 Session 的 Chef/Empath 查询正常且单一数字时，只显示**一个**可点击的“展示给玩家：N”按钮，不显示原任意数字输入框、额外“预览文本”和冗余列表。当前真实登记裁量或源 Drunk/poisoned 时呈现 Resolver 的数字单选，当前有效 AI 推荐仅高亮，不接纳过期/错 seat/错 metric/错 subjects 的推荐。真正常规唯一答案不得由 AI/人工随意替换；若需记录实际误播，走现有实际展示确认事实边界，不静默伪装为正确答案。
+3. 全屏展示是已有私密预览而非立即提交。返回同一步保留上次展示值；改选即使上一 preview 失效，需重新点击展示；本步 Next 才唯一提交最后一条实际展示的 `Observation`，不得跨角色 Previous。三模式 MANUAL / AI_ASSISTED / AI_AUTOMATIC 行为保留，自动模式缺少有效当前建议时等待/重试，不替玩家选择交互对象。
+4. 在真实生产调用中切换后，**同批删除** `ClocktowerDirectNumericResultUi.kt` 中旧的任意非负数文本输入和不再使用的双轨计算/测试。保留现有 `clocktowerDirectNumericResult` 的仅用于格式化有效结果的部分（如实际仍有调用），不能误删 NGJ Clockmaker/Chambermaid 仍使用的能力；后者真值计算留 Stage 5。不得在此阶段重建旧 Rules/合法候选/评分/假设世界。
+5. 加少量高价值真实 Session/Compose 回归：无特殊登记的唯一答案、健康 Spy/Recluse 才有裁量、源酒鬼/中毒可选数字、不同目标/已更改 Session 后 stale AI 无效、返回改选/重新预览/唯一 Next、360×520 界面与三模式。推送明确 SHA，核实完整 Android CI/R2。真机、物理强退、付费 API 分开报告，付费模型需用户明确同意。
+
+**之后：** Stage 4 Pair UI 座位先选后角色单列分组；Stage 5 Clockmaker/Chambermaid 精确求值及真实设备验收。别提前混进 Stage 3。独立待修 P1：活人可以提名死者的 Day UI；健康 Fortune Teller 固定布尔结果审计。保留唯一 `ClocktowerGameSession/ClocktowerSessionState`、两 builtin 规模与 AI V3/战略记忆/两项跨局防重复、隐私、AtomicFile、D2 显示后 Next 只写一次事件；严禁未授权合并、rebase、force push。
+
+## 2026-10-21 main 审计交接归档（后续以文首为准）
+
+> **旧版 2026-10-22 UI 视觉合同描述（以下为历史分类）**：[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。方桌稳定；Session Day Light、FirstNight/Night Dark；Session actualAlignment 善蓝恶红；交互仅边框/标记，文字高对比。第一/第二批只修改主题与阵营卡；第三批酒鬼/数字手选回方桌尚未实施。共享 Theme/Seat Renderer 承担唯一实现；提交与 CI 以实际产物为准。
 
 > **最终测试清理合并验收**：#338/#339 均已合并，最新已验证测试代码 main `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，后续 #339 [Android CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) / R2 #4098 成功，保留两项独有 AI 阻断和 5–15 人界面布局真实风险回归。最终静态 124 类/566 个 `@Test`，从 144 类/639 项净减 20 类/73 项。下一步仍应修复确定性信息和死者被提名的实际生产 Bug。下文各分支/旧 HEAD/待 CI 的信息视为审计过程记录。
 
