@@ -1,8 +1,8 @@
 # Host 信息角色重建 — 第二批代码验收与第三批交接（2026-10-22）
 
-> 本文记录已经实际提交的代码与待实施事项。权威完整五批 UI/信息设计见独立 [PR #342 的 HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md](https://github.com/Jazz0006/CampBoardGameHost/blob/docs/host-table-information-rebuild-20261022/docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。此设计文档仍在未合并的 Draft #342；本分支仅引用，不复制或覆盖它。
+> **验收记录与后续主线集成：** Stage 1 #343 源代码 `1ea2c918` / main squash `78d2b115`，Android CI #4543 / R2 #4110 SUCCESS；Stage 2 #344 源生产代码 `bb024f42` / main squash `d3a75c99`，Android CI #4544 / R2 #4111 SUCCESS。此前记录的 Draft/分支状态属于合并前的历史，**两批现已合并 main**。权威五批合同见 [当前本地设计文件](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)；第三批 Numeric UI 尚未实施，真机/付费 API 未验收。
 
-## 1. 真实分支和证据
+## 1. 合并前的真实分支和证据（历史留存）
 
 | 项目 | 已核验状态 |
 | --- | --- |
