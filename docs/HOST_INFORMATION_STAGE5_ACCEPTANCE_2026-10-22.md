@@ -3,7 +3,7 @@
 ## 基线与范围
 
 - Stage 4 [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 经完整 Android CI #4569 / R2 #4130 成功后 squash 合并 main `97a4179d8461a96e1d38f0fc169b1f5386a4c730`。
-- 第五批独立分支 `feature/host-numeric-clockmaker-chambermaid-stage5-20261022`，当前 [Draft #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)；首批代码 SHA `e64bbb3f0f308b5b964d65d4889c72f80d26a10b`。**最终 CI/R2 和真机验收分别记录，未验证时不得宣称完成**。
+- 第五批独立分支 `feature/host-numeric-clockmaker-chambermaid-stage5-20261022`，当前 [Draft #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)；首批代码 SHA `e64bbb3f0f308b5b964d65d4889c72f80d26a10b`。首批代码 `e64bbb3f` 完整 Android CI #4571 / R2 #4131 SUCCESS；完善 Drunk 回归和当前 AI 建议门后，**生产代码 `7c2950aa06b668d13230349957a3d844ce10e8a9` 完整 Android CI #4572 / R2 #4132 SUCCESS，PR 4/4 检查通过**。真机验收仍独立待执行。
 
 ## 生产实现与边界
 
@@ -15,7 +15,7 @@
 
 ## 仍待验收
 
-- Android 完整 CI/R2 应以**最终 SHA** 为准；不能引用先前提交上的成功。
-- 5–15 人 TB、5–6 人 NGJ、360×520 紧凑方桌、一局完整 D2、醉毒/Spy/Recluse、死亡/鬼票状态、后台电话/意外退出恢复：需要针对高价值风险继续抽样自动化/实际设备检查。
-- 真机 Android / ADB 未执行；真实付费 LLM API 未授权、未执行；不把 CI SUCCESS 当作这两项验收。
+- **已完成：** 最终生产代码 `7c2950aa` 完整 Android CI #4572、R2 #4132 SUCCESS；包括 NGJ 5–6 人数字语义、酒鬼假唤醒、恢复与真实 App 整局回归。后续文档提交如跳过 Android 测试，不得替代这一代码 SHA。
+- 现有自动化覆盖 5–15 人 TB、5–6 人 NGJ、360×520 共享卡片/数字/Pair、完整 D2、死亡/鬼票、Session 序列化恢复与 NGJ 整局闭环。需在真实 Android 设备上抽测 15 人文本与状态叠加、来电中断和杀进程后实用恢复。当前 NGJ 官方角色表不包含 Recluse/Spy，不新增跨剧本不可达的 Clockmaker 登记算法。
+- 全仓审计确认正式方桌仍通过共享 `ClocktowerSquareTableSeatSurface` 渲染；旧 `ClocktowerDirectNumericResultUi` 无调用，其余 `OutlinedTextField` 仅用于设置或玩家编辑。真机 Android/ADB 未执行，真实付费 LLM API 未授权、未执行；不能以 CI SUCCESS 代替现场测试。
 - 独立旧 P1：死亡玩家被提名、健康占卜师固定布尔真值审计不包含在第五批，需单独规划。
