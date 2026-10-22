@@ -63,6 +63,77 @@ internal object NumericInformationResolver {
         return HostNumericResolution(options.sorted(), subjects, ability, special, false)
     }
 
+    /**
+     * Stage 5, NGJ only. Returns current information from the sole Session.
+     * Clockmaker counts physical edges in either direction; Chambermaid counts
+     * actors scheduled to wake because of their actual ability this very night.
+     * Evil introductions and Storyteller-only setup do not count as an ability.
+     * Drunk has no actual waking ability even when shown a waking role.
+     */
+    fun resolveLaterNight(
+        session: ClocktowerSessionState,
+        ruleset: ValidatedClocktowerRuleset,
+        metric: NumericMetric,
+        sourceSeat: Int,
+        selectedSeats: List<Int> = emptyList(),
+    ): HostNumericResolution? {
+        if (session.gameState.script != ruleset.script.id) return null
+        val expectedRole = when (metric) {
+            NumericMetric.STEPS_TO_NEAREST_MINION -> "Clockmaker"
+            NumericMetric.PLAYERS_WAKING_FOR_ABILITY -> "Chambermaid"
+            else -> return null
+        }
+        if (metric == NumericMetric.STEPS_TO_NEAREST_MINION &&
+            session.phase != com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.FIRST_NIGHT) return null
+        val actor = session.gameState.playerAt(sourceSeat) ?: return null
+        val ability = sourceAbility(actor, expectedRole) ?: return null
+        if (!actor.alive) return null
+        val players = session.gameState.players.sortedBy(PlayerState::seat)
+        if (players.isEmpty()) return null
+        val subjects = when (metric) {
+            NumericMetric.STEPS_TO_NEAREST_MINION -> players.map(PlayerState::seat)
+            NumericMetric.PLAYERS_WAKING_FOR_ABILITY -> {
+                if (selectedSeats.size != 2 || selectedSeats.distinct().size != 2 ||
+                    sourceSeat in selectedSeats || selectedSeats.any {
+                        seat -> session.gameState.playerAt(seat)?.alive != true
+                    }) return null
+                selectedSeats.sorted()
+            }
+            else -> return null
+        }
+        if (ability != AbilityFunctioningState.FUNCTIONING) {
+            val upper = if (metric == NumericMetric.PLAYERS_WAKING_FOR_ABILITY) 2 else players.size
+            return HostNumericResolution((0..upper).toList(), subjects, ability, emptySet(), true)
+        }
+        val answer = when (metric) {
+            NumericMetric.STEPS_TO_NEAREST_MINION -> {
+                val demonSeats = players.filter { it.actualType == CharacterType.DEMON }.map(PlayerState::seat)
+                val minionSeats = players.filter { it.actualType == CharacterType.MINION }.map(PlayerState::seat)
+                if (demonSeats.size != 1 || minionSeats.isEmpty()) return null
+                val demonIndex = players.indexOfFirst { it.seat == demonSeats.single() }
+                minionSeats.minOf { seat ->
+                    val targetIndex = players.indexOfFirst { it.seat == seat }
+                    val forward = kotlin.math.abs(demonIndex - targetIndex)
+                    minOf(forward, players.size - forward)
+                }
+            }
+            NumericMetric.PLAYERS_WAKING_FOR_ABILITY -> {
+                val actualAbilityWakers = session.nightInteractions(ruleset)
+                    .filter { it.kind == com.codex.campboardgamehost.clocktower.flow.ClocktowerHostInteractionKind.ROLE_PHASE_ACTION }
+                    .mapNotNull { it.roleId }
+                    .toSet()
+                subjects.count { seat ->
+                    session.gameState.playerAt(seat)?.let { player ->
+                        player.actualRole.value != "Drunk" &&
+                            player.wakingRole() in actualAbilityWakers
+                    } == true
+                }
+            }
+            else -> return null
+        }
+        return HostNumericResolution(listOf(answer), subjects, ability, emptySet(), false)
+    }
+
     /** AI advice only: never reject an actually confirmed Storyteller misplay or observation. */
     fun acceptsCurrentAdvice(
         session: ClocktowerSessionState,

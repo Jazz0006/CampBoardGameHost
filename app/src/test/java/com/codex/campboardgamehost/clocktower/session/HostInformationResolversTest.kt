@@ -147,6 +147,62 @@ class HostInformationResolversTest {
         assertFalse(selected)
     }
 
+    @Test fun clockmakerUsesShortestPhysicalArcAndOnlyFirstNight() {
+        val ngj = catalog.ruleset(ClocktowerScript.NoGreaterJoy)
+        val near = session("Clockmaker", "Artist", "Imp", "Sage", "Scarlet Woman",
+            script = "no_greater_joy")
+        val resolved = requireNotNull(NumericInformationResolver.resolveLaterNight(
+            near.state, ngj, NumericMetric.STEPS_TO_NEAREST_MINION, 1,
+        ))
+        assertEquals(listOf(2), resolved.values)
+        assertEquals((1..5).toList(), resolved.subjectSeats)
+        assertFalse(resolved.productShortlist)
+
+        val wraparound = session("Scarlet Woman", "Clockmaker", "Artist", "Sage", "Imp",
+            script = "no_greater_joy")
+        // Imp at seat 5 and minion at seat 1 are one physical step apart.
+        assertEquals(listOf(1), NumericInformationResolver.resolveLaterNight(
+            wraparound.state, ngj, NumericMetric.STEPS_TO_NEAREST_MINION, 2,
+        )?.values)
+        assertNull(NumericInformationResolver.resolveLaterNight(
+            near.state, rules, NumericMetric.STEPS_TO_NEAREST_MINION, 1,
+        ))
+        update(near, 1, poisoned = true)
+        val poisoned = requireNotNull(NumericInformationResolver.resolveLaterNight(
+            near.state, ngj, NumericMetric.STEPS_TO_NEAREST_MINION, 1,
+        ))
+        assertEquals(AbilityFunctioningState.POISONED, poisoned.sourceAbility)
+        assertEquals((0..5).toList(), poisoned.values)
+    }
+
+    @Test fun chambermaidCountsOnlyActualAbilityWakersAndRequiresCurrentAlivePair() {
+        val ngj = catalog.ruleset(ClocktowerScript.NoGreaterJoy)
+        val s = session("Clockmaker", "Investigator", "Chambermaid", "Scarlet Woman", "Imp",
+            script = "no_greater_joy")
+        val before = s.state
+        assertEquals(listOf(2), NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(1, 2),
+        )?.values)
+        assertEquals(listOf(0), NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(4, 5),
+        )?.values)
+        assertNull(NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(2, 3),
+        ))
+        assertNull(NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(2, 2),
+        ))
+        assertSame(before, s.state)
+        update(s, 4, alive = false)
+        assertNull(NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(4, 5),
+        ))
+        update(s, 3, poisoned = true)
+        assertEquals(listOf(0, 1, 2), NumericInformationResolver.resolveLaterNight(
+            s.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY, 3, listOf(1, 2),
+        )?.values)
+    }
+
     @Test fun secondBuiltinUsesOnlyItsOwnRoleCatalog() {
         val s = session("Investigator", "Empath", "Drunk", "Baron", "Imp",
             script = "no_greater_joy", shown = mapOf(3 to "Clockmaker"))

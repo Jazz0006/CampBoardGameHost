@@ -456,22 +456,29 @@ internal fun ClocktowerJudgeScreen(
         val currentNumericMetric = when (currentStep.roleEnName) {
             "Chef" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
             "Empath" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
+            "Clockmaker" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.STEPS_TO_NEAREST_MINION
+            "Chambermaid" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY
             else -> null
         }
+        val currentChambermaidSubjects = listOfNotNull(chambermaidSelection.first, chambermaidSelection.second)
+            .mapNotNull { name -> cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1) }
         val currentNumericResolution = if (currentStep.isRealAction &&
-            currentStep.action == ClocktowerNightAction.None &&
-            currentNumericMetric != null && currentNumericQuestion?.metric == currentNumericMetric
+            currentNumericMetric != null &&
+            (currentStep.action == ClocktowerNightAction.None ||
+                currentStep.action == ClocktowerNightAction.Chambermaid) &&
+            (currentNumericQuestion?.metric == currentNumericMetric ||
+                currentStep.roleEnName == "Chambermaid")
         ) currentActorSeatForInformation?.let { seat ->
-            NumericInformationResolver.resolve(sessionState, currentNumericMetric, seat)
+            when (currentNumericMetric) {
+                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.STEPS_TO_NEAREST_MINION,
+                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY ->
+                    NumericInformationResolver.resolveLaterNight(
+                        sessionState, nightRuleset, currentNumericMetric, seat, currentChambermaidSubjects,
+                    )
+                else -> NumericInformationResolver.resolve(sessionState, currentNumericMetric, seat)
+            }
         } else null
-        // Stage 5 Clockmaker/Chambermaid keep their existing known-result shortcut.
-        val stage5KnownResult = if (currentNumericMetric == null &&
-            currentStep.informationReliability ==
-            com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE
-        ) currentActorSeatForInformation?.let { seat ->
-            clocktowerMatchingNumericResult(currentStep, seat, currentStep.displayProposition)
-        } else null
-        val hostDeterminedNumeric = currentNumericResolution?.values?.size == 1 || stage5KnownResult != null
+        val hostDeterminedNumeric = currentNumericResolution?.values?.size == 1
         val globalAiPending = if (globalAiAssisted && !hostDeterminedNumeric &&
             phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
@@ -595,7 +602,8 @@ internal fun ClocktowerJudgeScreen(
                     numeric != null && option.displayKind == ClocktowerDisplayKind.Number &&
                         currentNumericMetric == numeric.metric &&
                         currentActorSeatForInformation == numeric.sourceSeat &&
-                        NumericInformationResolver.acceptsCurrentAdvice(sessionState, numeric)
+                        numeric.subjectSeats == currentNumericResolution.subjectSeats &&
+                        numeric.value in currentNumericResolution.values
                 }
             }
         }

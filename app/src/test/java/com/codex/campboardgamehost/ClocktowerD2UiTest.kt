@@ -38,21 +38,6 @@ import org.robolectric.annotation.Config
 class ClocktowerD2UiTest {
     @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
 
-    @Test fun numericNextUsesCurrentHostPreviewGate() {
-        ui.setContent {
-            ClocktowerDarkTheme {
-                CompositionLocalProvider(LocalClocktowerNightNextEnabled provides false) {
-                    ClocktowerDirectNumericResultUi(
-                        title = "Chef", subjectSeats = listOf(1, 2), actorLabel = "P1",
-                        wakeInstruction = null, language = "en", onHostTools = {}, onNext = {},
-                        onConfirm = {}, draftKey = "g:first:Chef",
-                    )
-                }
-            }
-        }
-        ui.onNodeWithText("Next").assertIsNotEnabled()
-    }
-
     @Test fun manualChefPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.MANUAL)
     @Test fun assistedEmpathPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.AI_ASSISTED, "Empath")
     @Test fun automaticChefWaitsForActualPreviewAndExplicitNext() = numericHost(StorytellerOperationMode.AI_AUTOMATIC)
@@ -203,18 +188,16 @@ class ClocktowerD2UiTest {
     @Test fun manualChambermaidReturnsToSelectedNumberAndClearsChangedQuery() {
         val f = RoleCard("Chambermaid", StorytellerOperationMode.MANUAL)
         ui.setContent { f.Content() }
-        ui.onNode(hasSetTextAction()).performTextReplacement("2")
-        ui.onNodeWithText("Show manually selected result").performClick()
+        ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("P2").performClick()
         ui.onNodeWithText("P4").performClick()
-        ui.onAllNodesWithText("Next →")[0].assertIsNotEnabled()
-        ui.onNode(hasSetTextAction()).performTextReplacement("1")
-        ui.onNodeWithText("Show manually selected result").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next →").performClick()
         ui.runOnIdle {
-            assertEquals(listOf(4, 3), (f.confirmed.single() as InformationProposition.NumericResult).subjectSeats)
+            assertEquals(listOf(3, 4), (f.confirmed.single() as InformationProposition.NumericResult).subjectSeats)
         }
     }
 
@@ -298,6 +281,12 @@ class ClocktowerD2UiTest {
                         ghostVoteAuthority = ClocktowerGhostVoteAuthority(), poisonedPlayerName = null,
                         aliveCards = cards, chambermaidTargetCards = cards, mayorRedirectTargetCards = emptyList(),
                         step = current, surfacePlan = clocktowerNightSurfacePlan(current, ClocktowerPhase.Night),
+                        numericResolution = if (role == "Chambermaid" && subjects().size == 2)
+                            HostNumericResolution(
+                                listOf(1), subjects().sorted(),
+                                com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
+                                emptySet(), false,
+                            ) else null,
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
                         selectedName = "P2", fortuneTellerFirst = first.value, fortuneTellerSecond = second.value,
                         chambermaidFirst = first.value, chambermaidSecond = second.value, redHerring = null,
