@@ -2,19 +2,19 @@
 
 ## 当前有效开发进度与下一步（优先于下方旧审计）
 
-**权威五批合同：** [PR #342 的 `HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md`](https://github.com/Jazz0006/CampBoardGameHost/blob/docs/host-table-information-rebuild-20261022/docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。合同仍在独立 Draft #342，当前代码分支尚无此文件；不要把未合并文档错当作已在 `main`。
+**权威五批合同：** [`HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md`](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已由旧 #342 规划分支移入本轮 main 集成文档。所有阶段以此为准。
 
 | 批次 | 已验证事实 | 当前状态 |
 | --- | --- | --- |
-| Stage 1a/1b — 统一卡片视觉 | [Draft #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) HEAD `1ea2c9182cef31ebf0ede29cbfc8dd6545e0a80f`；Android CI #4543 / R2 #4110 SUCCESS；死亡/鬼票/醉毒、普通/特殊虚线与选中次序分层，旧 `ClocktowerSquareTableSeatState` 及其消费者已清理 | **代码已实现并自动验证，未合并；真机视觉未验收** |
-| Stage 2 — 只读 Numeric / Pair Resolver | [Draft #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) Stage 2 已验证**生产代码提交** `bb024f42442e464fe168e59af6ebd4a945840cb8`（后续 docs-only commit 会推进 PR HEAD）；Android CI #4544 / R2 #4111 SUCCESS。新增 `clocktower/session/HostInformationResolvers.kt` 与 `HostInformationResolversTest.kt`，只读 Session 支持 Chef、Empath、Washerwoman、Librarian、Investigator；独立判断信息源醉毒与 Spy/Recluse 特殊登记 | **求值模块已实现并自动验证；尚未接入 UI 或 AI 生产消费者，未合并** |
+| Stage 1a/1b — 统一卡片视觉 | [已合并 #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源 `1ea2c918` / main `78d2b115`；Android CI #4543 / R2 #4110 SUCCESS；死亡/鬼票/醉毒、普通/特殊虚线与选中次序分层，旧 `ClocktowerSquareTableSeatState` 及其消费者已清理 | **已合并 main；真机视觉未验收** |
+| Stage 2 — 只读 Numeric / Pair Resolver | [已合并 #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42` / main `d3a75c99`；Android CI #4544 / R2 #4111 SUCCESS。新增 `clocktower/session/HostInformationResolvers.kt` 与 `HostInformationResolversTest.kt`，只读 Session 支持 Chef、Empath、Washerwoman、Librarian、Investigator；独立判断信息源醉毒与 Spy/Recluse 特殊登记 | **已合并 main；尚未接入 UI 或 AI 生产消费者** |
 | Stage 3 — 厨师 / 共情者数字 UI | 需把当前 Session Resolver 接进 `ClocktowerNightStepUi` / HostScreen 与当前信息步进 | **下一步：实际实现，不是重新规划** |
 | Stage 4 — 洗衣妇 / 图书管理员 / 调查员 Pair UI | 先选两个座位、当前查询角色短名单与来源分区、AI 三模式 | 待实施 |
 | Stage 5 — 钟表匠 / 侍女及全局验收 | 后续补精确能力语义与真实设备/交互验收 | 待实施 |
 
-**立即实施 Stage 3：** 从 `feature/host-information-resolvers-20261022` 的已验证 HEAD `bb024f42` 开始（或检查实时 HEAD 后建立其子分支），切勿直接从未合并 Stage 1/2 的 `main` 创建不含 Resolver 的工作树。先逐个审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`ClocktowerSessionHost.kt`、`clocktowerDeterminedNumericResult` 与 D2 唯一 Observation。让正常确定结果只出现一个“展示给玩家：N”，多种真裁量提供单选并高亮当前可靠的 AI 建议，严守当前查询和预览失效/重预览/Next。正式完成迁移同批删除任意非负数文本输入与废弃分支/测试。只增高价值行为回归，提交推送运行准确 SHA 的完整 Android CI/R2，继续 Draft，不擅自合并/改写历史。
+**立即实施 Stage 3：** 从最新 `main`（已包含 #343/#344；至少 `d3a75c99`）派生干净 Stage 3 分支，先检查实时 HEAD/工作树。先逐个审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`ClocktowerSessionHost.kt`、`clocktowerDeterminedNumericResult` 与 D2 唯一 Observation。让正常确定结果只出现一个“展示给玩家：N”，多种真裁量提供单选并高亮当前可靠的 AI 建议，严守当前查询和预览失效/重预览/Next。正式完成迁移同批删除任意非负数文本输入与废弃分支/测试。只增高价值行为回归，提交推送运行准确 SHA 的完整 Android CI/R2，继续 Draft，不擅自合并/改写历史。
 
-**分支关系：** #344 堆叠在 #343（#343 以 `main` 为 base），#342 文档合同独立、#341 酒鬼方桌独立。两者共享的 Renderer 等文件后续集成必须核对冲突；当前绝不自动合并/覆盖。独立未修复 P1：活人可以提名死人（当前 UI 错误限制）、占卜师等固定布尔信息求值另行审计；这些不属于 Stage 3 的随意扩 scope。CI ≠ 真机；任何付费 API 测试单独授权。
+**分支关系：** #343、#344 已先后 squash 合并入 main；#342 的权威设计已通过本轮新文档集成移入主线，原 Draft 应在确认后关闭；#341 酒鬼方桌与新的 Renderer 发生语义冲突，需要迁移后单独验收；#336 旧拆分仍冲突，先审核独有代码再处置。独立未修复 P1：活人提名死人、占卜师固定布尔真值；均不要误认为 Stage 3 已完成。CI ≠ 真机；付费 API 需授权。
 
 **证据与完整交接：** [第二批验收与第三批入口](HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)、[下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md)、[测试策略](TESTING_STRATEGY.md)。
 
