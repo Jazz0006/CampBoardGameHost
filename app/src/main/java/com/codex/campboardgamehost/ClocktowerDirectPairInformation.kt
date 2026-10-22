@@ -14,19 +14,19 @@ internal data class ClocktowerDirectPairSelection(
     val noneSelected: Boolean = false,
 ) {
     fun chooseRole(role: String): ClocktowerDirectPairSelection =
-        ClocktowerDirectPairSelection(roleId = role)
+        copy(roleId = role, noneSelected = false)
 
     fun chooseNone(): ClocktowerDirectPairSelection =
         ClocktowerDirectPairSelection(noneSelected = true)
 
     fun chooseSeat(seat: Int, seatCount: Int): ClocktowerDirectPairSelection {
-        if (roleId == null || seat !in 1..seatCount) return this
+        if (seat !in 1..seatCount) return this
         return when (seat) {
-            firstSeat -> copy(firstSeat = secondSeat, secondSeat = null)
-            secondSeat -> copy(secondSeat = null)
-            else -> if (firstSeat == null) copy(firstSeat = seat)
-                else if (secondSeat == null) copy(secondSeat = seat)
-                else copy(firstSeat = seat, secondSeat = null)
+            firstSeat -> copy(firstSeat = secondSeat, secondSeat = null, noneSelected = false)
+            secondSeat -> copy(secondSeat = null, noneSelected = false)
+            else -> if (firstSeat == null) copy(firstSeat = seat, noneSelected = false)
+                else if (secondSeat == null) copy(secondSeat = seat, noneSelected = false)
+                else copy(firstSeat = seat, secondSeat = null, noneSelected = false)
         }
     }
 

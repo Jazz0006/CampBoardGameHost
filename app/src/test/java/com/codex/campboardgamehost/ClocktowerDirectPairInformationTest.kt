@@ -11,8 +11,8 @@ class ClocktowerDirectPairInformationTest {
     private val roles = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
 
     @Test fun `direct role and two seats records exact typed pair`() {
-        val selection = ClocktowerDirectPairSelection().chooseRole("Baron")
-            .chooseSeat(4, 8).chooseSeat(2, 8)
+        val selection = ClocktowerDirectPairSelection()
+            .chooseSeat(4, 8).chooseSeat(2, 8).chooseRole("Baron")
         val option = requireNotNull(selection.toDisplayOption(
             "Investigator", 8, roles, { it }, "Investigator", "en",
         ))
@@ -25,6 +25,14 @@ class ClocktowerDirectPairInformationTest {
         assertEquals(false, option.isTruthful)
     }
 
+    @Test fun `role selection after both seats preserves the selected physical pair`() {
+        val seats = ClocktowerDirectPairSelection().chooseSeat(2, 8).chooseSeat(7, 8)
+        assertEquals(listOf(2, 7), listOf(seats.firstSeat, seats.secondSeat))
+        val selected = seats.chooseRole("Baron")
+        assertEquals(listOf(2, 7), listOf(selected.firstSeat, selected.secondSeat))
+        assertEquals("Baron", selected.roleId)
+    }
+
     @Test fun `incomplete unknown or same seats cannot publish`() {
         val selection = ClocktowerDirectPairSelection().chooseRole("Baron").chooseSeat(2, 8)
         assertNull(selection.toDisplayOption("Investigator", 8, roles, { it }, "info", "en"))
@@ -32,6 +40,33 @@ class ClocktowerDirectPairInformationTest {
         assertNull(selection.chooseSeat(2, 8).firstSeat)
         assertNull(ClocktowerDirectPairSelection("Missing", 1, 2)
             .toDisplayOption("Investigator", 8, roles, { it }, "info", "en"))
+    }
+
+    @Test fun `current pair AI proposal is rejected when Session role domain changes`() {
+        val proposed = requireNotNull(
+            ClocktowerDirectPairSelection("Soldier", 2, 3).toDisplayOption(
+                "Washerwoman", 5, roles, { it }, "Washerwoman", "en",
+            )
+        )
+        val allowed = com.codex.campboardgamehost.clocktower.session.HostPairResolution(
+            options = listOf(com.codex.campboardgamehost.clocktower.session.HostPairRoleOption(
+                RoleId("Soldier"), com.codex.campboardgamehost.clocktower.session.HostPairRoleSource.IN_PLAY)),
+            ordinaryCandidateSeats = setOf(2), specialCandidateSeats = emptySet(),
+            canShowNoOutsiders = false,
+            sourceAbility = com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
+            productShortlist = false,
+        )
+        val current = { first: Int?, second: Int? ->
+            allowed.takeIf { first == 2 && second == 3 }
+        }
+        assertEquals("Soldier", clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, current)?.roleId)
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 2, roles, current))
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, { _, _ -> allowed.copy(options = emptyList()) }))
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, { _, _ -> null }))
     }
 
     @Test fun `none is a typed absence not a derived legal result`() {
