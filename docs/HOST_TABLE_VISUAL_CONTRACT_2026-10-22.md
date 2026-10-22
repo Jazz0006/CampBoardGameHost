@@ -1,6 +1,6 @@
 # Host 方桌视觉合同（2026-10-22，长期原则）
 
-> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已通过合并 #345 移入 main。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Resolver 尚未接入 UI**；下一步 Stage 3 Chef/Empath 数字界面，Stage 4 Pair，Stage 5 其余角色与真机验收。#341 旧酒鬼方桌已通过兼容共享 Renderer 的合并 #346 替代（Android CI #4551 / R2 #4115 SUCCESS），真机视觉仍未验证。
+> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已通过合并 #345 移入 main。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Stage 3 Chef/Empath 数字 Resolver 已接入统一方桌**，代码 `44fb05c7` 经完整 Android CI #4562 / R2 #4124 SUCCESS，Draft #348 待合并；下一步 Stage 4 Pair，Stage 5 其余角色与真机验收。#341 旧酒鬼方桌已通过兼容共享 Renderer 的合并 #346 替代（Android CI #4551 / R2 #4115 SUCCESS），真机视觉仍未验证。
 
 ## 唯一设计原则
 

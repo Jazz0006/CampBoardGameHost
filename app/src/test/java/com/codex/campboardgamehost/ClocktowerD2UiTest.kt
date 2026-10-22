@@ -106,7 +106,7 @@ class ClocktowerD2UiTest {
     }
 
     @Test fun automaticFailureRetryAndLateResponseStayOnCurrentRevision() {
-        val host = Host("Chef", StorytellerOperationMode.AI_AUTOMATIC)
+        val host = Host("Empath", StorytellerOperationMode.AI_AUTOMATIC)
         host.openingEnabled.value = false
         ui.setContent { host.Content() }
         ui.onNodeWithText("Retry AI information").assertIsEnabled().performClick()
@@ -114,16 +114,16 @@ class ClocktowerD2UiTest {
         val oldKey = host.adviceKey.value
         val requestId = requireNotNull(host.requestId)
         ui.runOnIdle { host.session.recordPlayerInput(); host.refresh() }
-        ui.onNodeWithText("Next").assertIsNotEnabled()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.runOnIdle { host.deliver(oldKey, requestId, "1") }
-        ui.onNodeWithText("Show recommended: 1").assertDoesNotExist()
-        ui.onNodeWithText("Next").assertIsNotEnabled()
+        ui.onNodeWithText("Show to player: 1").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.onNodeWithText("Retry AI information").performClick()
-        ui.runOnIdle { host.deliver(host.adviceKey.value, requireNotNull(host.requestId), "2") }
-        ui.onNodeWithText("Show recommended: 2").performClick()
+        ui.runOnIdle { host.deliver(host.adviceKey.value, requireNotNull(host.requestId), "1") }
+        ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
-        ui.onNodeWithText("Next").performTouchInput { doubleClick() }
-        ui.runOnIdle { assertEquals(2, (host.session.state.epistemicObservationLog.records.single()
+        ui.onNodeWithText("Next →").performTouchInput { doubleClick() }
+        ui.runOnIdle { assertEquals(1, (host.session.state.epistemicObservationLog.records.single()
             .proposition as InformationProposition.NumericResult).value) }
     }
 
@@ -305,32 +305,29 @@ class ClocktowerD2UiTest {
     private fun numericHost(mode: StorytellerOperationMode, role: String = "Chef") {
         val host = Host(role, mode)
         ui.setContent { host.Content() }
-        ui.onNodeWithText("Next").assertIsNotEnabled()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
         assertEquals(0, host.session.state.epistemicObservationLog.records.size)
-        if (mode == StorytellerOperationMode.AI_AUTOMATIC) {
-            ui.onNode(hasSetTextAction()).assertDoesNotExist()
-            ui.onNodeWithText("Show recommended: 1").performClick()
-        } else {
-            ui.onNode(hasSetTextAction()).performTextReplacement("2")
-            ui.onNodeWithText("Show manually selected result").performClick()
-        }
-        // The real player display unmounts the host content. Hardware Back must close it.
+        val discretionary = role == "Empath"
+        val first = 0
+        if (discretionary) ui.onNodeWithText("0").performClick()
+        ui.onNode(hasSetTextAction()).assertDoesNotExist()
+        ui.onNodeWithText("Show to player: $first").performClick()
         assertEquals(0, host.session.state.epistemicObservationLog.records.size)
         ui.runOnIdle { ui.activity.onBackPressedDispatcher.onBackPressed() }
-        ui.onNodeWithText("Next").assertIsEnabled()
-        if (mode != StorytellerOperationMode.AI_AUTOMATIC) {
-            ui.onNode(hasSetTextAction()).performTextReplacement("3")
-            ui.onNodeWithText("Next").assertIsNotEnabled()
-            ui.onNodeWithText("Show manually selected result").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        if (discretionary) {
+            ui.onNode(hasClickAction() and hasText("1", substring = true)).performClick()
+            ui.onNodeWithText("Next →").assertIsNotEnabled()
+            ui.onNodeWithText("Show to player: 1").performClick()
             ui.onNodeWithText("Close display card").performClick()
         }
         assertEquals(0, host.session.state.epistemicObservationLog.records.size)
-        ui.onNodeWithText("Next").performClick()
+        ui.onNodeWithText("Next →").performClick()
         ui.runOnIdle {
             val records = host.session.state.epistemicObservationLog.records
             assertEquals(1, records.size)
             assertEquals(setOf(1), records.single().recipientSeats)
-            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) 1 else 3,
+            assertEquals(if (discretionary) 1 else 0,
                 (records.single().proposition as InformationProposition.NumericResult).value)
         }
     }
@@ -486,8 +483,13 @@ class ClocktowerD2UiTest {
             ui.onNodeWithText("P3").performClick()
             ui.onNodeWithText("Next →").performClick()
         }
-        ui.onNode(hasSetTextAction()).performTextReplacement("1")
-        ui.onNodeWithText("Show manually selected result").performClick()
+        if (script == ClocktowerScript.TroubleBrewing) {
+            // Poisoner and Imp occupy neighbouring seats 4/5: Chef's Host value is 1.
+            ui.onNodeWithText("Show to player: 1").performClick()
+        } else {
+            ui.onNode(hasSetTextAction()).performTextReplacement("1")
+            ui.onNodeWithText("Show manually selected result").performClick()
+        }
         ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next").performClick()

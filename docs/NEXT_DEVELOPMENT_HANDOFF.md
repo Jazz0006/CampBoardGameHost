@@ -1,4 +1,10 @@
-# 当前开发交接（2026-10-22，第三批 Chef/Empath UI 实施入口）
+# 当前开发交接（2026-10-22，Stage 3 已通过自动化验收 / 下一步 Stage 4）
+
+> **Stage 3 方桌接线复审（2026-10-22）：** 开发分支 `feature/host-numeric-chef-empath-stage3-20261022` / Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)。原 `2799930c` 完整 Android CI #4560 / R2 #4122 成功，但复审确认 Chef/Empath 仍由独立数字全屏页面承载，且存在未提交的导航删改。现将 Chef/Empath 合入统一 `ClocktowerNightFullScreenSurface` 方桌分发，复用 `ClocktowerHostSquareTableScaffold`、唯一座位投影及底部 Host/Next，取消数字组件中的重复导航；新增 360×520 共享方桌 Compose 回归；保留 Session `NumericInformationResolver` / AI 当前建议校验 / D2 改选重预览及下一步唯一 Observation，Stage 5 旧文本输入不动。**最终代码 `44fb05c769735826187a66008749432e25368ea4` 的完整 Android CI #4562 / R2 #4124 已全部 SUCCESS，PR 检查 4/4 成功。** 首次 UI 接线代码 CI #4561 因完整对局测试仍点击旧 `Next` 而失败；下一提交将该测试改为共享方桌 `Next →`（钟表匠 Stage 5 路径保留），重新通过全量检查。见 [Stage 3 验收记录](HOST_INFORMATION_STAGE3_ACCEPTANCE_2026-10-22.md)。真机、付费模型未执行；Stage 4/5 不在本批范围。
+
+**下一批入口：** 在确认 Draft #348 合并状态后，依据 [五批合同](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 进入 Stage 4 Washerwoman/Librarian/Investigator Pair UI；不要重新规划已完成的 Stage 3。真机/付费模型均未执行。
+
+## 历史 Stage 3 开工交接（完成后以本页顶部状态为准）
 
 ## 下一轮必须直接执行（当前权威）
 
