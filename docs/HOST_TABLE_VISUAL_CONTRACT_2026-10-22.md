@@ -1,6 +1,6 @@
 # Host 方桌视觉合同（2026-10-22，长期原则）
 
-> **最新批准的新五批合同**：[PR #342 的 `HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md`](https://github.com/Jazz0006/CampBoardGameHost/blob/docs/host-table-information-rebuild-20261022/docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)，当前代码分支尚未包含该未合并文件；其新视觉/信息角色交互规则优先于本文早期批次分类。共享卡片视觉 Stage 1 已在 [Draft #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) `1ea2c918` 实施、Android CI #4543 / R2 #4110 通过：常驻阵营/亡/鬼票/醉/毒，操作金色长虚线/特殊青色短虚线/选中实线，中央唤醒提示替代粗金框，删除旧互斥 SeatState。信息 Resolver Stage 2 已在 [Draft #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) `bb024f42` 实施、Android CI #4544 / R2 #4111 通过；**未接入数字/Pair UI**。Stage 3 下一步是 Chef/Empath 数字 UI，Stage 4 是 Pair UI，Stage 5 是其余求值及真实设备验收。两个 PR 均未合并，真机视觉未验证；#341 酒鬼方桌独立 Draft。
+> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已从旧 Draft #342 移入主线集成分支。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Resolver 尚未接入 UI**；下一步 Stage 3 Chef/Empath 数字界面，Stage 4 Pair，Stage 5 其余角色与真机验收。#341 酒鬼方桌的旧 SeatState 仍需迁移，真机视觉仍未验证。
 
 ## 唯一设计原则
 
