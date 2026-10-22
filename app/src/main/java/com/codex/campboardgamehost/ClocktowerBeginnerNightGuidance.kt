@@ -34,6 +34,7 @@ internal fun clocktowerBeginnerNightGuidance(
     cards: List<PlayerCard>,
     language: String,
     groupTeam: ClocktowerTeam? = null,
+    actorIsPoisoned: Boolean = false,
 ): ClocktowerBeginnerNightGuidance? {
     val resolvedActor = actor ?: return null
     val seat = cards.indexOfFirst { card -> card.name == resolvedActor.name }
@@ -67,7 +68,7 @@ internal fun clocktowerBeginnerNightGuidance(
     val shownToPlayer = if (isDrunk) shownRole ?: actualRole else actualRole
     val status = listOfNotNull(
         (if (language == "en") "Drunk" else "醉").takeIf { isDrunk },
-        (if (language == "en") "Poisoned" else "毒").takeIf { resolvedActor.poisoned },
+        (if (language == "en") "Poisoned" else "毒").takeIf { actorIsPoisoned },
     ).joinToString(" · ")
     val roleContext = roleLabel(shownToPlayer) +
         status.takeIf { it.isNotBlank() }?.let { "（$it）" }.orEmpty()

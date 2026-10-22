@@ -61,6 +61,14 @@ class ClocktowerBeginnerNightGuidanceTest {
         assertEquals("张三", guidance?.actorLine)
         assertNull(guidance?.instruction)
         assertEquals("唤醒 1号 · 共情者（醉）\n张三", guidance?.asWakeInstruction())
+        val poisoned = clocktowerBeginnerNightGuidance(
+            action = ClocktowerNightAction.None,
+            actor = actor,
+            cards = listOf(actor),
+            language = "zh",
+            actorIsPoisoned = true,
+        )
+        assertEquals("唤醒 1号 · 共情者（醉 · 毒）", poisoned?.wakeLine)
     }
 
     @Test
