@@ -2,7 +2,6 @@ package com.codex.campboardgamehost
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -29,7 +28,6 @@ class ClocktowerNumericCompactUiTest {
                         values = listOf(1), recommendedValue = null,
                         lastPreviewValue = null, automaticOnly = false,
                         language = "en", draftKey = "small:chef",
-                        onHostTools = {}, onNext = {},
                         onConfirm = { shown = it }, onDraftChanged = {},
                     )
                 }
@@ -37,7 +35,8 @@ class ClocktowerNumericCompactUiTest {
         }
         ui.onNode(hasSetTextAction()).assertDoesNotExist()
         ui.onNodeWithText("Show to player: 1").assertExists().performClick()
-        ui.onNodeWithText("Next").assertIsNotEnabled()
+        // This center component does not duplicate the outer Host/Next controls.
+        ui.onNodeWithText("Next").assertDoesNotExist()
         ui.runOnIdle { assertEquals(1, shown) }
     }
 
@@ -49,7 +48,6 @@ class ClocktowerNumericCompactUiTest {
                         values = listOf(0, 1, 2), recommendedValue = null,
                         lastPreviewValue = null, automaticOnly = true,
                         language = "en", draftKey = "small:empath",
-                        onHostTools = {}, onNext = {},
                         onConfirm = {}, onDraftChanged = {},
                     )
                 }

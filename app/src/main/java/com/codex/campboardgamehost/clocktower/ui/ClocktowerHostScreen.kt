@@ -719,7 +719,9 @@ internal fun ClocktowerJudgeScreen(
             onHostTools = onHostTools,
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
-            lastPreviewLabel = currentInformationPreview?.takeIf { isPrivateInformationStep || isEvilInformationStep }?.let { preview ->
+            lastPreviewLabel = currentInformationPreview?.takeIf {
+                currentNumericResolution == null && (isPrivateInformationStep || isEvilInformationStep)
+            }?.let { preview ->
                 text("✓ 上次预览（下一步确认）", "✓ Last preview (confirm with Next)") + " · " +
                     listOfNotNull(preview.displayPrimary, preview.displaySecondary)
                         .filter(String::isNotBlank).joinToString(" · ")
