@@ -10,11 +10,11 @@
 | --- | --- | --- |
 | Stage 1（1a/1b）：共享座位视觉 | [已合并 PR #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源代码 `1ea2c918`，squash main `78d2b115`；Android CI #4543、R2 #4110 **SUCCESS**。独立阵营/死亡/鬼票/醉毒层与候选/选中层，旧互斥 SeatState 已删除 | **已合并**；真机视觉、小屏叠加验收未执行 |
 | Stage 2：只读数字 / Pair Resolver | [已合并 PR #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42`，squash main `d3a75c99`；Android CI #4544、R2 #4111 **SUCCESS**。只读 `HostInformationResolvers.kt` 支持 Chef/Empath 和 Washerwoman/Librarian/Investigator | **已合并**，但尚未接入生产数字/Pair UI |
-| Stage 3：厨师/共情者数字 UI | **下一步立即开发**，从 #344 当前分支最新 HEAD（包含 Stage 2 代码及已更新的交接文档）派生，读取真实 Session Resolver、迁移旧人工任意非负数字输入、实现唯一按钮/多值单选/AI 当前建议/预览再选/Next 唯一 Observation | 未实施 |
+| Stage 3：厨师/共情者数字 UI | **下一步立即开发**，从最新 `main`（至少 `b66f8fe3`，Stage 1/2/酒鬼方桌已合并）派生，读取真实 Session Resolver、迁移旧人工任意非负数字输入、实现唯一按钮/多值单选/AI 当前建议/预览再选/Next 唯一 Observation | 未实施 |
 | Stage 4：洗衣妇/图书管理员/调查员 Pair UI | 先选两座位，再根据当前 Session 给角色短名单；单列分组、三模式 | 未实施 |
 | Stage 5：钟表匠/侍女与整体设备验收 | 新能力语义、复用新 UI、5–15 人及真机验收 | 未实施 |
 
-**分支关系已收敛：** #343、#344 已依次 squash 合并进入 main，Stage 3 应从最新 main 派生；本合同最初在 #342，现通过独立文档集成入主线；酒鬼方桌 [#341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) 尚未合并且需要迁移新的共享 Renderer，不得自动覆盖。当前更新的路线图、交接与测试策略现均在 main，参见 [Stage 2 验收文档](https://github.com/Jazz0006/CampBoardGameHost/blob/feature/host-information-resolvers-20261022/docs/HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)。新对话务必实时核对 HEAD/工作树/PR，**此时 main 已包含 Resolver**；不得从早于 `d3a75c99` 的历史快照出发。独立待修 P1：白天被提名者可以死亡、固定布尔信息真值；没有真机/付费 API 验收。
+**分支关系已收敛：** #343、#344 已依次 squash 合并进入 main，Stage 3 应从最新 main 派生；本合同最初在 #342，现通过独立文档集成入主线；酒鬼方桌原 [#341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) 已由新的兼容实现 [#346](https://github.com/Jazz0006/CampBoardGameHost/pull/346) 迁移到共享 Renderer 并合并，原 #341 已关闭。原 #342 由 #345 替代，旧 #336 冲突拆分亦已关闭。当前无开放 PR。当前更新的路线图、交接与测试策略现均在 main，参见 [Stage 2 验收文档](https://github.com/Jazz0006/CampBoardGameHost/blob/feature/host-information-resolvers-20261022/docs/HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)。新对话务必实时核对 HEAD/工作树/PR，**此时 main 已包含 Resolver**；不得从早于 `d3a75c99` 的历史快照出发。独立待修 P1：白天被提名者可以死亡、固定布尔信息真值；没有真机/付费 API 验收。
 
 ## 0. 总目标与不可破坏边界
 

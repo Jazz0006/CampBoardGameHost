@@ -1,6 +1,6 @@
 # Host 方桌视觉合同（2026-10-22，长期原则）
 
-> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已从旧 Draft #342 移入主线集成分支。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Resolver 尚未接入 UI**；下一步 Stage 3 Chef/Empath 数字界面，Stage 4 Pair，Stage 5 其余角色与真机验收。#341 酒鬼方桌的旧 SeatState 仍需迁移，真机视觉仍未验证。
+> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已通过合并 #345 移入 main。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Resolver 尚未接入 UI**；下一步 Stage 3 Chef/Empath 数字界面，Stage 4 Pair，Stage 5 其余角色与真机验收。#341 旧酒鬼方桌已通过兼容共享 Renderer 的合并 #346 替代（Android CI #4551 / R2 #4115 SUCCESS），真机视觉仍未验证。
 
 ## 唯一设计原则
 
@@ -17,5 +17,5 @@
 - 唯一 Session 的游戏事实 → `HostSeatPresentation` / `ClocktowerSquareTableSeatUiModel` **只读投影** → 唯一 `ClocktowerSquareTableSeat` 渲染。不在 UI 内另造可写 GameState/实际阵营或基于展示角色、侦查登记推测阵营。
 - 白天/夜晚仅存在一个共享 MaterialTheme+Surface 配置入口，提供不同 `ColorScheme`；所有日间子页面通过 `ClocktowerDayTableScaffold`，所有夜间步骤通过既有 Night Host。未知阵营（发牌前）才使用中性卡片，不把玩家阵营标签公开到传手机/预览界面。
 - 替换原有按选中状态覆盖卡片颜色的唯一调色路径，完成消费者迁移就删除旧实现；禁止长期保留并行主题、并行卡片着色或第二套游戏状态。
-- 这条原有的“第一批主题/第二批阵营卡片”属于旧分类，**已由 2026-10-22 新五批重建方案取代**。现行 Stage 1 为统一卡片视觉，Stage 2 为 Numeric/Pair 只读 Resolver，Stage 3 为 Chef/Empath 数字 UI。酒鬼方桌选择在独立 Draft #341；不擅自将不同 PR 的代码覆盖或合并。D2 预览与 Next 边界始终不变。
+- 这条原有的“第一批主题/第二批阵营卡片”属于旧分类，**已由 2026-10-22 新五批重建方案取代**。现行 Stage 1 为统一卡片视觉，Stage 2 为 Numeric/Pair 只读 Resolver，Stage 3 为 Chef/Empath 数字 UI。酒鬼方桌选择已由 #346 迁移并合并 main，原 #341 已关闭；不恢复旧的状态枚举和多余虚线实现。D2 预览与 Next 边界始终不变。
 - 验收以真实代码/构建及高价值交互为主：日夜配色、红蓝文字对比、信息不泄漏、交互边框及死亡标记、TB/NGJ/小屏座位。代码 CI/R2 与真机视觉验收分别标注，不把构建成功等同现场效果。
