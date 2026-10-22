@@ -67,31 +67,40 @@ class ClocktowerD2UiTest {
         val host = Host(role, mode)
         ui.setContent { host.Content() }
         ui.onNodeWithText("Next →").assertIsNotEnabled()
+        val first = if (role == "Librarian") 3 else 2
+        val second = if (role == "Librarian") 4 else 3
+        val initialRole = when (role) {
+            "Washerwoman" -> "Soldier"
+            "Librarian" -> "Saint"
+            else -> "Poisoner"
+        }
         if (mode != StorytellerOperationMode.MANUAL) {
-            ui.onNode(hasClickAction() and hasText("P2 + P3", substring = true)).performClick()
+            ui.onNode(hasClickAction() and hasText("P$first + P$second", substring = true)).performClick()
         } else {
-            ui.onNode(hasClickAction() and hasText("Choose character")).performClick()
-            ui.onNodeWithText("Chef").performClick()
-            ui.onNodeWithText("P2").performClick()
-            ui.onNodeWithText("P3").performClick()
-            ui.onNodeWithText("Show to player").performClick()
+            // Stage 4: choose two physical seats BEFORE choosing the matching role.
+            ui.onNodeWithText("P$first").performClick()
+            ui.onNodeWithText("P$second").performClick()
+            if (role == "Washerwoman") {
+                ui.onNodeWithText("Choose character").performClick()
+                ui.onNodeWithText(initialRole).performClick()
+            }
+            ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
         }
         assertEquals(0, host.session.state.epistemicObservationLog.records.size)
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next →").assertIsEnabled()
         if (mode != StorytellerOperationMode.AI_AUTOMATIC) {
-            if (mode != StorytellerOperationMode.MANUAL) {
+            if (mode == StorytellerOperationMode.AI_ASSISTED) {
                 ui.onNodeWithText("Manual selection").performClick()
             }
-            ui.onNodeWithText("Chef").performClick()
-            ui.onNodeWithText("Empath").performClick()
+            // Remove first seat, retain second, then select a new partner.
+            ui.onNodeWithText("P$first").performClick()
+            val newPartner = if (role == "Librarian") 2 else 4
+            ui.onNodeWithText("P$newPartner").performClick()
             ui.onNodeWithText("Next →").assertIsNotEnabled()
-            // A late recommendation must not turn this manual edit back into the AI choice.
-            ui.runOnIdle { host.pairRole.value = "Saint" }
-            ui.onNodeWithText("Empath").assertExists()
-            ui.onNodeWithText("P3").performClick()
-            ui.onNodeWithText("P4").performClick()
-            ui.onNodeWithText("Show to player").performClick()
+            // An asynchronous changed recommendation must not clear the human draft.
+            ui.runOnIdle { host.pairRole.value = "Mayor" }
+            ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
             ui.onNodeWithText("Close display card").performClick()
         }
         ui.onNodeWithText("Next →").performClick()
@@ -100,8 +109,12 @@ class ClocktowerD2UiTest {
             assertEquals(setOf(1), observation.recipientSeats)
             val pair = (observation.proposition as InformationProposition.AnyOf).alternatives
                 .map { it as InformationProposition.RoleAt }
-            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) listOf(2, 3) else listOf(3, 4), pair.map { it.seat })
-            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) "Chef" else "Empath", pair.first().role.value)
+            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC)
+                listOf(first, second) else listOf(second, if (role == "Librarian") 2 else 4).sorted(),
+                pair.map { it.seat })
+            assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) initialRole else
+                when (role) { "Washerwoman" -> "Mayor"; "Librarian" -> "Saint"; else -> "Poisoner" },
+                pair.first().role.value)
         }
     }
 
@@ -532,9 +545,15 @@ class ClocktowerD2UiTest {
     /** Uses the production JudgeScreen and real Session; only external input/provider callbacks are fixtures. */
     private class Host(role: String, val mode: StorytellerOperationMode,
         private val script: ClocktowerScript = ClocktowerScript.TroubleBrewing,
-        roles: List<String> = listOf(role, "Soldier", "Mayor", "Saint", "Recluse")) {
+        roles: List<String> = listOf(role, "Soldier",
+            if (role == "Investigator") "Poisoner" else "Mayor", "Saint", "Recluse")) {
         val openingEnabled = mutableStateOf(true)
-        val pairRole = mutableStateOf("Chef")
+        val pairRole = mutableStateOf(when (role) {
+            "Washerwoman" -> "Soldier"
+            "Librarian" -> "Saint"
+            "Investigator" -> "Poisoner"
+            else -> "Chef"
+        })
         val adviceKey = mutableStateOf<String?>(null)
         private val adviceError = mutableStateOf<String?>(null)
         private val choices = mutableStateOf<Map<String, SemanticResult>>(emptyMap())
@@ -605,7 +624,9 @@ class ClocktowerD2UiTest {
                 jointOpeningSemantics = if (!openingEnabled.value) emptyMap() else mapOf(1 to
                     if (cards[0].clocktowerRole?.enName in listOf("Washerwoman", "Librarian", "Investigator"))
                         HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
-                            "FUNCTIONING", "EVIDENCE_PAIR", listOf(2, 3), "ROLE", roleId = pairRole.value)
+                            "FUNCTIONING", "EVIDENCE_PAIR",
+                            if (cards[0].clocktowerRole?.enName == "Librarian") listOf(3, 4)
+                            else listOf(2, 3), "ROLE", roleId = pairRole.value)
                     else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
                         "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
                 demonAttackDraftTarget = target.value, poisonDraftTarget = target.value,

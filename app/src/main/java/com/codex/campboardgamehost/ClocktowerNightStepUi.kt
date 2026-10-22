@@ -60,6 +60,7 @@ internal fun ClocktowerNightStepCardLocalized(
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
     numericResolution: com.codex.campboardgamehost.clocktower.session.HostNumericResolution? = null,
+    pairResolver: ((String, Int, Int?, Int?) -> com.codex.campboardgamehost.clocktower.session.HostPairResolution?)? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     selectedName: String?,
     fortuneTellerFirst: String?,
@@ -617,7 +618,11 @@ internal fun ClocktowerNightStepCardLocalized(
                         clocktowerRoleLabel(com.codex.campboardgamehost.clocktower.domain.RoleId(roleId), language)
                     },
                     language = language,
-
+                    resolvePair = { first, second ->
+                        val roleId = presentationRoleEnName
+                        if (roleId == null || actionActorSeat == null) null
+                        else pairResolver?.invoke(roleId, actionActorSeat, first, second)
+                    },
                     onHostTools = onHostTools,
                     onNext = onNext,
                     onConfirm = ::showRecommendedDisplayOption,

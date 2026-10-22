@@ -11,8 +11,8 @@ class ClocktowerDirectPairInformationTest {
     private val roles = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
 
     @Test fun `direct role and two seats records exact typed pair`() {
-        val selection = ClocktowerDirectPairSelection().chooseRole("Baron")
-            .chooseSeat(4, 8).chooseSeat(2, 8)
+        val selection = ClocktowerDirectPairSelection()
+            .chooseSeat(4, 8).chooseSeat(2, 8).chooseRole("Baron")
         val option = requireNotNull(selection.toDisplayOption(
             "Investigator", 8, roles, { it }, "Investigator", "en",
         ))
@@ -23,6 +23,14 @@ class ClocktowerDirectPairInformationTest {
             (pair.alternatives.first() as InformationProposition.RoleAt).role)
         assertEquals(listOf(2, 4), option.presentationSubjectSeats)
         assertEquals(false, option.isTruthful)
+    }
+
+    @Test fun `role selection after both seats preserves the selected physical pair`() {
+        val seats = ClocktowerDirectPairSelection().chooseSeat(2, 8).chooseSeat(7, 8)
+        assertEquals(listOf(2, 7), listOf(seats.firstSeat, seats.secondSeat))
+        val selected = seats.chooseRole("Baron")
+        assertEquals(listOf(2, 7), listOf(selected.firstSeat, selected.secondSeat))
+        assertEquals("Baron", selected.roleId)
     }
 
     @Test fun `incomplete unknown or same seats cannot publish`() {

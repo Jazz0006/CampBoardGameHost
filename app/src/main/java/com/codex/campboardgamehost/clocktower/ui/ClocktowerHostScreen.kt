@@ -780,6 +780,11 @@ internal fun ClocktowerJudgeScreen(
                     currentAiRequestBlocked
                 },
                 numericResolution = currentNumericResolution,
+                pairResolver = { role, seat, first, second ->
+                    PairInformationResolver.resolve(
+                        sessionState, nightRuleset, RoleId(role), seat, first, second,
+                    )
+                },
                 // AI may select the result but NEVER open the player fullscreen
                 // automatically. Showing private information requires a live tap.
                 step = currentStep,
