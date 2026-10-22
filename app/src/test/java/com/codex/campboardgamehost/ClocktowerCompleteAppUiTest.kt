@@ -70,17 +70,11 @@ class ClocktowerCompleteAppUiTest {
     }
 
     private fun numericInformation(script: ClocktowerScript) {
-        if (script == ClocktowerScript.TroubleBrewing) {
-            ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
-        } else {
-            // Clockmaker is intentionally unchanged until Stage 5.
-            ui.onNode(hasSetTextAction()).performTextReplacement("1")
-            click("Show manually selected result")
-        }
+        // Both TB Chef and NGJ Clockmaker now use the same Session-resolved
+        // square-table numeric preview rather than an arbitrary text field.
+        ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
         click("Close display card")
-        // Stage 3 numeric roles use the shared square-table navigation. Stage 5
-        // Clockmaker keeps its existing inline Next until its own migration.
-        click(if (script == ClocktowerScript.TroubleBrewing) "Next →" else "Next")
+        click("Next →")
     }
 
     private fun nominateAndExecute(nominator: PlayerState, target: PlayerState) {
