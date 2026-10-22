@@ -1,6 +1,6 @@
 # 当前开发交接（2026-10-22，Stage 3 Chef/Empath 实施与验收）
 
-> **本轮实施记录：** 从干净的 main `d1327648a8520a498b3cfc6adfb33f1be3807970` 新建 `feature/host-numeric-chef-empath-stage3-20261022`，实际生产 HostScreen 接入 `NumericInformationResolver`；Chef/Empath 唯一结果展示按钮、裁量值单选／AI 推荐验证、原 D2 返回后修改须重预览、唯一 Next Observation。原 `clocktowerDeterminedNumericResult` 删除；旧数字 TextField 仅限 Stage 5 才迁移的 Clockmaker/Chambermaid 使用。更新 D2/完整 App 回归及 360×520 组件测试。**已验收代码：** `c848a8f85a438ef24cd0593457e963d1789c2c49`，完整 Android [CI #4556](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39733213708) / [R2 #4118](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39733213825) 均 SUCCESS；初始 CI #4555 曾因紧凑布局测试 import 编译失败，已修复。Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) 未合并。真机和付费模型未执行；Stage 4/5 仍未实施。 真机和付费模型未执行；Stage 4/5 不在本批范围。
+> **Stage 3 方桌接线复审（2026-10-22）：** 开发分支 `feature/host-numeric-chef-empath-stage3-20261022` / Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)。原 `2799930c` 完整 Android CI #4560 / R2 #4122 成功，但复审确认 Chef/Empath 仍由独立数字全屏页面承载，且存在未提交的导航删改。现将 Chef/Empath 合入统一 `ClocktowerNightFullScreenSurface` 方桌分发，复用 `ClocktowerHostSquareTableScaffold`、唯一座位投影及底部 Host/Next，取消数字组件中的重复导航；新增 360×520 共享方桌 Compose 回归；保留 Session `NumericInformationResolver` / AI 当前建议校验 / D2 改选重预览及下一步唯一 Observation，Stage 5 旧文本输入不动。**本轮最终 SHA 的 Android CI/R2 尚待验证，不得用早前成功结果替代**。真机、付费模型未执行；Stage 4/5 不在本批范围。
 
 ## 历史 Stage 3 开工交接（完成后以本页顶部状态为准）
 

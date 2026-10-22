@@ -8,11 +8,11 @@
 | --- | --- | --- |
 | Stage 1a/1b — 统一卡片视觉 | [已合并 #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源 `1ea2c918` / main `78d2b115`；Android CI #4543 / R2 #4110 SUCCESS；死亡/鬼票/醉毒、普通/特殊虚线与选中次序分层，旧 `ClocktowerSquareTableSeatState` 及其消费者已清理 | **已合并 main；真机视觉未验收** |
 | Stage 2 — 只读 Numeric / Pair Resolver | [已合并 #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42` / main `d3a75c99`；Android CI #4544 / R2 #4111 SUCCESS。新增 `clocktower/session/HostInformationResolvers.kt` 与 `HostInformationResolversTest.kt`，只读 Session 支持 Chef、Empath、Washerwoman、Librarian、Investigator；独立判断信息源醉毒与 Spy/Recluse 特殊登记 | **已合并 main；尚未接入 UI 或 AI 生产消费者** |
-| Stage 3 — 厨师 / 共情者数字 UI | 本轮分支 `feature/host-numeric-chef-empath-stage3-20261022` 已从 main `d1327648` 派生；接入 Session Numeric Resolver、单值展示按钮、裁量单选及 AI 当前建议检查；保留 D2 最终 Observation | **已提交 Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)；代码 `c848a8f85a438ef24cd0593457e963d1789c2c49` 完整 Android CI #4556 / R2 #4118 SUCCESS；真机未验收，尚未合并** |
+| Stage 3 — 厨师 / 共情者数字 UI | 从 `d1327648` 创建 `feature/host-numeric-chef-empath-stage3-20261022` / Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)。生产 HostScreen 使用 Session `NumericInformationResolver`，按当前来源/座位/指标/subjects 验证 AI，单值唯一按钮、多值单选；新增 `ClocktowerNumericInformationSquareTableDialog`，使用共享方桌座位及统一 Host/Next 底部导航，移除数字页面独立导航；返回修改须重新预览，Next 只提交最终 Observation。初步实现曾通过 Android CI #4560 / R2 #4122（`2799930c`），**最终方桌接线尚待新 SHA CI/R2**。 | **Draft #348 在审；方桌接线代码已编写，待验证并合并。真机未验收** |
 | Stage 4 — 洗衣妇 / 图书管理员 / 调查员 Pair UI | 先选两个座位、当前查询角色短名单与来源分区、AI 三模式 | 待实施 |
 | Stage 5 — 钟表匠 / 侍女及全局验收 | 后续补精确能力语义与真实设备/交互验收 | 待实施 |
 
-**立即实施 Stage 3：** 从最新 `main`（已包含 #343/#344/#345/#346；至少 `b66f8fe3`）派生干净 Stage 3 分支，先检查实时 HEAD/工作树。先逐个审计 `ClocktowerDirectNumericResultUi.kt`、`ClocktowerNightStepUi.kt`、`clocktower/ui/ClocktowerHostScreen.kt`、`ClocktowerSessionHost.kt`、`clocktowerDeterminedNumericResult` 与 D2 唯一 Observation。让正常确定结果只出现一个“展示给玩家：N”，多种真裁量提供单选并高亮当前可靠的 AI 建议，严守当前查询和预览失效/重预览/Next。正式完成迁移同批删除任意非负数文本输入与废弃分支/测试。只增高价值行为回归，提交推送运行准确 SHA 的完整 Android CI/R2，继续 Draft，不擅自合并/改写历史。
+**Stage 3 验收边界：** Chef/Empath 必须在共享方桌内完成数字信息选择、预览与 Next；完整 Android CI/R2 以最终提交 SHA 为准，不能沿用先前 `2799930c` 的通过结果。Clockmaker/Chambermaid 任意数字输入留 Stage 5，Pair 界面改造留 Stage 4。通过后复核 Draft #348 再决定合并；当前不触发付费 API 或真机测试。
 
 **PR 清理已经完成：** #343/#344/#345/#346 已 squash 合并 main；#342 由 #345 替代并关闭，#341 由 #346 兼容改写替代并关闭，#336 旧冲突拆分已审计并关闭（其独有模块未直接移植）。当前开放 PR 为 0，详见 [收敛记录](HOST_PR_CONSOLIDATION_2026-10-22.md)。独立未修复 P1：活人提名死人、占卜师固定布尔真值；均不要误认为 Stage 3 已完成。CI ≠ 真机；付费 API 需授权。
 

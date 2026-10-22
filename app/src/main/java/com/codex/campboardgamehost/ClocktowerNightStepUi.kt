@@ -89,47 +89,14 @@ internal fun ClocktowerNightStepCardLocalized(
     val directNumericActorSeat = step.actor?.let { actor ->
         cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
     }
+    // Stage 3 Chef/Empath are rendered by the same square-table dispatcher as
+    // all other full-screen Host surfaces, not by the Stage 5 legacy input.
     if (step.isRealAction &&
         step.action == ClocktowerNightAction.None &&
+        step.roleEnName != "Chef" && step.roleEnName != "Empath" &&
         directNumericActorSeat != null &&
         clocktowerHasDirectNumericInput(step, directNumericActorSeat, cards)
     ) {
-        if (step.roleEnName == "Chef" || step.roleEnName == "Empath") {
-            val metric = (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric
-            val expectedMetric = if (step.roleEnName == "Chef")
-                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
-            else com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
-            val current = numericResolution?.takeIf { metric == expectedMetric }
-            if (current != null && current.values.isNotEmpty()) {
-                val advised = clocktowerMatchingNumericResult(
-                    step, directNumericActorSeat, aiSuggestedInformationOption?.proposition, current.subjectSeats,
-                )?.takeIf { it in current.values }
-                ClocktowerResolvedNumericResultUi(
-                    values = current.values,
-                    recommendedValue = advised,
-                    lastPreviewValue = clocktowerMatchingNumericResult(
-                        step, directNumericActorSeat, lastPreviewProposition, current.subjectSeats,
-                    ),
-                    automaticOnly = allowRuleDeterminedAutoUi,
-                    language = language,
-                    draftKey = informationDecisionKey,
-                    onHostTools = onHostTools,
-                    onNext = onNext,
-                    onConfirm = { value ->
-                        if (value in current.values) {
-                            clocktowerDirectNumericResult(
-                                step, directNumericActorSeat, value, cards, subjectSeats = current.subjectSeats,
-                            )?.let(onShowPlayerDisplay)
-                        }
-                    },
-                    onDraftChanged = onInformationDraftChanged,
-                )
-            } else {
-                Text(if (language == "en") "Current Host numeric query unavailable."
-                    else "当前 Host 数字信息尚不可用。")
-            }
-            return
-        }
         // Stage 5 roles retain their established path pending the separate semantic cutover.
         val determinedNumber = if (step.informationReliability ==
             com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE)
@@ -386,8 +353,6 @@ internal fun ClocktowerNightStepCardLocalized(
         val plannedSpecialistUnavailable = when (plannedFullScreenSurface) {
             ClocktowerNightFullScreenSurface.EvilInformation -> evilInfoSquareTablePresentation == null
             ClocktowerNightFullScreenSurface.PairInformation -> false
-            ClocktowerNightFullScreenSurface.Chef -> true
-            ClocktowerNightFullScreenSurface.Empath -> true
             ClocktowerNightFullScreenSurface.Undertaker -> !usesUndertakerSquareTable
             ClocktowerNightFullScreenSurface.Spy -> false
             ClocktowerNightFullScreenSurface.Clockmaker -> true
@@ -661,7 +626,49 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Chef,
-            ClocktowerNightFullScreenSurface.Empath -> renderPlainInformationFallback()
+            ClocktowerNightFullScreenSurface.Empath -> {
+                val metric = (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric
+                val expectedMetric = if (step.roleEnName == "Chef")
+                    com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
+                else com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
+                val current = numericResolution?.takeIf { metric == expectedMetric }
+                val advised = current?.let { resolved ->
+                    directNumericActorSeat?.let { seat ->
+                        clocktowerMatchingNumericResult(
+                            step, seat, aiSuggestedInformationOption?.proposition, resolved.subjectSeats,
+                        )
+                    }?.takeIf { it in resolved.values }
+                }
+                ClocktowerNumericInformationSquareTableDialog(
+                    seats = nightActionSeats,
+                    actorSeat = directNumericActorSeat,
+                    wakeInstruction = command,
+                    values = current?.values.orEmpty(),
+                    recommendedValue = advised,
+                    lastPreviewValue = current?.let { resolved ->
+                        directNumericActorSeat?.let { seat ->
+                            clocktowerMatchingNumericResult(
+                                step, seat, lastPreviewProposition, resolved.subjectSeats,
+                            )
+                        }
+                    },
+                    automaticOnly = allowRuleDeterminedAutoUi,
+                    language = language,
+                    draftKey = informationDecisionKey,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onConfirm = { value ->
+                        if (current != null && value in current.values) {
+                            directNumericActorSeat?.let { seat ->
+                                clocktowerDirectNumericResult(
+                                    step, seat, value, cards, subjectSeats = current.subjectSeats,
+                                )?.let(onShowPlayerDisplay)
+                            }
+                        }
+                    },
+                    onDraftChanged = onInformationDraftChanged,
+                )
+            }
 
             ClocktowerNightFullScreenSurface.Undertaker -> {
                 if (!usesUndertakerSquareTable) {
