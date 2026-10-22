@@ -12,14 +12,14 @@
 2. 统一 `ClocktowerPairInformationSquareTableDialog`：用户先点击两名不同物理座位；同一方桌再按当前 pair 求出可展示角色。正常 singleton 直接显示带完整信息的展示按钮；多个选项才用单列 Dropdown，按「在场角色」「恶魔伪装」来源分区、不重复来源列。可变更座位和角色，变更 pair 后旧角色不在当前集合则清空。
 3. 卡片继续使用唯一共享 `ClocktowerHostSquareTableScaffold`，角色/生死/毒酒/鬼票为 Session 只读投影；普通候选使用已有长虚线，Spy/Recluse 特殊候选用已有短虚线，其他座位仍可点击，候选只是提示。
 4. 健康 Librarian 无真实外来者时可展示「没有外来者」；醉毒信息源也可以显示短名单内允许的零结果。Investigator 不创造「没有爪牙」；Washerwoman 的恶魔伪装角色必须来自 Session 已确认列表，空短名单等语义沿用第二批 Resolver。
-5. MANUAL 直接手动选择；AI_ASSISTED 当前合法建议+人工编辑；AI_AUTOMATIC 仅当前可信推荐，缺失则等待/重试。推荐必须对应当前 pair、角色与 Session 局部短名单；迟到建议不覆盖手动草稿。
+5. MANUAL 直接手动选择；AI_ASSISTED 当前合法建议+人工编辑；AI_AUTOMATIC 仅当前可信推荐，缺失则等待/重试。推荐必须对应当前 pair、角色与 Session 局部短名单；Host 建议接纳与 AI 重新请求入口共享同一 Session 校验；迟到建议不覆盖手动草稿。
 6. 点击展示进入既有玩家私密全屏，不写事件；返回可修改，修改失效上次预览；只有 Next 提交最终一次 `Observation`。角色间无 Previous。未更动 Stage 5 钟表匠/侍女及付费 AI 调用路径。
 
 ## 实测范围 / 待更新
 
 - `ClocktowerD2UiTest` 覆盖 Washerwoman/Librarian/Investigator 手动选 pair 后的单选/多选、三模式的当前建议、改选后的 Next 门及唯一 Observation。
 - `ClocktowerDirectPairInformationTest` 验证先座位后角色，错误/过期当前 query AI 建议不可复用。
-- `ClocktowerPairCompactUiTest`：360×520 / 15 玩家共享方桌，先点两物理座位后才出现展示信息按钮、Next 在预览前不可提交。
+- `ClocktowerPairCompactUiTest`：360×520 / 15 玩家共享方桌，先点两物理座位后才出现展示信息按钮、Next 在预览前不可提交。回归发现受限页面原严格座位布局可能抛出异常；复用已有密度候选、`hostTableLayoutOrNull` 和 `hostTableLayoutBestEffort` 兜底，不重建另一个方桌排列算法。
 - 第一次提交 `ff96496a` CI/R2 已全绿；上述新增小屏与当前建议回归需再跑最终提交 SHA。
 - 不等价于真实设备渲染、人眼可读性、Android 物理强退测试或付费 API 实测。
 

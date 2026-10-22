@@ -142,8 +142,9 @@ internal fun hostTableSurfaceLayoutConstraints(
     availableWidth: Float,
     availableHeight: Float,
     playerCount: Int = 15,
+    densityOverride: ClocktowerSquareTableSeatDensity? = null,
 ): HostTableLayoutConstraints {
-    val seatDensity = clocktowerSquareTableSeatDensity(
+    val seatDensity = densityOverride ?: clocktowerSquareTableSeatDensity(
         playerCount = playerCount,
     )
     val maximumCenterWidth = (
@@ -199,14 +200,21 @@ internal fun ClocktowerSquareTableSeatSurface(
             availableHeight,
             seats.size,
         ) {
-            hostTableLayout(
-                playerCount = seats.size,
-                constraints = hostTableSurfaceLayoutConstraints(
-                    availableWidth = availableWidth,
-                    availableHeight = availableHeight,
-                    playerCount = seats.size,
-                ),
-            )
+            // The full-screen Host navigation reduces available height on
+            // 360×520 devices. Try every established card density before the
+            // existing best-effort fallback; never crash a live 15-player game.
+            val candidates = clocktowerSquareTableSeatDensityCandidates(seats.size)
+                .map { candidate ->
+                    hostTableSurfaceLayoutConstraints(
+                        availableWidth = availableWidth,
+                        availableHeight = availableHeight,
+                        playerCount = seats.size,
+                        densityOverride = candidate,
+                    )
+                }
+            candidates.firstNotNullOfOrNull { constraints ->
+                hostTableLayoutOrNull(seats.size, constraints)
+            } ?: hostTableLayoutBestEffort(seats.size, candidates.last())
         }
         require(abs(resolvedLayout.constraints.availableWidth - availableWidth) < 0.01f) {
             "Provided square-table layout width must match rendering constraints"
@@ -259,9 +267,10 @@ internal fun ClocktowerSquareTableSeatSurface(
         }
         val seatCardWidth = resolvedLayout.constraints.seatCardWidth
         val seatCardHeight = resolvedLayout.constraints.seatCardHeight
-        val seatDensity = clocktowerSquareTableSeatDensity(
-            playerCount = seats.size,
-        )
+        val seatDensity = clocktowerSquareTableSeatDensityCandidates(seats.size)
+            .firstOrNull {
+                it.cardWidth == seatCardWidth && it.cardHeight == seatCardHeight
+            } ?: clocktowerSquareTableSeatDensity(playerCount = seats.size)
         val tabletopGeometry = remember(resolvedLayout.constraints) {
             hostTableTabletopGeometry(resolvedLayout.constraints)
         }

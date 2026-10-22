@@ -566,13 +566,37 @@ internal fun ClocktowerJudgeScreen(
                 )
             }
         }
+        val pairInformationRole = currentStep.roleEnName?.takeIf {
+            currentStep.isRealAction && it in setOf("Washerwoman", "Librarian", "Investigator")
+        }
+        // Validate BOTH the UI action and the pending AI retry against the same
+        // current Session query. A stale opening proposal is not a current answer.
         val currentValidatedInformationOption = approvedOpeningOption?.takeIf { option ->
-            if (currentNumericResolution == null) true else {
-                val numeric = option.proposition as? com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult
-                numeric != null && option.displayKind == ClocktowerDisplayKind.Number &&
-                    currentNumericMetric == numeric.metric &&
-                    currentActorSeatForInformation == numeric.sourceSeat &&
-                    NumericInformationResolver.acceptsCurrentAdvice(sessionState, numeric)
+            when {
+                pairInformationRole != null -> {
+                    val seat = currentActorSeatForInformation
+                    seat != null && clocktowerCurrentPairRecommendation(
+                        option = option,
+                        abilityRole = pairInformationRole,
+                        seatCount = cards.size,
+                        scriptRoles = clocktowerRolesForScript(script),
+                        resolvePair = { first, second ->
+                            PairInformationResolver.resolve(
+                                sessionState, nightRuleset, RoleId(pairInformationRole),
+                                seat, first, second,
+                            )
+                        },
+                    ) != null
+                }
+                currentNumericResolution == null -> true
+                else -> {
+                    val numeric = option.proposition as?
+                        com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult
+                    numeric != null && option.displayKind == ClocktowerDisplayKind.Number &&
+                        currentNumericMetric == numeric.metric &&
+                        currentActorSeatForInformation == numeric.sourceSeat &&
+                        NumericInformationResolver.acceptsCurrentAdvice(sessionState, numeric)
+                }
             }
         }
         LaunchedEffect(globalAiCurrentKey, globalAiAssisted, currentValidatedInformationOption,
@@ -732,7 +756,7 @@ internal fun ClocktowerJudgeScreen(
                     globalAiCurrentKey != null
                 ) {
                     if (!globalAiAutomatic ||
-                        (approvedOpeningOption == null &&
+                        (currentValidatedInformationOption == null &&
                             (!globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey))
                     ) {
                         OutlinedButton(
