@@ -12,3 +12,8 @@ app/build/
 # Private real-model evaluation output and Python bytecode: never commit
 **/__pycache__/
 tools/.private-botc-evaluation/
+
+# Local review samples and offline artifacts: keep outside the repo
+S0*.json
+S0*.prompt.txt
+artifacts/
