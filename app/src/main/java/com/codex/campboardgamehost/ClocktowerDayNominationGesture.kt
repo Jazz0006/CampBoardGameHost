@@ -16,19 +16,15 @@ internal data class HostTableDirectionalLink(
     }
 }
 
+/** Only a living player may nominate; any player, living or dead, may be nominated. */
 internal fun clocktowerDayNominationGesturePolicy(
     tableState: ClocktowerDayOverviewTableState,
-): HostTableDirectionalGesturePolicy {
-    val aliveSeatIds = tableState.seats
-        .asSequence()
+): HostTableDirectionalGesturePolicy = HostTableDirectionalGesturePolicy(
+    sourceSeatIds = tableState.seats
         .filter(HostSeatPresentation::isAlive)
-        .map(HostSeatPresentation::seatId)
-        .toSet()
-    return HostTableDirectionalGesturePolicy(
-        sourceSeatIds = aliveSeatIds,
-        targetSeatIds = aliveSeatIds,
-    )
-}
+        .mapTo(mutableSetOf(), HostSeatPresentation::seatId),
+    targetSeatIds = tableState.seats.mapTo(mutableSetOf(), HostSeatPresentation::seatId),
+)
 
 /**
  * Resolves against the same already-computed spatial ring used for rendering.

@@ -144,8 +144,9 @@ internal fun ClocktowerDayHostScreen(
                     val sourceName = dayTableState.seats
                         .firstOrNull { seat -> seat.seatId == sourceSeatId && seat.isAlive }
                         ?.playerName
+                    // Dead players may still be nominated; only the nominator must be alive.
                     val targetName = dayTableState.seats
-                        .firstOrNull { seat -> seat.seatId == targetSeatId && seat.isAlive }
+                        .firstOrNull { seat -> seat.seatId == targetSeatId }
                         ?.playerName
                     if (sourceName != null && targetName != null && sourceName != targetName) {
                         nominationDraft.select(sourceName, targetName)
