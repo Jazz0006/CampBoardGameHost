@@ -1,8 +1,20 @@
-# Host 统一方桌与信息角色重建方案（2026-10-22，已批准设计／未实施）
+# Host 统一方桌与信息角色重建方案（2026-10-22，已批准合同／部分代码已实现）
 
-> **状态**：2026-10-22 讨论确认的后续实施合同。本文件记录待实施设计，不代表代码已修改、UI 真机验收或新 CI 通过。以 `ClocktowerGameSession` 为唯一事实权威；此合同取代旧的方桌卡片高亮／信息角色手选交互规划。已经完成的 Day Light / Night Dark、善蓝恶红主题与酒鬼方桌选择仍按真实已合并／Draft 状态区分。
+> **合同性质**：2026-10-22 讨论批准的五批重建规范，继续约束后续开发。本文件在独立 Draft PR #342；下面“已实现”均指其它**尚未合并的代码 Draft**及精确 SHA 验证，不是已合并入 `main`，更不是已通过真机验收。唯一事实权威为 `ClocktowerGameSession/ClocktowerSessionState`；本合同取代旧的高亮／信息角色人工选择规划。
 >
 > **入口**：[CURRENT_DEVELOPMENT_ROADMAP.md](CURRENT_DEVELOPMENT_ROADMAP.md)、[NEXT_DEVELOPMENT_HANDOFF.md](NEXT_DEVELOPMENT_HANDOFF.md)、[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。本文件是新 UI 与信息求值细节的权威合同；与旧文档描述冲突时，本文件决定**未来目标**，不得把目标当成已实现事实。
+
+## 本轮实现进度（2026-10-22，下一步 Stage 3）
+
+| 阶段 | 已有代码与验证 | 未完成边界 |
+| --- | --- | --- |
+| Stage 1（1a/1b）：共享座位视觉 | [Draft PR #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) HEAD `1ea2c9182cef31ebf0ede29cbfc8dd6545e0a80f`；Android CI #4543、R2 #4110 **SUCCESS**。独立阵营/死亡/鬼票/醉毒层与候选/选中层，旧互斥 SeatState 已删除 | 真机视觉、小屏叠加验收未执行；未合并 |
+| Stage 2：只读数字 / Pair Resolver | [Draft PR #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 的已验证**生产代码** `bb024f42442e464fe168e59af6ebd4a945840cb8`；Android CI #4544、R2 #4111 **SUCCESS**。只读 `HostInformationResolvers.kt` 支持 Chef/Empath 和 Washerwoman/Librarian/Investigator，明确 Drunk/poison 与 Spy/Recluse 独立登记 | **还没有接入生产数字/Pair UI**，未合并。后续 docs-only 提交使 #344 HEAD 前进 |
+| Stage 3：厨师/共情者数字 UI | **下一步立即开发**，从 #344 当前分支最新 HEAD（包含 Stage 2 代码及已更新的交接文档）派生，读取真实 Session Resolver、迁移旧人工任意非负数字输入、实现唯一按钮/多值单选/AI 当前建议/预览再选/Next 唯一 Observation | 未实施 |
+| Stage 4：洗衣妇/图书管理员/调查员 Pair UI | 先选两座位，再根据当前 Session 给角色短名单；单列分组、三模式 | 未实施 |
+| Stage 5：钟表匠/侍女与整体设备验收 | 新能力语义、复用新 UI、5–15 人及真机验收 | 未实施 |
+
+**分支关系：** #344 堆叠在 #343；本合同 #342 独立 Draft；酒鬼方桌 [#341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) 独立未合并且与 #343 的共享 Renderer 文件有重叠，不得自动合并、改写、覆盖。当前已更新的开发路线图、交接与测试策略位于 #344 的后续 docs-only 提交，参见 [Stage 2 验收文档](https://github.com/Jazz0006/CampBoardGameHost/blob/feature/host-information-resolvers-20261022/docs/HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)。新对话务必实时核对 HEAD/工作树/PR，不能仅从尚无 Resolver 的 `main` 出发。独立待修 P1：白天被提名者可以死亡、固定布尔信息真值；没有真机/付费 API 验收。
 
 ## 0. 总目标与不可破坏边界
 
