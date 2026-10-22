@@ -595,15 +595,17 @@ internal fun ClocktowerJudgeScreen(
                         },
                     ) != null
                 }
-                currentNumericResolution == null -> true
+                currentNumericMetric == null -> true
                 else -> {
                     val numeric = option.proposition as?
                         com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult
-                    numeric != null && option.displayKind == ClocktowerDisplayKind.Number &&
+                    val resolved = currentNumericResolution
+                    numeric != null && resolved != null &&
+                        option.displayKind == ClocktowerDisplayKind.Number &&
                         currentNumericMetric == numeric.metric &&
                         currentActorSeatForInformation == numeric.sourceSeat &&
-                        numeric.subjectSeats == currentNumericResolution.subjectSeats &&
-                        numeric.value in currentNumericResolution.values
+                        numeric.subjectSeats == resolved.subjectSeats &&
+                        numeric.value in resolved.values
                 }
             }
         }

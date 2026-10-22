@@ -203,6 +203,30 @@ class HostInformationResolversTest {
         )?.values)
     }
 
+    @Test fun chambermaidDoesNotCountFakeDrunkWakeAndDrunkClockmakerHasNoFixedAnswer() {
+        val ngj = catalog.ruleset(ClocktowerScript.NoGreaterJoy)
+        val misleadingWake = session(
+            "Clockmaker", "Drunk", "Chambermaid", "Scarlet Woman", "Imp",
+            shown = mapOf(2 to "Investigator"), script = "no_greater_joy",
+        )
+        // Clockmaker woke for their own ability. Seat 2 woke as a fake
+        // Investigator but is actually the Drunk, so the true answer is 1.
+        assertEquals(listOf(1), NumericInformationResolver.resolveLaterNight(
+            misleadingWake.state, ngj, NumericMetric.PLAYERS_WAKING_FOR_ABILITY,
+            3, listOf(1, 2),
+        )?.values)
+
+        val fakeClockmaker = session(
+            "Drunk", "Artist", "Imp", "Sage", "Scarlet Woman",
+            shown = mapOf(1 to "Clockmaker"), script = "no_greater_joy",
+        )
+        val arbitrary = requireNotNull(NumericInformationResolver.resolveLaterNight(
+            fakeClockmaker.state, ngj, NumericMetric.STEPS_TO_NEAREST_MINION, 1,
+        ))
+        assertEquals(AbilityFunctioningState.DRUNK, arbitrary.sourceAbility)
+        assertEquals((0..5).toList(), arbitrary.values)
+    }
+
     @Test fun secondBuiltinUsesOnlyItsOwnRoleCatalog() {
         val s = session("Investigator", "Empath", "Drunk", "Baron", "Imp",
             script = "no_greater_joy", shown = mapOf(3 to "Clockmaker"))
