@@ -42,6 +42,33 @@ class ClocktowerDirectPairInformationTest {
             .toDisplayOption("Investigator", 8, roles, { it }, "info", "en"))
     }
 
+    @Test fun `current pair AI proposal is rejected when Session role domain changes`() {
+        val proposed = requireNotNull(
+            ClocktowerDirectPairSelection("Soldier", 2, 3).toDisplayOption(
+                "Washerwoman", 5, roles, { it }, "Washerwoman", "en",
+            )
+        )
+        val allowed = com.codex.campboardgamehost.clocktower.session.HostPairResolution(
+            options = listOf(com.codex.campboardgamehost.clocktower.session.HostPairRoleOption(
+                RoleId("Soldier"), com.codex.campboardgamehost.clocktower.session.HostPairRoleSource.IN_PLAY)),
+            ordinaryCandidateSeats = setOf(2), specialCandidateSeats = emptySet(),
+            canShowNoOutsiders = false,
+            sourceAbility = com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
+            productShortlist = false,
+        )
+        val current = { first: Int?, second: Int? ->
+            allowed.takeIf { first == 2 && second == 3 }
+        }
+        assertEquals("Soldier", clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, current)?.roleId)
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 2, roles, current))
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, { _, _ -> allowed.copy(options = emptyList()) }))
+        assertNull(clocktowerCurrentPairRecommendation(
+            proposed, "Washerwoman", 5, roles, { _, _ -> null }))
+    }
+
     @Test fun `none is a typed absence not a derived legal result`() {
         val option = requireNotNull(ClocktowerDirectPairSelection().chooseNone()
             .toDisplayOption("Librarian", 8, roles, { it }, "Librarian", "en"))
