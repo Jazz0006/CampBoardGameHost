@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -40,6 +41,26 @@ class ClocktowerNumericCompactUiTest {
         // This full-screen role surface must supply its own gated Next.
         ui.onNodeWithText("Next").assertIsNotEnabled()
         ui.runOnIdle { assertEquals(1, shown) }
+    }
+
+    @Test fun fifteenSeatDiscretionCanScrollToLastValueAndShow() {
+        var shown: Int? = null
+        ui.setContent {
+            ClocktowerDarkTheme {
+                CompositionLocalProvider(LocalClocktowerNightNextEnabled provides false) {
+                    ClocktowerResolvedNumericResultUi(
+                        values = (0..15).toList(), recommendedValue = null,
+                        lastPreviewValue = null, automaticOnly = false,
+                        language = "en", draftKey = "small:15",
+                        onHostTools = {}, onNext = {},
+                        onConfirm = { shown = it }, onDraftChanged = {},
+                    )
+                }
+            }
+        }
+        ui.onNodeWithText("15").performScrollTo().performClick()
+        ui.onNodeWithText("Show to player: 15").performScrollTo().performClick()
+        ui.runOnIdle { assertEquals(15, shown) }
     }
 
     @Test fun automaticDiscretionWaitsWithoutValidRecommendation() {

@@ -3,6 +3,8 @@ package com.codex.campboardgamehost
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -98,7 +100,7 @@ internal fun ClocktowerResolvedNumericResultUi(
         else -> manualSelection?.takeIf { it in values }
     }
     Column(
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (values.size > 1 && !automaticOnly) {
