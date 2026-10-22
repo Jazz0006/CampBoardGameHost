@@ -1,4 +1,8 @@
-# 当前开发交接（2026-10-21，已审计 main）
+# 当前开发交接（2026-10-22，Host 方桌重建方案已批准）
+
+> **下一轮新权威设计（待实施）**：[HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。五批：所有卡片的常驻阵营/亡/鬼票/醉/毒与外边框双虚线+实线 → 小型只读 Numeric/Pair Resolver → 厨师/共情者数字方桌 → 三个 Pair 角色方桌（先选两座位、角色动态过滤、恶魔伪装分区、AI 推荐）→ 钟表匠/侍女及设备验收。旧高亮枚举/当前唤醒粗金框/死亡大叉/☠ 标记/先角色后座位须替换并同批删旧消费者。唯一 Session、当前夜间流程、D2 只在 Next 提交最后展示 Observation 不变。
+
+> **Git 状态核查 2026-10-22**：开发机 `clocktower`；`main` `991d6344`；酒鬼方桌是未合并 Draft [#341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) `ce69c540`，CI #4538/R2 #4105 SUCCESS；本次设计另用 docs 分支，未修改 #341。下一批代码实施前先核对真实 main 与 PR，禁止任意合并、覆盖、重写历史和付费 API 调用。
 
 > **2026-10-22 UI 长期设计合同**：[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。方桌稳定；Session Day Light、FirstNight/Night Dark；Session actualAlignment 善蓝恶红；交互仅边框/标记，文字高对比。第一/第二批只修改主题与阵营卡；第三批酒鬼/数字手选回方桌尚未实施。共享 Theme/Seat Renderer 承担唯一实现；提交与 CI 以实际产物为准。
 

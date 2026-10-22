@@ -1,4 +1,8 @@
-# 当前开发路线（2026-10-21，main 已合并清理）
+# 当前开发路线（2026-10-22，已批准方桌与信息角色重建计划）
+
+> **本轮批准的后续五批计划（仅文档，不是代码完成）**：[Host 统一方桌与信息角色重建](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。①统一所有说书人卡片状态：善蓝恶红、死亡/鬼票/醉毒、普通/特殊候选虚线/选中实线并清旧视觉状态；②只读 Host Numeric/Pair Resolver，基于唯一 Session、醉毒、Spy/Recluse、座位、夜间唤醒；③Chef/Empath 数字单选与展示；④Washerwoman/Librarian/Investigator 先选座位、动态角色列表、在场/恶魔伪装分区与 AI 推荐；⑤Clockmaker/Chambermaid 扩展及小屏/三模式/设备验收。仅 Next 记录最后一次展示的 Observation，不建第二份状态、不重建旧候选/评分引擎，替换后同批删旧消费者。
+
+> **实时 Git 核查（2026-10-22）**：`main` `991d6344347535d45d9077134d5b688f9da344d6`。酒鬼方桌独立 Draft [PR #341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) 位于 `feature/drunk-table-townfolk-selection-20261022` `ce69c540`，Android CI #4538、R2 #4105 SUCCESS，仍未合并。本设计文档走独立 docs 分支，不应改动 #341 或把待实施方案写成已完成。
 
 > **最终高价值测试验收（2026-10-21）**：#338 清理后，#339 按代码复审补回两个独有的高价值保护（当前行动未确认不生成后续 AI 请求；360×520 竖屏支持 5–15 人）。两 PR 已合并；最新代码合并点 `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，#339 [CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) / R2 #4098 SUCCESS；静态最终 124 测试类/566 个 `@Test`，相较初始 144/639 净删 20 类/73 项。下文 #338 后的 122/564 是中间检查点，不是最终数量。
 

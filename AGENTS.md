@@ -1,4 +1,8 @@
-# CURRENT AUTHORITY — 2026-10-21 post-merge independent audit
+# CURRENT AUTHORITY — 2026-10-22 approved Host UI plan (not implemented)
+
+**NEW AUTHORITATIVE PLANNED CONTRACT:** [docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md](docs/HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md). Rebuild shared seat cards rather than patch old Selected/Highlighted/RegistrationHint enum states. Keep Session actualAlignment blue/red; private permanent death/ghost-vote/drunk/poison markers inside cards, action-only ordinary/Spy/Recluse dashed candidate outlines and solid selected outlines; current waking actor is center text (no thick gold actor border). Small read-only Host Numeric/Pair resolvers consume the sole Session, separate information-source drunk/poison from investigated-target registration; Chef/Empath and Washerwoman/Librarian/Investigator first, later Clockmaker/Chambermaid. Pair human selection: two seats first, filtered single-column role picker with in-play vs committed Demon bluff vertical groups. Only final shown preview commits on explicit Next. Five batches each delete superseded code; keep AI three modes and TB/NGJ. This is **docs-only future design**; Draft #341 `ce69c540` is separately tested, not merged, and must not be overwritten.
+
+# Historical authority checkpoint — 2026-10-21 post-merge independent audit
 
 **2026-10-22 enduring Host UI contract:** [docs/HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](docs/HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md). The physical Storyteller table stays stable; Session phase owns day white/light vs night near-black/dark theme, actual Session alignment owns persistent good-blue/evil-red seat backgrounds, interaction affects borders/markers only. Project read-only facts through one seat model and renderer; no independent UI state or parallel theme/seat-color engines. First two visual batches only; manual Drunk/numeric selection-on-table is a separate future batch.
 
