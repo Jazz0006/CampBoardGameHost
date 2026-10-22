@@ -59,6 +59,7 @@ internal fun ClocktowerNightStepCardLocalized(
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
+    numericResolution: com.codex.campboardgamehost.clocktower.session.HostNumericResolution? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     selectedName: String?,
     fortuneTellerFirst: String?,
@@ -93,11 +94,49 @@ internal fun ClocktowerNightStepCardLocalized(
         directNumericActorSeat != null &&
         clocktowerHasDirectNumericInput(step, directNumericActorSeat, cards)
     ) {
-        val determinedNumber = clocktowerDeterminedNumericResult(step, directNumericActorSeat)
+        if (step.roleEnName == "Chef" || step.roleEnName == "Empath") {
+            val metric = (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric
+            val expectedMetric = if (step.roleEnName == "Chef")
+                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
+            else com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
+            val current = numericResolution?.takeIf { metric == expectedMetric }
+            if (current != null && current.values.isNotEmpty()) {
+                val advised = clocktowerMatchingNumericResult(
+                    step, directNumericActorSeat, aiSuggestedInformationOption?.proposition, current.subjectSeats,
+                )?.takeIf { it in current.values }
+                ClocktowerResolvedNumericResultUi(
+                    values = current.values,
+                    recommendedValue = advised,
+                    lastPreviewValue = clocktowerMatchingNumericResult(
+                        step, directNumericActorSeat, lastPreviewProposition, current.subjectSeats,
+                    ),
+                    automaticOnly = allowRuleDeterminedAutoUi,
+                    language = language,
+                    draftKey = informationDecisionKey,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
+                    onConfirm = { value ->
+                        if (value in current.values) {
+                            clocktowerDirectNumericResult(
+                                step, directNumericActorSeat, value, cards, subjectSeats = current.subjectSeats,
+                            )?.let(onShowPlayerDisplay)
+                        }
+                    },
+                    onDraftChanged = onInformationDraftChanged,
+                )
+            } else {
+                Text(if (language == "en") "Current Host numeric query unavailable."
+                    else "当前 Host 数字信息尚不可用。")
+            }
+            return
+        }
+        // Stage 5 roles retain their established path pending the separate semantic cutover.
+        val determinedNumber = if (step.informationReliability ==
+            com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE)
+            clocktowerMatchingNumericResult(step, directNumericActorSeat, step.displayProposition) else null
         val advised = clocktowerMatchingNumericResult(step, directNumericActorSeat, aiSuggestedInformationOption?.proposition)
         ClocktowerDirectNumericResultUi(
             title = step.displayTitle,
-            // A genuinely Host-determined result has exactly one reveal button in all modes.
             initialValue = determinedNumber ?: advised,
             lastPreviewValue = clocktowerMatchingNumericResult(step, directNumericActorSeat, lastPreviewProposition),
             automaticOnly = allowRuleDeterminedAutoUi || determinedNumber != null,

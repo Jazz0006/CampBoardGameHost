@@ -447,14 +447,31 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerNightAction.Chambermaid,
                 ClocktowerNightAction.Ravenkeeper,
             ) && currentStep.roleEnName != "Spy"
-        // Only a reliable, matching Host-authored *numeric* fact is known to
-        // require no AI discretion. Other typed statements may still be discretionary.
+        // Chef/Empath truth and discretionary domains are resolved from the sole
+        // current Session, never from a displayProposition or an AI narrative.
         val currentActorSeatForInformation = currentStep.actor?.name?.let { name ->
             cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
         }
-        val hostDeterminedNumeric = currentActorSeatForInformation?.let { seat ->
-            clocktowerDeterminedNumericResult(currentStep, seat)
-        } != null
+        val currentNumericQuestion = currentStep.informationQuestion as? ClocktowerInformationQuestion.Number
+        val currentNumericMetric = when (currentStep.roleEnName) {
+            "Chef" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
+            "Empath" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
+            else -> null
+        }
+        val currentNumericResolution = if (currentStep.isRealAction &&
+            currentStep.action == ClocktowerNightAction.None &&
+            currentNumericMetric != null && currentNumericQuestion?.metric == currentNumericMetric
+        ) currentActorSeatForInformation?.let { seat ->
+            NumericInformationResolver.resolve(sessionState, currentNumericMetric, seat)
+        } else null
+        // Stage 5 Clockmaker/Chambermaid keep their existing known-result shortcut.
+        val stage5KnownResult = if (currentNumericMetric == null &&
+            currentStep.informationReliability ==
+            com.codex.campboardgamehost.clocktower.domain.ReliabilityState.RELIABLE
+        ) currentActorSeatForInformation?.let { seat ->
+            clocktowerMatchingNumericResult(currentStep, seat, currentStep.displayProposition)
+        } else null
+        val hostDeterminedNumeric = currentNumericResolution?.values?.size == 1 || stage5KnownResult != null
         val globalAiPending = if (globalAiAssisted && !hostDeterminedNumeric &&
             phase == ClocktowerPhase.FirstNight) {
             pendingGlobalFirstNightPairDecision(
@@ -549,12 +566,21 @@ internal fun ClocktowerJudgeScreen(
                 )
             }
         }
-        LaunchedEffect(globalAiCurrentKey, globalAiAssisted, approvedOpeningOption,
+        val currentValidatedInformationOption = approvedOpeningOption?.takeIf { option ->
+            if (currentNumericResolution == null) true else {
+                val numeric = option.proposition as? com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult
+                numeric != null && option.displayKind == ClocktowerDisplayKind.Number &&
+                    currentNumericMetric == numeric.metric &&
+                    currentActorSeatForInformation == numeric.sourceSeat &&
+                    NumericInformationResolver.acceptsCurrentAdvice(sessionState, numeric)
+            }
+        }
+        LaunchedEffect(globalAiCurrentKey, globalAiAssisted, currentValidatedInformationOption,
             jointOpeningAvailable, phase) {
             if (globalAiAssisted &&
                 globalAiCurrentKey != null &&
                 globalAiAdviceKey != globalAiCurrentKey &&
-                approvedOpeningOption == null &&
+                currentValidatedInformationOption == null && !hostDeterminedNumeric &&
                 !(currentStep.action == ClocktowerNightAction.MayorRedirect &&
                     mayorRedirectDraftTarget != null)
             ) {
@@ -748,9 +774,10 @@ internal fun ClocktowerJudgeScreen(
                 // One optional current-step suggestion for both AI modes.
                 // The card retains the complete Host legal domain for manual edits.
                 // Automatic mode can use the same verified choice at this step only.
-                aiSuggestedInformationOption = approvedOpeningOption.takeUnless {
+                aiSuggestedInformationOption = currentValidatedInformationOption.takeUnless {
                     currentAiRequestBlocked
                 },
+                numericResolution = currentNumericResolution,
                 // AI may select the result but NEVER open the player fullscreen
                 // automatically. Showing private information requires a live tap.
                 step = currentStep,

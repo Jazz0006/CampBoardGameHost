@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Stage 1a/1b — 统一卡片视觉 | [已合并 #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源 `1ea2c918` / main `78d2b115`；Android CI #4543 / R2 #4110 SUCCESS；死亡/鬼票/醉毒、普通/特殊虚线与选中次序分层，旧 `ClocktowerSquareTableSeatState` 及其消费者已清理 | **已合并 main；真机视觉未验收** |
 | Stage 2 — 只读 Numeric / Pair Resolver | [已合并 #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42` / main `d3a75c99`；Android CI #4544 / R2 #4111 SUCCESS。新增 `clocktower/session/HostInformationResolvers.kt` 与 `HostInformationResolversTest.kt`，只读 Session 支持 Chef、Empath、Washerwoman、Librarian、Investigator；独立判断信息源醉毒与 Spy/Recluse 特殊登记 | **已合并 main；尚未接入 UI 或 AI 生产消费者** |
-| Stage 3 — 厨师 / 共情者数字 UI | 需把当前 Session Resolver 接进 `ClocktowerNightStepUi` / HostScreen 与当前信息步进 | **下一步：实际实现，不是重新规划** |
+| Stage 3 — 厨师 / 共情者数字 UI | 本轮分支 `feature/host-numeric-chef-empath-stage3-20261022` 已从 main `d1327648` 派生；接入 Session Numeric Resolver、单值展示按钮、裁量单选及 AI 当前建议检查；保留 D2 最终 Observation | **代码实施中；Android CI/R2 未验收，待精确 SHA 复核** |
 | Stage 4 — 洗衣妇 / 图书管理员 / 调查员 Pair UI | 先选两个座位、当前查询角色短名单与来源分区、AI 三模式 | 待实施 |
 | Stage 5 — 钟表匠 / 侍女及全局验收 | 后续补精确能力语义与真实设备/交互验收 | 待实施 |
 

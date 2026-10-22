@@ -21,7 +21,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
-import com.codex.campboardgamehost.clocktower.domain.ReliabilityState
 
 /**
  * A numeric result is an actual Storyteller choice, not one of the Host's calculated
@@ -57,13 +56,6 @@ internal fun clocktowerDirectNumericResult(
     )
 }
 
-/** A Host-authored unambiguous number needs no AI selection or manual input.
- * Never use a fixed answer for a drunk/poisoned ability or a different query. */
-internal fun clocktowerDeterminedNumericResult(step: ClocktowerNightStepUi, actorSeat: Int): Int? {
-    if (step.informationReliability != ReliabilityState.RELIABLE) return null
-    return clocktowerMatchingNumericResult(step, actorSeat, step.displayProposition)
-}
-
 /** Restore only a typed number for the current actor and actual query. */
 internal fun clocktowerMatchingNumericResult(
     step: ClocktowerNightStepUi,
@@ -82,6 +74,76 @@ internal fun clocktowerMatchingNumericResult(
 internal fun clocktowerHasDirectNumericInput(step: ClocktowerNightStepUi, actorSeat: Int, cards: List<PlayerCard>): Boolean =
     clocktowerDirectNumericResult(step, actorSeat, 0, cards) != null
 
+/** Chef/Empath only. Display choices come from the current read-only Session resolution.
+ * Uncommitted selection is local Compose state; the existing Host preview/Next is the sole fact writer. */
+@Composable
+internal fun ClocktowerResolvedNumericResultUi(
+    values: List<Int>,
+    recommendedValue: Int?,
+    lastPreviewValue: Int?,
+    automaticOnly: Boolean,
+    language: String,
+    draftKey: String,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
+    onConfirm: (Int) -> Unit,
+    onDraftChanged: () -> Unit,
+) {
+    var manualSelection by remember(draftKey) {
+        mutableStateOf(lastPreviewValue?.takeIf { it in values })
+    }
+    val chosen = when {
+        values.size == 1 -> values.single()
+        automaticOnly -> recommendedValue?.takeIf { it in values }
+        else -> manualSelection?.takeIf { it in values }
+    }
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (values.size > 1 && !automaticOnly) {
+            values.forEach { value ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    androidx.compose.material3.RadioButton(
+                        selected = chosen == value,
+                        onClick = {
+                            if (manualSelection != value) {
+                                manualSelection = value
+                                onDraftChanged()
+                            }
+                        },
+                    )
+                    androidx.compose.material3.TextButton(onClick = {
+                        if (manualSelection != value) {
+                            manualSelection = value
+                            onDraftChanged()
+                        }
+                    }) {
+                        Text(value.toString() + if (recommendedValue == value && language != "en") " · AI 推荐"
+                            else if (recommendedValue == value) " · AI suggested" else "")
+                    }
+                }
+            }
+        }
+        if (automaticOnly && values.size > 1 && chosen == null) {
+            Text(if (language == "en") "Waiting for valid current AI advice."
+                else "等待当前有效的 AI 推荐，不会自动选择其他结果。")
+        }
+        if (chosen != null) {
+            Button(onClick = { onConfirm(chosen) }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (language == "en") "Show to player: $chosen" else "展示给玩家：$chosen")
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onHostTools) { Text(if (language == "en") "Host" else "魔典") }
+            OutlinedButton(onClick = onNext, enabled = LocalClocktowerNightNextEnabled.current) {
+                Text(if (language == "en") "Next" else "下一步")
+            }
+        }
+    }
+}
+
+/** Temporary Stage 5 input used only by Clockmaker/Chambermaid, never Chef/Empath. */
 @Composable
 internal fun ClocktowerDirectNumericResultUi(
     title: String,

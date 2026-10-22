@@ -69,9 +69,14 @@ class ClocktowerCompleteAppUiTest {
         ui.runOnIdle { mounted.value = true }
     }
 
-    private fun numericInformation() {
-        ui.onNode(hasSetTextAction()).performTextReplacement("1")
-        click("Show manually selected result")
+    private fun numericInformation(script: ClocktowerScript) {
+        if (script == ClocktowerScript.TroubleBrewing) {
+            ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
+        } else {
+            // Clockmaker is intentionally unchanged until Stage 5.
+            ui.onNode(hasSetTextAction()).performTextReplacement("1")
+            click("Show manually selected result")
+        }
         click("Close display card")
         click("Next")
     }
@@ -105,7 +110,7 @@ class ClocktowerCompleteAppUiTest {
         assertEquals(if (script == ClocktowerScript.TroubleBrewing)
             setOf("Chef", "Empath", "Slayer", "Scarlet Woman", "Imp") else
             setOf("Clockmaker", "Artist", "Sage", "Scarlet Woman", "Imp"), first.gameState.players.map { it.actualRole.value }.toSet())
-        repeat(if (script == ClocktowerScript.TroubleBrewing) 2 else 1) { numericInformation() }
+        repeat(if (script == ClocktowerScript.TroubleBrewing) 2 else 1) { numericInformation(script) }
         waitFor("End day")
         val day = state()
         val source = day.gameState.players.first { it.actualRole.value == if (script == ClocktowerScript.TroubleBrewing) "Chef" else "Clockmaker" }
