@@ -78,7 +78,9 @@ class ClocktowerCompleteAppUiTest {
             click("Show manually selected result")
         }
         click("Close display card")
-        click("Next")
+        // Stage 3 numeric roles use the shared square-table navigation. Stage 5
+        // Clockmaker keeps its existing inline Next until its own migration.
+        click(if (script == ClocktowerScript.TroubleBrewing) "Next →" else "Next")
     }
 
     private fun nominateAndExecute(nominator: PlayerState, target: PlayerState) {
