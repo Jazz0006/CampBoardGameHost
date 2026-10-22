@@ -84,6 +84,8 @@ internal fun ClocktowerResolvedNumericResultUi(
     automaticOnly: Boolean,
     language: String,
     draftKey: String,
+    onHostTools: () -> Unit,
+    onNext: () -> Unit,
     onConfirm: (Int) -> Unit,
     onDraftChanged: () -> Unit,
 ) {
@@ -130,6 +132,14 @@ internal fun ClocktowerResolvedNumericResultUi(
         if (chosen != null) {
             Button(onClick = { onConfirm(chosen) }, modifier = Modifier.fillMaxWidth()) {
                 Text(if (language == "en") "Show to player: $chosen" else "展示给玩家：$chosen")
+            }
+        }
+        // Chef/Empath own the full-screen host surface; the outer scaffold has
+        // no Next/Host controls here. Keep these as the sole step navigation.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = onHostTools) { Text(if (language == "en") "Host" else "魔典") }
+            OutlinedButton(onClick = onNext, enabled = LocalClocktowerNightNextEnabled.current) {
+                Text(if (language == "en") "Next" else "下一步")
             }
         }
     }

@@ -78,7 +78,7 @@ class ClocktowerCompleteAppUiTest {
             click("Show manually selected result")
         }
         click("Close display card")
-        click(if (script == ClocktowerScript.TroubleBrewing) "Next →" else "Next")
+        click("Next")
     }
 
     private fun nominateAndExecute(nominator: PlayerState, target: PlayerState) {

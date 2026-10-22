@@ -113,6 +113,8 @@ internal fun ClocktowerNightStepCardLocalized(
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
                     draftKey = informationDecisionKey,
+                    onHostTools = onHostTools,
+                    onNext = onNext,
                     onConfirm = { value ->
                         if (value in current.values) {
                             clocktowerDirectNumericResult(
