@@ -20,7 +20,7 @@
 - `ClocktowerD2UiTest` 覆盖 Washerwoman/Librarian/Investigator 手动选 pair 后的单选/多选、三模式的当前建议、改选后的 Next 门及唯一 Observation。
 - `ClocktowerDirectPairInformationTest` 验证先座位后角色，错误/过期当前 query AI 建议不可复用。
 - `ClocktowerPairCompactUiTest`：360×520 / 15 玩家共享方桌，先点两物理座位后才出现展示信息按钮、Next 在预览前不可提交。回归发现受限页面原严格座位布局可能抛出异常；复用已有密度候选、`hostTableLayoutOrNull` 和 `hostTableLayoutBestEffort` 兜底，不重建另一个方桌排列算法。
-- 第一次提交 `ff96496a` CI/R2 已全绿；上述新增小屏与当前建议回归需再跑最终提交 SHA。
+- 第一版 `ff96496a` CI #4565 / R2 #4126 SUCCESS；增加小屏与当前 AI 建议验收、复用受限布局回退的 `4f418656` 完整 CI #4568 / R2 #4129 SUCCESS。去除旧重复预览提示的最终清理提交仍须按新 SHA 验收。
 - 不等价于真实设备渲染、人眼可读性、Android 物理强退测试或付费 API 实测。
 
 **下一步**：记录最后 CI/R2，审核 Draft #349 后依约合并；第五批实施 Clockmaker/Chambermaid 及全局设备验收；独立 P1 白天可提名死者和 Fortune Teller 确定性结果仍未在本批改动。
