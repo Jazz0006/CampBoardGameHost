@@ -1,20 +1,20 @@
-# Host 统一方桌与信息角色重建方案（2026-10-22，已批准合同／部分代码已实现）
+# Host 统一方桌与信息角色重建方案（2026-10-22 已批准合同；2026-10-23 实施状态）
 
-> **合同性质**：2026-10-22 讨论批准的五批重建规范，继续约束后续开发。原文维护于 Draft PR #342，后按已验收的代码 PR 合并结果同步。**Stage 1 与 Stage 2 已于 2026-10-22 合并进 `main`**；本文件仍是 Stage 3–5 的设计合同，不代表真机验收。唯一事实权威为 `ClocktowerGameSession/ClocktowerSessionState`；本合同取代旧的高亮／信息角色人工选择规划。
+> 本文保留已经批准的五批设计合同，不改规则范围。**五批源代码已全部合并 `main`，不能把下面各项实施规范误读为尚未开发。** 最新合并为 [PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)，主线 `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`。唯一可写事实权威仍为 `ClocktowerGameSession/ClocktowerSessionState`。现场真机验收尚未完成。
 >
-> **入口**：[CURRENT_DEVELOPMENT_ROADMAP.md](CURRENT_DEVELOPMENT_ROADMAP.md)、[NEXT_DEVELOPMENT_HANDOFF.md](NEXT_DEVELOPMENT_HANDOFF.md)、[HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。本文件是新 UI 与信息求值细节的权威合同；与旧文档描述冲突时，本文件决定**未来目标**，不得把目标当成已实现事实。
+> [路线图](CURRENT_DEVELOPMENT_ROADMAP.md) · [下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md) · [视觉合同](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md) · [第五批验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md)。如历史阶段文字与下表冲突，以下列最新代码和验证事实为准。
 
-## 本轮实现进度（2026-10-22，Stage 1–4 已合并，Stage 5 开发中）
+## 实施与合并总览（2026-10-23）
 
-| 阶段 | 已有代码与验证 | 未完成边界 |
+| 批次 | 最终合并证据 | 结论 |
 | --- | --- | --- |
-| Stage 1（1a/1b）：共享座位视觉 | [已合并 PR #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源代码 `1ea2c918`，squash main `78d2b115`；Android CI #4543、R2 #4110 **SUCCESS**。独立阵营/死亡/鬼票/醉毒层与候选/选中层，旧互斥 SeatState 已删除 | **已合并**；真机视觉、小屏叠加验收未执行 |
-| Stage 2：只读数字 / Pair Resolver | [已合并 PR #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42`，squash main `d3a75c99`；Android CI #4544、R2 #4111 **SUCCESS**。只读 `HostInformationResolvers.kt` 支持 Chef/Empath 和 Washerwoman/Librarian/Investigator | **已合并**；数字 Resolver 已在 Stage 3 接入，Pair UI 待 Stage 4 |
-| Stage 3：厨师/共情者数字 UI | [Draft #348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)，代码 `44fb05c769735826187a66008749432e25368ea4` 完整 Android CI #4562、R2 #4124 **SUCCESS**；从当前 Session Resolver 求值、统一方桌中的单值按钮/多值单选、AI 当前建议、D2 重预览/Next 唯一 Observation | **已通过 #348 squash 合并 main `e241d03b`；真机未验收** |
-| Stage 4：洗衣妇/图书管理员/调查员 Pair UI | [Draft #349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 代码 `4f418656` Android CI #4568 / R2 #4129 SUCCESS，含 360×520/15 人方桌回归；已接入当前 Session Pair Resolver、先座位后角色、普通/特殊虚线、单列来源分区、三模式及 D2 唯一 Next；后补小屏 15 人测试待最终验收 | **最终 `18a64bc8` Android CI #4569 / R2 #4130 SUCCESS，#349 已 squash 合并 main `97a4179d`；真机未验收** |
-| Stage 5：钟表匠/侍女与整体设备验收 | [Draft #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 实施 Session 只读钟表匠最短座位距离、侍女本夜实际能力唤醒计数，并接入共享数字方桌，删除任意数字手输；代码 `7c2950aa` 完整 Android CI #4572 / R2 #4132 SUCCESS；NGJ 两角色已从旧任意输入切到 Session 只读数字方桌，既有 5–15 TB、NGJ 与 360×520 自动化覆盖保持 | **数字语义与自动化验收完成，Draft #350；真机视觉/来电恢复仍待验收** |
+| Stage 1：共享卡片、全局状态与候选边框 | [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) `78d2b115`，Android CI #4543 / R2 #4110 SUCCESS | 已合并；视觉需真机复验 |
+| Stage 2：Session 只读 Numeric/Pair 求值 | [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) `d3a75c99`，CI #4544 / R2 #4111 SUCCESS | 已合并，接口已被后续角色 UI 使用 |
+| Stage 3：Chef / Empath 数字方桌 | [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) `e241d03b`，代码 CI #4562 / R2 #4124 SUCCESS | 已合并 |
+| Stage 4：Washerwoman / Librarian / Investigator Pair 方桌 | [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) `97a4179d`，最终代码 CI #4569 / R2 #4130 SUCCESS | 已合并 |
+| Stage 5：Clockmaker / Chambermaid NGJ 数字语义 + 统一 UI | [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) `b551d7f2`；生产代码 `7c2950aa` 完整 CI #4572 / R2 #4132 SUCCESS；docs-only CI #4573/R2 #4133 SUCCESS（Android skipped） | 已合并；自动化验收通过；真实设备及来电/进程退出恢复仍待检验 |
 
-**分支关系已收敛：** #343、#344 已依次 squash 合并进入 main，Stage 3 应从最新 main 派生；本合同最初在 #342，现通过独立文档集成入主线；酒鬼方桌原 [#341](https://github.com/Jazz0006/CampBoardGameHost/pull/341) 已由新的兼容实现 [#346](https://github.com/Jazz0006/CampBoardGameHost/pull/346) 迁移到共享 Renderer 并合并，原 #341 已关闭。原 #342 由 #345 替代，旧 #336 冲突拆分亦已关闭。Stage 3 PR #348 已 squash 合并 main `e241d03b`；Stage 4 PR #349 已合并 main `97a4179d`，目前开发中的 PR 是 Stage 5 Draft #350。当前更新的路线图、交接与测试策略现均在 main，参见 [Stage 2 验收文档](https://github.com/Jazz0006/CampBoardGameHost/blob/feature/host-information-resolvers-20261022/docs/HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)。新对话务必实时核对 HEAD/工作树/PR，**此时 main 已包含 Resolver**；不得从早于 `d3a75c99` 的历史快照出发。独立待修 P1：白天被提名者可以死亡、固定布尔信息真值；没有真机/付费 API 验收。
+**剩余边界：** Stage 5 的实机 UI 可读性/状态叠加/5–15 TB 和 5–6 NGJ 代表局、三模式现场全屏交接/Next、意外退出后的实用继续，均未由本轮真机验证；付费 AI 未运行。独立 P1（活人提名已死玩家、健康 Fortune Teller 固定布尔线索）不包含在本五批实施范围。不得重建已删除的任意数字输入、旧 Rules 候选/评分或重复 GameState。
 
 ## 0. 总目标与不可破坏边界
 

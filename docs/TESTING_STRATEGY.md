@@ -1,11 +1,14 @@
-# CampBoardGameHost 测试与验收策略（2026-10-22）
+# CampBoardGameHost 测试与验收策略（2026-10-23）
 
-## 当前五批 UI/Resolver 证据（优先于旧基线）
+## 当前五批 Host UI/Resolver 验收证据（优先于历史检查点）
 
-- **Stage 1 卡片视觉（已合并 main `78d2b115`）**：[已合并 #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) `1ea2c918`：Android CI #4543 / R2 #4110 SUCCESS；共享 Renderer 的死亡/鬼票/醉毒/虚线/选中层和旧 SeatState 删除已自动验证，**真实设备视觉未验收**。
-- **Stage 2 只读信息求值（已合并 main `d3a75c99`）**：[已合并 #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) `bb024f42442e464fe168e59af6ebd4a945840cb8`：Android CI #4544 / R2 #4111 SUCCESS；测试仅新增 `HostInformationResolversTest.kt`，生产仅新增 `HostInformationResolvers.kt`。覆盖 Chef 首尾环绕、Empath 最近存活邻居、来源醉毒和被调查 Spy/Recluse 登记失效独立处理、Drunk 展示身份、真角色与已确认恶魔伪装、Librarian 无外来者/醉毒、TB/NGJ 与当前数字建议不匹配等；**旧 Numeric / Pair UI 未接入**。
-- **Stage 3 下一轮严格验收**：真实 Session 数字 Resolver 正式连接 Chef/Empath 页面；健康唯一答案为一个展示按钮，裁量才允许单选，当前可靠 AI 高亮，自动模式无结果不得临时生成，过期主体/来源/版本建议无效；改选必须使旧预览失效且再次展示才准 Next，单步最终只写一个实际玩家收到的私密 `Observation`。同时清除旧任意非负数输入 UI 和双轨消费者；高价值 360×520/三模式/中毒解除/死人邻位回归，而非枚举穷举。完整 Android CI/R2 与真机分别标记，不把 docs-only CI 充当 Android 生产代码测试。
-- 这三批是**2026-10-22 新五批产品合同**，不可与此前“第一阶段最小整局”“第二阶段全仓清理”混淆；后者已在主线合并。完整权威新合同已从原 [docs Draft #342](https://github.com/Jazz0006/CampBoardGameHost/pull/342) 移交到 [主线集成文档](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)；#343/#344 已合并；#345 完成合同集成，#346 重新适配并合并酒鬼镇民方桌（Android CI #4551/R2 #4115 SUCCESS），原 #341/#342 与冲突旧拆分 #336 已关闭；当前开放 PR 为 0。详见 [PR 清理记录](HOST_PR_CONSOLIDATION_2026-10-22.md)。详见 [路线图](CURRENT_DEVELOPMENT_ROADMAP.md)、[交接](NEXT_DEVELOPMENT_HANDOFF.md)、[Stage 2 验收](HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)。
+**所有五批已合并 `main` `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`**。Stage 1 视觉 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) CI #4543/R2 #4110、Stage 2 只读求值 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) CI #4544/R2 #4111、Stage 3 Chef/Empath [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) CI #4562/R2 #4124、Stage 4 Pair [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) CI #4569/R2 #4130、Stage 5 NGJ 数字 [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 完整 [Android CI #4572](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39768833600) / R2 #4132，**全部 SUCCESS**。第五批最后文档提交另有 CI #4573 / R2 #4133 SUCCESS，但该次 Android 测试因 docs-only 变更被 **SKIPPED**，以 `7c2950aa` 的生产代码 CI 为代码证据。
+
+**已有高价值自动化**：TB 5–15 与 NGJ 5–6 代表局、360×520 共享方桌/数值/Pair、醉酒中毒/Spy/Recluse 登记（适用于包含相应角色的剧本）、侍女排除酒鬼假唤醒、钟表匠环形座位距离、当前 Session AI 建议、D2 全屏预览→改选→仅 Next 写最终 Observation、全局阶段/死亡/鬼票、Session 序列化恢复以及完整 App 闭环。不要把此描述扩大成穷举全部角色组合或真实来电/物理强退证明。
+
+**尚未验收：实际 Android 手机。** 在代表性 5/15 人 TB 与 5/6 人 NGJ 局检查昼夜/阵营配色、姓名/角色文字、死亡/鬼票/醉酒/中毒叠加、虚线/选中/中央按钮和滚动、三种工作模式、全屏手机交接与 Next、真实来电/进程被杀及从唯一 Session 继续游戏。CI/Robolectric 和本地脚本成功 ≠ 真机视觉/设备恢复；付费 LLM 调用需要用户明确授权。
+
+**测试取舍：** 遵循高价值行为风险测试，不机械 test-first，不为被删旧 Rules/评分/长候选接口恢复僵化测试；新读写路径迁移成功后同批删除旧接口、状态与调用。仍待独立 P1 行为验收：活人提名死人；正常占卜师固定布尔信息。完整合同见 [五批方案](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)、[最新路线图](CURRENT_DEVELOPMENT_ROADMAP.md)、[第五批验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md)。
 
 ## 2026-10-21 既有测试政策 / 历史基线（无冲突部分继续适用）
 

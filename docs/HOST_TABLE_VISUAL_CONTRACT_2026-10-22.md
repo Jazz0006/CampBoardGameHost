@@ -1,6 +1,6 @@
 # Host 方桌视觉合同（2026-10-22，长期原则）
 
-> **当前批准的五批合同**：[Host 方桌与信息角色完整规划](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已通过合并 #345 移入 main。共享卡片视觉 Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 已合并 main `78d2b115`（Android CI #4543 / R2 #4110）；Numeric/Pair Resolver Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 已合并 main `d3a75c99`（Android CI #4544 / R2 #4111）。**Stage 3 Chef/Empath 数字 Resolver 已接入统一方桌**，代码 `44fb05c7` 经完整 Android CI #4562 / R2 #4124 SUCCESS，Draft #348 待合并；下一步 Stage 4 Pair，Stage 5 其余角色与真机验收。#341 旧酒鬼方桌已通过兼容共享 Renderer 的合并 #346 替代（Android CI #4551 / R2 #4115 SUCCESS），真机视觉仍未验证。
+> **2026-10-23 最新状态：** [五批权威方案](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 的源代码已全部合并 `main`：Stage 1 [#343](https://github.com/Jazz0006/CampBoardGameHost/pull/343)、Stage 2 [#344](https://github.com/Jazz0006/CampBoardGameHost/pull/344)、Stage 3 [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)、Stage 4 [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349)、Stage 5 [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)；最终主线合并点 `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`。第五批生产代码 Android CI #4572、R2 #4132 SUCCESS；方桌唯一 Seat renderer、颜色与标记、数字及 Pair UI 复用关系均由现有代码/自动化验证。**真实 Android 设备的视觉可读性、叠加状态与打断恢复尚未验收**；不可误读为已经做过真机验证。
 
 ## 唯一设计原则
 

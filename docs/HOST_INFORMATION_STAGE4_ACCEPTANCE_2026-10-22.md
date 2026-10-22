@@ -1,6 +1,8 @@
 # Stage 4 验收记录：Pair 信息统一方桌（2026-10-22）
 
-## 合并与基线
+> **2026-10-23 合并后状态：** 本批 [PR #349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 最终代码 `18a64bc8da052b41b28067918cca7a719bbd5cfb` 完整 Android CI **#4569** / R2 **#4130 SUCCESS**，已 squash 合并 `main` `97a4179d8461a96e1d38f0fc169b1f5386a4c730`。随后第五批 [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 也已合并，第五批主线合并点 `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`。下文 Draft/未合并描述是当时快照，非当前状态。真机尚未验收。
+
+## 合并与基线（合并前开发记录）
 
 - Stage 3 [PR #348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) 已经 squash 合并 main `e241d03b9a7e344f422937cdb6c8419ad091981b`。
 - 从上述干净 main 新建 `feature/host-pair-information-stage4-20261022`；本批 [Draft PR #349](https://github.com/Jazz0006/CampBoardGameHost/pull/349)，未合并。
@@ -15,7 +17,7 @@
 5. MANUAL 直接手动选择；AI_ASSISTED 当前合法建议+人工编辑；AI_AUTOMATIC 仅当前可信推荐，缺失则等待/重试。推荐必须对应当前 pair、角色与 Session 局部短名单；Host 建议接纳与 AI 重新请求入口共享同一 Session 校验；迟到建议不覆盖手动草稿。
 6. 点击展示进入既有玩家私密全屏，不写事件；返回可修改，修改失效上次预览；只有 Next 提交最终一次 `Observation`。角色间无 Previous。未更动 Stage 5 钟表匠/侍女及付费 AI 调用路径。
 
-## 实测范围 / 待更新
+## 实测范围 / 历史验收记录
 
 - `ClocktowerD2UiTest` 覆盖 Washerwoman/Librarian/Investigator 手动选 pair 后的单选/多选、三模式的当前建议、改选后的 Next 门及唯一 Observation。
 - `ClocktowerDirectPairInformationTest` 验证先座位后角色，错误/过期当前 query AI 建议不可复用。

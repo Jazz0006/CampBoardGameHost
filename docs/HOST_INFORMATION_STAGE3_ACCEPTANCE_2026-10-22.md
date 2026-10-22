@@ -1,6 +1,8 @@
 # Stage 3 验收：Chef / Empath 数字信息统一方桌（2026-10-22）
 
-## 交付与精确验收
+> **2026-10-23 合并后更新：** 第三批 [PR #348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) 已 squash 合并 `main` `e241d03b9a7e344f422937cdb6c8419ad091981b`；Stage 4 [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 和 Stage 5 [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 也已合并。第五批主线合并点 `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`。此文保留 Stage 3 具体代码/回归证据，以下分支及 Draft 状态是**当时的验收快照**，不是当前待办。真实设备仍未验收。
+
+## 交付与精确验收（合并前验收快照）
 
 - 仓库：`Jazz0006/CampBoardGameHost`；分支：`feature/host-numeric-chef-empath-stage3-20261022`；[Draft PR #348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)。从干净 main `d1327648a8520a498b3cfc6adfb33f1be3807970` 开工。
 - **最后一次修改生产代码的验收 SHA：`44fb05c769735826187a66008749432e25368ea4`**。

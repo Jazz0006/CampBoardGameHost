@@ -1,22 +1,22 @@
-# 当前开发路线（2026-10-22，Host 方桌 / 信息角色五批重建）
+# 当前开发路线（2026-10-23，Host 方桌与信息角色五批已合并）
 
-## 当前有效开发进度与下一步（优先于下方旧审计）
+## 当前权威进度（优先于本文件下方历史审计）
 
-**权威五批合同：** [`HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md`](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md) 已由旧 #342 规划分支移入本轮 main 集成文档。所有阶段以此为准。
+**已合并主线：** [Stage 5 PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 通过 squash merge 合并 `main`，第五批合并提交为 **`b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`**。2026-10-23 开发机 `clocktower` 已从干净的 feature 分支切回 `main` 并 fast-forward 至同一 SHA；最终文档更新另行提交推送。详细设计合同：[五批重建](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。
 
-| 批次 | 已验证事实 | 当前状态 |
+| 批次 | 生产实现与代码证据 | 状态 |
 | --- | --- | --- |
-| Stage 1a/1b — 统一卡片视觉 | [已合并 #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) 源 `1ea2c918` / main `78d2b115`；Android CI #4543 / R2 #4110 SUCCESS；死亡/鬼票/醉毒、普通/特殊虚线与选中次序分层，旧 `ClocktowerSquareTableSeatState` 及其消费者已清理 | **已合并 main；真机视觉未验收** |
-| Stage 2 — 只读 Numeric / Pair Resolver | [已合并 #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) 源代码 `bb024f42` / main `d3a75c99`；Android CI #4544 / R2 #4111 SUCCESS。新增 `clocktower/session/HostInformationResolvers.kt` 与 `HostInformationResolversTest.kt`，只读 Session 支持 Chef、Empath、Washerwoman、Librarian、Investigator；独立判断信息源醉毒与 Spy/Recluse 特殊登记 | **已合并 main；Chef/Empath 已由 Stage 3 消费，Pair UI 留 Stage 4** |
-| Stage 3 — 厨师 / 共情者数字 UI | 从 `d1327648` 创建 `feature/host-numeric-chef-empath-stage3-20261022` / Draft [#348](https://github.com/Jazz0006/CampBoardGameHost/pull/348)。生产 HostScreen 使用 Session `NumericInformationResolver`，按当前来源/座位/指标/subjects 验证 AI，单值唯一按钮、多值单选；新增 `ClocktowerNumericInformationSquareTableDialog`，使用共享方桌座位及统一 Host/Next 底部导航，移除数字页面独立导航；返回修改须重新预览，Next 只提交最终 Observation。最终代码 `44fb05c769735826187a66008749432e25368ea4` 完整 [Android CI #4562](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39756358897) / [R2 #4124](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39756358937) **SUCCESS**，PR 4/4 检查成功；见 [Stage 3 验收记录](HOST_INFORMATION_STAGE3_ACCEPTANCE_2026-10-22.md)。 | **已通过 #348 squash 合并 main `e241d03b`；真机未验收** |
-| Stage 4 — 洗衣妇 / 图书管理员 / 调查员 Pair UI | 从主线 `e241d03b` 建立 `feature/host-pair-information-stage4-20261022` / [Draft #349](https://github.com/Jazz0006/CampBoardGameHost/pull/349)。当前 Session Pair Resolver 接入统一方桌；先选两个座位再按选中 pair 求角色；洗衣妇只按在场/已确认恶魔伪装两区分组、图书管理员有效零外来者、调查员无虚构零爪牙；普通/特殊候选虚线及所有座位可点；三模式与 D2 唯一 Next。第一版 `ff96496a` 完整 Android CI #4565、R2 #4126 SUCCESS；补完 360×520 / 15 人交互、共享方桌受限布局兜底与当前 Session AI 校验后，代码 `4f418656` 完整 Android CI #4568、R2 #4129 SUCCESS；最后去除 Pair 页面多余的旧预览提示，待最终 SHA 确认。 | **Draft #349；代码第一版 CI/R2 通过，最终补测 SHA 待验收；真机未验收** |
-| Stage 5 — 钟表匠 / 侍女及全局验收 | 从 Stage 4 main `97a4179d` 建立 `feature/host-numeric-clockmaker-chambermaid-stage5-20261022` / [Draft #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)。新增 NGJ 只读 `NumericInformationResolver.resolveLaterNight`：钟表匠计算恶魔到最近爪牙的环形物理距离；侍女读取当前夜间能力唤醒步骤，排除虚假酒鬼唤醒，按活人双座位计算人数；复用 Session 数字方桌/本步 D2，删除最后任意非负输入组件。首批代码 `e64bbb3f` Android CI #4571 / R2 #4131 SUCCESS；扩充醉毒/Drunk 回归与 Host 无解析结果的 AI 拦截后，代码 `7c2950aa` 完整 Android CI #4572 / R2 #4132 SUCCESS。全仓审计仅一套 Seat renderer，旧数字文本输入无生产调用。 | **Stage 5 数字功能和自动化验收完成；Draft #350 待合并，真机/来电恢复未验收** |
+| Stage 1 — 共享座位视觉 | [PR #343](https://github.com/Jazz0006/CampBoardGameHost/pull/343) squash `78d2b115`；CI #4543 / R2 #4110 SUCCESS。善蓝恶红、死亡/鬼票/醉毒和普通/特殊候选边框统一到同一 renderer | **已合并 main；真机视觉待验收** |
+| Stage 2 — Session 只读求值 | [PR #344](https://github.com/Jazz0006/CampBoardGameHost/pull/344) squash `d3a75c99`；CI #4544 / R2 #4111 SUCCESS。当前 Session 的 Numeric/Pair Resolver，不创建第二套状态 | **已合并 main；已由 Stage 3–5 UI 消费** |
+| Stage 3 — 厨师 / 共情者 | [PR #348](https://github.com/Jazz0006/CampBoardGameHost/pull/348) squash `e241d03b`；代码 `44fb05c` CI #4562 / R2 #4124 SUCCESS。统一方桌数字信息、单值按钮/裁量单选和 Next 唯一 Observation | **已合并 main** |
+| Stage 4 — 洗衣妇 / 图书管理员 / 调查员 | [PR #349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) squash `97a4179d`；最终代码 `18a64bc8` CI #4569 / R2 #4130 SUCCESS。先物理双座位再动态角色短名单、两种候选虚线、来源单列分区、三模式/预览门禁 | **已合并 main** |
+| Stage 5 — 钟表匠 / 侍女 | [PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) squash `b551d7f2`；生产代码 `7c2950aa` 完整 [Android CI #4572](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39768833600) / R2 #4132 SUCCESS。NGJ 当前夜唤醒和最近爪牙数字只读求值、共享数字 UI、删除旧任意数字文本输入；后续 docs-only CI #4573/R2 #4133 SUCCESS（Android tests skipped） | **已合并 main；自动化通过；真机/打断恢复待验收** |
 
-**Stage 5 当前工作：** 第四批 [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 已于完整 Android CI #4569/R2 #4130 SUCCESS 后 squash 合并 main `97a4179d`。第五批 [#350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 的 Clockmaker/Chambermaid 只读数字语义、共享 UI 和旧自由输入删除已完成且 Android CI #4572 / R2 #4132 SUCCESS；剩余为真机视觉和电话打断/实际恢复等设备验收，不能以自动化结果替代。
+**接下来只处理剩余风险，不重新实现已合并五批。** [下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md) / [Stage 5 验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md) 明确：在真实 Android 手机验证 15 人/360×520 可读性、状态叠加、三工作模式 D2 全屏预览→Next、来电/切后台/被杀进程后的安全继续。现有 TB 5–15、NGJ 5–6、小屏/全局行为自动化验证不等同真机或付费 API 验收。Oracle VM 当前不具备本地 Android 真机条件时，记录设备测试未执行，不杜撰结果。
 
-**PR 清理已经完成：** #343/#344/#345/#346 已 squash 合并 main；#342 由 #345 替代并关闭，#341 由 #346 兼容改写替代并关闭，#336 旧冲突拆分已审计并关闭（其独有模块未直接移植）。上述旧 PR 已收敛，**#348/#349 均已合并；#350 为第五批 Draft PR**；详见 [收敛记录](HOST_PR_CONSOLIDATION_2026-10-22.md)。独立未修复 P1：活人提名死人、占卜师固定布尔真值；均不要误认为 Stage 3 已完成。CI ≠ 真机；付费 API 需授权。
+**独立待办 P1（与五批合并分离）：** 白天存活提名者应可提名已死目标；正常占卜师（Fortune Teller）可靠固定布尔结果应由 Host 确认。仅在独立授权的任务中处理，不回引旧 Rules 引擎、候选评分或额外 GameState。
 
-**证据与完整交接：** [第二批验收与第三批入口](HOST_INFORMATION_STAGE2_ACCEPTANCE_2026-10-22.md)、[下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md)、[测试策略](TESTING_STRATEGY.md)。
+**工程原则：** 唯一可写 `ClocktowerGameSession/ClocktowerSessionState` 与结构化已确认事件；信息展示可多次预览，只有 Next 形成最后一条 Observation；AI 仅建议当前有效裁量；TB/NGJ 两 builtin 与安全恢复、隐私、AtomicFile 保留。测试遵守 [当前测试策略](TESTING_STRATEGY.md)，付费 API 须另行批准。
 
 ## 以下为 2026-10-21 清理 / P1 独立审计历史基线（与上方新状态冲突时以上方为准）
 

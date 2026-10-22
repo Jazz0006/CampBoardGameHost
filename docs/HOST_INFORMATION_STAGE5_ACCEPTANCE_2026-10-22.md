@@ -1,9 +1,9 @@
-# Stage 5 验收记录：NGJ 钟表匠、侍女数字语义与统一方桌（2026-10-22）
+# Stage 5 验收记录：NGJ 钟表匠、侍女数字语义与统一方桌（2026-10-23 已合并主线）
 
 ## 基线与范围
 
 - Stage 4 [#349](https://github.com/Jazz0006/CampBoardGameHost/pull/349) 经完整 Android CI #4569 / R2 #4130 成功后 squash 合并 main `97a4179d8461a96e1d38f0fc169b1f5386a4c730`。
-- 第五批独立分支 `feature/host-numeric-clockmaker-chambermaid-stage5-20261022`，当前 [Draft #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350)；首批代码 SHA `e64bbb3f0f308b5b964d65d4889c72f80d26a10b`。首批代码 `e64bbb3f` 完整 Android CI #4571 / R2 #4131 SUCCESS；完善 Drunk 回归和当前 AI 建议门后，**生产代码 `7c2950aa06b668d13230349957a3d844ce10e8a9` 完整 Android CI #4572 / R2 #4132 SUCCESS，PR 4/4 检查通过**。真机验收仍独立待执行。
+- 第五批 [PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 已于 2026-10-23 squash merge 到 `main`，合并 SHA **`b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`**。合并后开发机 `main` 曾同步至该 SHA、工作树 Clean；后续纯文档更新会生成更晚的 main 提交。首批代码 `e64bbb3f` 完整 Android CI #4571/R2 #4131 SUCCESS；最终生产代码 **`7c2950aa06b668d13230349957a3d844ce10e8a9`** 完整 Android CI **#4572/R2 #4132 SUCCESS**；后续 docs-only `4d3ce214` CI #4573/R2 #4133 SUCCESS（Android tests SKIPPED）。本次没有真机/付费 API 验收。
 
 ## 生产实现与边界
 
@@ -13,7 +13,7 @@
 4. Clockmaker 复用 `ClocktowerNumericInformationSquareTableDialog`，Chambermaid 保留共享物理座位双选方桌并复用 `ClocktowerResolvedNumericResultUi`；两者统一全屏展示/返回改选/Next 最终一次 Observation 语义。MANUAL、AI_ASSISTED、AI_AUTOMATIC 当前建议仅绑定实际 metric、source、subject seats 与当前 Resolver 值；确定值不需要 AI 自选。
 5. **已删** `ClocktowerDirectNumericResultUi` 遗留的任意非负整数编辑 UI 及相关不用的 helper，保留 `clocktowerDirectNumericResult` 仅用于实际展示格式化。D2/完整 App 高价值回归已切换到新数字组件；此前 Stage 1–4 共用 Seat renderer/显示合同保持不变。
 
-## 仍待验收
+## 已完成的自动化与仍需实机验收的工作
 
 - **已完成：** 最终生产代码 `7c2950aa` 完整 Android CI #4572、R2 #4132 SUCCESS；包括 NGJ 5–6 人数字语义、酒鬼假唤醒、恢复与真实 App 整局回归。后续文档提交如跳过 Android 测试，不得替代这一代码 SHA。
 - 现有自动化覆盖 5–15 人 TB、5–6 人 NGJ、360×520 共享卡片/数字/Pair、完整 D2、死亡/鬼票、Session 序列化恢复与 NGJ 整局闭环。需在真实 Android 设备上抽测 15 人文本与状态叠加、来电中断和杀进程后实用恢复。当前 NGJ 官方角色表不包含 Recluse/Spy，不新增跨剧本不可达的 Clockmaker 登记算法。

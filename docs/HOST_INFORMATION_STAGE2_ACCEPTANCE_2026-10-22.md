@@ -1,6 +1,6 @@
 # Host 信息角色重建 — 第二批代码验收与第三批交接（2026-10-22）
 
-> **验收记录与后续主线集成：** Stage 1 #343 源代码 `1ea2c918` / main squash `78d2b115`，Android CI #4543 / R2 #4110 SUCCESS；Stage 2 #344 源生产代码 `bb024f42` / main squash `d3a75c99`，Android CI #4544 / R2 #4111 SUCCESS。此前记录的 Draft/分支状态属于合并前的历史，**两批现已合并 main**。权威五批合同见 [当前本地设计文件](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)；第三批 Numeric UI 尚未实施。另酒鬼选择已由 #346 兼容实现合并 main `b66f8fe3`（Android CI #4551 / R2 #4115 SUCCESS），原 #341 已关闭；#342 文档由 #345 替代，#336 旧冲突 Draft 关闭且未移植旧模块。真机/付费 API 未验收。
+> **2026-10-23 合并后更新：** 本文是第二批当时的验收与第三批开工**历史交接**。Stage 1 #343 / Stage 2 #344 / Stage 3 #348 / Stage 4 #349 / Stage 5 #350 现均已合并 `main`，最新已核实合并点 `b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`。Stage 2 原代码 `bb024f42` Android CI #4544 / R2 #4111 SUCCESS；第三批和 Pair/NGJ 数字 UI 也早已完成，旧“尚未实施/待启动”内容仅供追踪，勿照其开新分支。五批现行记录见 [路线图](CURRENT_DEVELOPMENT_ROADMAP.md)、[第五批验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md)。真机/付费 API 仍未验收。
 
 ## 1. 合并前的真实分支和证据（历史留存）
 
