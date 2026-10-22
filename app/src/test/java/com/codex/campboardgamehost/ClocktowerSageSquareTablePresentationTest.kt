@@ -35,11 +35,11 @@ class ClocktowerSageSquareTablePresentationTest {
         val first = clocktowerSageSeatPresentation(2, 4, listOf(2, 4))
         val other = clocktowerSageSeatPresentation(1, 4, listOf(2, 4))
         assertTrue(actor.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.SelectedSecond, actor.targetState)
+        assertEquals(2, actor.selectionOrder)
         assertFalse(first.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.SelectedFirst, first.targetState)
+        assertEquals(1, first.selectionOrder)
         assertFalse(other.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.Selectable, other.targetState)
+        assertTrue(other.isCandidate)
     }
 
     private fun sageStep(actor: PlayerCard) = ClocktowerNightStepUi(

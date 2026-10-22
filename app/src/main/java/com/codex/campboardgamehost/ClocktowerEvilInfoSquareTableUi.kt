@@ -72,11 +72,7 @@ internal fun clocktowerEvilInfoSeatPresentation(
     actorSeat: Int?,
     highlightedSeats: Set<Int> = emptySet(),
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
-    targetState = if (seatNumber in highlightedSeats) {
-        ClocktowerSquareTableSeatState.HighlightedInformation
-    } else {
-        ClocktowerSquareTableSeatState.Neutral
-    },
+    contextMarker = if (seatNumber in highlightedSeats) "队" else null,
     isCurrentActor = seatNumber == actorSeat,
 )
 

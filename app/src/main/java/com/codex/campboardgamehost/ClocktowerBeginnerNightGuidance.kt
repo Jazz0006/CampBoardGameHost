@@ -12,6 +12,8 @@ internal data class ClocktowerBeginnerNightGuidance(
     ).joinToString("\n")
 
     private fun String.asExpandedWakeLine(): String = when {
+        startsWith("唤醒 ") && contains("号 ·") -> this
+        startsWith("Wake P") && contains(" · ") -> this
         startsWith("唤醒 ") -> "唤醒：${removePrefix("唤醒 ")}"
         startsWith("Wake ") -> "Wake: ${removePrefix("Wake ")}"
         else -> this
@@ -32,6 +34,7 @@ internal fun clocktowerBeginnerNightGuidance(
     cards: List<PlayerCard>,
     language: String,
     groupTeam: ClocktowerTeam? = null,
+    actorIsPoisoned: Boolean = false,
 ): ClocktowerBeginnerNightGuidance? {
     val resolvedActor = actor ?: return null
     val seat = cards.indexOfFirst { card -> card.name == resolvedActor.name }
@@ -61,17 +64,17 @@ internal fun clocktowerBeginnerNightGuidance(
         )
     }
 
-    val roleContext = if (
-        actualRole.enName == "Drunk" &&
-        shownRole != null &&
-        shownRole.enName != actualRole.enName
-    ) {
-        "${roleLabel(actualRole)} → ${roleLabel(shownRole)}"
-    } else {
-        roleLabel(actualRole)
-    }
-    val wakeLine = if (language == "en") "Wake $roleContext" else "唤醒 $roleContext"
-    val actorLine = if (language == "en") "P$seat ${resolvedActor.name}" else "${seat}号 ${resolvedActor.name}"
+    val isDrunk = actualRole.enName == "Drunk"
+    val shownToPlayer = if (isDrunk) shownRole ?: actualRole else actualRole
+    val status = listOfNotNull(
+        (if (language == "en") "Drunk" else "醉").takeIf { isDrunk },
+        (if (language == "en") "Poisoned" else "毒").takeIf { actorIsPoisoned },
+    ).joinToString(" · ")
+    val roleContext = roleLabel(shownToPlayer) +
+        status.takeIf { it.isNotBlank() }?.let { "（$it）" }.orEmpty()
+    val wakeLine = if (language == "en") "Wake P$seat · $roleContext"
+        else "唤醒 ${seat}号 · $roleContext"
+    val actorLine = resolvedActor.name
     val instruction = when (action) {
         ClocktowerNightAction.Poison -> if (language == "en") {
             "Have them choose one player to poison"

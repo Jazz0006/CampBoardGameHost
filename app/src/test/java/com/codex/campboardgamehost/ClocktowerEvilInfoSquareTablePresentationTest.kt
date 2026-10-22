@@ -84,9 +84,9 @@ class ClocktowerEvilInfoSquareTablePresentationTest {
         val actor = clocktowerEvilInfoSeatPresentation(seatNumber = 4, actorSeat = 4)
         val other = clocktowerEvilInfoSeatPresentation(seatNumber = 5, actorSeat = 4)
 
-        assertEquals(ClocktowerSquareTableSeatState.Neutral, actor.targetState)
+        assertFalse(actor.isInteractionEnabled)
         assertTrue(actor.isCurrentActor)
-        assertEquals(ClocktowerSquareTableSeatState.Neutral, other.targetState)
+        assertFalse(other.isInteractionEnabled)
         assertFalse(other.isCurrentActor)
     }
 

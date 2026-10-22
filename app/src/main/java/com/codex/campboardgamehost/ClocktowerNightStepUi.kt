@@ -212,6 +212,7 @@ internal fun ClocktowerNightStepCardLocalized(
 
     val compactNightGuidance = clocktowerBeginnerNightGuidance(
         action = step.action,
+        actorIsPoisoned = poisonedPlayerName != null && step.actor?.name == poisonedPlayerName,
         actor = step.actor,
         cards = cards,
         language = language,

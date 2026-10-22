@@ -39,13 +39,13 @@ class ClocktowerBeginnerNightGuidanceTest {
             language = "zh",
         )
 
-        assertEquals("唤醒 投毒者", guidance?.wakeLine)
-        assertEquals("2号 李四", guidance?.actorLine)
+        assertEquals("唤醒 2号 · 投毒者", guidance?.wakeLine)
+        assertEquals("李四", guidance?.actorLine)
         assertEquals("让他选择一名玩家作为中毒目标", guidance?.instruction)
     }
 
     @Test
-    fun `drunk shows actual role arrow shown role`() {
+    fun `drunk shows shown role with actual impairment status`() {
         val drunk = role(ClocktowerTeam.Outsider, "酒鬼", "Drunk")
         val empath = role(ClocktowerTeam.Townsfolk, "共情者", "Empath")
         val actor = player("张三", actual = drunk, shown = empath)
@@ -57,10 +57,18 @@ class ClocktowerBeginnerNightGuidanceTest {
             language = "zh",
         )
 
-        assertEquals("唤醒 酒鬼 → 共情者", guidance?.wakeLine)
-        assertEquals("1号 张三", guidance?.actorLine)
+        assertEquals("唤醒 1号 · 共情者（醉）", guidance?.wakeLine)
+        assertEquals("张三", guidance?.actorLine)
         assertNull(guidance?.instruction)
-        assertEquals("唤醒 酒鬼 → 共情者\n1号 张三", guidance?.asWakeInstruction())
+        assertEquals("唤醒 1号 · 共情者（醉）\n张三", guidance?.asWakeInstruction())
+        val poisoned = clocktowerBeginnerNightGuidance(
+            action = ClocktowerNightAction.None,
+            actor = actor,
+            cards = listOf(actor),
+            language = "zh",
+            actorIsPoisoned = true,
+        )
+        assertEquals("唤醒 1号 · 共情者（醉 · 毒）", poisoned?.wakeLine)
     }
 
     @Test

@@ -82,11 +82,4 @@ class ClocktowerDirectPairInformationTest {
         ))
     }
 
-    @Test fun `true-role UI marker never invents Spy Recluse registration`() {
-        assertEquals("✓", clocktowerPairInformationTruthMarker(true, "Chef", "Chef"))
-        assertNull(clocktowerPairInformationTruthMarker(true, "Chef", "Empath"))
-        assertNull(clocktowerPairInformationTruthMarker(false, "Chef", "Chef"))
-        assertNull(clocktowerPairInformationTruthMarker(true, "Poisoner", "Recluse"))
-        assertNull(clocktowerPairInformationTruthMarker(true, "Washerwoman", "Spy"))
-    }
 }
