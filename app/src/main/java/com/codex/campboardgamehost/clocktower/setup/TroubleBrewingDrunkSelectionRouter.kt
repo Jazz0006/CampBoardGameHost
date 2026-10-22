@@ -34,16 +34,18 @@ internal object TroubleBrewingDrunkSelectionRouter {
         recommendedCandidate: TroubleBrewingDrunkCandidate?,
     ): TroubleBrewingDrunkSelectionRoute {
         val intermediate = preparedSetup.intermediateSetup
-        val seats = if (intermediate.visibleRoster.hasDrunk)
-            intermediate.shownSeatAssignments.map {
-                TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId)
-            } else emptyList()
+        val townsfolkRoleIds = intermediate.visibleRoster.townsfolkRoleIds.toSet()
+        val seats = if (intermediate.visibleRoster.hasDrunk) {
+            intermediate.shownSeatAssignments
+                .filter { it.shownRoleId in townsfolkRoleIds }
+                .map { TroubleBrewingDrunkCandidate(it.seat, it.playerName, it.shownRoleId) }
+        } else emptyList()
         if (!intermediate.visibleRoster.hasDrunk) {
             require(seats.isEmpty()) { "No-Drunk setup cannot expose Drunk candidates." }
             require(recommendedCandidate == null) { "No-Drunk setup cannot carry a Drunk recommendation." }
             return TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded
         }
-        require(seats.isNotEmpty()) { "Drunk setup requires a dealt seat." }
+        require(seats.isNotEmpty()) { "Drunk setup requires at least one shown Townsfolk." }
         require(recommendedCandidate == null || recommendedCandidate in seats) {
             "Drunk recommendation must belong to the current dealt seats."
         }
@@ -52,3 +54,4 @@ internal object TroubleBrewingDrunkSelectionRouter {
             )
     }
 }
+

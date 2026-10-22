@@ -122,16 +122,15 @@ class TroubleBrewingSetupCommitterTest {
         )
     }
 
-    @Test fun `confirmed non townsfolk Drunk seat is a structural fact with its shown identity preserved`() {
+    @Test fun `Drunk cannot be committed to an Outsider Minion or Demon`() {
         val setup = drunkIntermediateSetup()
-        for (assignment in setup.shownSeatAssignments.filter { it.shownRoleId in setOf("saint", "poisoner", "imp") }) {
+        for (assignment in setup.shownSeatAssignments.filter {
+            it.shownRoleId in setOf("saint", "poisoner", "imp")
+        }) {
             val chosen = TroubleBrewingDrunkCandidate(assignment.seat, assignment.playerName, assignment.shownRoleId)
-            val result = TroubleBrewingSetupCommitter.commit(setup, chosen, canonicalRegistry())
-            val player = result.gameState.playerAt(assignment.seat)!!
-            assertEquals(RoleId("Drunk"), player.actualRole)
-            assertEquals(canonicalRegistry().findByExternalId(assignment.shownRoleId)!!.id, player.shownRole)
-            assertEquals(com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD, player.actualAlignment)
-            assertEquals(1, result.gameState.players.count { it.actualRole == RoleId("Drunk") })
+            assertThrows(IllegalArgumentException::class.java) {
+                TroubleBrewingSetupCommitter.commit(setup, chosen, canonicalRegistry())
+            }
         }
     }
 
@@ -190,3 +189,4 @@ class TroubleBrewingSetupCommitterTest {
         }.ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
     }
 }
+

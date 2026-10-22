@@ -749,6 +749,7 @@ internal fun CampBoardGameHostApp(
                             .ruleset(ClocktowerScript.TroubleBrewing)
                             .characterRegistry
                         ClocktowerDrunkSelectionScreen(
+                            preparedSetup = pending.preparedSetup,
                             request = pending.request,
                             operationMode = storytellerOperationMode,
                             language = language,
