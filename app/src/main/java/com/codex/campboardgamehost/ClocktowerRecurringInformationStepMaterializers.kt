@@ -96,6 +96,8 @@ internal fun clocktowerFirstNightMaterializers(
     text: (String, String) -> String,
     firstNightEvilInformationSteps: ClocktowerFirstNightEvilInformationSteps,
     redHerring: String?,
+    /** Session fact: an actual Fortune Teller is seated. */
+    fortuneTellerInPlay: Boolean,
 ): List<ClocktowerNightStepMaterializerRegistry.Entry> {
     fun pair(roleName: String, enName: String) = ClocktowerNightStepMaterializerRegistry.Entry(
         identity = ClocktowerProductionNightStepIdentity.role(RoleId(enName)),
@@ -119,8 +121,8 @@ internal fun clocktowerFirstNightMaterializers(
                 ClocktowerNightStepUi(
                                 title = text("占卜师红鲱鱼", "Fortune Teller red herring"),
                                 actor = null,
-                                isRealAction = actualClocktowerRoleCards(cards, "Fortune Teller").isNotEmpty(),
-                                reason = if (actualClocktowerRoleCards(cards, "Fortune Teller").isEmpty()) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
+                                isRealAction = fortuneTellerInPlay,
+                                reason = if (!fortuneTellerInPlay) text("本局没有占卜师，此步骤只用于首夜配置。", "No Fortune Teller is in play; this is only a first-night setup step.") else "",
                                 storytellerAction = text("不要公开说明这个选择。请选择一名善良玩家作为红鲱鱼；可以选择占卜师本人。", "Keep this choice private. Choose a good player as the red herring; the Fortune Teller may be chosen."),
                                 tellPlayer = redHerring?.let { text("已选择：${playerSeatLabel(cards, it)}", "Selected: ${playerSeatLabel(cards, it)}") },
                                 explanation = text("选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。", "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon."),

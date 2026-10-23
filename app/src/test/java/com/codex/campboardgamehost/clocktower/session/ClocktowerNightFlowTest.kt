@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
 import com.codex.campboardgamehost.ClocktowerScript
-import com.codex.campboardgamehost.ClocktowerNightHostProjection
 import com.codex.campboardgamehost.PlayerCard
 import com.codex.campboardgamehost.clocktowerRoleByName
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
@@ -89,13 +88,13 @@ class ClocktowerNightFlowTest {
         val cards = s.state.gameState.players.map { player ->
             PlayerCard(player.name, clocktowerRole = clocktowerRoleByName(player.actualRole.value))
         }
-        val projection = ClocktowerNightHostProjection(cards, s.state)
-        assertEquals(AbilityFunctioningState.POISONED, projection.ravenkeeperDeathTriggerAbilityState)
+        assertEquals(3, s.state.currentNightDeathTriggerSeat("Ravenkeeper"))
+        assertEquals(AbilityFunctioningState.POISONED, s.state.deathTriggerAbilityState("Ravenkeeper"))
         val step = com.codex.campboardgamehost.ClocktowerInformationStepBuilder(
             cards, "en", { _, en -> en }, { null }, { "" }, { _, _ -> null },
         ).build("Ravenkeeper", "Ravenkeeper", null, "",
-            actorOverride = projection.ravenkeeperTrigger,
-            abilityStateOverride = projection.ravenkeeperDeathTriggerAbilityState)
+            actorOverride = cards[2],
+            abilityStateOverride = s.state.deathTriggerAbilityState("Ravenkeeper"))
         assertTrue(com.codex.campboardgamehost.clocktowerDisplayedInformationIsUnreliable(step) { _, _ -> false })
         assertEquals("other_night:role:Ravenkeeper", next(s))
     }

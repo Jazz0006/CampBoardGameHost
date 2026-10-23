@@ -143,7 +143,7 @@ internal object NumericInformationResolver {
         return proposed.subjectSeats == resolved.subjectSeats && proposed.value in resolved.values
     }
 
-    private fun livingNeighbours(circle: List<PlayerState>, actorSeat: Int): List<PlayerState> {
+    internal fun livingNeighbours(circle: List<PlayerState>, actorSeat: Int): List<PlayerState> {
         val living = circle.filter(PlayerState::alive)
         val index = living.indexOfFirst { it.seat == actorSeat }
         if (index == -1 || living.size <= 1) return emptyList()

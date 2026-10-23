@@ -25,6 +25,7 @@ import com.codex.campboardgamehost.ClocktowerResidualDisplayMatcherV2
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.RoleId
+import com.codex.campboardgamehost.clocktower.domain.CharacterType
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
@@ -90,7 +91,6 @@ internal fun ClocktowerJudgeScreen(
         ?.pendingImpNotification()?.targetSeat?.let(sessionGameState::playerAt)?.name
     val ghostVoteAuthority = ClocktowerGhostVoteAuthority.from(sessionState.actionTimeline)
     fun text(zh: String, en: String): String = if (language == "en") en else zh
-    val publicAliveCards = cards.filter { it.eliminatedRound == null }
 
     val nightRuleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)
     val flowPhase = when {
@@ -106,22 +106,19 @@ internal fun ClocktowerJudgeScreen(
     fun seatOf(name: String?): Int? = name?.let { selected ->
         cards.indexOfFirst { it.name == selected }.takeIf { it >= 0 }?.plus(1)
     }
-    val draftSlotNames = nightDraft?.seatSlots.orEmpty().map { seat -> seat?.let { cards.getOrNull(it - 1)?.name } }
+    fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
     // Builders run for every step; only the current interaction gets its draft.
-    fun draftSlotNamesFor(identity: ClocktowerProductionNightStepIdentity): List<String?> =
-        if (flowPhase != null && nightDraft?.interactionId == identity.interactionId(flowPhase)) draftSlotNames else emptyList()
-    val fortuneTellerSlots = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")))
-    val fortuneTellerFirst = fortuneTellerSlots.getOrNull(0)
-    val fortuneTellerSecond = fortuneTellerSlots.getOrNull(1)
-    val chambermaidSlots = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")))
-    val chambermaidFirst = chambermaidSlots.getOrNull(0)
-    val chambermaidSecond = chambermaidSlots.getOrNull(1)
-    val ravenkeeperTarget = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))).firstOrNull()
-    val butlerMaster = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Butler"))).firstOrNull()
+    fun draftSlotsFor(identity: ClocktowerProductionNightStepIdentity): List<Int?> =
+        if (flowPhase != null && nightDraft?.interactionId == identity.interactionId(flowPhase)) nightDraft?.seatSlots.orEmpty() else emptyList()
+    val fortuneTellerSlots = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")))
+    val fortuneTellerFirst = nameAt(fortuneTellerSlots.getOrNull(0))
+    val fortuneTellerSecond = nameAt(fortuneTellerSlots.getOrNull(1))
+    val chambermaidSlots = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")))
+    val ravenkeeperTargetSeat = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))).firstOrNull()
+    val butlerMaster = nameAt(draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Butler"))).firstOrNull())
     // Accepted Red Herring comes from Session; its draft exists only on its own first-night step.
-    val redHerring = (if (flowPhase == ClocktowerNightFlowPhase.FIRST_NIGHT) draftSlotNamesFor(
-        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()).firstOrNull() else null)
-        ?: sessionState.redHerringSeat?.let { cards.getOrNull(it - 1)?.name }
+    val redHerring = nameAt((if (flowPhase == ClocktowerNightFlowPhase.FIRST_NIGHT) draftSlotsFor(
+        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()).firstOrNull() else null) ?: sessionState.redHerringSeat)
 
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // UI-only D2 draft must outlive the fullscreen early return below.
@@ -188,32 +185,28 @@ internal fun ClocktowerJudgeScreen(
         return
     }
 
-    val spySeatLabel = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }?.seatLabel(cards)
+    // Host night facts are Session seat reads; cards only provide labels.
+    val spySeatLabel = sessionState.actualRoleSeats("Spy").firstOrNull()?.let({ cards.getOrNull(it - 1) })?.seatLabel(cards)
     val nightInteractions = sessionState.nightInteractions(nightRuleset)
-    val nightHostProjection = ClocktowerNightHostProjection(cards, sessionState)
-    val mayorRedirectTargetCards = nightHostProjection.mayorRedirectTargetCards
-    val demonCard = nightHostProjection.demonCard
-    val chambermaidTargetCards = nightHostProjection.chambermaidTargetCards
-
-    val effectiveAbilitySubjectForRole = nightHostProjection::effectiveAbilitySubjectForRole
-
-    val effectivePoisonForRole = nightHostProjection::effectivePoisonForRole
-    val chambermaidSelection = revalidateTwoPlayerSelection(
-        first = chambermaidFirst, second = chambermaidSecond,
-        eligibleNames = chambermaidTargetCards.mapTo(mutableSetOf()) { it.name },
-    )
+    val aliveSeats = sessionState.aliveSeats()
+    val mayorRedirectTargetSeats = sessionState.mayorRedirectEligibleSeats()
+    val demonCard = sessionState.livingDemonSeat()?.let({ cards.getOrNull(it - 1) })
+    fun abilityStateFor(enName: String, actor: PlayerCard?): AbilityFunctioningState? =
+        sessionState.abilitySubjectForRole(enName, seatOf(actor?.name))?.let { AbilityFunctioningSemantics.stateFor(it, enName) }
+    val chambermaidSelection = revalidateTwoPlayerSelection(chambermaidSlots.getOrNull(0), chambermaidSlots.getOrNull(1), aliveSeats)
     val chambermaidPresentation = clocktowerChambermaidSelectionPresentation(cards, chambermaidSelection)
     fun roleActor(enName: String): PlayerCard? = sessionGameState.players.firstOrNull {
         it.alive && it.wakingRole() == RoleId(enName)
     }?.let { cards.getOrNull(it.seat - 1) }
 
     fun roleMissingReason(enName: String): String {
-        val roleCard = actualClocktowerRoleCards(cards, enName).firstOrNull()
-        val drunkShownAsRole = cards.firstOrNull { it.clocktowerRole?.enName == "Drunk" && it.clocktowerShownRole?.enName == enName }
+        val rolePlayer = sessionGameState.players.firstOrNull { it.actualRole.value == enName }
+        val roleCard = rolePlayer?.let { cards.getOrNull(it.seat - 1) }
+        val drunkShownAsRole = sessionGameState.players.any { it.actualRole.value == "Drunk" && it.shownRole?.value == enName }
         return when {
-            roleCard == null && drunkShownAsRole != null -> ""
-            roleCard == null -> text("本局没有这个角色。", "This character is not in play.")
-            roleCard.eliminatedRound != null -> text(
+            rolePlayer == null && drunkShownAsRole -> ""
+            rolePlayer == null || roleCard == null -> text("本局没有这个角色。", "This character is not in play.")
+            !rolePlayer.alive -> text(
                 "${roleCard.seatLabel(cards)} 已经死亡，死亡后不再执行这个能力。",
                 "${roleCard.seatLabel(cards)} is dead and no longer uses this ability.",
             )
@@ -222,29 +215,18 @@ internal fun ClocktowerJudgeScreen(
     }
 
     fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
-        (effectiveAbilitySubjectForRole(enName, actor)?.let { subject ->
-            AbilityFunctioningSemantics.stateFor(subject, enName)
-        } in
-            setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
-        )
+        abilityStateFor(enName, actor) in setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
     val informationStepBuilder = ClocktowerInformationStepBuilder(
         cards = cards,
         language = language,
         text = ::text,
         roleActor = ::roleActor,
         roleMissingReason = ::roleMissingReason,
-        abilityStateFor = { enName, actor ->
-            effectiveAbilitySubjectForRole(enName, actor)?.let { subject ->
-                AbilityFunctioningSemantics.stateFor(subject, enName)
-            }
-        },
+        abilityStateFor = ::abilityStateFor,
     )
 
     val empathActor = roleActor("Empath")
-    val effectiveEmpathCards = cards.filterIndexed { index, _ ->
-        sessionGameState.playerAt(index + 1)?.alive == true
-    }
-    val empathNeighbors = empathActor?.let { livingNeighbors(effectiveEmpathCards, it.name) }.orEmpty()
+    val empathNeighborSeats = seatOf(empathActor?.name)?.let(sessionState::livingNeighbourSeats).orEmpty()
     // Capture query seats before the information-publication callbacks that record the
     // actual Fortune Teller result; the materializer below reuses this same seat list.
     val fortuneTellerSelectedNames = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
@@ -268,7 +250,7 @@ internal fun ClocktowerJudgeScreen(
             step = displayStep,
             actorSeat = actorSeat,
             allSeats = cards.indices.map { it + 1 },
-            empathNeighborSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+            empathNeighborSeats = empathNeighborSeats,
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         ) != null
     }
@@ -281,7 +263,7 @@ internal fun ClocktowerJudgeScreen(
             step = displayStep,
             actorSeat = actorSeat,
             allSeats = cards.indices.map { it + 1 },
-            empathNeighborSeats = empathNeighbors.map { cards.indexOf(it) + 1 },
+            empathNeighborSeats = empathNeighborSeats,
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         ) else null
         // Never silently omit misinformation after the first-night marker was accepted.
@@ -318,8 +300,8 @@ internal fun ClocktowerJudgeScreen(
     }
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
-    val minionCards = cards.filter { it.clocktowerRole?.team == ClocktowerTeam.Minion }
-    val shouldGiveFirstNightEvilInfo = cards.size >= 7
+    val minionCards = sessionState.actualTypeSeats(CharacterType.MINION).mapNotNull { cards.getOrNull(it - 1) }
+    val shouldGiveFirstNightEvilInfo = sessionGameState.players.size >= 7
     val manualDemonBluffsRequired = shouldGiveFirstNightEvilInfo && demonCard != null
     val manualDemonBluffsReady = !manualDemonBluffsRequired ||
         manualDemonBluffSelectionReady(
@@ -351,7 +333,7 @@ internal fun ClocktowerJudgeScreen(
         presentation = chambermaidPresentation,
     )
     val empathStepMaterializer = clocktowerEmpathStepMaterializer(
-        informationStepBuilder, empathNeighbors.map { cards.indexOf(it) + 1 }, ::text,
+        informationStepBuilder, empathNeighborSeats, ::text,
     )
     val fortuneTellerStepMaterializer = clocktowerFortuneTellerStepMaterializer(
         informationStepBuilder, fortuneTellerSubjectSeats, ::text,
@@ -366,14 +348,15 @@ internal fun ClocktowerJudgeScreen(
             phase = ClocktowerNightFlowPhase.FIRST_NIGHT,
             entries = commonRoleMaterializers + clocktowerFirstNightMaterializers(
                 informationStepBuilder, cards, ::text, firstNightEvilInformationSteps, redHerring,
+                fortuneTellerInPlay = sessionState.actualRoleSeats("Fortune Teller").isNotEmpty(),
             ),
         )
         firstNightMaterializers.materialize(nightInteractions)
     } else {
     val otherNightMaterializers = ClocktowerNightStepMaterializerRegistry(
         phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
-        entries = commonRoleMaterializers + nightHostProjection.otherNightMaterializers(
-            informationStepBuilder, ::text, ravenkeeperTarget,
+        entries = commonRoleMaterializers + clocktowerOtherNightMaterializers(
+            cards, sessionState, informationStepBuilder, ::text, ravenkeeperTargetSeat,
         ),
     )
         otherNightMaterializers.materialize(
@@ -462,7 +445,6 @@ internal fun ClocktowerJudgeScreen(
             else -> null
         }
         val currentChambermaidSubjects = listOfNotNull(chambermaidSelection.first, chambermaidSelection.second)
-            .mapNotNull { name -> cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1) }
         val currentNumericResolution = if (currentStep.isRealAction &&
             currentNumericMetric != null &&
             (currentStep.action == ClocktowerNightAction.None ||
@@ -543,11 +525,8 @@ internal fun ClocktowerJudgeScreen(
                 globalAiAdviceKey == globalAiCurrentKey &&
                 !currentAiRequestBlocked
         }?.let { decision ->
-            val visibleEligibleNames = mayorRedirectTargetCards.mapTo(mutableSetOf()) { it.name }
-            cards.getOrNull(decision.mayorSeat - 1)?.name?.let(visibleEligibleNames::add)
-            val eligibleSeats = cards.mapIndexedNotNull { index, card ->
-                (index + 1).takeIf { card.name in visibleEligibleNames }
-            }.toSet()
+            val eligibleSeats = mayorRedirectTargetSeats +
+                listOfNotNull(decision.mayorSeat.takeIf { it in sessionState.allSeats() })
             ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
                 decision = decision,
                 selected =
@@ -627,7 +606,7 @@ internal fun ClocktowerJudgeScreen(
             ClocktowerNightAction.RedHerring -> redHerring
             ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster, ClocktowerNightAction.MonkProtect,
             ClocktowerNightAction.DemonKill, ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.Ravenkeeper ->
-                draftSlotNames.firstOrNull()
+                nameAt(nightDraft?.selectedSeats?.firstOrNull())
             else -> null
         }
         fun updateNightDraft(next: ClocktowerNightStepDraft) {
@@ -640,23 +619,18 @@ internal fun ClocktowerJudgeScreen(
         }
         // Reuse exactly the current square-table's Host target domain. Player
         // actions remain player choices, never AI-selected defaults.
-        val legalPlayerTargetNames = when (currentStep.action) {
-            ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill ->
-                publicAliveCards.mapTo(mutableSetOf()) { it.name }
-            ClocktowerNightAction.ButlerMaster ->
-                cards.filter { it.name != currentStep.actor?.name }.mapTo(mutableSetOf()) { it.name }
-            ClocktowerNightAction.MonkProtect ->
-                cards.mapTo(mutableSetOf()) { it.name }
+        val legalPlayerTargetSeats = when (currentStep.action) {
+            ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill -> aliveSeats
+            ClocktowerNightAction.ButlerMaster -> sessionState.allSeats() - listOfNotNull(seatOf(currentStep.actor?.name)).toSet()
+            ClocktowerNightAction.MonkProtect -> sessionState.allSeats()
             else -> emptySet()
         }
         val playerTargetReady = clocktowerLivePlayerTargetReady(
             currentStep.action, currentStep.isRealAction,
-            selectedNightName, legalPlayerTargetNames,
+            seatOf(selectedNightName), legalPlayerTargetSeats,
         )
         val succession = if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
-            sessionState.impSelfKillSuccession(selectedNightName?.let { name ->
-                sessionGameState.players.firstOrNull { it.name == name }?.seat
-            })
+            sessionState.impSelfKillSuccession(seatOf(selectedNightName))
         } else DemonSuccessionResolution.None
         val eligibleSuccessors = when (succession) {
             is DemonSuccessionResolution.Forced -> listOf(succession.targetSeat)
@@ -785,10 +759,11 @@ internal fun ClocktowerJudgeScreen(
                 cards = cards,
                 actualAlignmentBySeat = sessionGameState.players.associate { it.seat to it.actualAlignment },
                 ghostVoteAuthority = ghostVoteAuthority,
-                poisonedPlayerName = currentStep.roleEnName?.let(effectivePoisonForRole),
-                aliveCards = publicAliveCards,
-                chambermaidTargetCards = chambermaidTargetCards,
-                mayorRedirectTargetCards = mayorRedirectTargetCards,
+                poisonedPlayerName = nameAt(currentStep.roleEnName?.let(sessionState::poisonedSeatForRole)),
+                aliveSeats = aliveSeats,
+                chambermaidTargetSeats = aliveSeats,
+                mayorRedirectTargetSeats = mayorRedirectTargetSeats,
+                livingMayorSeat = sessionGameState.players.firstOrNull { it.alive && it.actualRole.value == "Mayor" }?.seat,
                 // One optional current-step suggestion for both AI modes.
                 // The card retains the complete Host legal domain for manual edits.
                 // Automatic mode can use the same verified choice at this step only.
@@ -808,7 +783,7 @@ internal fun ClocktowerJudgeScreen(
                 selectedSeatSlots = when (currentStep.action) {
                     ClocktowerNightAction.RedHerring -> listOfNotNull(seatOf(redHerring))
                     ClocktowerNightAction.Chambermaid ->
-                        listOf(seatOf(chambermaidSelection.first), seatOf(chambermaidSelection.second))
+                        listOf(chambermaidSelection.first, chambermaidSelection.second)
                     else -> nightDraft?.seatSlots.orEmpty()
                 },
                 redHerringSeat = sessionState.redHerringSeat,
