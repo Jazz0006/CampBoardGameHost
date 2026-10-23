@@ -165,6 +165,37 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun manualHealthyFortuneTellerUsesHostAnswerAndRecordsOnlyFinalPreview() = healthyFortuneTeller(StorytellerOperationMode.MANUAL)
+    @Test fun assistedHealthyFortuneTellerUsesHostAnswerAndRecordsOnlyFinalPreview() = healthyFortuneTeller(StorytellerOperationMode.AI_ASSISTED)
+    @Test fun automaticHealthyFortuneTellerNeedsNoAiAndRecordsOnlyFinalPreview() = healthyFortuneTeller(StorytellerOperationMode.AI_AUTOMATIC)
+    private fun healthyFortuneTeller(mode: StorytellerOperationMode) {
+        val host = Host("Fortune Teller", mode, roles = listOf("Fortune Teller", "Soldier", "Mayor", "Saint", "Imp"))
+        host.session.commitRedHerringSeat(4, StorytellerPhase.FIRST_NIGHT, 1, host.session.nextInputSequence)
+        ui.setContent { host.Content() }
+        clickSeat("P2")
+        clickSeat("P3")
+        ui.onNodeWithText("YES").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("NO").performClick()
+        ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        clickSeat("P2")
+        clickSeat("P4") // Red herring, changing targets must invalidate the old NO preview.
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("NO").assertDoesNotExist()
+        ui.onNodeWithText("YES").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            val record = host.session.state.epistemicObservationLog.records.single()
+            assertEquals(setOf(1), record.recipientSeats)
+            assertEquals(InformationProposition.BooleanResult(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+                1, listOf(4, 3), true), record.proposition)
+            assertEquals(0, host.requests)
+        }
+    }
+
     @Test fun manualFortuneTellerClearsPreviewWhenPlayerChangesQuery() = fortuneTeller(StorytellerOperationMode.MANUAL)
     @Test fun assistedFortuneTellerClearsPreviewWhenPlayerChangesQuery() = fortuneTeller(StorytellerOperationMode.AI_ASSISTED)
     @Test fun automaticFortuneTellerCannotReuseAnswerForOtherPlayers() = fortuneTeller(StorytellerOperationMode.AI_AUTOMATIC)
@@ -295,6 +326,10 @@ class ClocktowerD2UiTest {
                                 com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.FUNCTIONING,
                                 emptySet(), false,
                             ) else null,
+                        // This card-only fixture exercises discretionary (impaired) Boolean input.
+                        booleanResolution = if (role == "Fortune Teller" && subjects().size == 2)
+                            HostBooleanResolution(listOf(false, true), 1, subjects(),
+                                com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.POISONED) else null,
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
                         selectedSeatSlots = if (twoSeatQuery) slots() else listOf(2), redHerringSeat = null,
                         onSelectSeat = { seat ->

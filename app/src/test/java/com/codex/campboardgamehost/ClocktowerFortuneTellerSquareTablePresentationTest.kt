@@ -18,12 +18,13 @@ class ClocktowerFortuneTellerSquareTablePresentationTest {
         assertFalse(unavailable.isInteractionEnabled)
     }
 
-    @Test fun resultActionsKeepBothManualAnswersAndRespectAutomaticRecommendation() {
-        assertEquals(listOf(true, false), clocktowerFortuneTellerResultActions(null))
-        assertEquals(listOf(false, true), clocktowerFortuneTellerResultActions(false))
-        assertEquals(emptyList<Boolean>(), clocktowerFortuneTellerVisibleResults(null, automaticOnly = true))
-        assertEquals(listOf(false), clocktowerFortuneTellerVisibleResults(false, automaticOnly = true))
-        assertEquals(listOf(false, true), clocktowerFortuneTellerVisibleResults(false, automaticOnly = false))
+    @Test fun fixedAnswersBypassAiWhileDiscretionRequiresCurrentAutomaticAdvice() {
+        for (automatic in listOf(false, true)) {
+            assertEquals(listOf(false), clocktowerFortuneTellerVisibleResults(listOf(false), true, automatic))
+            assertEquals(listOf(true), clocktowerFortuneTellerVisibleResults(listOf(true), null, automatic))
+        }
+        assertEquals(emptyList<Boolean>(), clocktowerFortuneTellerVisibleResults(listOf(false, true), null, true))
+        assertEquals(listOf(false), clocktowerFortuneTellerVisibleResults(listOf(false, true), false, true))
+        assertEquals(listOf(true, false), clocktowerFortuneTellerVisibleResults(listOf(false, true), true, false))
     }
 }
-

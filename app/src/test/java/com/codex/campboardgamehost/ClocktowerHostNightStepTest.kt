@@ -129,6 +129,38 @@ class ClocktowerHostNightStepTest {
         }
     }
 
+    @Test fun fortuneTellerDiscretionAcceptsOnlyCurrentAiAndFixedAnswersNeverRequestIt() {
+        val s = session("Fortune Teller", "Recluse", "Baron", "Soldier", "Imp")
+        s.commitRedHerringSeat(4, StorytellerPhase.FIRST_NIGHT, 1, s.nextInputSequence)
+        val cards = s.state.gameState.players.map { PlayerCard(it.name, clocktowerRole = clocktowerRoleByName(it.actualRole.value)) }
+        val host = hostNightStep(s.state, ruleset, draft(s, 2, 3))
+        val step = ClocktowerNightStepUi(title = "Fortune Teller", actor = cards[0], isRealAction = true,
+            reason = "", storytellerAction = "", tellPlayer = null, explanation = "",
+            action = ClocktowerNightAction.FortuneTeller, displayKind = ClocktowerDisplayKind.YesNo,
+            informationQuestion = host.facts.question, roleEnName = "Fortune Teller")
+        val inputs = NightAiInputs(true, true, null, false, null, emptyMap(), emptyMap(), null, listOf("P2", "P3"))
+        fun overlay(h: HostNightStep, input: NightAiInputs) = nightAiOverlay(h, input, s.state, ruleset,
+            step.copy(informationQuestion = h.facts.question), 0, ClocktowerPhase.FirstNight, cards, "en",
+            clocktowerRolesForScript(ClocktowerScript.TroubleBrewing))
+        val pending = requireNotNull(pendingGlobalNightScalarDecision(step, ClocktowerPhase.FirstNight, 1, 0,
+            cards, s.state.gameId, StorytellerDecisionRevision(s.state.gameStateRevision, s.state.playerInputRevision),
+            inputs.fortuneTellerSelectedNames))
+        val waiting = overlay(host, inputs)
+        assertTrue(waiting.shouldRequest)
+        val received = inputs.copy(adviceKey = waiting.currentKey, residualChoices = mapOf(
+            pending.requestIdentity.requestId to StorytellerStrategicContinuationV2.SemanticResult(
+                kind = "SCALAR_RESULT", scalarValue = "true")))
+        assertNotNull(overlay(host, received).suggestedOption)
+        s.recordPlayerInput()
+        assertNull(overlay(host, received).suggestedOption)
+        val fixed = hostNightStep(s.state, ruleset, draft(s, 4, 3))
+        assertEquals(listOf(true), fixed.booleanResolution?.values)
+        val fixedOverlay = overlay(fixed, received.copy(fortuneTellerSelectedNames = listOf("P4", "P3"), adviceBusy = true))
+        assertFalse(fixedOverlay.shouldRequest)
+        assertFalse(fixedOverlay.requestBlocked)
+        assertNull(fixedOverlay.currentKey)
+    }
+
     @Test fun manualOverlayIsEmptyAndOutOfRangeOpeningNumbersAreRejected() {
         val s = session("Chef", "Soldier", "Baron", "Imp", "Saint")
         val host = hostNightStep(s.state, ruleset, null)

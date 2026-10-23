@@ -37,6 +37,7 @@ internal data class HostNightStep(
     val isEvilInformation: Boolean,
     val numericMetric: NumericMetric?,
     val numericResolution: HostNumericResolution?,
+    val booleanResolution: HostBooleanResolution?,
     /** Washerwoman/Librarian/Investigator whose pair query Session resolves. */
     val pairRole: String?,
     val selectedSeat: Int?,
@@ -46,6 +47,7 @@ internal data class HostNightStep(
     val successorSeats: List<Int>,
 ) {
     val hostDeterminedNumeric: Boolean get() = numericResolution?.values?.size == 1
+    val hostDeterminedInformation: Boolean get() = hostDeterminedNumeric || booleanResolution?.values?.size == 1
     fun successorSeat(chosen: Int?): Int? = when (successorSeats.size) {
         0 -> null
         1 -> successorSeats.single()
@@ -176,6 +178,9 @@ internal fun hostNightStep(
         isEvilInformation = facts.isEvilInformation,
         numericMetric = metric,
         numericResolution = numericResolution,
+        booleanResolution = if (action == ClocktowerNightAction.FortuneTeller) facts.actorSeat?.let {
+            FortuneTellerInformationResolver.resolve(state, it, draft?.selectedSeats.orEmpty())
+        } else null,
         pairRole = facts.roleEnName?.takeIf { facts.isRealAction && it in pairInformationRoles },
         selectedSeat = selectedSeat,
         legalTargetSeats = legalTargetSeats,

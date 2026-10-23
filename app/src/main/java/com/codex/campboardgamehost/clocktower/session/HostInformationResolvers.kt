@@ -195,6 +195,36 @@ internal object NumericInformationResolver {
     }
 }
 
+/** Current Fortune Teller query; this does not gate recording an actual misplay. */
+internal data class HostBooleanResolution(
+    val values: List<Boolean>,
+    val sourceSeat: Int,
+    val subjectSeats: List<Int>,
+    val sourceAbility: AbilityFunctioningState,
+) {
+    fun accepts(proposed: InformationProposition.BooleanResult): Boolean =
+        proposed.metric == com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric.DEMON_OR_RED_HERRING_PRESENT &&
+            proposed.sourceSeat == sourceSeat && proposed.subjectSeats == subjectSeats && proposed.value in values
+}
+
+internal object FortuneTellerInformationResolver {
+    fun resolve(session: ClocktowerSessionState, sourceSeat: Int, subjects: List<Int>): HostBooleanResolution? {
+        val actor = session.gameState.playerAt(sourceSeat) ?: return null
+        val ability = sourceAbility(actor, "Fortune Teller") ?: return null
+        if (subjects.size != 2 || subjects.distinct().size != 2) return null
+        val targets = subjects.map { session.gameState.playerAt(it) ?: return null }
+        val values = when {
+            ability != AbilityFunctioningState.FUNCTIONING -> listOf(false, true)
+            // Death, poison, or alignment changes do not stop a Demon or red herring
+            // from being detected. Spy can register as good, never as a Demon.
+            targets.any { it.actualType == CharacterType.DEMON || it.seat == session.redHerringSeat } -> listOf(true)
+            targets.any { it.actualRole.value == "Recluse" && hasFunctioningSpecialRegistration(it) } -> listOf(false, true)
+            else -> listOf(false)
+        }
+        return HostBooleanResolution(values, sourceSeat, subjects.toList(), ability)
+    }
+}
+
 /** A distinct role-source label for the future single-column grouped Pair picker. */
 internal enum class HostPairRoleSource { IN_PLAY, DEMON_BLUFF, SCRIPT_FALLBACK }
 internal data class HostPairRoleOption(val role: RoleId, val source: HostPairRoleSource)

@@ -28,16 +28,17 @@ internal fun clocktowerFortuneTellerSeatPresentation(
     selectionOrder = selectedSeats.indexOf(seatNumber).takeIf { it >= 0 }?.plus(1),
 )
 
-/** Both Boolean answers remain confirmable; an AI recommendation only changes display order. */
-internal fun clocktowerFortuneTellerResultActions(recommendedResult: Boolean?): List<Boolean> =
-    if (recommendedResult == null) listOf(true, false) else listOf(recommendedResult, !recommendedResult)
-
-/** Automatic mode cannot display an answer that AI has not chosen. */
+/** Fixed Host answers bypass AI; only real discretion needs a current automatic suggestion. */
 internal fun clocktowerFortuneTellerVisibleResults(
+    resolvedValues: List<Boolean>,
     recommendedResult: Boolean?,
     automaticOnly: Boolean,
-): List<Boolean> = if (automaticOnly) listOfNotNull(recommendedResult)
-else clocktowerFortuneTellerResultActions(recommendedResult)
+): List<Boolean> {
+    if (resolvedValues.size == 1) return resolvedValues
+    val recommendation = recommendedResult?.takeIf { it in resolvedValues }
+    return if (automaticOnly) listOfNotNull(recommendation)
+    else listOfNotNull(recommendation) + resolvedValues.filter { it != recommendation }
+}
 
 @Composable
 internal fun ClocktowerFortuneTellerSquareTableDialog(
@@ -49,6 +50,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
     wakeInstruction: String? = null,
     redHerringSeat: Int? = null,
     recommendedResult: Boolean?,
+    resolvedValues: List<Boolean>,
     lastPreviewResult: Boolean?,
     automaticOnly: Boolean = false,
     language: String,
@@ -105,6 +107,7 @@ internal fun ClocktowerFortuneTellerSquareTableDialog(
             wakeInstruction = wakeInstruction,
             selectedSeats = selectedSeats,
             recommendedResult = recommendedResult,
+            resolvedValues = resolvedValues,
             lastPreviewResult = lastPreviewResult,
             automaticOnly = automaticOnly,
             language = language,
@@ -118,12 +121,13 @@ private fun ClocktowerFortuneTellerCenterControls(
     wakeInstruction: String?,
     selectedSeats: List<Int>,
     recommendedResult: Boolean?,
+    resolvedValues: List<Boolean>,
     lastPreviewResult: Boolean?,
     automaticOnly: Boolean,
     language: String,
     onResultSelected: (Boolean) -> Unit,
 ) {
-    val choices = clocktowerFortuneTellerVisibleResults(recommendedResult, automaticOnly)
+    val choices = clocktowerFortuneTellerVisibleResults(resolvedValues, recommendedResult, automaticOnly)
     val completePair = selectedSeats.size == 2 && selectedSeats.distinct().size == 2
     Column(
         modifier = Modifier.fillMaxSize().padding(6.dp),
@@ -140,7 +144,9 @@ private fun ClocktowerFortuneTellerCenterControls(
             }
             choices.forEachIndexed { index, result ->
                 Text(
-                    text = if (result == lastPreviewResult) {
+                    text = if (resolvedValues.size == 1) {
+                        if (language == "en") "Show to player" else "展示给玩家"
+                    } else if (result == lastPreviewResult) {
                         if (language == "en") "Last preview" else "最近预览"
                     } else if (recommendedResult != null && result == recommendedResult) {
                         if (language == "en") "Recommended" else "推荐"
@@ -150,7 +156,7 @@ private fun ClocktowerFortuneTellerCenterControls(
                     style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center,
                 )
-                if (result == lastPreviewResult || (lastPreviewResult == null && result == recommendedResult)) {
+                if (resolvedValues.size == 1 || result == lastPreviewResult || (lastPreviewResult == null && result == recommendedResult)) {
                     Button(
                         onClick = { onResultSelected(result) },
                         modifier = Modifier.fillMaxWidth(),
