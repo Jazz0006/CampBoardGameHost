@@ -188,6 +188,40 @@ jobs:
         if: needs.changes.outputs.android_full == 'true'
         run: ./gradlew :app:testFull :app:assembleDebug --no-daemon --rerun-tasks
 
+      # Print actual JUnit failure messages in FULL Android CI to enable focused D2 test correction.
+      - name: Print full test failure details
+        if: failure()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import glob
+          import xml.etree.ElementTree as ET
+          paths = sorted(glob.glob("app/build/test-results/testDebugUnitTest/TEST-*.xml"))
+          print(f"JUnit XML files: {len(paths)}")
+          failures = 0
+          for path in paths:
+              root = ET.parse(path).getroot()
+              for case in root.iter("testcase"):
+                  for child in case:
+                      if child.tag in ("failure", "error"):
+                          failures += 1
+                          print(f"\n===== TEST FAILURE {failures}: {case.get('classname')}::{case.get('name')} =====")
+                          print("message:", child.get("message", ""))
+                          print((child.text or "")[:8500])
+          print(f"TOTAL FAILED TEST CASES: {failures}")
+          PY
+
+      - name: Upload baseline full test XML reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main-baseline-full-junit
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: warn
+          retention-days: 3
+
       - name: Attach draft whole-game AI Android test APK
         if: needs.changes.outputs.android_full == 'true' && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
