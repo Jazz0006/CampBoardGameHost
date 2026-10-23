@@ -3,14 +3,12 @@ package com.codex.campboardgamehost
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.codex.campboardgamehost.clocktower.domain.RoleId
-import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
-import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.MayorRedirectDecisionBoundary
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.session.StorytellerProviderRequestFactoryV1
@@ -79,29 +77,24 @@ internal fun ClocktowerGameSession.confirmNightStep(
 /** Session-to-Host adapter and confirmation dispatcher. Destinations own UI drafts; Session owns facts. */
 @Composable
 internal fun ClocktowerSessionHost(
-    sessionUi: ClocktowerSessionUiState,
+    lifecycle: ClocktowerGameLifecycle,
     cards: List<PlayerCard>,
     activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
-    clocktowerRulesetRef: RulesetRef?,
     aiConversation: ClocktowerAiConversation,
     aiSettings: StorytellerAiSettings,
-    storytellerOperationMode: StorytellerOperationMode,
-    currentMode: () -> StorytellerOperationMode,
-    currentSession: () -> ClocktowerGameSession?,
     isJudgeVisible: () -> Boolean,
     drunkAiScope: kotlinx.coroutines.CoroutineScope,
     onHostTools: () -> Unit,
 ) {
+    val sessionUi = requireNotNull(lifecycle.sessionUi)
+    val storytellerOperationMode = lifecycle.operationMode
+    val clocktowerRulesetRef = lifecycle.rulesetRef
     val session = sessionUi.session
     val sessionState = sessionUi.snapshot
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     val currentClocktowerScript = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionState.gameState.script }
-    val clocktowerPhase = when (sessionState.phase) {
-        StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
-        StorytellerPhase.DAY -> ClocktowerPhase.Day
-        StorytellerPhase.NIGHT -> ClocktowerPhase.Night
-    }
+    val clocktowerPhase = sessionState.phase.toClocktowerPhase()
     val round = sessionState.round
     val clocktowerGameId = sessionState.gameId
     val clocktowerGameStateRevision = sessionState.gameStateRevision
@@ -141,7 +134,7 @@ internal fun ClocktowerSessionHost(
         ) {
             return null
         }
-        val session = currentSession() ?: return null
+        val session = lifecycle.sessionUi?.session ?: return null
         val rulesetRef = clocktowerRulesetRef ?: return null
         val registry = activeGameClocktowerRulesetCatalog
             .ruleset(ClocktowerScript.TroubleBrewing)
@@ -173,10 +166,7 @@ internal fun ClocktowerSessionHost(
         phase.toStorytellerPhase()
 
     fun clocktowerSeatFor(playerName: String): Int =
-        cards.indexOfFirst { it.name == playerName }
-            .takeIf { index -> index >= 0 }
-            ?.plus(1)
-            ?: error("Unknown Clocktower player '$playerName'.")
+        requireNotNull(cards.seatOf(playerName)) { "Unknown Clocktower player '$playerName'." }
 
     fun clocktowerActionId(
         kind: String,
@@ -221,7 +211,7 @@ internal fun ClocktowerSessionHost(
         aiConversation.requestLiveGlobalAdvice(
             steps, stepIndex, aiSettings = aiSettings,
             activeGameClocktowerRulesetCatalog = activeGameClocktowerRulesetCatalog,
-            currentSession = currentSession, currentMode = currentMode, isJudgeVisible = isJudgeVisible,
+            currentSession = { lifecycle.sessionUi?.session }, currentMode = { lifecycle.operationMode }, isJudgeVisible = isJudgeVisible,
             cards = cards, clocktowerRulesetRef = clocktowerRulesetRef,
             fortuneTellerSelectedNames = fortuneTellerSelectedNames,
             mayorPending = runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull(),
@@ -341,7 +331,7 @@ internal fun ClocktowerSessionHost(
                 globalAiAdviceBusy = liveAiAdviceBusy,
                 globalAiAdviceError = liveAiAdviceError,
                 globalResidualRecommendedChoices = pendingCurrentStepAdvice?.takeIf { pending ->
-                    val latest = currentSession()?.state
+                    val latest = lifecycle.sessionUi?.session?.state
                     val plan = pending.recommendation
                     pending.requestKey == liveAiAdviceKey &&
                         latest?.gameId == plan.gameId &&

@@ -8,6 +8,37 @@ import org.json.JSONObject
 
 /** Advisory AI state and immutable setup identity travel with the one active Session save. */
 internal object ClocktowerActiveGameMetadata {
+    data class Restored(val session: ClocktowerGameSession, val mode: StorytellerOperationMode,
+        val ref: RulesetRef?, val rotation: TroubleBrewingSetupRotationRecord?, val needsDeal: Boolean)
+
+    fun restore(saved: ClocktowerActiveGameStore.Saved,
+        catalog: com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog,
+        conversation: ClocktowerAiConversation): Restored {
+        val state = saved.state
+        val metadata = saved.metadata
+        val session = ClocktowerGameSession.restore(state)
+        val opening = opening(metadata)
+        val cursor = cursor(metadata)
+        require(opening == null || opening.selection.gameId == state.gameId)
+        require(cursor == null || (cursor.gameId == state.gameId && cursor.exclusiveGlobalSequence <= state.nextTimelineGlobalSequence))
+        val restored = Restored(session, StorytellerOperationMode.valueOf(metadata.getString("mode")),
+            ruleset(metadata), rotation(metadata), state.phase == StorytellerPhase.FIRST_NIGHT &&
+                state.actionTimeline.entries.isEmpty() && state.epistemicObservationLog.records.isEmpty())
+        val bluffNames = opening?.selection?.demonBluffs.orEmpty().map { external ->
+            requireNotNull(catalog.ruleset(ClocktowerScript.TroubleBrewing).characterRegistry.findByExternalId(external)).id.value
+        }
+        conversation.openingPlanRecommendation = opening
+        conversation.openingRecommendedInformation = opening?.selection?.information.orEmpty()
+        conversation.openingRecommendedRedHerringSeat = opening?.selection?.redHerringSeat
+        conversation.openingRecommendedBluffRoleNames = bluffNames
+        conversation.strategicPolicyCursor = cursor
+        conversation.canonicalConversationResponseId = metadata.optString("responseId").takeIf { it.isNotBlank() }
+        conversation.canonicalConversationModel = metadata.optString("responseModel").takeIf { it.isNotBlank() }
+        conversation.strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.capture(session,
+            StorytellerStrategicChangeCheckpointV2.Position(state.phase, state.round))
+        return restored
+    }
+
     fun encode(mode: StorytellerOperationMode, ref: RulesetRef?, rotation: TroubleBrewingSetupRotationRecord?,
         opening: HostOpeningSemanticAcceptanceV2?, cursor: StorytellerStrategicContinuationV2.MemoryCursor?,
         responseId: String?, responseModel: String?): JSONObject = JSONObject().apply {

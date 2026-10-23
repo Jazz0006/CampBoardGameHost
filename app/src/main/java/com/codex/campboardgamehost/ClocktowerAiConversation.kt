@@ -115,11 +115,7 @@ internal class ClocktowerAiConversation {
         val currentClocktowerScript = currentSession()?.state?.gameState?.script?.let { id ->
             ClocktowerScript.entries.single { it.toRecommendationScriptId() == id }
         }
-        val clocktowerPhase = when (currentSession()?.state?.phase) {
-            StorytellerPhase.DAY -> ClocktowerPhase.Day
-            StorytellerPhase.NIGHT -> ClocktowerPhase.Night
-            else -> ClocktowerPhase.FirstNight
-        }
+        val clocktowerPhase = currentSession()?.state?.phase?.toClocktowerPhase() ?: ClocktowerPhase.FirstNight
         val round = currentSession()?.state?.round ?: 1
         val clocktowerRedHerring = currentSession()?.state?.redHerringSeat
 

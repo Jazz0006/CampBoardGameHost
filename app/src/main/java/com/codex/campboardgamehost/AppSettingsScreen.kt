@@ -31,25 +31,17 @@ import com.codex.campboardgamehost.clocktower.domain.PlayerExperienceLevelV1
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun SettingsContent(
-    languageMode: LanguageMode,
-    commonPlayers: List<String>,
-    playerExperienceByName: Map<String, PlayerExperienceLevelV1>,
-    onPlayerExperienceChange: (String, PlayerExperienceLevelV1) -> Unit,
-    newCommonPlayerName: String,
-    onLanguageModeChange: (LanguageMode) -> Unit,
-    onNewCommonPlayerNameChange: (String) -> Unit,
-    onAddCommonPlayer: () -> Unit,
-    onRemoveCommonPlayer: (String) -> Unit,
+    preferences: AppPreferencesState,
     aiSettingsSection: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val isEnglish = context.resources.configuration.locales[0].language == "en"
-    val chineseSelected = languageMode == LanguageMode.Chinese ||
-        (languageMode == LanguageMode.System && !isEnglish)
-    val englishSelected = languageMode == LanguageMode.English ||
-        (languageMode == LanguageMode.System && isEnglish)
+    val chineseSelected = preferences.languageMode == LanguageMode.Chinese ||
+        (preferences.languageMode == LanguageMode.System && !isEnglish)
+    val englishSelected = preferences.languageMode == LanguageMode.English ||
+        (preferences.languageMode == LanguageMode.System && isEnglish)
 
     LazyColumn(
         modifier = modifier
@@ -68,14 +60,14 @@ internal fun SettingsContent(
                     Text(stringResource(R.string.settings_subtitle), color = Color(0xFF5C6A63))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { onLanguageModeChange(LanguageMode.Chinese) }) {
+                    TextButton(onClick = { preferences.setLanguage(LanguageMode.Chinese) }) {
                         Text(
                             "中",
                             color = if (chineseSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             fontWeight = if (chineseSelected) FontWeight.Bold else FontWeight.Normal,
                         )
                     }
-                    TextButton(onClick = { onLanguageModeChange(LanguageMode.English) }) {
+                    TextButton(onClick = { preferences.setLanguage(LanguageMode.English) }) {
                         Text(
                             "EN",
                             color = if (englishSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
@@ -113,25 +105,25 @@ internal fun SettingsContent(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         OutlinedTextField(
-                            value = newCommonPlayerName,
-                            onValueChange = onNewCommonPlayerNameChange,
+                            value = preferences.newCommonPlayerName,
+                            onValueChange = { preferences.newCommonPlayerName = it },
                             modifier = Modifier.weight(1f),
                             label = { Text(stringResource(R.string.player_name_input_label)) },
                             singleLine = true,
                         )
                         Button(
-                            onClick = onAddCommonPlayer,
-                            enabled = newCommonPlayerName.trim().isNotEmpty() && newCommonPlayerName.trim() !in commonPlayers,
+                            onClick = preferences::addCommonPlayer,
+                            enabled = preferences.newCommonPlayerName.trim().isNotEmpty() && preferences.newCommonPlayerName.trim() !in preferences.commonPlayers,
                             shape = RoundedCornerShape(8.dp),
                         ) {
                             Text(stringResource(R.string.add))
                         }
                     }
 
-                    if (commonPlayers.isEmpty()) {
+                    if (preferences.commonPlayers.isEmpty()) {
                         EmptyStateCard(text = stringResource(R.string.no_common_players_settings))
                     } else {
-                        commonPlayers.forEach { name ->
+                        preferences.commonPlayers.forEach { name ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -140,10 +132,10 @@ internal fun SettingsContent(
                                 Text(name, modifier = Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
                                 PlayerExperiencePicker(
                                     playerName = name,
-                                    value = playerExperienceByName[name] ?: PlayerExperienceLevelV1.BEGINNER,
-                                    onChange = { onPlayerExperienceChange(name, it) },
+                                    value = preferences.playerExperienceByName[name] ?: PlayerExperienceLevelV1.BEGINNER,
+                                    onChange = { preferences.setExperience(name, it) },
                                 )
-                                TextButton(onClick = { onRemoveCommonPlayer(name) }) {
+                                TextButton(onClick = { preferences.removeCommonPlayer(name) }) {
                                     Text(stringResource(R.string.remove))
                                 }
                             }

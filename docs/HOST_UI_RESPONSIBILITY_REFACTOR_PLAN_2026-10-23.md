@@ -1,7 +1,6 @@
 # Host UI Responsibility Refactor Plan — FINAL v3 (2026-10-23)
 
-**Status (2026-10-23):** FINAL v3 implementation contract; Batch 2 temporary AI→UI adapter dependency explicitly approved (§Batch 2 and [review §13](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)). **Already merged to `main`:** Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) → `7486d05c`; Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) → `e7ac9481`; Batch 2 [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) → `1fe855e8` (full Android CI #4597 / R2 #4151 successful on reviewed head `5871c355`). **P1 #358 is now merged** as `01ef5e14` (full PR CI #4606/R2 #4158; main CI #4607 successful). **Batch 3 #359 (`85d3833c`, CI #4608/R2 #4159) is implemented on its review branch, not yet merged**; see [acceptance](HOST_UI_BATCH3_ACCEPTANCE.md). **Batch 4 implemented for stacked review** on unmerged Batch 3; see [acceptance](HOST_UI_BATCH4_ACCEPTANCE.md). **Not yet implemented:** Batch 5. Historical source-size / PR / baseline facts below describe the original planning date unless explicitly marked current.
-**Current implemented baseline before merging this docs PR:** `main` `1fe855e80efb006717275341b17b8a9d9e805fa7` (#357). The independent dead-nominee P1 [#352](https://github.com/Jazz0006/CampBoardGameHost/pull/352) was merged as `edcbf5a4`. The **original planning baseline** was `7baf014b` (#354, CI #4585 / R2 #4142); historic references to #352 as Draft are no longer current. Continue future batches from the latest `main`, not the original planning base.
+**Current implementation status:** Batches 1/2a/2 and P1 #358 are merged. Batch 3 #359 → `2aa7abbf`; Batch 4 #360 → `17949e72`; combined main full CI #4611 / Field Test APK #175 passed. **Batch 5 is implemented for review, not merged**, on `refactor/batch5-game-lifecycle-20261024`; see [acceptance](HOST_UI_BATCH5_ACCEPTANCE.md). Batch 6 remains independent future work. Temporary AI→UI adapter dependencies stay approved (§Batch 2 and review §13). Historical size/baseline references below describe the original planning date.
 **History:** v1 `133fe98b` and v2 `2687e6a3` were reviewed in [HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md) (§1–11 on v1, §12 on v2). v3 resolves every §12 item; §9 lists changes per version. Where this plan and the review differ, this plan governs.
 **Scope:** `CampBoardGameHostApp.kt` (49,208 B), `clocktower/ui/ClocktowerHostScreen.kt` (51,102 B, over the 50,000 B hard limit), their adapter `ClocktowerSessionHost.kt` (30,907 B), and `ClocktowerNightHostProjection.kt` (11,883 B).
 **Not in scope:** Session rules and confirmation APIs, AI prompts/parser/memory, setup diversity, persistence format, visual design.
@@ -178,11 +177,11 @@ Also:
 - One `PlayerCard` builder shared by TB and NGJ; restore logic beside `ClocktowerActiveGameMetadata`; `CampBoardGameHostTheme`; one `StorytellerPhase.toClocktowerPhase()`; one `cards.seatOf(name)`.
 
 **Exit checks**
-- [ ] `CampBoardGameHostApp` calls no Session confirmation method and no setup committer directly.
-- [ ] `ClocktowerOpeningDraft` receives no `{ screen }` / `{ screen = it }` / mode getter lambdas.
-- [ ] Exactly one in-memory holder of the active operation mode; the old scattered mode getters/setters and callback chains are deleted.
-- [ ] `ClocktowerGameLifecycle` has no `Screen`/navigation/dialog state.
-- [ ] `ClocktowerGameLifecycle` exposes no game-fact fields (roles, phase, deaths, observations). Reference size: App root ≈ 20 KB.
+- [x] `CampBoardGameHostApp` calls no Session confirmation method and no setup committer directly.
+- [x] `ClocktowerOpeningDraft` receives no `{ screen }` / `{ screen = it }` / mode getter lambdas.
+- [x] Exactly one in-memory holder of the active operation mode; the old scattered mode getters/setters and callback chains are deleted.
+- [x] `ClocktowerGameLifecycle` has no `Screen`/navigation/dialog state.
+- [x] `ClocktowerGameLifecycle` exposes no game-fact fields (roles, phase, deaths, observations). Reference size: App root ≈ 20 KB.
 
 ### Batch 6 (independent) — Portable Session JSON contract
 
@@ -203,9 +202,9 @@ For a future TypeScript WebHost / EvidenceLab; no cross-language SDK, no second 
 | 3 | Batch 2a | **Merged** #356 → `e7ac9481`; full Android CI #4593 / R2 #4148 success |
 | 4 | Batch 2 | **Merged** #357 → `1fe855e8`; code head `5871c355`, full Android CI #4597 / R2 #4151 success; approved temporary AI adapter exception |
 | 5 | Independent P1: healthy Fortune Teller fixed Boolean | **Merged** #358 → `01ef5e14`; full PR CI #4606 / R2 #4158 and main CI #4607 passed. |
-| 6 | Batch 3 | **Implemented for review, not merged.** See [Batch 3 acceptance](HOST_UI_BATCH3_ACCEPTANCE.md); Batch 4 follows acceptance. |
-| 7 | Batch 4 | §Batch 4 exit checks |
-| 8 | Batch 5 | §Batch 5 exit checks |
+| 6 | Batch 3 | **Merged** #359 → `2aa7abbf`; prior exact code full CI #4608/R2 #4159. |
+| 7 | Batch 4 | **Merged** #360 → `17949e72`; prior exact code full CI #4609/R2 #4160; main CI #4611 passed. |
+| 8 | Batch 5 | **Implemented, not merged.** See [acceptance](HOST_UI_BATCH5_ACCEPTANCE.md). |
 | — | Batch 6 | Independent; does not block Android work |
 
 Product-behaviour items (§8) and the Stage 5 device checks are never folded into a refactor batch.

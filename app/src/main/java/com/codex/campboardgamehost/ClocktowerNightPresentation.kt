@@ -26,9 +26,6 @@ internal fun clocktowerNightPresentation(
     val flowPhase = if (phase == StorytellerPhase.FIRST_NIGHT) ClocktowerNightFlowPhase.FIRST_NIGHT else ClocktowerNightFlowPhase.OTHER_NIGHT
     val poisonTarget = sessionState.confirmedPoisonTargetName(round)
     fun text(zh: String, en: String) = if (language == "en") en else zh
-    fun seatOf(name: String?): Int? = name?.let { selected ->
-        cards.indexOfFirst { it.name == selected }.takeIf { it >= 0 }?.plus(1)
-    }
     fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
     // Builders run for every step; only the current interaction gets its draft.
     fun draftSlotsFor(identity: ClocktowerProductionNightStepIdentity): List<Int?> =
@@ -47,7 +44,7 @@ internal fun clocktowerNightPresentation(
     val aliveSeats = sessionState.aliveSeats()
     val demonCard = sessionState.livingDemonSeat()?.let({ cards.getOrNull(it - 1) })
     fun abilityStateFor(enName: String, actor: PlayerCard?): AbilityFunctioningState? =
-        sessionState.abilitySubjectForRole(enName, seatOf(actor?.name))?.let { AbilityFunctioningSemantics.stateFor(it, enName) }
+        sessionState.abilitySubjectForRole(enName, cards.seatOf(actor?.name))?.let { AbilityFunctioningSemantics.stateFor(it, enName) }
     val chambermaidSelection = revalidateTwoPlayerSelection(chambermaidSlots.getOrNull(0), chambermaidSlots.getOrNull(1), aliveSeats)
     val chambermaidPresentation = clocktowerChambermaidSelectionPresentation(cards, chambermaidSelection)
     fun roleActor(enName: String): PlayerCard? = sessionGameState.players.firstOrNull {
@@ -79,7 +76,7 @@ internal fun clocktowerNightPresentation(
     )
 
     val empathActor = roleActor("Empath")
-    val empathNeighborSeats = seatOf(empathActor?.name)?.let(sessionState::livingNeighbourSeats).orEmpty()
+    val empathNeighborSeats = cards.seatOf(empathActor?.name)?.let(sessionState::livingNeighbourSeats).orEmpty()
     val fortuneTellerSubjectSeats = fortuneTellerSlots.filterNotNull()
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.

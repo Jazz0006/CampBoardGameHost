@@ -1,11 +1,10 @@
-# 当前开发路线：Host UI Batch 4 已实现，叠加审阅中
+# 当前开发路线：Batch 3/4 已合并，Batch 5 已实现待审阅
 
-- 已合并基线：P1 #358 → `01ef5e14`，main full CI #4607 成功；Stage 1–5、UI Batch 1/2a/2 已完成。
-- Batch 3 [Draft #359](https://github.com/Jazz0006/CampBoardGameHost/pull/359) **未合并**，`85d3833c` 完整 CI #4608 / R2 #4159 成功。[Batch 3 验收](HOST_UI_BATCH3_ACCEPTANCE.md)。
-- 用户授权继续 Batch 4；独立分支 `refactor/batch4-session-ui-state-20261024` 叠加于 Batch 3。新增绑定单个 Session 的可观察快照 holder，统一提交/保存错误路径，清除手动刷新 tick，停用旧实例回调。详见 [Batch 4 验收](HOST_UI_BATCH4_ACCEPTANCE.md)。
-- 下一步按依赖顺序审阅 Batch 3、Batch 4，再推进 Batch 5 的 App 生命周期归属。未获合并授权；勿把叠加分支状态写成已合并。
+- 最新已验证 main：`17949e72`。Batch 3 #359 → `2aa7abbf`，Batch 4 #360 → `17949e72`；combined main full CI #4611 / Field Test APK #175 成功。先前 Stage 1–5、UI Batch 1/2a/2 和两个独立 P1 已合并。
+- **Batch 5** 在独立分支 `refactor/batch5-game-lifecycle-20261024` 实现。生命周期协调器拥有创建/恢复/结束/重开、轮换记录、持久化绑定及当前模式；App 保留导航/弹窗/发牌位置。OpeningDraft 返回结果，偏好状态统一，旧 TB 身份桥接退休。[验收记录](HOST_UI_BATCH5_ACCEPTANCE.md)。
+- 下一步审阅 Batch 5 的精确 HEAD/full CI/R2。Batch 6 的可移植 Session JSON 合同是独立后续工作，本批未实施；真机视觉/中断恢复及付费 provider 验收继续单列。
 
-[FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 仍为合同；[交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 PR 记录精确 SHA 的 CI/R2。Session API/JSON、规则、AI provider/prompts/memory 与 setup 多样性未改。真机与付费 API 验收仍待办。
+[FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 与 [交接](NEXT_DEVELOPMENT_HANDOFF.md) 为当前合同。未改变 Session API/JSON、规则、AI provider/prompts/memory 或两项开局多样性。Batch 5 尚未获合并授权。
 
 ## 已完成方桌 Stage 1–5 的历史快照（保留原有验收资料）
 

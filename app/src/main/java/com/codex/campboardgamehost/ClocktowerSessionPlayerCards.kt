@@ -44,14 +44,17 @@ internal class ClocktowerSessionPlayerCards(
                 "Dead Session seat $seat has no confirmed death or execution."
             }
         }
-        return PlayerCard(
-            name = player.name,
-            roleLabel = shown?.nameFor(language),
-            actualRoleLabel = actual.nameFor(language),
-            clocktowerTeam = actual.team,
-            clocktowerRole = actual,
-            clocktowerShownRole = shown,
-            eliminatedRound = deathRound,
-        )
+        return clocktowerPlayerCard(player.name, actual, shown, language, deathRound)
     }
 }
+
+/** One presentation builder for TB, NGJ and precommit shown-only cards. */
+internal fun clocktowerPlayerCard(name: String, actual: ClocktowerRole?, shown: ClocktowerRole?,
+    language: String, deathRound: Int? = null) = PlayerCard(
+    name = name, roleLabel = shown?.nameFor(language), actualRoleLabel = actual?.nameFor(language),
+    clocktowerTeam = (actual ?: shown)?.team, clocktowerRole = actual, clocktowerShownRole = shown,
+    eliminatedRound = deathRound,
+)
+
+internal fun List<PlayerCard>.seatOf(name: String?): Int? =
+    indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)

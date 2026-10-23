@@ -1,5 +1,7 @@
 # Host UI Batch 3 acceptance
 
+**Current status:** Merged as `2aa7abbf` via #359; combined main after Batch 4 is `17949e72`, full CI #4611 / APK #175 successful.
+
 Status: implemented for Draft review; not merged. Baseline: P1 #358 squash merge `01ef5e14217e29d7c34db5efc086a023c7f1bf8f`. Baseline main full CI #4607 and Field Test APK #173 passed. Exact Batch 3 commit and remote CI/R2 evidence belong to its PR.
 
 ## Ownership and retirement
