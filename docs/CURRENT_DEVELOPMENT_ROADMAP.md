@@ -1,6 +1,24 @@
-# 当前开发路线（2026-10-23，Host 方桌与信息角色五批已合并）
+# 当前开发路线（2026-10-23，Host UI 职责重构 Batch 2 已合并）
 
-## 当前权威进度（优先于本文件下方历史审计）
+## 当前权威进度：Host UI 重构（优先于历史 Stage 1–5 说明）
+
+**本次文档更新前主线：** `main` `1fe855e80efb006717275341b17b8a9d9e805fa7`。Host 方桌与信息角色 Stage 1–5 已全部合并；随后独立 Day P1 #352 已合并（`edcbf5a4`）。Host UI v3 职责重构依次完成：
+
+| 批次 | 实际代码 / 合并 | 状态 |
+| --- | --- | --- |
+| Batch 1 — 唯一当前夜间交互草稿和确认分发 | [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) squash `7486d05c` | 已合并 |
+| Batch 2a — Session 座位事实，不经 PlayerCard 裁判 | [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) squash `e7ac9481`；完整 Android CI #4593 / R2 #4148 | 已合并 |
+| Batch 2 — Session 派生 HostNightStep + 只读 AI→UI Overlay | [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) squash `1fe855e8`；reviewed head `5871c355` 完整 Android CI #4597 / R2 #4151 | 已合并 |
+| 独立 P1 — 健康 Fortune Teller 确定布尔结果 | 需另立有界 PR | 未完成；不得混入 Batch 3 |
+| Batch 3 / 4 / 5 — 夜间 UI 路由与唯一 Next / 可观察 Session UI / App 根职责 | 以 v3 文档逐批实施 | 未开始 |
+
+**权威合同：** [Host UI FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 和 [独立 Review（§13 AI 例外，§14 最新进度）](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)，原在 docs-only PR #351。用户已批准：`NightAiOverlay` 对旧 `ClocktowerNightStepUi`、`PlayerCard`、语言与 AI matcher 的依赖可作为**临时 AI→UI 适配层**保留；`hostNightStep` 和 Session/规则代码不得读取这些展示类型。不要提前重写/删除 AI 生产推荐，也不要为旧 AI 增建兼容框架。独立 AI 推荐重建时，再迁移调用并同批删去旧适配器。
+
+**下一步：** 先按已批准顺序独立处理健康 Fortune Teller P1 或明确安排；再开始 Batch 3（`ClocktowerJudgeScreen` 路由瘦身，`ClocktowerNightHostScreen` 拥有夜间 UI/预览与唯一 Next 意图，唯一 Session 确认分发仍归 `ClocktowerSessionHost`）。代码批次在精确 HEAD 上执行完整 `:app:testFull :app:assembleDebug` 和 R2。Stage 5 真机可读性、三模式、来电/后台/进程终止后安全继续仍待设备验收；付费 AI API 未获新授权时不得执行。
+
+## 已完成方桌 Stage 1–5 的历史快照（保留原有验收资料）
+
+
 
 **已合并主线：** [Stage 5 PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 通过 squash merge 合并 `main`，第五批合并提交为 **`b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`**。2026-10-23 开发机 `clocktower` 已从干净的 feature 分支切回 `main` 并 fast-forward 至同一 SHA；最终文档更新另行提交推送。详细设计合同：[五批重建](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)。
 
@@ -14,7 +32,7 @@
 
 **接下来只处理剩余风险，不重新实现已合并五批。** [下一轮交接](NEXT_DEVELOPMENT_HANDOFF.md) / [Stage 5 验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md) 明确：在真实 Android 手机验证 15 人/360×520 可读性、状态叠加、三工作模式 D2 全屏预览→Next、来电/切后台/被杀进程后的安全继续。现有 TB 5–15、NGJ 5–6、小屏/全局行为自动化验证不等同真机或付费 API 验收。Oracle VM 当前不具备本地 Android 真机条件时，记录设备测试未执行，不杜撰结果。
 
-**独立待办 P1（与五批合并分离）：** 白天存活提名者应可提名已死目标；正常占卜师（Fortune Teller）可靠固定布尔结果应由 Host 确认。仅在独立授权的任务中处理，不回引旧 Rules 引擎、候选评分或额外 GameState。
+**原 Stage 5 时点独立待办（历史描述）：** 白天存活提名者提名已死目标的问题现已由 #352 合并解决；正常占卜师（Fortune Teller）可靠固定布尔结果仍待独立修复。后续以本文件顶部进度为准，不回引旧 Rules 引擎、候选评分或额外 GameState。
 
 **工程原则：** 唯一可写 `ClocktowerGameSession/ClocktowerSessionState` 与结构化已确认事件；信息展示可多次预览，只有 Next 形成最后一条 Observation；AI 仅建议当前有效裁量；TB/NGJ 两 builtin 与安全恢复、隐私、AtomicFile 保留。测试遵守 [当前测试策略](TESTING_STRATEGY.md)，付费 API 须另行批准。
 
