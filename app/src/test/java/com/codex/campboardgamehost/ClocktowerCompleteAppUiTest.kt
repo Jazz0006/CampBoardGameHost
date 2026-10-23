@@ -96,9 +96,27 @@ class ClocktowerCompleteAppUiTest {
     @Test fun troubleBrewingRunsFromLandingThroughDealToOutcomeAndRestoredQuickRestart() = complete(ClocktowerScript.TroubleBrewing, 34L)
     @Test fun noGreaterJoyRunsFromLandingThroughDealToOutcomeAndRestoredQuickRestart() = complete(ClocktowerScript.NoGreaterJoy, 26L)
 
-    private fun complete(script: ClocktowerScript, seed: Long) {
+    @Test fun restoredAssistedGameKeepsNightPreviewDeathWakeAndEndingFlow() =
+        complete(ClocktowerScript.TroubleBrewing, 34L, StorytellerOperationMode.AI_ASSISTED)
+    @Test fun restoredAutomaticGameKeepsNightPreviewDeathWakeAndEndingFlow() =
+        complete(ClocktowerScript.TroubleBrewing, 34L, StorytellerOperationMode.AI_AUTOMATIC)
+
+    private fun complete(script: ClocktowerScript, seed: Long, mode: StorytellerOperationMode = StorytellerOperationMode.MANUAL) {
         launch(script, seed)
         deal()
+        if (mode != StorytellerOperationMode.MANUAL) {
+            // Restore a game already in progress. First-night setup/deal auto-pause is a
+            // separate product boundary; this batch exercises the actual active Host path.
+            numericInformation(script)
+            ui.runOnIdle { mounted.value = false }
+            ui.waitForIdle()
+            ui.runOnIdle {
+                val saved = requireNotNull(store.load())
+                store.save(saved.state, saved.metadata.put("mode", mode.name))
+                mounted.value = true
+            }
+            waitFor("Next →")
+        }
         val first = state()
         assertEquals(script.toRecommendationScriptId(), first.gameState.script)
         assertEquals(players, first.gameState.players.map { it.name })
@@ -106,7 +124,8 @@ class ClocktowerCompleteAppUiTest {
         assertEquals(if (script == ClocktowerScript.TroubleBrewing)
             setOf("Chef", "Empath", "Slayer", "Scarlet Woman", "Imp") else
             setOf("Clockmaker", "Artist", "Sage", "Scarlet Woman", "Imp"), first.gameState.players.map { it.actualRole.value }.toSet())
-        repeat(if (script == ClocktowerScript.TroubleBrewing) 2 else 1) { numericInformation(script) }
+        val informationSteps = if (script == ClocktowerScript.TroubleBrewing) 2 else 1
+        repeat(informationSteps - if (mode == StorytellerOperationMode.MANUAL) 0 else 1) { numericInformation(script) }
         waitFor("End day")
         val day = state()
         val source = day.gameState.players.first { it.actualRole.value == if (script == ClocktowerScript.TroubleBrewing) "Chef" else "Clockmaker" }
@@ -129,6 +148,7 @@ class ClocktowerCompleteAppUiTest {
         assertEquals(first.gameId, ended.gameId)
         assertEquals(GameEndReason.NO_DEMON, ended.outcome?.reason)
         assertEquals(1, ended.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.GameEnded>().size)
+        if (mode != StorytellerOperationMode.MANUAL) return
         // Restore the actual ended save, then start another game with the same canonical participants.
         remount()
         waitFor("Confirm and reveal all roles")

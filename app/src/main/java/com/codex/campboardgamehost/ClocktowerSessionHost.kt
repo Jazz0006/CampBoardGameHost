@@ -1,10 +1,6 @@
 package com.codex.campboardgamehost
 
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RulesetRef
@@ -25,7 +21,6 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRequest
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
-import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
 import com.codex.campboardgamehost.debug.DebugFlightRecorder
 
 /**
@@ -40,10 +35,15 @@ internal fun ClocktowerGameSession.confirmNightStep(
     val step = confirmation.step
     val draft = confirmation.draft
     if (draft.gameId != state.gameId || draft.phase != state.phase || draft.round != state.round ||
-        draft.interactionId != step.interactionId
+        draft.interactionId != step.interactionId || state.nextNightInteraction(ruleset)?.id != draft.interactionId
     ) {
         DebugFlightRecorder.record("NIGHT_STEP_CONFIRMATION_STALE")
         return false
+    }
+    confirmation.observation?.let { observation ->
+        val before = state.playerInputRevision
+        commitGlobalEpistemicObservation(observation, requireNotNull(confirmation.previewRevision))
+        return state.playerInputRevision != before
     }
     // Saved action IDs embed these exact step-ID strings; keep both forms for restored-game idempotency.
     val actionStepId = step.interactionId.toString()
@@ -76,7 +76,7 @@ internal fun ClocktowerGameSession.confirmNightStep(
     return true
 }
 
-/** Actual Session-to-Host UI adapter. Only drafts live here; all confirmations call the one Session. */
+/** Session-to-Host adapter and confirmation dispatcher. Destinations own UI drafts; Session owns facts. */
 @Composable
 internal fun ClocktowerSessionHost(
     session: ClocktowerGameSession,
@@ -226,21 +226,6 @@ internal fun ClocktowerSessionHost(
         refreshClocktowerUi()
     }
 
-    fun commitClocktowerPrivateInformationPublication(draft: EpistemicObservationDraft, expectedRevision: StorytellerDecisionRevision) = confirmClocktowerStep {
-        val session = requireClocktowerGameSession()
-        val before = session.state
-        session.commitGlobalEpistemicObservation(draft, expectedRevision)
-        if (session.state.playerInputRevision == before.playerInputRevision) return@confirmClocktowerStep
-        aiConversation.reviewConfirmedCurrentStepAdvice(session, storytellerOperationMode, before, draft)
-        refreshClocktowerUi()
-        if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
-            BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
-                aiConversation.strategicPolicyCursor?.version ?: 0,
-                draft.phase.name, draft.round)
-        }
-    }
-
-
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int, fortuneTellerSelectedNames: List<String>) =
         aiConversation.requestLiveGlobalAdvice(
             steps, stepIndex, aiSettings = aiSettings,
@@ -284,122 +269,146 @@ internal fun ClocktowerSessionHost(
         )
     }
     ClocktowerJudgeScreen(
-                        allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-                        cards = cards,
-                        sessionState = requireClocktowerGameSession().state,
-                        globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
-                        globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
-                        jointOpeningAvailable = openingHintsUsable,
-                        jointOpeningSemantics = openingRecommendedInformation.takeIf {
+        allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
+        cards = cards,
+        sessionState = requireClocktowerGameSession().state,
+        jointOpeningAvailable = openingHintsUsable,
+        recommendedDemonBluffRoleNames =
+            clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
+                openingRecommendedBluffRoleNames.takeIf {
+                    openingHintsUsable
+                }.orEmpty()
+            },
+        onHostTools = onHostTools,
+        onCommitDemonBluffs = { roleNames ->
+            confirmClocktowerStep {
+                if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
+                    requireClocktowerGameSession().commitDemonBluffs(
+                        roles = roleNames.map(::RoleId),
+                        phase = storytellerPhaseFor(), round = round,
+                        sequence = requireClocktowerGameSession().nextInputSequence,
+                    )
+                    refreshClocktowerUi()
+                }
+            }
+        },
+        onConfirmNewDemon = {
+            confirmClocktowerStep {
+                requireClocktowerGameSession().confirmImpNotification()
+                refreshClocktowerUi()
+            }
+        },
+        onConfirmKlutzChoice = { chosenName ->
+            confirmClocktowerStep {
+                val session = requireClocktowerGameSession()
+                val death = requireNotNull(session.state.pendingKlutzDeath())
+                session.confirmKlutzChoice(death.actionId, clocktowerSeatFor(chosenName))
+                refreshClocktowerUi()
+            }
+        },
+        onConfirmArtistQuestion = { claimant, truth, shown ->
+            confirmClocktowerStep {
+                requireClocktowerGameSession().confirmArtistAnswer(clocktowerSeatFor(claimant), truth, shown)
+                refreshClocktowerUi()
+            }
+        },
+        onSlayerShot = { claimant, target, registration ->
+            confirmClocktowerStep {
+                requireClocktowerGameSession().confirmSlayerShot(clocktowerSeatFor(claimant), clocktowerSeatFor(target), registration)
+                refreshClocktowerUi()
+            }
+        },
+        onConfirmedNomination = { nominator, nominee, spyChoice, expectedRound ->
+            confirmClocktowerNomination {
+                val executed = requireClocktowerGameSession().confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spyChoice, expectedRound)
+                refreshClocktowerUi()
+                executed
+            }
+        },
+        onConfirmedVote = { nominator, nominee, vote, expectedRound ->
+            confirmClocktowerStep {
+                requireClocktowerGameSession().confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { clocktowerSeatFor(it.playerName) }, expectedRound)
+                refreshClocktowerUi()
+            }
+        },
+        onConfirmDay = { expectedRound ->
+            confirmClocktowerStep {
+                requireClocktowerGameSession().confirmEndDay(expectedRound)
+                refreshClocktowerUi()
+            }
+        },
+        nightContent = {
+            ClocktowerNightHostScreen(
+                allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
+                cards = cards,
+                sessionState = requireClocktowerGameSession().state,
+                globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
+                globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
+                jointOpeningAvailable = openingHintsUsable,
+                jointOpeningSemantics = openingRecommendedInformation.takeIf {
+                    openingHintsUsable
+                }.orEmpty(),
+                globalNightPendingDecision = if (
+                    storytellerOperationMode != StorytellerOperationMode.MANUAL &&
+                    clocktowerPhase == ClocktowerPhase.Night
+                ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
+                else null,
+                globalAiAdviceKey = liveAiAdviceKey,
+                globalAiAdviceText = liveAiAdviceText,
+                globalAiAdviceBusy = liveAiAdviceBusy,
+                globalAiAdviceError = liveAiAdviceError,
+                globalResidualRecommendedChoices = pendingCurrentStepAdvice?.takeIf { pending ->
+                    val latest = currentSession()?.state
+                    val plan = pending.recommendation
+                    pending.requestKey == liveAiAdviceKey &&
+                        latest?.gameId == plan.gameId &&
+                        latest.gameStateRevision == plan.gameStateRevision &&
+                        latest.playerInputRevision == plan.playerInputRevision &&
+                        latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
+                }?.recommendation?.choices.orEmpty(),
+                onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
+                recommendedDemonBluffRoleNames =
+                    clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
+                        openingRecommendedBluffRoleNames.takeIf {
                             openingHintsUsable
-                        }.orEmpty(),
-                        globalNightPendingDecision = if (
-                            storytellerOperationMode != StorytellerOperationMode.MANUAL &&
-                            clocktowerPhase == ClocktowerPhase.Night
-                        ) runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull()
-                        else null,
-                        globalAiAdviceKey = liveAiAdviceKey,
-                        globalAiAdviceText = liveAiAdviceText,
-                        globalAiAdviceBusy = liveAiAdviceBusy,
-                        globalAiAdviceError = liveAiAdviceError,
-                        globalResidualRecommendedChoices = pendingCurrentStepAdvice?.takeIf { pending ->
-                            val latest = currentSession()?.state
-                            val plan = pending.recommendation
-                            pending.requestKey == liveAiAdviceKey &&
-                                latest?.gameId == plan.gameId &&
-                                latest.gameStateRevision == plan.gameStateRevision &&
-                                latest.playerInputRevision == plan.playerInputRevision &&
-                                latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
-                        }?.recommendation?.choices.orEmpty(),
-                        onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
-                        recommendedDemonBluffRoleNames =
-                            clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
-                                openingRecommendedBluffRoleNames.takeIf {
-                                    openingHintsUsable
-                                }.orEmpty()
-                            },
-                        onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
-                        onHostTools = onHostTools,
-                        onRecordPlayerInput = ::advanceClocktowerPlayerInputRevision,
-                        onConfirmNightStep = { confirmation ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmNightStep(
-                                    confirmation,
-                                    activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript),
-                                    ::confirmTroubleBrewingMayorRedirect,
-                                )
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onCommitDemonBluffs = { roleNames ->
-                            confirmClocktowerStep {
-                                if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
-                                    requireClocktowerGameSession().commitDemonBluffs(
-                                        roles = roleNames.map(::RoleId),
-                                        phase = storytellerPhaseFor(), round = round,
-                                        sequence = requireClocktowerGameSession().nextInputSequence,
-                                    )
-                                    refreshClocktowerUi()
+                        }.orEmpty()
+                    },
+                onHostTools = onHostTools,
+                onRecordPlayerInput = ::advanceClocktowerPlayerInputRevision,
+                onConfirmNightStep = { confirmation ->
+                    try {
+                        val before = session.state
+                        val accepted = session.confirmNightStep(confirmation,
+                            activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript),
+                            ::confirmTroubleBrewingMayorRedirect)
+                        if (accepted) {
+                            confirmation.observation?.let { observation ->
+                                aiConversation.reviewConfirmedCurrentStepAdvice(session, storytellerOperationMode, before, observation)
+                                if (storytellerOperationMode != StorytellerOperationMode.MANUAL) {
+                                    BotcAiWireTrace.residualGate("HOST_PUBLISHED", 1,
+                                        aiConversation.strategicPolicyCursor?.version ?: 0,
+                                        observation.phase.name, observation.round)
                                 }
                             }
-                        },
-                        onConfirmNewDemon = {
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmImpNotification()
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmKlutzChoice = { chosenName ->
-                            confirmClocktowerStep {
-                                val session = requireClocktowerGameSession()
-                                val death = requireNotNull(session.state.pendingKlutzDeath())
-                                session.confirmKlutzChoice(death.actionId, clocktowerSeatFor(chosenName))
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmArtistQuestion = { claimant, truth, shown ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmArtistAnswer(clocktowerSeatFor(claimant), truth, shown)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onSlayerShot = { claimant, target, registration ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmSlayerShot(clocktowerSeatFor(claimant), clocktowerSeatFor(target), registration)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmedNomination = { nominator, nominee, spyChoice, expectedRound ->
-                            confirmClocktowerNomination {
-                                val executed = requireClocktowerGameSession().confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spyChoice, expectedRound)
-                                refreshClocktowerUi()
-                                executed
-                            }
-                        },
-                        onConfirmedVote = { nominator, nominee, vote, expectedRound ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { clocktowerSeatFor(it.playerName) }, expectedRound)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        rulesetCatalog = activeGameClocktowerRulesetCatalog,
-                        onAdvanceFromFirstNight = {
-                            confirmClocktowerStep {
-                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmDay = { expectedRound ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmEndDay(expectedRound)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onCompleteNight = {
-                            confirmClocktowerStep {
-                                commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                refreshClocktowerUi()
-                            }
-                        },
-                    )
+                            refreshClocktowerUi()
+                        }
+                        accepted
+                    } catch (_: java.io.IOException) { onSaveError(); false }
+                },
+                rulesetCatalog = activeGameClocktowerRulesetCatalog,
+                onAdvanceFromFirstNight = {
+                    confirmClocktowerStep {
+                        commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                        refreshClocktowerUi()
+                    }
+                },
+                onCompleteNight = {
+                    confirmClocktowerStep {
+                        commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
+                        refreshClocktowerUi()
+                    }
+                },
+            )
+        },
+    )
 }

@@ -1,6 +1,6 @@
 # Host UI Responsibility Refactor Plan — FINAL v3 (2026-10-23)
 
-**Status (2026-10-23):** FINAL v3 implementation contract; Batch 2 temporary AI→UI adapter dependency explicitly approved (§Batch 2 and [review §13](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)). **Already merged to `main`:** Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) → `7486d05c`; Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) → `e7ac9481`; Batch 2 [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) → `1fe855e8` (full Android CI #4597 / R2 #4151 successful on reviewed head `5871c355`). **Not yet implemented:** healthy Fortune Teller P1 (independent), Batch 3–5. Historical source-size / PR / baseline facts below describe the original planning date unless explicitly marked current.
+**Status (2026-10-23):** FINAL v3 implementation contract; Batch 2 temporary AI→UI adapter dependency explicitly approved (§Batch 2 and [review §13](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)). **Already merged to `main`:** Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) → `7486d05c`; Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) → `e7ac9481`; Batch 2 [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) → `1fe855e8` (full Android CI #4597 / R2 #4151 successful on reviewed head `5871c355`). **P1 #358 is now merged** as `01ef5e14` (full PR CI #4606/R2 #4158; main CI #4607 successful). **Batch 3 is implemented on its review branch, not yet merged**; see [acceptance](HOST_UI_BATCH3_ACCEPTANCE.md). **Not yet implemented:** Batch 4–5. Historical source-size / PR / baseline facts below describe the original planning date unless explicitly marked current.
 **Current implemented baseline before merging this docs PR:** `main` `1fe855e80efb006717275341b17b8a9d9e805fa7` (#357). The independent dead-nominee P1 [#352](https://github.com/Jazz0006/CampBoardGameHost/pull/352) was merged as `edcbf5a4`. The **original planning baseline** was `7baf014b` (#354, CI #4585 / R2 #4142); historic references to #352 as Draft are no longer current. Continue future batches from the latest `main`, not the original planning base.
 **History:** v1 `133fe98b` and v2 `2687e6a3` were reviewed in [HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md) (§1–11 on v1, §12 on v2). v3 resolves every §12 item; §9 lists changes per version. Where this plan and the review differ, this plan governs.
 **Scope:** `CampBoardGameHostApp.kt` (49,208 B), `clocktower/ui/ClocktowerHostScreen.kt` (51,102 B, over the 50,000 B hard limit), their adapter `ClocktowerSessionHost.kt` (30,907 B), and `ClocktowerNightHostProjection.kt` (11,883 B).
@@ -134,9 +134,9 @@ Also:
 - Delete the remaining step-builder assembly in `ClocktowerNightHostProjection.kt` (kept by Batch 2a) once the night screen assembles its steps; remove the file if nothing remains.
 
 **Exit checks**
-- [ ] `ClocktowerJudgeScreen` contains no night commit or AI decision logic; exactly one Next handler exists for night steps, and it reaches the Session only through the `ClocktowerSessionHost` dispatcher.
-- [ ] No step-builder assembly remains in `ClocktowerNightHostProjection.kt`.
-- [ ] D2, night death affecting later wakes, and all three modes pass in the real App regression. Reference sizes: router ≈ 3 KB, night screen ≈ 15–20 KB.
+- [x] `ClocktowerJudgeScreen` contains no night commit or AI decision logic; exactly one Next handler exists for night steps, and it reaches the Session only through the `ClocktowerSessionHost` dispatcher.
+- [x] No step-builder assembly remains in `ClocktowerNightHostProjection.kt`.
+- [x] D2, night death affecting later wakes, and all three modes pass in the real App regression. Reference sizes: router ≈ 3 KB, night screen ≈ 15–20 KB.
 
 ### Batch 4 — Observable Session in the UI adapter; delete the tick
 
@@ -202,8 +202,8 @@ For a future TypeScript WebHost / EvidenceLab; no cross-language SDK, no second 
 | 2 | Batch 1 | **Merged** #355 → `7486d05c` (full CI / R2 verified for PR head) |
 | 3 | Batch 2a | **Merged** #356 → `e7ac9481`; full Android CI #4593 / R2 #4148 success |
 | 4 | Batch 2 | **Merged** #357 → `1fe855e8`; code head `5871c355`, full Android CI #4597 / R2 #4151 success; approved temporary AI adapter exception |
-| 5 | Independent P1: healthy Fortune Teller fixed Boolean | **Open task; not yet delivered.** Separate PR on stable Batch 2 Host boundary; drunk/poisoned, registration and target-change regressions. Review scheduling before Batch 3. |
-| 6 | Batch 3 | **Next planned structural batch; not started.** §Batch 3 exit checks. Independent FT P1 remains a separate product change. |
+| 5 | Independent P1: healthy Fortune Teller fixed Boolean | **Merged** #358 → `01ef5e14`; full PR CI #4606 / R2 #4158 and main CI #4607 passed. |
+| 6 | Batch 3 | **Implemented for review, not merged.** See [Batch 3 acceptance](HOST_UI_BATCH3_ACCEPTANCE.md); Batch 4 follows acceptance. |
 | 7 | Batch 4 | §Batch 4 exit checks |
 | 8 | Batch 5 | §Batch 5 exit checks |
 | — | Batch 6 | Independent; does not block Android work |

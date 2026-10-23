@@ -54,6 +54,7 @@ internal data class ClocktowerNightStepConfirmation(
     val draft: ClocktowerNightStepDraft,
     val successorSeat: Int? = null,
     val previewRevision: StorytellerDecisionRevision? = null,
+    val observation: com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft? = null,
 )
 
 /**

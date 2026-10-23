@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.doubleClick
@@ -460,6 +461,27 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun demonBluffsRouteIntoSeparatePrivateEvilInformationPreviews() {
+        val host = Host("Chef", StorytellerOperationMode.MANUAL, roles =
+            listOf("Chef", "Soldier", "Mayor", "Saint", "Empath", "Baron", "Imp"))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Confirm Demon bluffs").assertIsNotEnabled()
+        listOf("Monk", "Washerwoman", "Investigator").forEach { ui.onNodeWithText(it).performScrollTo().performClick() }
+        ui.onNodeWithText("Confirm Demon bluffs").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("Show to player").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.runOnIdle { assertEquals(setOf(6), host.session.state.epistemicObservationLog.records.single().recipientSeats) }
+        ui.onNodeWithText("Show to player").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(listOf(setOf(6), setOf(7)),
+            host.session.state.epistemicObservationLog.records.map { it.recipientSeats }) }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+    }
+
     @Test fun selfKillWithMultipleMinionsWaitsForChoiceThenCommitsOnNext() {
         val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
             listOf("Imp", "Spy", "Baron", "Chef", "Soldier"))
@@ -479,6 +501,14 @@ class ClocktowerD2UiTest {
             assertEquals(false, host.session.state.gameState.playerAt(1)!!.alive)
             assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(2)!!.actualRole)
             assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.RoleChange>().size)
+        }
+        ui.onNodeWithText("Informed, continue").assertIsNotEnabled()
+        ui.onNodeWithText("Show full screen to player").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Informed, continue").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            val notification = host.session.state.epistemicObservationLog.records.single { it.recordId.startsWith("role-notification:") }
+            assertEquals(setOf(2), notification.recipientSeats)
         }
     }
 
@@ -515,6 +545,47 @@ class ClocktowerD2UiTest {
             assertEquals(1, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size)
             assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.RoleChange>().size)
         }
+    }
+
+    @Test fun openNightPreviewIsDiscardedWhenSessionMovesToAnotherNight() {
+        val host = Host("Chef", StorytellerOperationMode.MANUAL, roles =
+            listOf("Chef", "Baron", "Imp", "Soldier", "Saint"))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Show to player: 1").performClick()
+        ui.runOnIdle { host.enterOtherNight() }
+        ui.onNodeWithText("Close display card").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
+    }
+
+    @Test fun confirmingOneInformationRoleCannotEnableTheNextRolesNext() {
+        val host = Host("Chef", StorytellerOperationMode.MANUAL, roles =
+            listOf("Chef", "Empath", "Baron", "Imp", "Saint"))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Show to player: 1").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.runOnIdle { assertEquals(1, host.session.state.epistemicObservationLog.records.size) }
+        ui.onNodeWithText("Show to player: 1").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(listOf(1, 2), host.session.state.epistemicObservationLog.records.map { it.sourceSeat }) }
+    }
+
+    @Test fun failedNightObservationSaveRetainsPreviewAndRetryWritesOnce() {
+        val host = Host("Chef", StorytellerOperationMode.MANUAL)
+        var failSave = false
+        host.session.persistWith { if (failSave) throw java.io.IOException("fixture disk failure") }
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Show to player: 0").performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        val before = host.session.state
+        ui.runOnIdle { failSave = true }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(before, host.session.state); assertEquals(1, host.saveErrors); failSave = false }
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle { assertEquals(1, host.session.state.epistemicObservationLog.records.size) }
     }
 
     @Test fun unconfirmedImpTargetDoesNotCarryIntoTheNextNight() {
@@ -608,6 +679,7 @@ class ClocktowerD2UiTest {
         val adviceKey = mutableStateOf<String?>(null)
         private val adviceError = mutableStateOf<String?>(null)
         private val choices = mutableStateOf<Map<String, SemanticResult>>(emptyMap())
+        var saveErrors = 0
         var requests = 0
         var requestId: String? = null
         val cards = roles.mapIndexed { index, name ->
@@ -675,45 +747,62 @@ class ClocktowerD2UiTest {
                 .fromContext(androidx.compose.ui.platform.LocalContext.current).ruleset(script)
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"), sessionState = state,
-                globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
-                globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                globalAiAdviceKey = adviceKey.value, globalAiAdviceError = adviceError.value,
-                globalResidualRecommendedChoices = choices.value, onRequestGlobalAiAdvice = ::request,
-                jointOpeningSemantics = if (!openingEnabled.value) emptyMap() else mapOf(1 to
-                    if (cards[0].clocktowerRole?.enName in listOf("Washerwoman", "Librarian", "Investigator"))
-                        HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
-                            "FUNCTIONING", "EVIDENCE_PAIR",
-                            if (cards[0].clocktowerRole?.enName == "Librarian") listOf(3, 4)
-                            else listOf(2, 3), "ROLE", roleId = pairRole.value)
-                    else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
-                        "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
-                recommendedDemonBluffRoleNames = emptyList(),
-                onCommitConfirmedPrivateInformationPublication = { draft, revision ->
-                    session.commitGlobalEpistemicObservation(draft, revision)
-                    tick.value++
-                },
+                cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"),
+                sessionState = state,
+                recommendedDemonBluffRoleNames = state.demonBluffRoleIds.map(RoleId::value),
                 onHostTools = {},
-                onRecordPlayerInput = { session.recordPlayerInput(); refresh() },
-                onConfirmNightStep = { confirmation ->
-                    session.confirmNightStep(confirmation, ruleset, confirmMayorRedirect = {})
+                onCommitDemonBluffs = { names ->
+                    session.commitDemonBluffs(names.map(::RoleId), state.phase, state.round, session.nextInputSequence)
                     refresh()
                 },
-                onCommitDemonBluffs = {},
                 onConfirmNewDemon = { session.confirmImpNotification(); refresh() },
                 onConfirmKlutzChoice = { chosenName ->
                     session.confirmKlutzChoice(requireNotNull(session.state.pendingKlutzDeath()).actionId,
                         cards.indexOfFirst { it.name == chosenName } + 1)
                     refresh()
-                }, onConfirmArtistQuestion = { _, _, _ -> },
+                },
+                onConfirmArtistQuestion = { _, _, _ -> },
                 onSlayerShot = { _, _, _ -> },
-                onConfirmedNomination = { _, _, _, _ -> false }, onConfirmedVote = { a, b, vote, expectedRound ->
+                onConfirmedNomination = { _, _, _, _ -> false },
+                onConfirmedVote = { a, b, vote, expectedRound ->
                     session.confirmVote(cards.indexOfFirst { it.name == a } + 1, cards.indexOfFirst { it.name == b } + 1,
                         vote.voters.map { v -> cards.indexOfFirst { it.name == v.playerName } + 1 }, expectedRound)
                     refresh()
                 },
-                onAdvanceFromFirstNight = ::enterDay,
-                onConfirmDay = { expectedRound -> session.confirmEndDay(expectedRound); refresh() }, onCompleteNight = ::enterDay,
+                onConfirmDay = { expectedRound -> session.confirmEndDay(expectedRound); refresh() },
+                nightContent = {
+                    ClocktowerNightHostScreen(
+                        allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
+                        cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"),
+                        sessionState = state,
+                        globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
+                        globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
+                        globalAiAdviceKey = adviceKey.value,
+                        globalAiAdviceError = adviceError.value,
+                        globalResidualRecommendedChoices = choices.value,
+                        onRequestGlobalAiAdvice = ::request,
+                        jointOpeningSemantics = if (!openingEnabled.value) emptyMap() else mapOf(1 to
+                            if (cards[0].clocktowerRole?.enName in listOf("Washerwoman", "Librarian", "Investigator"))
+                                HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                                    "FUNCTIONING", "EVIDENCE_PAIR",
+                                    if (cards[0].clocktowerRole?.enName == "Librarian") listOf(3, 4)
+                                    else listOf(2, 3), "ROLE", roleId = pairRole.value)
+                            else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                                "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
+                        recommendedDemonBluffRoleNames = state.demonBluffRoleIds.map(RoleId::value),
+                        onHostTools = {},
+                        onRecordPlayerInput = { session.recordPlayerInput(); refresh() },
+                        onConfirmNightStep = { confirmation ->
+                            try {
+                                val accepted = session.confirmNightStep(confirmation, ruleset, confirmMayorRedirect = {})
+                                refresh()
+                                accepted
+                            } catch (_: java.io.IOException) { saveErrors++; false }
+                        },
+                        onAdvanceFromFirstNight = ::enterDay,
+                        onCompleteNight = ::enterDay,
+                    )
+                },
             )
         }
     }
