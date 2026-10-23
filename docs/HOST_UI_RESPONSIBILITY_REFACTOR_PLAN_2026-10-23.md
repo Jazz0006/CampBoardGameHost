@@ -1,6 +1,6 @@
 # Host UI Responsibility Refactor Plan — FINAL v3 (2026-10-23)
 
-**Status:** FINAL — implementation contract after two owner review rounds. No batch is implemented yet.
+**Status:** FINAL v3 contract, with an explicitly approved Batch 2 AI-adapter exception (2026-10-23); the paragraphs below retain historical baseline evidence. **Implementation progress:** Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) and Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) have merged; Batch 2 [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) has finished code audit issue 1 (Session-derived Host step) and passed full Android CI #4597 / R2 #4151 at `5871c355`, pending merge as of this documentation decision. Batch 3 onward remain unimplemented.
 **Baseline:** `main` `7baf014b` (#354 D2 test selector refresh; main push CI #4585 ran `:app:testFull` and succeeded; R2 #4142). The dead-nominee P1 is Draft [PR #352](https://github.com/Jazz0006/CampBoardGameHost/pull/352) at `7aac192b` (CI #4586 `testFull` / R2 #4143 success), **not yet merged**. Batch 1 starts from the latest `main` after #352 is handled.
 **History:** v1 `133fe98b` and v2 `2687e6a3` were reviewed in [HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md) (§1–11 on v1, §12 on v2). v3 resolves every §12 item; §9 lists changes per version. Where this plan and the review differ, this plan governs.
 **Scope:** `CampBoardGameHostApp.kt` (49,208 B), `clocktower/ui/ClocktowerHostScreen.kt` (51,102 B, over the 50,000 B hard limit), their adapter `ClocktowerSessionHost.kt` (30,907 B), and `ClocktowerNightHostProjection.kt` (11,883 B).
@@ -97,7 +97,7 @@ Removing `PlayerCard` from rule code (Batch 2) requires first moving the Host fa
 **Change**: move decision code out of the composable into two plain-Kotlin functions:
 
 1. `hostNightStep(sessionState, ruleset: ValidatedClocktowerRuleset, draft: NightStepDraft): HostNightStep` — built on the existing `sessionState.nextNightInteraction(ruleset)` (not a second step engine). Returns: the current interaction; required input shape; numeric/pair resolution; whether the step is private information or evil information; target readiness; Imp succession (`impSelfKillSuccession`); the real discretion boundary. It does **not** read Compose preview state, AI busy/error or `PlayerCard`.
-2. `nightAiOverlay(hostStep, aiInputs): NightAiOverlay` — pure and read-only: validates request identity, game/input revision, script/role/seat/metric/subjects; reports stale/blocked; returns the validated suggestion and Mayor recommendation. It can only return an option inside `hostStep`'s discretion boundary, never calls Session, and returns nothing in MANUAL. AI_AUTOMATIC still waits for real player input and a live tap to show information.
+2. `nightAiOverlay(...): NightAiOverlay` — **temporary read-only AI → UI adapter**, not part of Host Core: validates request identity, game/input revision, script/role/seat/metric/subjects; reports stale/blocked; returns the validated suggestion and Mayor recommendation. It must never mutate Session, never expand the current Host step's available choices, and must return an empty overlay in MANUAL. AI_AUTOMATIC still waits for actual player input and a live tap to show information. **Approved exception (2026-10-23):** its signature may still take `ClocktowerNightStepUi`, `PlayerCard`, localized text/language and existing AI matchers because those old helpers have active production consumers. This exception applies **only** to the AI/UI adapter, not to `hostNightStep`, Session or rule computation. Do not create replacement compatibility abstractions merely to hide these types in Batch 2/3.
 
 `nextEnabled` is derived in the UI from `HostNightStep` readiness + current preview, not inside `hostNightStep`.
 
@@ -118,10 +118,13 @@ Also:
 - Use the App's `BuiltInClocktowerRulesetCatalog` instance instead of a second `fromContext` lookup (cached; clarity only).
 
 **Exit checks**
-- [ ] `hostNightStep` / `nightAiOverlay` signatures contain no `PlayerCard`, `Context`, Compose or string-label types.
+- [x] `hostNightStep` reads the active `Session.nextNightInteraction(ruleset)` and current draft, not UI-provided role/action/reality or `PlayerCard`, `Context`, Compose, label strings or AI state (PR #357 audit issue 1; full CI #4597 / R2 #4151 passed).
+- [x] **Approved temporary exception for `nightAiOverlay`**: read-only AI → UI matching may reference `ClocktowerNightStepUi`, `PlayerCard`, language and existing AI request/matcher helpers. It cannot supply Host facts, write Session, narrow legitimate manual selection to an AI suggestion, or unblock stale advice. The planned pure-semantic interface for the *AI module itself* is deferred to the separately scoped AI redesign; this is accepted, not a Batch 2 merge blocker.
 - [ ] No role-name string literals in UI decision code for metric/role classification.
 - [ ] JVM tests: unique numeric; Spy/Recluse discretion; drunk/poisoned source; Mayor redirect and Imp succession; wrong target; stale revision / wrong seat / wrong metric AI rejected; MANUAL overlay empty.
 - [ ] With the AI overlay replaced by an empty overlay, a MANUAL game completes in `ClocktowerCompleteAppUiTest`.
+
+**Deferred AI redesign boundary (not a Batch 3 prerequisite):** existing `pendingGlobalFirstNightPairDecision`, `pendingGlobalNightScalarDecision`, `ClocktowerResidualDisplayMatcherV2` and `ClocktowerJointOpeningDisplayMatcherV2` still serve production AI requests/matching. Keep them functional until the later AI recommendations redesign replaces their actual consumers in one migration; then remove the dead paths. Do not rebuild AI prompts/parser/strategic memory or add a second Host candidate/rules engine in this Host UI refactor. See the decision appended to [the architecture review](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md).
 
 ### Batch 3 — Judge screen becomes a router
 
