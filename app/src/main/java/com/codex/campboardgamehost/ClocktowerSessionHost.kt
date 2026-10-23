@@ -79,8 +79,7 @@ internal fun ClocktowerGameSession.confirmNightStep(
 /** Session-to-Host adapter and confirmation dispatcher. Destinations own UI drafts; Session owns facts. */
 @Composable
 internal fun ClocktowerSessionHost(
-    session: ClocktowerGameSession,
-    sessionState: ClocktowerSessionState,
+    sessionUi: ClocktowerSessionUiState,
     cards: List<PlayerCard>,
     activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
     clocktowerRulesetRef: RulesetRef?,
@@ -92,9 +91,9 @@ internal fun ClocktowerSessionHost(
     isJudgeVisible: () -> Boolean,
     drunkAiScope: kotlinx.coroutines.CoroutineScope,
     onHostTools: () -> Unit,
-    onChanged: () -> Unit,
-    onSaveError: () -> Unit,
 ) {
+    val session = sessionUi.session
+    val sessionState = sessionUi.snapshot
     val context = LocalContext.current
     val language = context.resources.configuration.locales[0].language
     val currentClocktowerScript = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionState.gameState.script }
@@ -134,13 +133,7 @@ internal fun ClocktowerSessionHost(
             )
         }
     } == true
-    fun refreshClocktowerUi() = onChanged()
     fun requireClocktowerGameSession() = session
-    fun confirmClocktowerStep(confirm: () -> Unit) {
-        try { confirm() } catch (_: java.io.IOException) { onSaveError() }
-    }
-    fun confirmClocktowerNomination(confirm: () -> Boolean): Boolean = try { confirm() }
-        catch (_: java.io.IOException) { onSaveError(); false }
     fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
         if (
             currentClocktowerScript != ClocktowerScript.TroubleBrewing ||
@@ -174,8 +167,7 @@ internal fun ClocktowerSessionHost(
     }
 
     fun advanceClocktowerPlayerInputRevision() {
-        requireClocktowerGameSession().recordPlayerInput()
-        refreshClocktowerUi()
+        sessionUi.commit { it.recordPlayerInput() }
     }
     fun storytellerPhaseFor(phase: ClocktowerPhase = clocktowerPhase): StorytellerPhase =
         phase.toStorytellerPhase()
@@ -223,7 +215,6 @@ internal fun ClocktowerSessionHost(
             // Dusk expiry or another accepted step may have advanced Session in this callback.
             expectedGameStateRevision = requireClocktowerGameSession().state.gameStateRevision,
         )
-        refreshClocktowerUi()
     }
 
     fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int, fortuneTellerSelectedNames: List<String>) =
@@ -271,7 +262,7 @@ internal fun ClocktowerSessionHost(
     ClocktowerJudgeScreen(
         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
         cards = cards,
-        sessionState = requireClocktowerGameSession().state,
+        sessionState = sessionState,
         jointOpeningAvailable = openingHintsUsable,
         recommendedDemonBluffRoleNames =
             clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
@@ -281,67 +272,59 @@ internal fun ClocktowerSessionHost(
             },
         onHostTools = onHostTools,
         onCommitDemonBluffs = { roleNames ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
                     requireClocktowerGameSession().commitDemonBluffs(
                         roles = roleNames.map(::RoleId),
                         phase = storytellerPhaseFor(), round = round,
                         sequence = requireClocktowerGameSession().nextInputSequence,
                     )
-                    refreshClocktowerUi()
                 }
             }
         },
         onConfirmNewDemon = {
-            confirmClocktowerStep {
+            sessionUi.commit {
                 requireClocktowerGameSession().confirmImpNotification()
-                refreshClocktowerUi()
             }
         },
         onConfirmKlutzChoice = { chosenName ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 val session = requireClocktowerGameSession()
                 val death = requireNotNull(session.state.pendingKlutzDeath())
                 session.confirmKlutzChoice(death.actionId, clocktowerSeatFor(chosenName))
-                refreshClocktowerUi()
             }
         },
         onConfirmArtistQuestion = { claimant, truth, shown ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 requireClocktowerGameSession().confirmArtistAnswer(clocktowerSeatFor(claimant), truth, shown)
-                refreshClocktowerUi()
             }
         },
         onSlayerShot = { claimant, target, registration ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 requireClocktowerGameSession().confirmSlayerShot(clocktowerSeatFor(claimant), clocktowerSeatFor(target), registration)
-                refreshClocktowerUi()
             }
         },
         onConfirmedNomination = { nominator, nominee, spyChoice, expectedRound ->
-            confirmClocktowerNomination {
+            sessionUi.commit {
                 val executed = requireClocktowerGameSession().confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spyChoice, expectedRound)
-                refreshClocktowerUi()
                 executed
-            }
+            } ?: false
         },
         onConfirmedVote = { nominator, nominee, vote, expectedRound ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 requireClocktowerGameSession().confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { clocktowerSeatFor(it.playerName) }, expectedRound)
-                refreshClocktowerUi()
             }
         },
         onConfirmDay = { expectedRound ->
-            confirmClocktowerStep {
+            sessionUi.commit {
                 requireClocktowerGameSession().confirmEndDay(expectedRound)
-                refreshClocktowerUi()
             }
         },
         nightContent = {
             ClocktowerNightHostScreen(
                 allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 cards = cards,
-                sessionState = requireClocktowerGameSession().state,
+                sessionState = sessionState,
                 globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                 globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                 jointOpeningAvailable = openingHintsUsable,
@@ -376,7 +359,7 @@ internal fun ClocktowerSessionHost(
                 onHostTools = onHostTools,
                 onRecordPlayerInput = ::advanceClocktowerPlayerInputRevision,
                 onConfirmNightStep = { confirmation ->
-                    try {
+                    sessionUi.commit { session ->
                         val before = session.state
                         val accepted = session.confirmNightStep(confirmation,
                             activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript),
@@ -390,22 +373,19 @@ internal fun ClocktowerSessionHost(
                                         observation.phase.name, observation.round)
                                 }
                             }
-                            refreshClocktowerUi()
                         }
                         accepted
-                    } catch (_: java.io.IOException) { onSaveError(); false }
+                    } ?: false
                 },
                 rulesetCatalog = activeGameClocktowerRulesetCatalog,
                 onAdvanceFromFirstNight = {
-                    confirmClocktowerStep {
+                    sessionUi.commit {
                         commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                        refreshClocktowerUi()
                     }
                 },
                 onCompleteNight = {
-                    confirmClocktowerStep {
+                    sessionUi.commit {
                         commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                        refreshClocktowerUi()
                     }
                 },
             )

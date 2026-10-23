@@ -1,13 +1,11 @@
-# 当前开发路线：Host UI Batch 3 已实现，待审阅合并
+# 当前开发路线：Host UI Batch 4 已实现，叠加审阅中
 
-## 当前进度（下方旧状态仅供追溯）
+- 已合并基线：P1 #358 → `01ef5e14`，main full CI #4607 成功；Stage 1–5、UI Batch 1/2a/2 已完成。
+- Batch 3 [Draft #359](https://github.com/Jazz0006/CampBoardGameHost/pull/359) **未合并**，`85d3833c` 完整 CI #4608 / R2 #4159 成功。[Batch 3 验收](HOST_UI_BATCH3_ACCEPTANCE.md)。
+- 用户授权继续 Batch 4；独立分支 `refactor/batch4-session-ui-state-20261024` 叠加于 Batch 3。新增绑定单个 Session 的可观察快照 holder，统一提交/保存错误路径，清除手动刷新 tick，停用旧实例回调。详见 [Batch 4 验收](HOST_UI_BATCH4_ACCEPTANCE.md)。
+- 下一步按依赖顺序审阅 Batch 3、Batch 4，再推进 Batch 5 的 App 生命周期归属。未获合并授权；勿把叠加分支状态写成已合并。
 
-- Host 方桌/信息 Stage 1–5、Day 死者被提名 P1、UI Batch 1/2a/2 均已合并。
-- Fortune Teller P1 [#358](https://github.com/Jazz0006/CampBoardGameHost/pull/358) 已合并至 `01ef5e14`。精确代码 `0b5da9ff` 完整 CI #4606/R2 #4158 成功；合并后 main 完整 CI #4607、Field Test APK #173 成功。
-- **Batch 3 已在独立分支实现，尚未合并。** Judge 只路由；NightHostScreen 拥有本交互草稿/全屏预览/唯一 Next；唯一 SessionHost 分发同时承接最终 Observation。旧 NightHostProjection 文件及独立信息发布回调删除，现有 AI 适配器保留。[验收与边界](HOST_UI_BATCH3_ACCEPTANCE.md)。
-- 下一步先审阅 Batch 3，然后 Batch 4（可观察 Session 快照/原子发布），再 Batch 5（App 根职责）。本批没有改造 AI、规则、存档格式或 setup 多样性。
-
-权威合同仍是 [FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)；[交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 PR 记录精确 SHA 的 CI/R2。真机 UI、物理中断/杀进程及付费 API 验收继续单独待办。
+[FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 仍为合同；[交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 PR 记录精确 SHA 的 CI/R2。Session API/JSON、规则、AI provider/prompts/memory 与 setup 多样性未改。真机与付费 API 验收仍待办。
 
 ## 已完成方桌 Stage 1–5 的历史快照（保留原有验收资料）
 

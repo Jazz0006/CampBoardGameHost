@@ -1,19 +1,19 @@
-# 当前开发交接：Batch 3 代码已实现，待审阅合并
+# 当前开发交接：Batch 4 叠加于 Batch 3，待审阅
 
-## 当前基线及归属
+## 基线和实现
 
-- `main` 已包含 Fortune Teller P1 #358，squash `01ef5e14217e29d7c34db5efc086a023c7f1bf8f`；PR 精确代码全量 CI #4606/R2 #4158、合并后 main 全量 CI #4607 均成功。不要再重复 P1。
-- 当前独立分支 `refactor/batch3-night-host-screen-20261023` 实现 Batch 3。代码/验证详情见 [验收记录](HOST_UI_BATCH3_ACCEPTANCE.md) 与该分支 Draft PR；审阅前重新核对精确 HEAD 和 GitHub full CI/R2。
-- `ClocktowerJudgeScreen` 只选择 New Demon、Demon bluffs、Day 或 Night destination；夜间 AI/预览/Next 不再经过它的参数或实现。每个 destination 持有自己的短期 UI 状态。
-- `ClocktowerNightHostScreen` 的目标草稿和两种预览状态均按 game/phase/round/interaction 绑定。`clocktowerNightPresentation` 只将 Session 步骤及本步输入转成现有 UI 展示，不拥有夜间游标。
-- Next 产生一个 `ClocktowerNightStepConfirmation`，含可选最终 Observation；SessionHost 是唯一 Session 分发者。拒绝过期交互或保存失败时，UI 不清空仍有效的预览；正式提交成功后才通知现有 AI 记忆并刷新。
-- 删除 `ClocktowerNightHostProjection.kt` 与独立 `onCommitConfirmedPrivateInformationPublication` 链；保留已批准临时 AI→UI 适配器。Session API/JSON、玩法、AI 提示词/解析/战略记忆保持原合同。
+- main：P1 #358 → `01ef5e14`。Batch 3 #359 尚未合并，`85d3833c` full CI #4608 / R2 #4159 已成功。
+- 当前分支 `refactor/batch4-session-ui-state-20261024` 基于 Batch 3；仅审阅相对 Batch 3 的 Batch 4 增量，先前批次由 #359 单独承载。
+- `ClocktowerSessionUiState` 持有一个 Session 与只读 accepted snapshot。泛型 `commit` 保留返回值（含 nomination Boolean），只在 Session 操作成功后发布；IOException 保留旧快照并调用保存错误回调。
+- App 在替换/恢复/重开前停用旧 holder，卸载时亦停用。旧 holder 捕获的提交回调不会执行，不能写旧存档或新局。现有异步 AI 的 Session 实例/revision 校验继续保留。
+- SessionHost 统一经 holder 提交；不再接收独立状态副本或刷新回调。角色卡、round、phase、结果、主持人工具等读取可观察快照；卡片也保留同一回调中读取最新 accepted snapshot 的能力。
+- 手动 tick、刷新函数、两份确认 wrapper 及 nomination 专用错误 wrapper 已删除；Session 核心事务、API/JSON 没有改变。
 
-## 下一步
+## 后续
 
-1. 审阅并验收 Batch 3；未获进一步授权不合并本批。
-2. 然后按 [FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 推进 Batch 4，处理 UI 可观察快照及去除 tick；Batch 5 后续处理 App 所有权。不要在本批扩张这些范围。
-3. 真机小屏/状态叠加/三模式交接、来电/后台/杀进程后安全继续仍待设备验收；付费模型仍需独立授权。Robolectric 和 APK 构建不能替代现场验证。
+1. 按 [验收记录](HOST_UI_BATCH4_ACCEPTANCE.md) 核对精确 HEAD/full CI/R2，并依次审阅 Batch 3、Batch 4；未获授权不合并。
+2. Batch 5 仍未实施，处理 App 生命周期与导航职责；勿在 Batch 4 引入新的 lifecycle/controller。
+3. 真机小屏、三模式交接、来电/后台/杀进程及付费 provider 验收继续单列，不把 Robolectric 成功当作现场验证。
 
 ## 历史 Stage 3 开工交接（完成后以本页顶部状态为准）
 
