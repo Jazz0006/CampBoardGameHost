@@ -283,6 +283,26 @@ v2 正确规定“视觉虚线/推荐高亮/Pair shortlist ≠ 通用合法性 v
 
 ### 13.2 审核与合并范围
 
-**建议 PR #357 可以合并**，前提是最新 HEAD 通过精确 Android full CI/R2、差异只包含 Batch 2、base 是已合并 Batch 2a 的 `main`。本决策不授权在本批修改 AI 提示词、解析器、存储格式、Session 确认 API 或额外修改玩法。后续 AI 重构需另立规划、测试与 PR。
+**PR #357 已合并**（2026-10-23，squash `1fe855e8`）。其 reviewed head `5871c355` 的完整 Android CI #4597 / R2 #4151 均成功，且该 PR 仅包含 Batch 2 代码。本决策不授权在本批修改 AI 提示词、解析器、存储格式、Session 确认 API 或额外修改玩法。后续 AI 重构需另立规划、测试与 PR。
 
-**文档分支说明：** 此 Review 与 FINAL v3 计划仍在独立 Draft [PR #351](https://github.com/Jazz0006/CampBoardGameHost/pull/351)；更新此处不意味着 #351 已合并 `main`。
+**文档分支说明：** 本 Review 与 FINAL v3 计划属于待合并的文档 [PR #351](https://github.com/Jazz0006/CampBoardGameHost/pull/351)。原 §1–12 的基线、审计意见及当时的 Draft 状态属于历史记录；下方 §14 和规划首页的当前状态优先。
+
+---
+
+## 14. 2026-10-23 实施及合并前最终进度核对
+
+**本节是当前状态快照，上方 §1–12 的旧审计时间点与状态保留用于追溯，不应当作后续执行命令。** 本次仅更新文档，不改生产代码。
+
+| 工作 | GitHub 事实 | 现状 |
+| --- | --- | --- |
+| 独立 P1：活人提名死人 | [#352](https://github.com/Jazz0006/CampBoardGameHost/pull/352) squash `edcbf5a4` | 已合并 |
+| Batch 1：当前交互草稿 + 单一夜间确认分发 | [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) squash `7486d05c` | 已合并 |
+| Batch 2a：Host 座位事实归 Session | [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) squash `e7ac9481`；完整 CI #4593 / R2 #4148 | 已合并 |
+| Batch 2：Session 派生 Host Step、AI → UI 临时建议层 | [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) squash `1fe855e8`，精确 reviewed head `5871c355`；`testFull :app:assembleDebug` CI #4597 / R2 #4151 | 已合并 |
+| 独立健康 Fortune Teller 固定布尔真值 P1 | 尚无对应已合并修复的本轮证据 | 独立待办，不与 Batch 3 混做 |
+| Batch 3–5 | 尚未实施 | 后续职责重构工作；Batch 3 是下一结构批次 |
+
+**问题 2 最终裁定不变**：`ClocktowerNightAiOverlay` 中 `ClocktowerNightStepUi`、`PlayerCard` 及既有请求/匹配器依赖被有意接受为临时 AI→UI 适配层技术债务；不得倒流进入 `hostNightStep`、Session 或规则计算。保持当前三模式、AI 推荐、首夜联合规划和后夜战略记忆；下一独立 AI 重新设计阶段完成真实迁移后，再同批删除旧调用，不为旧接口新建兼容架构。
+
+**真实验收边界**：完整 Android CI/R2 已通过属于精确 PR 代码版本的自动化证据；真实 Android 设备、电话/后台/强退恢复、付费 LLM 调用未在本次文档更新中执行，不能宣称已验收。文档 PR #351 只涉及文本；docs-only CI 不等于 Android `testFull`。
+
