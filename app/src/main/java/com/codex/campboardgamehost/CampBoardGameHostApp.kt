@@ -19,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -141,12 +140,16 @@ internal fun CampBoardGameHostApp(
     var showNewGameConfirmation by remember { mutableStateOf(false) }
     var currentDealIndex by remember { mutableStateOf(0) }
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
-    var clocktowerGameSession by remember { mutableStateOf<ClocktowerGameSession?>(null) }
-    // Render invalidation only. All game data is read from the one live Session.
-    var clocktowerUiTick by remember { mutableStateOf(0) }
-    clocktowerUiTick
-    val clocktowerSessionState = clocktowerGameSession?.state
-    val round by remember { derivedStateOf { clocktowerUiTick; clocktowerGameSession?.state?.round ?: 1 } }
+    var clocktowerSessionUi by remember { mutableStateOf<ClocktowerSessionUiState?>(null) }
+    fun replaceClocktowerSession(session: ClocktowerGameSession?) {
+        clocktowerSessionUi?.deactivate()
+        clocktowerSessionUi = session?.let { ClocktowerSessionUiState(it) { activeGameSaveError = true } }
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { clocktowerSessionUi?.deactivate() }
+    }
+    val clocktowerSessionState = clocktowerSessionUi?.snapshot
+    val round = clocktowerSessionState?.round ?: 1
     val currentClocktowerScript = clocktowerSessionState?.gameState?.script
         ?.let { scriptId ->
             ClocktowerScript.entries.singleOrNull { script -> script.toRecommendationScriptId() == scriptId }
@@ -191,25 +194,17 @@ internal fun CampBoardGameHostApp(
     val setupCards = remember { mutableStateListOf<PlayerCard>() }
     // The live game has a read-only card presentation of Session facts.
     // Only setup cards are mutable.
-    val cards: List<PlayerCard> = remember(setupCards, language) {
+    val cards: List<PlayerCard> = remember(setupCards, clocktowerSessionState, language) {
         ClocktowerSessionPlayerCards(
             setupCards = setupCards,
             currentSession = {
-                clocktowerGameSession?.state
+                clocktowerSessionUi?.snapshot
             },
             language = language,
         )
     }
-    fun refreshClocktowerUi() {
-        clocktowerUiTick++
-    }
-
-    fun confirmClocktowerStep(confirm: () -> Unit) {
-        try { confirm() }
-        catch (_: java.io.IOException) { activeGameSaveError = true }
-    }
     fun requireClocktowerGameSession(): ClocktowerGameSession =
-        requireNotNull(clocktowerGameSession) {
+        requireNotNull(clocktowerSessionUi?.session) {
             "Clocktower session authority is unavailable."
         }
 
@@ -280,8 +275,7 @@ internal fun CampBoardGameHostApp(
         committedTroubleBrewingSetupRotationRecord = null
         aiConversation.canonicalConversationResponseId = null
         aiConversation.canonicalConversationModel = null
-        clocktowerGameSession = null
-        refreshClocktowerUi()
+        replaceClocktowerSession(null)
         currentDealIndex = 0
         showResults = false
 
@@ -302,7 +296,7 @@ internal fun CampBoardGameHostApp(
                     seed = gameSeed,
                     poisonedPlayerName = null,
                 )
-            clocktowerGameSession = ClocktowerGameSession.createProduction(
+            replaceClocktowerSession(ClocktowerGameSession.createProduction(
                 gameId = gameId,
                 gameSeed = gameSeed,
                 initialState = initialGameState,
@@ -312,8 +306,7 @@ internal fun CampBoardGameHostApp(
                     if (level == PlayerExperienceLevelV1.BEGINNER) null
                     else (index + 1) to StorytellerPlayerContextInputV1(experienceLevel = level)
                 }.toMap(),
-            )
-            refreshClocktowerUi()
+            ))
             if (clocktowerScript == ClocktowerScript.TroubleBrewing) {
                 val rulesetBasis = ClocktowerRulesetPersistenceBasis(
                     cards.map { card ->
@@ -394,10 +387,10 @@ internal fun CampBoardGameHostApp(
     )
     fun confirmJointOpeningDrunk(pending: PendingTroubleBrewingJointOpening, candidate: TroubleBrewingDrunkCandidate?) =
         openingDraft.confirmJointOpeningDrunk(pending, candidate, aiConversation, activeGameClocktowerRulesetCatalog,
-            { storytellerOperationMode }, { clocktowerGameSession }, ::commitAndStartTroubleBrewingGame, { screen = it })
+            { storytellerOperationMode }, { clocktowerSessionUi?.session }, ::commitAndStartTroubleBrewingGame, { screen = it })
     fun beginJointOpeningAtDrunkStep() = openingDraft.beginJointOpeningAtDrunkStep(
         { screen }, { storytellerOperationMode }, aiConversation, activeGameClocktowerRulesetCatalog,
-        { clocktowerGameSession }, ::commitAndStartTroubleBrewingGame, { screen = it },
+        { clocktowerSessionUi?.session }, ::commitAndStartTroubleBrewingGame, { screen = it },
     )
     fun takeOverJointOpeningManually() = openingDraft.takeOverJointOpeningManually(
         { screen }, aiConversation, { storytellerOperationMode = it }, ::commitAndStartTroubleBrewingGame, { screen = it },
@@ -500,8 +493,7 @@ internal fun CampBoardGameHostApp(
         if (cards.isEmpty()) return false
         if (!persistCompletedTroubleBrewingSetupIfNeeded()) return false
         activeGameStore.clear()
-        clocktowerGameSession = null
-        refreshClocktowerUi()
+        replaceClocktowerSession(null)
         showNewGameConfirmation = false
         showHostTools = false
         showResults = false
@@ -553,7 +545,7 @@ internal fun CampBoardGameHostApp(
         val saved = runCatching { withContext(Dispatchers.IO) { activeGameStore.load() } }
         if (saved.isFailure) { activeGameRestoreError = true; return@LaunchedEffect }
         val active = saved.getOrNull() ?: return@LaunchedEffect
-        if (clocktowerGameSession != null || screen != Screen.Landing) return@LaunchedEffect
+        if (clocktowerSessionUi?.session != null || screen != Screen.Landing) return@LaunchedEffect
         runCatching {
             val metadata = active.metadata
             val restored = ClocktowerGameSession.restore(active.state)
@@ -579,8 +571,7 @@ internal fun CampBoardGameHostApp(
             aiConversation.strategicPolicyCursor = restoredCursor
             aiConversation.canonicalConversationResponseId = metadata.optString("responseId").takeIf { it.isNotBlank() }
             aiConversation.canonicalConversationModel = metadata.optString("responseModel").takeIf { it.isNotBlank() }
-            clocktowerGameSession = restored
-            refreshClocktowerUi()
+            replaceClocktowerSession(restored)
             aiConversation.strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.capture(restored,
                 StorytellerStrategicChangeCheckpointV2.Position(active.state.phase, active.state.round))
             // No first-night action was confirmed: repeat dealing from the same roster.
@@ -591,10 +582,10 @@ internal fun CampBoardGameHostApp(
                 restored.state.epistemicObservationLog.records.isEmpty()) Screen.PassPhone else Screen.ClocktowerJudge
         }.onFailure { activeGameRestoreError = true }
     }
-    LaunchedEffect(clocktowerGameSession, aiConversation.openingPlanRecommendation, aiConversation.strategicPolicyCursor,
+    LaunchedEffect(clocktowerSessionUi?.session, aiConversation.openingPlanRecommendation, aiConversation.strategicPolicyCursor,
         storytellerOperationMode, aiConversation.canonicalConversationResponseId, aiConversation.canonicalConversationModel) {
-        val session = clocktowerGameSession ?: return@LaunchedEffect
-        confirmClocktowerStep {
+        val holder = clocktowerSessionUi ?: return@LaunchedEffect
+        holder.commit { session ->
             session.persistWith { confirmed -> activeGameStore.save(confirmed, activeMetadata()) }
         }
     }
@@ -603,10 +594,8 @@ internal fun CampBoardGameHostApp(
             text = { Text(localizedText("对局未能保存，本次确认没有生效。请腾出存储空间后重试。", "The game could not be saved. This confirmation was not accepted. Free storage and retry.")) },
             confirmButton = { androidx.compose.material3.TextButton(onClick = {
                 activeGameSaveError = false
-                confirmClocktowerStep {
-                    clocktowerGameSession?.let { session ->
-                        session.persistWith { confirmed -> activeGameStore.save(confirmed, activeMetadata()) }
-                    }
+                clocktowerSessionUi?.commit { session ->
+                    session.persistWith { confirmed -> activeGameStore.save(confirmed, activeMetadata()) }
                 }
             }) { Text(localizedText("重试保存", "Retry save")) } })
     }
@@ -869,8 +858,7 @@ internal fun CampBoardGameHostApp(
                     )
 
                     Screen.ClocktowerJudge -> ClocktowerSessionHost(
-                        session = requireClocktowerGameSession(),
-                        sessionState = requireClocktowerGameSession().state,
+                        sessionUi = requireNotNull(clocktowerSessionUi),
                         cards = cards,
                         activeGameClocktowerRulesetCatalog = activeGameClocktowerRulesetCatalog,
                         clocktowerRulesetRef = clocktowerRulesetRef,
@@ -878,12 +866,10 @@ internal fun CampBoardGameHostApp(
                         aiSettings = aiSettings,
                         storytellerOperationMode = storytellerOperationMode,
                         currentMode = { storytellerOperationMode },
-                        currentSession = { clocktowerGameSession },
+                        currentSession = { clocktowerSessionUi?.session },
                         isJudgeVisible = { screen == Screen.ClocktowerJudge },
                         drunkAiScope = drunkAiScope,
                         onHostTools = { hostToolTab = HostToolTab.Roles; showHostTools = true },
-                        onChanged = ::refreshClocktowerUi,
-                        onSaveError = { activeGameSaveError = true },
                     )
 
                         }
@@ -899,7 +885,7 @@ internal fun CampBoardGameHostApp(
                     )
                 }
 
-                val hostUiIsNight = clocktowerGameSession?.state?.phase != StorytellerPhase.DAY
+                val hostUiIsNight = clocktowerSessionUi?.snapshot?.phase != StorytellerPhase.DAY
                 if (showHostTools) {
                     HostGameToolsScreen(
                         cards = cards,

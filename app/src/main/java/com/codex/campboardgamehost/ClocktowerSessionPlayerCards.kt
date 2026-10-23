@@ -4,11 +4,11 @@ import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 
 /**
- * Read-only Clocktower presentation over the *live* Session, not a second card-state cache.
+ * Read-only Clocktower presentation over the accepted Session snapshot, not a second card-state cache.
  *
  * Setup cards are used only before Session creation. An active or restored game
  * supplies its entire roster from Session, including size and names.
- * A live list is essential: confirmation callbacks can read the updated Session in
+ * A live list is essential: confirmation callbacks can read the newly accepted snapshot in
  * the same frame, before Compose has recomposed the screen.
  */
 internal class ClocktowerSessionPlayerCards(

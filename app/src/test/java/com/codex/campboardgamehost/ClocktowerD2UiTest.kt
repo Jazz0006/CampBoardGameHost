@@ -172,6 +172,7 @@ class ClocktowerD2UiTest {
     private fun healthyFortuneTeller(mode: StorytellerOperationMode) {
         val host = Host("Fortune Teller", mode, roles = listOf("Fortune Teller", "Soldier", "Mayor", "Saint", "Imp"))
         host.session.commitRedHerringSeat(4, StorytellerPhase.FIRST_NIGHT, 1, host.session.nextInputSequence)
+        host.refresh()
         ui.setContent { host.Content() }
         clickSeat("P2")
         clickSeat("P3")
@@ -698,8 +699,9 @@ class ClocktowerD2UiTest {
                 })
         }, 19L)
         var session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
-        private val tick = mutableStateOf(0)
-        fun refresh() { tick.value++ }
+        private val holderState = mutableStateOf(ClocktowerSessionUiState(session) { saveErrors++ })
+        // Test-only externally injected Session changes publish through the production holder.
+        fun refresh() { holderState.value.commit { } }
         fun enterDay() {
             session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
                 "ui-day-${session.state.round}", session.state.phase, session.state.round, session.nextInputSequence, StorytellerPhase.DAY, session.state.round), session.state.gameStateRevision)
@@ -719,8 +721,9 @@ class ClocktowerD2UiTest {
             refresh()
         }
         fun reload() {
+            holderState.value.deactivate()
             session = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(session.state)))
-            refresh()
+            holderState.value = ClocktowerSessionUiState(session) { saveErrors++ }
         }
         fun deliver(key: String?, id: String, value: String) {
             adviceKey.value = key
@@ -741,13 +744,13 @@ class ClocktowerD2UiTest {
         }
 
         @Composable fun Content() {
-            tick.value
-            val state = session.state
+            val holder = holderState.value
+            val state = holder.snapshot
             val ruleset = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
                 .fromContext(androidx.compose.ui.platform.LocalContext.current).ruleset(script)
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"),
+                cards = ClocktowerSessionPlayerCards(emptyList(), { holder.snapshot }, "en"),
                 sessionState = state,
                 recommendedDemonBluffRoleNames = state.demonBluffRoleIds.map(RoleId::value),
                 onHostTools = {},
@@ -773,7 +776,7 @@ class ClocktowerD2UiTest {
                 nightContent = {
                     ClocktowerNightHostScreen(
                         allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
-                        cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"),
+                        cards = ClocktowerSessionPlayerCards(emptyList(), { holder.snapshot }, "en"),
                         sessionState = state,
                         globalAiAssisted = mode != StorytellerOperationMode.MANUAL,
                         globalAiAutomatic = mode == StorytellerOperationMode.AI_AUTOMATIC,
@@ -793,11 +796,7 @@ class ClocktowerD2UiTest {
                         onHostTools = {},
                         onRecordPlayerInput = { session.recordPlayerInput(); refresh() },
                         onConfirmNightStep = { confirmation ->
-                            try {
-                                val accepted = session.confirmNightStep(confirmation, ruleset, confirmMayorRedirect = {})
-                                refresh()
-                                accepted
-                            } catch (_: java.io.IOException) { saveErrors++; false }
+                            holder.commit { it.confirmNightStep(confirmation, ruleset, confirmMayorRedirect = {}) } ?: false
                         },
                         onAdvanceFromFirstNight = ::enterDay,
                         onCompleteNight = ::enterDay,
