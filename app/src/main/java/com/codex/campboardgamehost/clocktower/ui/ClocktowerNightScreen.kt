@@ -18,6 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -267,4 +271,46 @@ internal fun ClocktowerNightActiveScreen(
             }
         }
     }
+}
+
+/** The succession handoff has its own preview lifetime, separate from role information. */
+@Composable
+internal fun ClocktowerNewDemonHostScreen(
+    cards: List<PlayerCard>,
+    newDemonSeat: Int,
+    onHostTools: () -> Unit,
+    onConfirmNewDemon: () -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String) = if (language == "en") en else zh
+    var showing by remember(newDemonSeat) { mutableStateOf(false) }
+    var hasPreviewed by remember(newDemonSeat) { mutableStateOf(false) }
+    val newDemon = cards.getOrNull(newDemonSeat - 1)
+    val newDemonStep = ClocktowerNightStepUi(
+        interactionId = ClocktowerProductionNightStepIdentity.newDemonIdentity().interactionId(ClocktowerNightFlowPhase.OTHER_NIGHT),
+        action = ClocktowerNightAction.NewDemonIdentity,
+        title = text("新恶魔", "New Demon"),
+        actor = newDemon,
+        isRealAction = newDemon != null,
+        reason = "",
+        storytellerAction = text("唤醒新的小恶魔。", "Wake the new Imp."),
+        tellPlayer = text("你现在是小恶魔", "You are now the Imp"),
+        explanation = "",
+        displayKind = ClocktowerDisplayKind.RoleReveal,
+        displayTitle = text("新身份", "New role"),
+        displayPrimary = text("你现在是小恶魔", "You are now the Imp"),
+        displayFooter = "",
+    )
+    if (showing) {
+        ClocktowerPlayerDisplayCardLocalized(newDemonStep, cards, onDismiss = { showing = false })
+        return
+    }
+    ClocktowerNewDemonConfirmationScreen(
+        newDemonLabel = newDemon?.seatLabel(cards).orEmpty(),
+        hasNewDemon = newDemon != null,
+        confirmationEnabled = hasPreviewed,
+        onHostTools = onHostTools,
+        onShowPlayerDisplay = { hasPreviewed = true; showing = true },
+        onConfirm = { onConfirmNewDemon(); hasPreviewed = false },
+    )
 }

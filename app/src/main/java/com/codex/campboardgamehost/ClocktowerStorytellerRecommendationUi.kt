@@ -18,6 +18,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -173,5 +178,68 @@ internal fun ClocktowerDemonBluffManualPicker(
                 }
             }
         }
+    }
+}
+
+/** Disposable setup draft; confirmed bluffs remain Session facts. */
+@Composable
+internal fun ClocktowerDemonBluffsHostScreen(
+    script: ClocktowerScript,
+    recommendedDemonBluffRoleNames: List<String>,
+    acceptOpeningRecommendation: Boolean,
+    onHostTools: () -> Unit,
+    onCommitDemonBluffs: (List<String>) -> Unit,
+) {
+    val language = LocalContext.current.resources.configuration.locales[0].language
+    fun text(zh: String, en: String) = if (language == "en") en else zh
+    val legalDemonBluffs = clocktowerRolesForScript(script).distinctBy { it.enName }
+    val legalDemonBluffRoleNames = legalDemonBluffs.mapTo(linkedSetOf()) { it.enName }
+    var manualDemonBluffDraft by remember(
+        recommendedDemonBluffRoleNames,
+        legalDemonBluffRoleNames,
+    ) {
+        mutableStateOf(
+            recommendedDemonBluffRoleNames
+                .filter { it in legalDemonBluffRoleNames }
+                .distinct()
+                .take(3),
+        )
+    }
+
+    val manualDemonBluffsReady = manualDemonBluffSelectionReady(manualDemonBluffDraft, legalDemonBluffs)
+    // Automatic mode may accept an already verified joint-opening recommendation.
+    // It must not fast-forward any player information display.
+    LaunchedEffect(
+        acceptOpeningRecommendation, manualDemonBluffsReady,
+        manualDemonBluffDraft,
+    ) {
+        if (acceptOpeningRecommendation && manualDemonBluffsReady) {
+            onCommitDemonBluffs(manualDemonBluffDraft)
+        }
+    }
+    ClocktowerStorytellerRecommendationScreen(
+        title = text("恶魔伪装身份", "DEMON BLUFFS"),
+        subtitle = text("确认实际恶魔伪装", "Confirm the actual Demon bluffs"),
+        description = text(
+            "请确认本局恶魔实际获得的三项伪装身份。这个真实配置决定确认后，直接进入首夜角色。",
+            "Confirm the three actual Demon bluffs. This is a real setup decision; the first night starts directly afterward.",
+        ),
+        buttonLabel = text("确认恶魔伪装", "Confirm Demon bluffs"),
+        onHostTools = onHostTools,
+        startEnabled = manualDemonBluffsReady,
+        onStartNight = {
+            if (manualDemonBluffsReady) {
+                onCommitDemonBluffs(manualDemonBluffDraft)
+            }
+        },
+    ) {
+        ClocktowerDemonBluffManualPicker(
+            legalRoles = legalDemonBluffs,
+            selectedRoleNames = manualDemonBluffDraft,
+            language = language,
+            onSelectionChange = { nextSelection ->
+                manualDemonBluffDraft = nextSelection
+            },
+        )
     }
 }

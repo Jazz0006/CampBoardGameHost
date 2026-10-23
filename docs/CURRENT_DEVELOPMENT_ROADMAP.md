@@ -1,23 +1,13 @@
-# 当前开发路线（2026-10-23，Host UI 职责重构 Batch 2 已合并）
+# 当前开发路线：Host UI Batch 3 已实现，待审阅合并
 
-> **P1 修复分支进度（2026-10-23，尚未合并）**：健康 Fortune Teller 现在从唯一 Session 对当前双目标求布尔结果；确定值在三模式直接展示，不再等待 AI 或提供相反值。醉毒与有效 Recluse 登记保留裁量；Spy 不登记为 Demon，恶魔/红鲱鱼的确定阳性优先。目标变更仍清空预览，Next 只提交最后一条私密 Observation。已补求值、AI stale 和三模式真实 Host UI 回归；验收结果见本修复 PR。P1 合并后下一结构批次为 Batch 3；本批不混做 Batch 3 或 AI 重建。
+## 当前进度（下方旧状态仅供追溯）
 
+- Host 方桌/信息 Stage 1–5、Day 死者被提名 P1、UI Batch 1/2a/2 均已合并。
+- Fortune Teller P1 [#358](https://github.com/Jazz0006/CampBoardGameHost/pull/358) 已合并至 `01ef5e14`。精确代码 `0b5da9ff` 完整 CI #4606/R2 #4158 成功；合并后 main 完整 CI #4607、Field Test APK #173 成功。
+- **Batch 3 已在独立分支实现，尚未合并。** Judge 只路由；NightHostScreen 拥有本交互草稿/全屏预览/唯一 Next；唯一 SessionHost 分发同时承接最终 Observation。旧 NightHostProjection 文件及独立信息发布回调删除，现有 AI 适配器保留。[验收与边界](HOST_UI_BATCH3_ACCEPTANCE.md)。
+- 下一步先审阅 Batch 3，然后 Batch 4（可观察 Session 快照/原子发布），再 Batch 5（App 根职责）。本批没有改造 AI、规则、存档格式或 setup 多样性。
 
-## 当前权威进度：Host UI 重构（优先于历史 Stage 1–5 说明）
-
-**本次文档更新前主线：** `main` `1fe855e80efb006717275341b17b8a9d9e805fa7`。Host 方桌与信息角色 Stage 1–5 已全部合并；随后独立 Day P1 #352 已合并（`edcbf5a4`）。Host UI v3 职责重构依次完成：
-
-| 批次 | 实际代码 / 合并 | 状态 |
-| --- | --- | --- |
-| Batch 1 — 唯一当前夜间交互草稿和确认分发 | [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) squash `7486d05c` | 已合并 |
-| Batch 2a — Session 座位事实，不经 PlayerCard 裁判 | [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) squash `e7ac9481`；完整 Android CI #4593 / R2 #4148 | 已合并 |
-| Batch 2 — Session 派生 HostNightStep + 只读 AI→UI Overlay | [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) squash `1fe855e8`；reviewed head `5871c355` 完整 Android CI #4597 / R2 #4151 | 已合并 |
-| 独立 P1 — 健康 Fortune Teller 确定布尔结果 | 需另立有界 PR | 未完成；不得混入 Batch 3 |
-| Batch 3 / 4 / 5 — 夜间 UI 路由与唯一 Next / 可观察 Session UI / App 根职责 | 以 v3 文档逐批实施 | 未开始 |
-
-**权威合同：** [Host UI FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 和 [独立 Review（§13 AI 例外，§14 最新进度）](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)，原在 docs-only PR #351。用户已批准：`NightAiOverlay` 对旧 `ClocktowerNightStepUi`、`PlayerCard`、语言与 AI matcher 的依赖可作为**临时 AI→UI 适配层**保留；`hostNightStep` 和 Session/规则代码不得读取这些展示类型。不要提前重写/删除 AI 生产推荐，也不要为旧 AI 增建兼容框架。独立 AI 推荐重建时，再迁移调用并同批删去旧适配器。
-
-**下一步：** 先按已批准顺序独立处理健康 Fortune Teller P1 或明确安排；再开始 Batch 3（`ClocktowerJudgeScreen` 路由瘦身，`ClocktowerNightHostScreen` 拥有夜间 UI/预览与唯一 Next 意图，唯一 Session 确认分发仍归 `ClocktowerSessionHost`）。代码批次在精确 HEAD 上执行完整 `:app:testFull :app:assembleDebug` 和 R2。Stage 5 真机可读性、三模式、来电/后台/进程终止后安全继续仍待设备验收；付费 AI API 未获新授权时不得执行。
+权威合同仍是 [FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)；[交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 PR 记录精确 SHA 的 CI/R2。真机 UI、物理中断/杀进程及付费 API 验收继续单独待办。
 
 ## 已完成方桌 Stage 1–5 的历史快照（保留原有验收资料）
 
