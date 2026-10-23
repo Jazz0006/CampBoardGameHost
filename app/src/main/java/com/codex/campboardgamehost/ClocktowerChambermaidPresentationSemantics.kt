@@ -12,15 +12,11 @@ internal data class ClocktowerChambermaidSelectionPresentation(
 
 internal fun clocktowerChambermaidSelectionPresentation(
     cards: List<PlayerCard>,
-    selection: RevalidatedTwoPlayerSelection,
+    selection: RevalidatedTwoPlayerSelection<Int>,
 ): ClocktowerChambermaidSelectionPresentation {
-    val selectedTargetNames = listOfNotNull(selection.first, selection.second)
+    val seats = listOfNotNull(selection.first, selection.second)
     return ClocktowerChambermaidSelectionPresentation(
-        selectedTargetNames = selectedTargetNames,
-        subjectSeats = selectedTargetNames.mapNotNull { targetName ->
-            cards.indexOfFirst { card -> card.name == targetName }
-                .takeIf { it >= 0 }
-                ?.plus(1)
-        },
+        selectedTargetNames = seats.mapNotNull { seat -> cards.getOrNull(seat - 1)?.name },
+        subjectSeats = seats,
     )
 }

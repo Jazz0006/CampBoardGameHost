@@ -14,7 +14,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = "Alice",
             second = "Bob",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertEquals("Alice", result.first)
@@ -27,7 +27,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = "Stale",
             second = "Bob",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertNull(result.first)
@@ -40,7 +40,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = "Alice",
             second = "Stale",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertEquals("Alice", result.first)
@@ -53,7 +53,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = "Alice",
             second = "Alice",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertEquals("Alice", result.first)
@@ -66,7 +66,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = null,
             second = "Bob",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertNull(result.first)
@@ -79,7 +79,7 @@ class TwoPlayerSelectionRevalidationTest {
         val result = revalidateTwoPlayerSelection(
             first = "Carol",
             second = "Alice",
-            eligibleNames = eligibleNames,
+            eligible = eligibleNames,
         )
 
         assertTrue(result.isComplete)

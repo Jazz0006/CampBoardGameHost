@@ -53,9 +53,11 @@ internal fun ClocktowerNightStepCardLocalized(
     actualAlignmentBySeat: Map<Int, com.codex.campboardgamehost.clocktower.domain.Alignment>,
     ghostVoteAuthority: ClocktowerGhostVoteAuthority,
     poisonedPlayerName: String?,
-    aliveCards: List<PlayerCard>,
-    chambermaidTargetCards: List<PlayerCard>,
-    mayorRedirectTargetCards: List<PlayerCard>,
+    /** Session seat facts: living seats, Chambermaid-eligible seats, Mayor redirect seats, living Mayor. */
+    aliveSeats: Set<Int>,
+    chambermaidTargetSeats: Set<Int>,
+    mayorRedirectTargetSeats: Set<Int>,
+    livingMayorSeat: Int?,
     step: ClocktowerNightStepUi,
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
@@ -263,9 +265,7 @@ internal fun ClocktowerNightStepCardLocalized(
             ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
             ?.takeIf { index -> index >= 0 }
             ?.plus(1)
-        fun selectableSeatNumbers(candidates: List<PlayerCard>): Set<Int> = candidates
-            .mapNotNull { candidate -> seatNumberForName(candidate.name) }
-            .toSet()
+        val allSeats = cards.indices.mapTo(sortedSetOf()) { it + 1 }
         val actionActorSeat = seatNumberForName(step.actor?.name)
         val evilInfoTeam = step.actor
             ?.clocktowerRole
@@ -361,16 +361,16 @@ internal fun ClocktowerNightStepCardLocalized(
         when (plannedFullScreenSurface) {
             ClocktowerNightFullScreenSurface.SingleTarget -> {
                 val candidates = when (step.action) {
-                    ClocktowerNightAction.RedHerring -> cards
-                    ClocktowerNightAction.ButlerMaster -> cards.filter { it.name != step.actor?.name }
-                    ClocktowerNightAction.MonkProtect -> cards
-                    else -> aliveCards
+                    ClocktowerNightAction.RedHerring -> allSeats
+                    ClocktowerNightAction.ButlerMaster -> allSeats - listOfNotNull(actionActorSeat).toSet()
+                    ClocktowerNightAction.MonkProtect -> allSeats
+                    else -> aliveSeats
                 }
                 val presentation = checkNotNull(
                     clocktowerSingleTargetAbilityPresentation(
                         action = step.action,
                         selection = ClocktowerSingleTargetSelection(
-                            selectedSeat, selectableSeatNumbers(candidates), step.isRealAction,
+                            selectedSeat, candidates, step.isRealAction,
                         ),
                         actorSeat = actionActorSeat,
                         wakeInstruction = command,
@@ -384,13 +384,12 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Ravenkeeper -> {
-                val candidates = cards
                 ClocktowerRavenkeeperSquareTableDialog(
                     interactionKey = informationDecisionKey,
                     seats = nightActionSeats,
                     actorSeat = actionActorSeat,
                     selectedSeat = ravenkeeperSelectedSeat,
-                    selectableSeats = selectableSeatNumbers(candidates),
+                    selectableSeats = allSeats,
                     enabled = step.isRealAction,
                     wakeInstruction = command,
                     step = step,
@@ -438,8 +437,7 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Chambermaid -> {
-                val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
-                val candidateSeats = selectableSeatNumbers(candidates)
+                val candidateSeats = chambermaidTargetSeats - listOfNotNull(actionActorSeat).toSet()
                 val selectableSeats = when (selectedSeats.size) {
                     0 -> candidateSeats
                     1 -> candidateSeats - selectedSeats.first()
@@ -514,15 +512,14 @@ internal fun ClocktowerNightStepCardLocalized(
             }
 
             ClocktowerNightFullScreenSurface.Ruling -> {
-                val candidates = mayorRedirectTargetCards
-                val mayor = aliveCards.firstOrNull { it.clocktowerRole?.enName == "Mayor" }
+                val candidates = mayorRedirectTargetSeats
                 val presentation = checkNotNull(
                     clocktowerNightRulingPresentation(
                         action = step.action,
                         selection = ClocktowerSingleTargetSelection(
-                            selectedSeat, selectableSeatNumbers(candidates), step.isRealAction,
+                            selectedSeat, candidates, step.isRealAction,
                         ),
-                        mayorSeat = seatNumberForName(mayor?.name),
+                        mayorSeat = livingMayorSeat,
                     ),
                 ) { "Ruling surface plan requires Mayor redirect or Demon succession." }
                 key(step.action) {

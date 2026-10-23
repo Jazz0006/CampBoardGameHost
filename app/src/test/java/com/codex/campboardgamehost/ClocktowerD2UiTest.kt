@@ -286,7 +286,8 @@ class ClocktowerD2UiTest {
                                 Alignment.EVIL else Alignment.GOOD
                         }.toMap(),
                         ghostVoteAuthority = ClocktowerGhostVoteAuthority(), poisonedPlayerName = null,
-                        aliveCards = cards, chambermaidTargetCards = cards, mayorRedirectTargetCards = emptyList(),
+                        aliveSeats = (1..cards.size).toSet(), chambermaidTargetSeats = (1..cards.size).toSet(),
+                        mayorRedirectTargetSeats = emptySet(), livingMayorSeat = 3,
                         step = current, surfacePlan = clocktowerNightSurfacePlan(current, ClocktowerPhase.Night),
                         numericResolution = if (role == "Chambermaid" && subjects().size == 2)
                             HostNumericResolution(

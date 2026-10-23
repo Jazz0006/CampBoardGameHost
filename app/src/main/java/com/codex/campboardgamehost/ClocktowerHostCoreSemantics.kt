@@ -98,12 +98,3 @@ internal fun clocktowerPrivateObservationRecordId(
 }
 
 
-internal fun actualClocktowerRoleCards(cards: List<PlayerCard>, enName: String): List<PlayerCard> =
-    cards.filter { it.clocktowerRole?.enName == enName }
-
-internal fun livingNeighbors(cards: List<PlayerCard>, playerName: String): List<PlayerCard> {
-    val alive = cards.filter { it.eliminatedRound == null }
-    val index = alive.indexOfFirst { it.name == playerName }
-    if (index < 0 || alive.size <= 1) return emptyList()
-    return listOf(alive[(index - 1 + alive.size) % alive.size], alive[(index + 1) % alive.size]).distinctBy { it.name }
-}

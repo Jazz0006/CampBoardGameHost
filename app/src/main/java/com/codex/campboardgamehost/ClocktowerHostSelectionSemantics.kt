@@ -65,30 +65,30 @@ internal data class ClocktowerNightStepConfirmation(
 internal fun clocktowerLivePlayerTargetReady(
     action: ClocktowerNightAction,
     isRealAction: Boolean,
-    selectedName: String?,
-    legalNames: Set<String>,
+    selectedSeat: Int?,
+    legalSeats: Set<Int>,
 ): Boolean = !isRealAction || action !in setOf(
     ClocktowerNightAction.Poison,
     ClocktowerNightAction.ButlerMaster,
     ClocktowerNightAction.MonkProtect,
     ClocktowerNightAction.DemonKill,
-) || (selectedName != null && selectedName in legalNames)
+) || (selectedSeat != null && selectedSeat in legalSeats)
 
-internal data class RevalidatedTwoPlayerSelection(
-    val first: String?,
-    val second: String?,
+internal data class RevalidatedTwoPlayerSelection<T>(
+    val first: T?,
+    val second: T?,
 ) {
     val isComplete: Boolean
         get() = first != null && second != null && first != second
 }
 
-internal fun revalidateTwoPlayerSelection(
-    first: String?,
-    second: String?,
-    eligibleNames: Set<String>,
-): RevalidatedTwoPlayerSelection {
-    val revalidatedFirst = first?.takeIf { it in eligibleNames }
-    val revalidatedSecond = second?.takeIf { it in eligibleNames && it != revalidatedFirst }
+internal fun <T> revalidateTwoPlayerSelection(
+    first: T?,
+    second: T?,
+    eligible: Set<T>,
+): RevalidatedTwoPlayerSelection<T> {
+    val revalidatedFirst = first?.takeIf { it in eligible }
+    val revalidatedSecond = second?.takeIf { it in eligible && it != revalidatedFirst }
     return RevalidatedTwoPlayerSelection(
         first = revalidatedFirst,
         second = revalidatedSecond,
