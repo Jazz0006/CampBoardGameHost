@@ -382,6 +382,7 @@ internal fun ClocktowerSessionHost(
                                 refreshClocktowerUi()
                             }
                         },
+                        rulesetCatalog = activeGameClocktowerRulesetCatalog,
                         onAdvanceFromFirstNight = {
                             confirmClocktowerStep {
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Day)

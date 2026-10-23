@@ -33,6 +33,7 @@ import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 import com.codex.campboardgamehost.clocktower.session.PendingMayorRedirectDecision
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationReliability
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 
@@ -68,6 +69,7 @@ internal fun ClocktowerJudgeScreen(
     onSlayerShot: (String, String, Boolean?) -> Unit,
     onConfirmedNomination: (String, String, Boolean?, Int) -> Boolean,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord, Int) -> Unit,
+    rulesetCatalog: BuiltInClocktowerRulesetCatalog = BuiltInClocktowerRulesetCatalog.fromContext(LocalContext.current),
     onAdvanceFromFirstNight: () -> Unit,
     onConfirmDay: (Int) -> Unit,
     onCompleteNight: () -> Unit,
@@ -92,7 +94,7 @@ internal fun ClocktowerJudgeScreen(
     val ghostVoteAuthority = ClocktowerGhostVoteAuthority.from(sessionState.actionTimeline)
     fun text(zh: String, en: String): String = if (language == "en") en else zh
 
-    val nightRuleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)
+    val nightRuleset = rulesetCatalog.ruleset(script)
     val flowPhase = when {
         phase == ClocktowerPhase.FirstNight -> ClocktowerNightFlowPhase.FIRST_NIGHT
         phase == ClocktowerPhase.Night -> ClocktowerNightFlowPhase.OTHER_NIGHT
@@ -238,44 +240,33 @@ internal fun ClocktowerJudgeScreen(
             sourceRevision = displayStep.informationSourceRevision,
             currentRevision = StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
         )
-    fun unreliableInformationCanBeRecorded(displayStep: ClocktowerNightStepUi): Boolean {
-        if (!clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) return true
-        if (displayStep.displayKind !in setOf(
-                ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo,
-                ClocktowerDisplayKind.EitherOne, ClocktowerDisplayKind.RoleReveal,
-            )) return true
-        val actorSeat = displayStep.actor?.let { cards.indexOf(it) + 1 }
-            ?.takeIf { it > 0 } ?: return false
+    fun displayIsUnreliable(displayStep: ClocktowerNightStepUi) =
+        clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
+    val recordableUnreliableKinds = setOf(
+        ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo, ClocktowerDisplayKind.EitherOne, ClocktowerDisplayKind.RoleReveal,
+    )
+    // The exact proposition Next records for this preview. Misinformation is never silently
+    // omitted; the true display proposition may only serve a reliable ability.
+    fun shownPropositionFor(displayStep: ClocktowerNightStepUi): InformationProposition? {
+        if (!displayIsUnreliable(displayStep)) return displayStep.displayProposition
+        val actorSeat = seatOf(displayStep.actor?.name) ?: return null
+        if (displayStep.displayKind !in recordableUnreliableKinds) return null
         return clocktowerShownUnreliableProposition(
             step = displayStep,
             actorSeat = actorSeat,
             allSeats = cards.indices.map { it + 1 },
             empathNeighborSeats = empathNeighborSeats,
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
-        ) != null
+        )
     }
+    // Previews of unsupported unreliable kinds stay viewable; their Next is refused.
+    fun unreliableInformationCanBeRecorded(displayStep: ClocktowerNightStepUi): Boolean =
+        !displayIsUnreliable(displayStep) || displayStep.displayKind !in recordableUnreliableKinds ||
+            shownPropositionFor(displayStep) != null
     fun recordReliablePrivateInformation(displayStep: ClocktowerNightStepUi, stepId: String): Boolean {
-        val actor = displayStep.actor ?: return false
-        val actorSeat = cards.indexOf(actor).takeIf { it >= 0 }?.plus(1) ?: return false
+        val actorSeat = seatOf(displayStep.actor?.name) ?: return false
         if (!informationDecisionPublicationAllowed(displayStep)) return false
-        val unreliable = clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)
-        val shownUnreliable = if (unreliable) clocktowerShownUnreliableProposition(
-            step = displayStep,
-            actorSeat = actorSeat,
-            allSeats = cards.indices.map { it + 1 },
-            empathNeighborSeats = empathNeighborSeats,
-            fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
-        ) else null
-        // Never silently omit misinformation after the first-night marker was accepted.
-        // In particular, these fallbacks are TRUE answers and may only serve reliable abilities.
-        if (unreliable) {
-            if (displayStep.displayKind !in setOf(
-                    ClocktowerDisplayKind.Number, ClocktowerDisplayKind.YesNo,
-                    ClocktowerDisplayKind.EitherOne, ClocktowerDisplayKind.RoleReveal,
-                )) return false
-            requireNotNull(shownUnreliable) { "Actual unreliable displayed information lacks a typed proposition." }
-        }
-        val proposition = shownUnreliable ?: displayStep.displayProposition ?: return false
+        val proposition = shownPropositionFor(displayStep) ?: return false
         onCommitConfirmedPrivateInformationPublication(EpistemicObservationDraft(
             recordId = clocktowerPrivateObservationRecordId(
                 gameId = gameId,
@@ -289,7 +280,7 @@ internal fun ClocktowerJudgeScreen(
             round = round, sequence = (sessionState.nextTimelineGlobalSequence + 1).toInt(), sourceSeat = actorSeat,
             sourceAbility = RoleId(requireNotNull(displayStep.roleEnName)), visibility = ObservationVisibility.PRIVATE,
             recipientSeats = setOf(actorSeat),
-            reliability = if (clocktowerDisplayedInformationIsUnreliable(displayStep, ::actorIsUnreliable)) {
+            reliability = if (displayIsUnreliable(displayStep)) {
                 ObservationReliability.KNOWN_MALFUNCTIONING
             } else {
                 ObservationReliability.RECEIVED_AS_FUNCTIONING
@@ -422,193 +413,22 @@ internal fun ClocktowerJudgeScreen(
         val currentInformationPreview = lastInformationPreview?.takeIf {
             it.interactionId == currentStep.interactionId && informationDecisionPublicationAllowed(it)
         }
-        val isEvilInformationStep = currentStep.displayKind == ClocktowerDisplayKind.EvilInfo
-        val isPrivateInformationStep = currentStep.isRealAction &&
-            currentStep.actor != null && currentStep.roleEnName != null &&
-            currentStep.action in setOf(
-                ClocktowerNightAction.None,
-                ClocktowerNightAction.FortuneTeller,
-                ClocktowerNightAction.Chambermaid,
-                ClocktowerNightAction.Ravenkeeper,
-            ) && currentStep.roleEnName != "Spy"
-        // Chef/Empath truth and discretionary domains are resolved from the sole
-        // current Session, never from a displayProposition or an AI narrative.
-        val currentActorSeatForInformation = currentStep.actor?.name?.let { name ->
-            cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
-        }
-        val currentNumericQuestion = currentStep.informationQuestion as? ClocktowerInformationQuestion.Number
-        val currentNumericMetric = when (currentStep.roleEnName) {
-            "Chef" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
-            "Empath" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
-            "Clockmaker" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.STEPS_TO_NEAREST_MINION
-            "Chambermaid" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY
-            else -> null
-        }
-        val currentChambermaidSubjects = listOfNotNull(chambermaidSelection.first, chambermaidSelection.second)
-        val currentNumericResolution = if (currentStep.isRealAction &&
-            currentNumericMetric != null &&
-            (currentStep.action == ClocktowerNightAction.None ||
-                currentStep.action == ClocktowerNightAction.Chambermaid) &&
-            (currentNumericQuestion?.metric == currentNumericMetric ||
-                currentStep.roleEnName == "Chambermaid")
-        ) currentActorSeatForInformation?.let { seat ->
-            when (currentNumericMetric) {
-                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.STEPS_TO_NEAREST_MINION,
-                com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.PLAYERS_WAKING_FOR_ABILITY ->
-                    NumericInformationResolver.resolveLaterNight(
-                        sessionState, nightRuleset, currentNumericMetric, seat, currentChambermaidSubjects,
-                    )
-                else -> NumericInformationResolver.resolve(sessionState, currentNumericMetric, seat)
-            }
-        } else null
-        val hostDeterminedNumeric = currentNumericResolution?.values?.size == 1
-        val globalAiPending = if (globalAiAssisted && !hostDeterminedNumeric &&
-            phase == ClocktowerPhase.FirstNight) {
-            pendingGlobalFirstNightPairDecision(
-                currentStep, phase, round, cards, sessionGameState, gameId,
-                com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
-                    gameStateRevision, playerInputRevision),
-            )
-        } else null
-        val globalAiScalarPending = if (globalAiAssisted &&
-            !hostDeterminedNumeric &&
-            phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) &&
-            globalAiPending == null
-        ) pendingGlobalNightScalarDecision(
-            currentStep, phase, round, currentStepIndex, cards, gameId,
-            StorytellerDecisionRevision(gameStateRevision, playerInputRevision),
-            listOfNotNull(fortuneTellerFirst, fortuneTellerSecond),
-        ) else null
-        val globalAiTargetPending = globalNightPendingDecision?.takeIf {
-            globalAiAssisted && phase == ClocktowerPhase.Night &&
-                currentStep.action == ClocktowerNightAction.MayorRedirect &&
-                currentStep.isRealAction
-        }
-        val globalAiDecisionIdentity = globalAiPending?.requestIdentity
-            ?: globalAiScalarPending?.requestIdentity
-            ?: globalAiTargetPending?.requestIdentity
-        val globalAiCurrentKey = globalAiDecisionIdentity?.let { identity ->
-            ClocktowerResidualRequestIdentityV2.build(
-                gameId, round, currentStepIndex, identity.requestId,
-                gameStateRevision, playerInputRevision, sessionState.nextTimelineGlobalSequence,
-                if (globalAiAutomatic) StorytellerOperationMode.AI_AUTOMATIC
-                else StorytellerOperationMode.AI_ASSISTED,
-            )
-        }
-        // Host revalidates each currently recommended option against the live
-        // legal display domain; no package-level confirmation grants authority.
-        val preplannedSeat = currentStep.actor?.let { actor ->
-            cards.indexOfFirst { it.name == actor.name }.takeIf { it >= 0 }?.plus(1)
-        }
-        // An opening information choice is NEVER a valid default for a later
-        // night, even when the same role wakes again and the number matches.
-        val residualRecommendedOption = if (globalAiCurrentKey != null &&
-            globalAiAdviceKey == globalAiCurrentKey
-        ) when {
-            globalAiPending != null -> ClocktowerResidualDisplayMatcherV2.matchPair(
-                globalAiPending,
-                globalResidualRecommendedChoices[globalAiPending.requestIdentity.requestId],
-                cards, language)
-            globalAiScalarPending != null -> ClocktowerResidualDisplayMatcherV2.matchScalar(
-                globalAiScalarPending,
-                globalResidualRecommendedChoices[globalAiScalarPending.requestIdentity.requestId])
-            else -> null
-        } else null
-        // Busy/error belong to their exact Host-current request. A stale
-        // failed/in-flight earlier step must not block a new deterministic step.
-        val currentAiRequestBlocked = clocktowerCurrentAiRequestBlocked(
-            globalAiCurrentKey, globalAiAdviceKey, globalAiAdviceBusy, globalAiAdviceError,
-        )
-        // Match direct AI target advice to the current question, revision and canonical seats.
-        val recommendedMayorTargetName = globalAiTargetPending?.takeIf {
-            globalAiCurrentKey != null &&
-                globalAiAdviceKey == globalAiCurrentKey &&
-                !currentAiRequestBlocked
-        }?.let { decision ->
-            val eligibleSeats = mayorRedirectTargetSeats +
-                listOfNotNull(decision.mayorSeat.takeIf { it in sessionState.allSeats() })
-            ClocktowerResidualDisplayMatcherV2.matchMayorRedirect(
-                decision = decision,
-                selected =
-                    globalResidualRecommendedChoices[decision.requestIdentity.requestId],
-                currentRevision = com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision(
-                    gameStateRevision, playerInputRevision,
-                ),
-                currentSeats = eligibleSeats,
-            )?.let { seat -> cards.getOrNull(seat - 1)?.name }
-        }
-        // MANUAL never consumes an AI opening plan; a failed current automatic request
-        // may not silently reuse an old recommendation.
-        val approvedOpeningOption = if (!globalAiAssisted ||
-            (globalAiAutomatic && currentAiRequestBlocked)) null else
-            residualRecommendedOption ?: preplannedSeat?.takeIf {
-                phase == ClocktowerPhase.FirstNight
-            }?.let { seat ->
-            jointOpeningSemantics[seat]?.let { planned ->
-                ClocktowerJointOpeningDisplayMatcherV2.match(
-                    question = currentStep.informationQuestion,
-                    plan = planned,
-                    currentSourceSeat = seat,
-                    currentOptions = currentStep.manualInformationCandidates,
-                )
-            }
-        }
-        val pairInformationRole = currentStep.roleEnName?.takeIf {
-            currentStep.isRealAction && it in setOf("Washerwoman", "Librarian", "Investigator")
-        }
-        // Validate BOTH the UI action and the pending AI retry against the same
-        // current Session query. A stale opening proposal is not a current answer.
-        val currentValidatedInformationOption = approvedOpeningOption?.takeIf { option ->
-            when {
-                pairInformationRole != null -> {
-                    val seat = currentActorSeatForInformation
-                    seat != null && clocktowerCurrentPairRecommendation(
-                        option = option,
-                        abilityRole = pairInformationRole,
-                        seatCount = cards.size,
-                        scriptRoles = clocktowerRolesForScript(script),
-                        resolvePair = { first, second ->
-                            PairInformationResolver.resolve(
-                                sessionState, nightRuleset, RoleId(pairInformationRole),
-                                seat, first, second,
-                            )
-                        },
-                    ) != null
-                }
-                currentNumericMetric == null -> true
-                else -> {
-                    val numeric = option.proposition as?
-                        com.codex.campboardgamehost.clocktower.epistemic.InformationProposition.NumericResult
-                    val resolved = currentNumericResolution
-                    numeric != null && resolved != null &&
-                        option.displayKind == ClocktowerDisplayKind.Number &&
-                        currentNumericMetric == numeric.metric &&
-                        currentActorSeatForInformation == numeric.sourceSeat &&
-                        numeric.subjectSeats == resolved.subjectSeats &&
-                        numeric.value in resolved.values
-                }
-            }
-        }
-        LaunchedEffect(globalAiCurrentKey, globalAiAssisted, currentValidatedInformationOption,
-            jointOpeningAvailable, phase) {
-            if (globalAiAssisted &&
-                globalAiCurrentKey != null &&
-                globalAiAdviceKey != globalAiCurrentKey &&
-                currentValidatedInformationOption == null && !hostDeterminedNumeric &&
-                !(currentStep.action == ClocktowerNightAction.MayorRedirect &&
-                    nightDraft?.selectedSeats?.isNotEmpty() == true)
-            ) {
-                onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames)
-            }
+        val host = hostNightStep(sessionState, nightRuleset, nightDraft)
+        // Verify the UI materializer matches the actual pending Session interaction.
+        // Display projections may not assign role, action, actor or numeric query authority.
+        check(currentStep.interactionId == host.facts.interactionId &&
+            currentStep.action == host.facts.action &&
+            currentStep.isRealAction == host.facts.isRealAction &&
+            currentStep.informationQuestion == host.facts.question
+        ) { "Night display differs from the authoritative Session interaction." }
+        val ai = nightAiOverlay(host, NightAiInputs(
+            globalAiAssisted, globalAiAutomatic, globalAiAdviceKey, globalAiAdviceBusy, globalAiAdviceError,
+            globalResidualRecommendedChoices, jointOpeningSemantics, globalNightPendingDecision, fortuneTellerSelectedNames,
+        ), sessionState, nightRuleset, currentStep, currentStepIndex, phase, cards, language, clocktowerRolesForScript(script))
+        LaunchedEffect(ai.currentKey, globalAiAssisted, ai.validatedOption, jointOpeningAvailable, phase) {
+            if (ai.shouldRequest) onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames)
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
-        val selectedNightName = when (currentStep.action) {
-            ClocktowerNightAction.RedHerring -> redHerring
-            ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster, ClocktowerNightAction.MonkProtect,
-            ClocktowerNightAction.DemonKill, ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.Ravenkeeper ->
-                nameAt(nightDraft?.selectedSeats?.firstOrNull())
-            else -> null
-        }
         fun updateNightDraft(next: ClocktowerNightStepDraft) {
             if (currentStep.action in setOf(
                     ClocktowerNightAction.Ravenkeeper, ClocktowerNightAction.FortuneTeller, ClocktowerNightAction.Chambermaid,
@@ -617,47 +437,21 @@ internal fun ClocktowerJudgeScreen(
             if (currentStep.action != ClocktowerNightAction.RedHerring) onRecordPlayerInput()
             nightDraft = next
         }
-        // Reuse exactly the current square-table's Host target domain. Player
-        // actions remain player choices, never AI-selected defaults.
-        val legalPlayerTargetSeats = when (currentStep.action) {
-            ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill -> aliveSeats
-            ClocktowerNightAction.ButlerMaster -> sessionState.allSeats() - listOfNotNull(seatOf(currentStep.actor?.name)).toSet()
-            ClocktowerNightAction.MonkProtect -> sessionState.allSeats()
-            else -> emptySet()
-        }
-        val playerTargetReady = clocktowerLivePlayerTargetReady(
-            currentStep.action, currentStep.isRealAction,
-            seatOf(selectedNightName), legalPlayerTargetSeats,
-        )
-        val succession = if (currentStep.action == ClocktowerNightAction.DemonKill && currentStep.isRealAction) {
-            sessionState.impSelfKillSuccession(seatOf(selectedNightName))
-        } else DemonSuccessionResolution.None
-        val eligibleSuccessors = when (succession) {
-            is DemonSuccessionResolution.Forced -> listOf(succession.targetSeat)
-            is DemonSuccessionResolution.Choice -> succession.targetSeats.toList()
-            DemonSuccessionResolution.None -> emptyList()
-        }.map { requireNotNull(sessionGameState.playerAt(it)) }
         var selectedSelfKillSuccessor by remember(
             gameId, phase, round, currentStep.interactionId,
-        ) { mutableStateOf<String?>(null) }
-        val successorName = when (eligibleSuccessors.size) {
-            0 -> null
-            1 -> eligibleSuccessors.single().name
-            else -> selectedSelfKillSuccessor
-        }
-        val successorReady = eligibleSuccessors.size <= 1 ||
-            successorName in eligibleSuccessors.map { it.name }
-        val successorSeat = eligibleSuccessors.firstOrNull { it.name == successorName }?.seat
+        ) { mutableStateOf<Int?>(null) }
+        val successorSeat = host.successorSeat(selectedSelfKillSuccessor)
+        val successorReady = host.successorReady(selectedSelfKillSuccessor)
         val advanceNightStep = advance@{
             // Check readiness before the only irreversible Observation write.
-            if (!playerTargetReady || !successorReady) {
+            if (!host.targetReady || !successorReady) {
                 Toast.makeText(context, text(
                     "请先完成当前行动目标及必要的恶魔继任选择。",
                     "Select the current target and any required Imp successor before continuing.",
                 ), Toast.LENGTH_LONG).show()
                 return@advance
             }
-            if (isPrivateInformationStep) {
+            if (host.isPrivateInformation) {
                 val preview = currentInformationPreview
                 if (preview == null ||
                     preview.actor?.name != currentStep.actor?.name ||
@@ -688,9 +482,9 @@ internal fun ClocktowerJudgeScreen(
                 previewRevision = currentInformationPreview?.informationSourceRevision,
             ))
         }
-        LaunchedEffect(recommendedMayorTargetName, currentStep.interactionId, selectedNightName, globalAiAssisted) {
-            if (globalAiAssisted && currentStep.action == ClocktowerNightAction.MayorRedirect && selectedNightName == null) {
-                recommendedMayorTargetName?.let(::seatOf)?.let { seat ->
+        LaunchedEffect(ai.recommendedMayorSeat, currentStep.interactionId, host.selectedSeat, globalAiAssisted) {
+            if (globalAiAssisted && currentStep.action == ClocktowerNightAction.MayorRedirect && host.selectedSeat == null) {
+                ai.recommendedMayorSeat?.let { seat ->
                     nightDraft?.let { draft -> updateNightDraft(draft.copy(seatSlots = listOf(seat))) }
                 }
             }
@@ -698,19 +492,14 @@ internal fun ClocktowerJudgeScreen(
 
         ClocktowerNightActiveScreen(
             progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
-            nextEnabled =
-                (!(isPrivateInformationStep || isEvilInformationStep) || currentInformationPreview != null) &&
-                playerTargetReady && successorReady && (currentStep.action !in setOf(
-                ClocktowerNightAction.MayorRedirect,
-            ) || selectedNightName != null) &&
-                (currentStep.action != ClocktowerNightAction.RedHerring ||
-                    !currentStep.isRealAction || redHerring != null),
+            nextEnabled = (!(host.isPrivateInformation || host.isEvilInformation) || currentInformationPreview != null) &&
+                host.targetReady && successorReady,
             onHostTools = onHostTools,
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
             lastPreviewLabel = currentInformationPreview?.takeIf {
-                currentNumericResolution == null && pairInformationRole == null &&
-                    (isPrivateInformationStep || isEvilInformationStep)
+                host.numericResolution == null && host.pairRole == null &&
+                    (host.isPrivateInformation || host.isEvilInformation)
             }?.let { preview ->
                 text("✓ 上次预览（下一步确认）", "✓ Last preview (confirm with Next)") + " · " +
                     listOfNotNull(preview.displayPrimary, preview.displaySecondary)
@@ -718,22 +507,20 @@ internal fun ClocktowerJudgeScreen(
             },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (globalAiAssisted && globalAiDecisionIdentity != null &&
-                    globalAiCurrentKey != null
-                ) {
+                val aiKey = ai.currentKey
+                if (aiKey != null) {
                     if (!globalAiAutomatic ||
-                        (currentValidatedInformationOption == null &&
-                            (!globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey))
+                        (ai.validatedOption == null && (!globalAiAdviceBusy || globalAiAdviceKey != aiKey))
                     ) {
                         OutlinedButton(
                             onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames) },
-                            enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
+                            enabled = !globalAiAdviceBusy || globalAiAdviceKey != aiKey,
                         ) {
                             Text(if (globalAiAutomatic) text("重新请求 AI 信息", "Retry AI information")
                                 else text("AI 全局局势与当前合法裁量", "Global AI advice"))
                         }
                     }
-                    if (globalAiAdviceKey == globalAiCurrentKey) {
+                    if (globalAiAdviceKey == aiKey) {
                         if (globalAiAdviceBusy) Text(
                             text("正在重新评估已确认的游戏事件…", "Analysing committed game history…"),
                         )
@@ -767,10 +554,8 @@ internal fun ClocktowerJudgeScreen(
                 // One optional current-step suggestion for both AI modes.
                 // The card retains the complete Host legal domain for manual edits.
                 // Automatic mode can use the same verified choice at this step only.
-                aiSuggestedInformationOption = currentValidatedInformationOption.takeUnless {
-                    currentAiRequestBlocked
-                },
-                numericResolution = currentNumericResolution,
+                aiSuggestedInformationOption = ai.suggestedOption,
+                numericResolution = host.numericResolution,
                 pairResolver = { role, seat, first, second ->
                     PairInformationResolver.resolve(
                         sessionState, nightRuleset, RoleId(role), seat, first, second,
@@ -781,7 +566,7 @@ internal fun ClocktowerJudgeScreen(
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
                 selectedSeatSlots = when (currentStep.action) {
-                    ClocktowerNightAction.RedHerring -> listOfNotNull(seatOf(redHerring))
+                    ClocktowerNightAction.RedHerring -> listOfNotNull(host.selectedSeat)
                     ClocktowerNightAction.Chambermaid ->
                         listOf(chambermaidSelection.first, chambermaidSelection.second)
                     else -> nightDraft?.seatSlots.orEmpty()
@@ -815,18 +600,15 @@ internal fun ClocktowerJudgeScreen(
                         onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )
-                if (eligibleSuccessors.size > 1 &&
-                    !successorReady) {
+                if (host.successorSeats.size > 1 && !successorReady) {
                     AlertDialog(
                         onDismissRequest = {},
                         title = { Text(text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor")) },
                         text = {
                             Column {
-                                eligibleSuccessors.forEach { candidate ->
-                                    TextButton(onClick = {
-                                        selectedSelfKillSuccessor = candidate.name
-                                    }) {
-                                        Text(playerSeatLabel(cards, candidate.name))
+                                host.successorSeats.forEach { seat ->
+                                    TextButton(onClick = { selectedSelfKillSuccessor = seat }) {
+                                        Text(cards.getOrNull(seat - 1)?.seatLabel(cards).orEmpty())
                                     }
                                 }
                             }
