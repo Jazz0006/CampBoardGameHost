@@ -62,6 +62,7 @@ internal fun ClocktowerNightStepCardLocalized(
     /** Suggested current-step option only. Never narrows the Host's legal domain. */
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
     numericResolution: com.codex.campboardgamehost.clocktower.session.HostNumericResolution? = null,
+    booleanResolution: com.codex.campboardgamehost.clocktower.session.HostBooleanResolution? = null,
     pairResolver: ((String, Int, Int?, Int?) -> com.codex.campboardgamehost.clocktower.session.HostPairResolution?)? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     /** The current step's draft seats; two-player queries keep first/second slots. */
@@ -134,7 +135,8 @@ internal fun ClocktowerNightStepCardLocalized(
     val fortuneTellerRecommendedResult = (currentAiSuggestedOption?.proposition as?
         InformationProposition.BooleanResult)?.takeIf {
             it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
-                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric
+                it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric &&
+                booleanResolution?.accepts(it) == true
         }?.value
 
     fun showRecommendedDisplayOption(
@@ -166,6 +168,8 @@ internal fun ClocktowerNightStepCardLocalized(
     fun showStructuredFortuneTellerResult(value: Boolean) {
         val actorSeat = structuredActorSeat ?: return
         val subjects = structuredFortuneTellerSelectedSeats ?: return
+        val resolved = booleanResolution ?: return
+        if (resolved.sourceSeat != actorSeat || resolved.subjectSeats != subjects || value !in resolved.values) return
         clocktowerDirectBooleanResult(step, actorSeat, subjects, value, language)
             ?.let(onShowPlayerDisplay)
     }
@@ -421,6 +425,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     wakeInstruction = command,
                     redHerringSeat = redHerringSeat,
                     recommendedResult = fortuneTellerRecommendedResult,
+                    resolvedValues = booleanResolution?.values.orEmpty(),
                     lastPreviewResult = (lastPreviewProposition as? InformationProposition.BooleanResult)?.takeIf {
                         it.sourceSeat == structuredActorSeat && it.subjectSeats == structuredFortuneTellerSelectedSeats &&
                             it.metric == (step.informationQuestion as? ClocktowerInformationQuestion.Boolean)?.metric

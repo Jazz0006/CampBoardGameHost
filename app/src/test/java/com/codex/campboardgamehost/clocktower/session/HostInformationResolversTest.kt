@@ -48,6 +48,50 @@ class HostInformationResolversTest {
         }))
     }
 
+    @Test fun fortuneTellerDetectsDemonAndRedHerringButNotSpyAndKeepsRealRecluseDiscretion() {
+        val s = session("Fortune Teller", "Imp", "Spy", "Recluse", "Soldier")
+        s.commitRedHerringSeat(5, StorytellerPhase.FIRST_NIGHT, 1, s.nextInputSequence)
+        fun values(a: Int, b: Int) = FortuneTellerInformationResolver.resolve(s.state, 1, listOf(a, b))?.values
+        val before = s.state
+        assertEquals(listOf(false), values(1, 3)) // Spy cannot register as Demon; self-query is allowed.
+        assertEquals(listOf(true), values(2, 4)) // A real positive dominates optional Recluse registration.
+        assertEquals(listOf(true), values(3, 5))
+        assertEquals(listOf(false, true), values(3, 4))
+        assertSame(before, s.state)
+        update(s, 2, alive = false, poisoned = true)
+        update(s, 5, alive = false, poisoned = true)
+        update(s, 4, alive = false)
+        assertEquals(listOf(true), values(1, 2))
+        assertEquals(listOf(true), values(1, 5))
+        assertEquals(listOf(false, true), values(3, 4)) // Recluse retains registration after death.
+        update(s, 4, poisoned = true)
+        assertEquals(listOf(false), values(3, 4))
+        assertNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(2, 2)))
+        assertNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(2, 99)))
+        assertNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(2)))
+    }
+
+    @Test fun fortuneTellerSourceImpairmentAndChangedQueriesRevalidateAdvice() {
+        val s = session("Fortune Teller", "Imp", "Spy", "Soldier", "Saint")
+        fun resolve(a: Int, b: Int) = requireNotNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(a, b)))
+        val answer = InformationProposition.BooleanResult(
+            com.codex.campboardgamehost.clocktower.epistemic.BooleanMetric.DEMON_OR_RED_HERRING_PRESENT,
+            1, listOf(2, 3), true)
+        assertTrue(resolve(2, 3).accepts(answer))
+        assertFalse(resolve(3, 4).accepts(answer))
+        assertFalse(resolve(2, 3).accepts(answer.copy(sourceSeat = 4)))
+        assertFalse(resolve(2, 3).accepts(answer.copy(value = false)))
+        update(s, 1, poisoned = true)
+        assertEquals(listOf(false, true), resolve(2, 3).values)
+        assertEquals(AbilityFunctioningState.POISONED, resolve(2, 3).sourceAbility)
+        update(s, 1, poisoned = false)
+        assertFalse(resolve(2, 3).accepts(answer.copy(value = false)))
+        val drunk = session("Drunk", "Imp", "Spy", "Soldier", "Saint", shown = mapOf(1 to "Fortune Teller"))
+        assertEquals(listOf(false, true), FortuneTellerInformationResolver.resolve(drunk.state, 1, listOf(2, 3))?.values)
+        update(s, 1, alive = false)
+        assertNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(2, 3)))
+    }
+
     @Test fun chefWraparoundCountsSpecialRegistrationsWithoutChangingSession() {
         val s = session("Imp", "Recluse", "Chef", "Empath", "Soldier", "Saint", "Poisoner", "Spy")
         val before = s.state

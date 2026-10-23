@@ -1,5 +1,8 @@
 # 当前开发交接（2026-10-23：Host UI 职责重构 Batch 2 已合并）
 
+> **P1 修复分支进度（2026-10-23，尚未合并）**：健康 Fortune Teller 现在从唯一 Session 对当前双目标求布尔结果；确定值在三模式直接展示，不再等待 AI 或提供相反值。醉毒与有效 Recluse 登记保留裁量；Spy 不登记为 Demon，恶魔/红鲱鱼的确定阳性优先。目标变更仍清空预览，Next 只提交最后一条私密 Observation。已补求值、AI stale 和三模式真实 Host UI 回归；验收结果见本修复 PR。P1 合并后下一结构批次为 Batch 3；本批不混做 Batch 3 或 AI 重建。
+
+
 ## 最新权威基线（优先于以下历史记录）
 
 - 仓库：`Jazz0006/CampBoardGameHost`；开发机 Mini MCP 别名 `clocktower`。本次文档更新前 `main` 精确 HEAD `1fe855e80efb006717275341b17b8a9d9e805fa7`，开发机 `main` 工作树 clean 且与远端一致。**合并本 docs-only PR #351 后应重新读取最新 `main` SHA 并同步开发机**，不把本行的旧 SHA 固定为未来基线。

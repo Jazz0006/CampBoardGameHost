@@ -556,6 +556,7 @@ internal fun ClocktowerJudgeScreen(
                 // Automatic mode can use the same verified choice at this step only.
                 aiSuggestedInformationOption = ai.suggestedOption,
                 numericResolution = host.numericResolution,
+                booleanResolution = host.booleanResolution,
                 pairResolver = { role, seat, first, second ->
                     PairInformationResolver.resolve(
                         sessionState, nightRuleset, RoleId(role), seat, first, second,

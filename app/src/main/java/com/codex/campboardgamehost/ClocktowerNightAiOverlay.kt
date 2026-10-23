@@ -53,10 +53,10 @@ internal fun nightAiOverlay(
     if (!inputs.assisted) return NightAiOverlay()
     val revision = StorytellerDecisionRevision(state.gameStateRevision, state.playerInputRevision)
     val round = state.round
-    val pairPending = if (!host.hostDeterminedNumeric && phase == ClocktowerPhase.FirstNight) {
+    val pairPending = if (!host.hostDeterminedInformation && phase == ClocktowerPhase.FirstNight) {
         pendingGlobalFirstNightPairDecision(step, phase, round, cards, state.gameState, state.gameId, revision)
     } else null
-    val scalarPending = if (!host.hostDeterminedNumeric &&
+    val scalarPending = if (!host.hostDeterminedInformation &&
         phase in setOf(ClocktowerPhase.FirstNight, ClocktowerPhase.Night) && pairPending == null
     ) pendingGlobalNightScalarDecision(
         step, phase, round, stepIndex, cards, state.gameId, revision, inputs.fortuneTellerSelectedNames,
@@ -122,6 +122,11 @@ internal fun nightAiOverlay(
                     PairInformationResolver.resolve(state, ruleset, RoleId(pairRole), actorSeat, first, second)
                 },
             ) != null
+            host.facts.action == ClocktowerNightAction.FortuneTeller -> {
+                val boolean = option.proposition as? InformationProposition.BooleanResult
+                option.displayKind == ClocktowerDisplayKind.YesNo && boolean != null &&
+                    host.booleanResolution?.accepts(boolean) == true
+            }
             host.numericMetric == null -> true
             else -> {
                 val numeric = option.proposition as? InformationProposition.NumericResult
@@ -141,7 +146,7 @@ internal fun nightAiOverlay(
         validatedOption = validatedOption,
         recommendedMayorSeat = recommendedMayorSeat,
         shouldRequest = currentKey != null && !adviceIsCurrent && validatedOption == null &&
-            !host.hostDeterminedNumeric &&
+            !host.hostDeterminedInformation &&
             !(host.facts.action == ClocktowerNightAction.MayorRedirect && host.selectedSeat != null),
     )
 }
