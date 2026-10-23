@@ -577,13 +577,8 @@ internal fun ClocktowerNightStepCardLocalized(
             ClocktowerNightFullScreenSurface.Chef,
             ClocktowerNightFullScreenSurface.Empath,
             ClocktowerNightFullScreenSurface.Clockmaker -> {
-                val metric = (step.informationQuestion as? ClocktowerInformationQuestion.Number)?.metric
-                val expectedMetric = when (step.roleEnName) {
-                    "Chef" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.ADJACENT_EVIL_PAIRS
-                    "Empath" -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.LIVING_EVIL_NEIGHBOURS
-                    else -> com.codex.campboardgamehost.clocktower.epistemic.NumericMetric.STEPS_TO_NEAREST_MINION
-                }
-                val current = numericResolution?.takeIf { metric == expectedMetric }
+                // The Host step resolves numbers only for this step's own Number question.
+                val current = numericResolution?.takeIf { step.informationQuestion is ClocktowerInformationQuestion.Number }
                 val advised = current?.let { resolved ->
                     directNumericActorSeat?.let { seat ->
                         clocktowerMatchingNumericResult(
