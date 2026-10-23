@@ -195,63 +195,63 @@ hostNightStep(
 
 ## 12. v2 复审补充（2026-10-23，保留原评审与历史结论）
 
-> **评审对象：** 同分支 [HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 的 **v2**（截至本轮审阅 PR #351 HEAD \`2687e6a3\`）；上文第 1–11 节保留为**对 v1 的原始评审历史**，本节是第二轮独立复审，出现措辞或顺序冲突时以 v2 和本节为准。
+> **评审对象：** 同分支 [HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) 的 **v2**（截至本轮审阅 PR #351 HEAD `2687e6a3`）；上文第 1–11 节保留为**对 v1 的原始评审历史**，本节是第二轮独立复审，出现措辞或顺序冲突时以 v2 和本节为准。
 >
 > **第二轮总体结论：** **总体技术方向认可，可以进入实施准备，不需要再启动大规模架构规划。** v2 已吸收座位 ID、单一 Session 权威、规则与 AI 分离、先迁移卡片事实、Session 原子提交及批次退出标准。正式 Batch 1 前优先修订 **草稿跨夜标识** 与 **Batch 2a 删除边界** 两处；其余属于实施约束或独立产品行为问题。本轮只读复核生产代码，未声称完成 Batch 1–5 任何实现。
 
 ### 12.1 需在 Batch 1 前修订：交互 ID 不包含轮次，草稿可能跨夜残留
 
-v2 Batch 1 以 \`remember(gameId, interactionId)\` 管理 \`NightStepDraft\`。实际 \`clocktower/flow/ClocktowerProductionNightStepIdentity.kt\` 为角色生成的 ID 形如 \`other_night:role:Imp\`，\`ClocktowerInteractionId\` **本身不带 round**；第二夜和第三夜同角色可有相同 ID。在同一 Compose 状态持有者未销毁、键值重复的情况下，不能靠这两个 key 保证上一夜草稿被清空。
+v2 Batch 1 以 `remember(gameId, interactionId)` 管理 `NightStepDraft`。实际 `clocktower/flow/ClocktowerProductionNightStepIdentity.kt` 为角色生成的 ID 形如 `other_night:role:Imp`，`ClocktowerInteractionId` **本身不带 round**；第二夜和第三夜同角色可有相同 ID。在同一 Compose 状态持有者未销毁、键值重复的情况下，不能靠这两个 key 保证上一夜草稿被清空。
 
 **最小修订建议：** 复用现有 Phase/Round/Interaction 身份，不另建 ID 体系或 Session 步骤游标，例如：
 
-\`\`\`kotlin
+```kotlin
 val draft by remember(gameId, phase, round, interactionId) {
     mutableStateOf(NightStepDraft(interactionId))
 }
-\`\`\`
+```
 
-- 当前步骤确认入口必须重新核对现存的 \`gameId\`、阶段、\`round\`、\`interactionId\`，并保留必要 revision / 幂等 / 过期请求检查；旧异步回调不得确认新局或新一夜的操作。不要将 UI 草稿存入 Session 或额外事件记录。
+- 当前步骤确认入口必须重新核对现存的 `gameId`、阶段、`round`、`interactionId`，并保留必要 revision / 幂等 / 过期请求检查；旧异步回调不得确认新局或新一夜的操作。不要将 UI 草稿存入 Session 或额外事件记录。
 - 增加高价值回归：第二夜 Imp 选座并确认后，第三夜再次唤醒 Imp 不出现上一夜未确认目标；上一夜的延迟回调不能在下一夜写入行为；FT/Chambermaid 改目标后仍须重预览。
-- 旧草稿生产读写者的逐一审计仍然必须进行；仅靠 \`remember\` 换 key 不能替代跨步骤依赖清理。
+- 旧草稿生产读写者的逐一审计仍然必须进行；仅靠 `remember` 换 key 不能替代跨步骤依赖清理。
 
 ### 12.2 需修订 Batch 2a：事实读取与 UI materializer 混在同一个现有文件
 
-v2 新增 **Batch 2a** 是正确顺序：规则/夜间事实应直接读取 \`ClocktowerSessionState\`，不要经过 \`PlayerCard\` 反向判断。实际 \`ClocktowerNightHostProjection.kt\` 不只是事实求值器：它还通过 \`otherNightMaterializers()\` 生成 Undertaker、Monk、Imp、Mayor、Ravenkeeper、Sage 等 \`ClocktowerNightStepUi\`、角色指示和本地化文案。
+v2 新增 **Batch 2a** 是正确顺序：规则/夜间事实应直接读取 `ClocktowerSessionState`，不要经过 `PlayerCard` 反向判断。实际 `ClocktowerNightHostProjection.kt` 不只是事实求值器：它还通过 `otherNightMaterializers()` 生成 Undertaker、Monk、Imp、Mayor、Ravenkeeper、Sage 等 `ClocktowerNightStepUi`、角色指示和本地化文案。
 
 **修订范围：** Batch 2a 迁移并验证“当前恶魔、死者触发、醉毒能力、Mayor/Chambermaid 目标座位等 **Session 事实**”的读路径；同批删掉被替代的 **卡片式规则事实求值**。尚在生产使用的文案和夜间展示 materializer 可作为仅 UI 投影暂留，待 Batch 3 新夜间页面真正接管时再删除旧装配路径。不能为了删除一个类而提前重写所有角色 UI，也不能迁移完事实后仍长期保留两套事实求值。
 
 退出验收同时检查：
-- 宿主决策不以 \`PlayerCard\`、姓名/显示文本、\`publicAliveCards\` 作为权威事实输入；
+- 宿主决策不以 `PlayerCard`、姓名/显示文本、`publicAliveCards` 作为权威事实输入；
 - UI materializer 只消费当前已计算的 Session 事实/seat projection 来生成显示；
 - 现有目标集合与夜间展示行为逐项对照，不能以“架构变干净”为由顺便改变玩法。
 
 ### 12.3 Batch 1/2/3 的提交回调职责：统一入口不意味着新建第二层业务提交者
 
-v2 Batch 1 提议 \`onConfirmNightStep(step, draft, preview)\`，并指定 \`ClocktowerSessionHost\` 统一调度 Session \`confirmX\`；Batch 3 又指定新 \`ClocktowerNightHostScreen\` 拥有唯一 Next 处理。两者可以兼容，但须把边界写明：
+v2 Batch 1 提议 `onConfirmNightStep(step, draft, preview)`，并指定 `ClocktowerSessionHost` 统一调度 Session `confirmX`；Batch 3 又指定新 `ClocktowerNightHostScreen` 拥有唯一 Next 处理。两者可以兼容，但须把边界写明：
 
 - **夜间 Screen** 只拥有 Next 的 UI 意图、当前交互门禁与最后一次预览；**SessionHost 适配器** 是唯一实际 Session 确认分发器；Session 本身仍是唯一事实写者。
 - 不要让 Screen 和 SessionHost 两处各自实现一份动作合法性/写入分支，也不允许因“统一回调”在现有 Session API 之外新增一套 Host 规则 veto。
-- 统一 \`NightStepDraft\` 仅替代原先 11 个跨步骤夜间角色目标草稿。Pair、Sage 等角色页面已有的短生命周期、纯 UI 的编辑状态，若仍能保持步骤局部与单次 Observation 语义，不必为表面统一全部重写。
+- 统一 `NightStepDraft` 仅替代原先 11 个跨步骤夜间角色目标草稿。Pair、Sage 等角色页面已有的短生命周期、纯 UI 的编辑状态，若仍能保持步骤局部与单次 Observation 语义，不必为表面统一全部重写。
 
 ### 12.4 Batch 5：Lifecycle 与导航分离；活动局模式只存在一份
 
-v2 已明确 \`StorytellerAiSettings.preferredMode\` 是“下局默认值”，\`ClocktowerGameLifecycle\` 是“当前活动局模式”的唯一内存所有者（通过现有 \`ClocktowerActiveGameMetadata\` 持久化），原则上认可。**不能另在 App root 和 Lifecycle 各留一份可写的当前模式。**
+v2 已明确 `StorytellerAiSettings.preferredMode` 是“下局默认值”，`ClocktowerGameLifecycle` 是“当前活动局模式”的唯一内存所有者（通过现有 `ClocktowerActiveGameMetadata` 持久化），原则上认可。**不能另在 App root 和 Lifecycle 各留一份可写的当前模式。**
 
-不过 v2 Batch 5 同时建议 \`ClocktowerOpeningDraft\` 调用 Lifecycle 的 \`navigateTo\`，与所有权表“导航归 App UI/导航层”矛盾。推荐 Lifecycle 只返回明确的创建/恢复/结束操作结果，由 App/导航层决定切换 \`Screen\`；Lifecycle 不直接持有/修改导航状态或对话框，也不提供大而全的 Context/Manager facade。确认接口时检查是否实际删除原来散落的模式 setter、getter、回调链。
+不过 v2 Batch 5 同时建议 `ClocktowerOpeningDraft` 调用 Lifecycle 的 `navigateTo`，与所有权表“导航归 App UI/导航层”矛盾。推荐 Lifecycle 只返回明确的创建/恢复/结束操作结果，由 App/导航层决定切换 `Screen`；Lifecycle 不直接持有/修改导航状态或对话框，也不提供大而全的 Context/Manager facade。确认接口时检查是否实际删除原来散落的模式 setter、getter、回调链。
 
 ### 12.5 现有 Pair 可选范围：登记为产品行为差距，勿在架构重构中固化
 
-v2 正确规定“视觉虚线/推荐高亮/Pair shortlist ≠ 通用合法性 veto”。但现有 \`ClocktowerPairInformationSquareTableUi.kt\` 对人工选定座位后仍通过 \`resolvePair(...).options\` 限制角色下拉及展示按钮；如果 \`options\` 为空，可能无法展示说书人决定采用的其他信息。这与长期“Host 记录真实展示事实，不替说书人拒绝误播”的目标尚有差距。
+v2 正确规定“视觉虚线/推荐高亮/Pair shortlist ≠ 通用合法性 veto”。但现有 `ClocktowerPairInformationSquareTableUi.kt` 对人工选定座位后仍通过 `resolvePair(...).options` 限制角色下拉及展示按钮；如果 `options` 为空，可能无法展示说书人决定采用的其他信息。这与长期“Host 记录真实展示事实，不替说书人拒绝误播”的目标尚有差距。
 
 - **本次仅作为既存产品行为差距记录**，不声称已认定为新回归，也不借 Batch 2a/2 的“裁量边界”将当前候选列表升级为通用规则权威。
 - 当前重构批次坚持行为保持；未来如决定放宽人工输入，应单独评审展示语义、私密 Observation 与正式确认合同，并在相应独立修复 PR 中验收。
 
 ### 12.6 实施基线、CI 与顺序的本轮事实更新
 
-- v2 页首审计基线 \`main 5dd880f9\` 已不再是当前主线：D2 测试修复 **PR #354** 已 squash merge 为 \`7baf014b716756d24210b628c02532cd9da29cb6\`，完整 Android **CI #4584** / **R2 #4142** 成功。
-- 白天活人提名已死目标 **PR #352** 已在该新主线上更新，HEAD \`7aac192b48a76359c9fd57a7acf985759614a6b9\`；完整 Android **CI #4586** / **R2 #4143** 成功，截至本轮复核仍为 Draft、**尚未合并**。因此不能将 P1 写成已在 \`main\` 交付；待处理 #352 后再从最新 \`main\` 开 Batch 1。
-- 上轮失败暴露了关键测试覆盖盲区：\`testFast\` 明确排除 \`ClocktowerD2UiTest\`；此前绿色 CI 可能只运行 FAST 或仅 docs-only。每批必须核验精确代码 SHA 的 CI step **确实执行** \`./gradlew :app:testFull :app:assembleDebug\`，且 R2 成功；不能仅看 GitHub 的绿色总状态。
+- v2 页首审计基线 `main 5dd880f9` 已不再是当前主线：D2 测试修复 **PR #354** 已 squash merge 为 `7baf014b716756d24210b628c02532cd9da29cb6`，完整 Android **CI #4584** / **R2 #4142** 成功。
+- 白天活人提名已死目标 **PR #352** 已在该新主线上更新，HEAD `7aac192b48a76359c9fd57a7acf985759614a6b9`；完整 Android **CI #4586** / **R2 #4143** 成功，截至本轮复核仍为 Draft、**尚未合并**。因此不能将 P1 写成已在 `main` 交付；待处理 #352 后再从最新 `main` 开 Batch 1。
+- 上轮失败暴露了关键测试覆盖盲区：`testFast` 明确排除 `ClocktowerD2UiTest`；此前绿色 CI 可能只运行 FAST 或仅 docs-only。每批必须核验精确代码 SHA 的 CI step **确实执行** `./gradlew :app:testFull :app:assembleDebug`，且 R2 成功；不能仅看 GitHub 的绿色总状态。
 - 独立的健康 Fortune Teller 固定布尔结果，以及 Stage 5 真机 UI/来电/杀进程后续局，继续依 v2 的独立节点处理；不要与重构顺手合并。未执行的真机或付费 LLM 检验须明确列为未执行。
 
 ### 12.7 第二轮裁定建议与启动条件
