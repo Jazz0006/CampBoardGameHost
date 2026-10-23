@@ -267,3 +267,22 @@ v2 正确规定“视觉虚线/推荐高亮/Pair shortlist ≠ 通用合法性 v
 | Batch 6 可移植 JSON 合同 | **独立安排，不阻塞 Android** |
 
 **最终建议：** 不再扩展新的规划阶段。先把“跨夜草稿 key”和“Batch 2a materializer 保留边界”落实到批准合同，再按最新主线小批次实施、用真实全量 CI/R2 验收并同批清除旧调用。评判重构的标准仍是状态无重复、所有权明确、玩法不回退、代码净复杂度下降，而非文件数和体积本身。
+
+---
+
+## 13. 2026-10-23 Batch 2 审计问题 2 的所有者决策：阶段性接受，不重写 AI
+
+**决策状态：已批准；属于针对 FINAL v3 的实施例外，并非新功能需求。** 对应 [PR #357](https://github.com/Jazz0006/CampBoardGameHost/pull/357)；Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) 和 Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) 已合并。#357 审计**问题 1**已修复：`hostNightStep` 直接基于 `Session.nextNightInteraction(ruleset)` 得出当前交互 ID、角色、行动、真实行动标记、演员座位和语义问题，不信任 UI 传入的事实，精确代码 HEAD `5871c355` 完整 Android CI #4597 / R2 #4151 **SUCCESS**。
+
+### 13.1 问题 2：允许的依赖边界
+
+- `ClocktowerNightAiOverlay.kt` 的 **AI → UI 临时适配接口** 仍使用 `ClocktowerNightStepUi`、`PlayerCard`、语言与展示类型。现有请求与匹配器 `pendingGlobalFirstNightPairDecision`、`pendingGlobalNightScalarDecision`、`ClocktowerResidualDisplayMatcherV2`、`ClocktowerJointOpeningDisplayMatcherV2` 具有生产消费者；这一批不重写、不删去可用 AI 推荐。
+- 允许例外**只限 AI 适配器**：`hostNightStep` / Session / Host 规则计算不得反向依赖这些 UI/AI 类型；AI 只读、只给建议，不生成或修改正式 GameState/事件，不改变已确定的 Host 事实、真实裁量边界，不用推荐取代玩家现场目标选择。MANUAL 路径不得依赖 AI；旧请求/失败/过期推荐不得带入下一交互或扩张裁量域。
+- **无需修改 PR #357 的现有 AI 代码来消除签名里的 UI 类型**；不为即将改造的接口引入兼容层、包装 DTO、并行推荐路径或第二个候选/规则引擎。此问题从“合并阻塞”调整为“明确接受的阶段性技术债务”，不视为缺陷已彻底消除。
+- 下一阶段**独立 AI 推荐重建**才以 Session 结构化游戏状态 + 关键事件为输入，设计新的语义请求/推荐结果合同；迁移当前真实 AI 调用链后，同批清除这些旧适配器及无消费者的旧匹配代码。该重建**不阻塞 Batch 3 的 UI 路由拆分**，也不得擅自移除现有 MANUAL / AI_ASSISTED / AI_AUTOMATIC 功能、首夜联合推荐、后夜建议及战略记忆。
+
+### 13.2 审核与合并范围
+
+**建议 PR #357 可以合并**，前提是最新 HEAD 通过精确 Android full CI/R2、差异只包含 Batch 2、base 是已合并 Batch 2a 的 `main`。本决策不授权在本批修改 AI 提示词、解析器、存储格式、Session 确认 API 或额外修改玩法。后续 AI 重构需另立规划、测试与 PR。
+
+**文档分支说明：** 此 Review 与 FINAL v3 计划仍在独立 Draft [PR #351](https://github.com/Jazz0006/CampBoardGameHost/pull/351)；更新此处不意味着 #351 已合并 `main`。
