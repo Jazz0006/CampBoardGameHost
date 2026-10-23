@@ -53,43 +53,15 @@ internal fun ClocktowerJudgeScreen(
     globalAiAdviceBusy: Boolean = false,
     globalAiAdviceError: String? = null,
     globalResidualRecommendedChoices: Map<String, com.codex.campboardgamehost.clocktower.session.StorytellerStrategicContinuationV2.SemanticResult> = emptyMap(),
-    onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int) -> Unit = { _, _ -> },
-    demonAttackDraftTarget: String?,
-    poisonDraftTarget: String?,
-    monkProtectedDraftTarget: String?,
-    mayorRedirectDraftTarget: String?,
-    fortuneTellerFirst: String?,
-    fortuneTellerSecond: String?,
-    chambermaidFirst: String?,
-    chambermaidSecond: String?,
-    ravenkeeperTarget: String?,
-    redHerring: String?,
-    openingRecommendedRedHerring: String? = null,
+    onRequestGlobalAiAdvice: (List<ClocktowerNightStepUi>, Int, List<String>) -> Unit = { _, _, _ -> },
     recommendedDemonBluffRoleNames: List<String>,
-    butlerMaster: String?,
     onCommitConfirmedPrivateInformationPublication: (EpistemicObservationDraft, StorytellerDecisionRevision) -> Unit,
     onHostTools: () -> Unit,
-    onSelectNightDeath: (String?) -> Unit,
-    onConfirmDemonAttack: (String, String?) -> Unit,
-    onSelectPoisonTarget: (String?) -> Unit,
-    onConfirmPoisonTarget: (String) -> Unit,
-    onSelectFortuneTellerFirst: (String?) -> Unit,
-    onSelectFortuneTellerSecond: (String?) -> Unit,
-    onSelectChambermaidFirst: (String?) -> Unit,
-    onSelectChambermaidSecond: (String?) -> Unit,
-    onSelectRavenkeeperTarget: (String?) -> Unit,
-    onSelectRedHerring: (String?) -> Unit,
-    onConfirmRedHerring: (String) -> Unit,
+    /** Advances only the AI-staleness input revision; never a game fact or event. */
+    onRecordPlayerInput: () -> Unit,
+    onConfirmNightStep: (ClocktowerNightStepConfirmation) -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
-    onSelectButlerMaster: (String?) -> Unit,
-    onConfirmButlerMaster: (String, String, String) -> Unit,
-    onSelectMonkProtectedTarget: (String?) -> Unit,
-    onConfirmMonkProtectedTarget: (String) -> Unit,
-    onSelectMayorRedirectTarget: (String?) -> Unit,
-    onConfirmMayorRedirectTarget: () -> Unit,
     onConfirmNewDemon: () -> Unit,
-    onConfirmSpyWake: (String) -> Unit,
-    onConfirmEvilInformation: (String, StorytellerDecisionRevision) -> Unit,
     onConfirmKlutzChoice: (String) -> Unit,
     onConfirmArtistQuestion: (String, Boolean, Boolean) -> Unit,
     onSlayerShot: (String, String, Boolean?) -> Unit,
@@ -119,6 +91,37 @@ internal fun ClocktowerJudgeScreen(
     val ghostVoteAuthority = ClocktowerGhostVoteAuthority.from(sessionState.actionTimeline)
     fun text(zh: String, en: String): String = if (language == "en") en else zh
     val publicAliveCards = cards.filter { it.eliminatedRound == null }
+
+    val nightRuleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)
+    val flowPhase = when {
+        phase == ClocktowerPhase.FirstNight -> ClocktowerNightFlowPhase.FIRST_NIGHT
+        phase == ClocktowerPhase.Night -> ClocktowerNightFlowPhase.OTHER_NIGHT
+        else -> null
+    }
+    val nextNightInteraction = flowPhase?.let { sessionState.nextNightInteraction(nightRuleset) }
+    // UI-only, keyed to this exact interaction (IDs carry no round); outlives the fullscreen preview.
+    var nightDraft by remember(gameId, phase, round, nextNightInteraction?.id) {
+        mutableStateOf(nextNightInteraction?.let { ClocktowerNightStepDraft(gameId, sessionState.phase, round, it.id) })
+    }
+    fun seatOf(name: String?): Int? = name?.let { selected ->
+        cards.indexOfFirst { it.name == selected }.takeIf { it >= 0 }?.plus(1)
+    }
+    val draftSlotNames = nightDraft?.seatSlots.orEmpty().map { seat -> seat?.let { cards.getOrNull(it - 1)?.name } }
+    // Builders run for every step; only the current interaction gets its draft.
+    fun draftSlotNamesFor(identity: ClocktowerProductionNightStepIdentity): List<String?> =
+        if (flowPhase != null && nightDraft?.interactionId == identity.interactionId(flowPhase)) draftSlotNames else emptyList()
+    val fortuneTellerSlots = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")))
+    val fortuneTellerFirst = fortuneTellerSlots.getOrNull(0)
+    val fortuneTellerSecond = fortuneTellerSlots.getOrNull(1)
+    val chambermaidSlots = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")))
+    val chambermaidFirst = chambermaidSlots.getOrNull(0)
+    val chambermaidSecond = chambermaidSlots.getOrNull(1)
+    val ravenkeeperTarget = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))).firstOrNull()
+    val butlerMaster = draftSlotNamesFor(ClocktowerProductionNightStepIdentity.role(RoleId("Butler"))).firstOrNull()
+    // Accepted Red Herring comes from Session; its draft exists only on its own first-night step.
+    val redHerring = (if (flowPhase == ClocktowerNightFlowPhase.FIRST_NIGHT) draftSlotNamesFor(
+        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()).firstOrNull() else null)
+        ?: sessionState.redHerringSeat?.let { cards.getOrNull(it - 1)?.name }
 
     var playerDisplayStep by remember { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // UI-only D2 draft must outlive the fullscreen early return below.
@@ -186,9 +189,7 @@ internal fun ClocktowerJudgeScreen(
     }
 
     val spySeatLabel = cards.firstOrNull { it.clocktowerRole?.enName == "Spy" }?.seatLabel(cards)
-    val nightRuleset = BuiltInClocktowerRulesetCatalog.fromContext(context).ruleset(script)
     val nightInteractions = sessionState.nightInteractions(nightRuleset)
-    val nextNightInteraction = sessionState.nextNightInteraction(nightRuleset)
     val nightHostProjection = ClocktowerNightHostProjection(cards, sessionState)
     val mayorRedirectTargetCards = nightHostProjection.mayorRedirectTargetCards
     val demonCard = nightHostProjection.demonCard
@@ -616,21 +617,26 @@ internal fun ClocktowerJudgeScreen(
                 globalAiAdviceKey != globalAiCurrentKey &&
                 currentValidatedInformationOption == null && !hostDeterminedNumeric &&
                 !(currentStep.action == ClocktowerNightAction.MayorRedirect &&
-                    mayorRedirectDraftTarget != null)
+                    nightDraft?.selectedSeats?.isNotEmpty() == true)
             ) {
-                onRequestGlobalAiAdvice(nightSteps, currentStepIndex)
+                onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames)
             }
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
         val selectedNightName = when (currentStep.action) {
             ClocktowerNightAction.RedHerring -> redHerring
-            ClocktowerNightAction.Poison -> poisonDraftTarget
-            ClocktowerNightAction.ButlerMaster -> butlerMaster
-            ClocktowerNightAction.MonkProtect -> monkProtectedDraftTarget
-            ClocktowerNightAction.DemonKill -> demonAttackDraftTarget
-            ClocktowerNightAction.MayorRedirect -> mayorRedirectDraftTarget
-            ClocktowerNightAction.Ravenkeeper -> ravenkeeperTarget
+            ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster, ClocktowerNightAction.MonkProtect,
+            ClocktowerNightAction.DemonKill, ClocktowerNightAction.MayorRedirect, ClocktowerNightAction.Ravenkeeper ->
+                draftSlotNames.firstOrNull()
             else -> null
+        }
+        fun updateNightDraft(next: ClocktowerNightStepDraft) {
+            if (currentStep.action in setOf(
+                    ClocktowerNightAction.Ravenkeeper, ClocktowerNightAction.FortuneTeller, ClocktowerNightAction.Chambermaid,
+                )) lastInformationPreview = null
+            // Red Herring stays a pure draft until its Next; it does not advance the AI input revision.
+            if (currentStep.action != ClocktowerNightAction.RedHerring) onRecordPlayerInput()
+            nightDraft = next
         }
         // Reuse exactly the current square-table's Host target domain. Player
         // actions remain player choices, never AI-selected defaults.
@@ -667,6 +673,7 @@ internal fun ClocktowerJudgeScreen(
         }
         val successorReady = eligibleSuccessors.size <= 1 ||
             successorName in eligibleSuccessors.map { it.name }
+        val successorSeat = eligibleSuccessors.firstOrNull { it.name == successorName }?.seat
         val advanceNightStep = advance@{
             // Check readiness before the only irreversible Observation write.
             if (!playerTargetReady || !successorReady) {
@@ -699,45 +706,19 @@ internal fun ClocktowerJudgeScreen(
                 }
                 lastInformationPreview = null
             }
-            if (currentStep.action == ClocktowerNightAction.RedHerring &&
-                currentStep.isRealAction
-            ) {
-                onConfirmRedHerring(requireNotNull(redHerring) {
-                    "Red Herring requires a selected rules-legal player."
-                })
-            }
-            // Non-real night placeholders never commit an action or a
-            // synthetic revision. Only the active player/ruling has authority.
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.Poison) {
-                onConfirmPoisonTarget(currentStep.interactionId.toString())
-            }
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MonkProtect) {
-                onConfirmMonkProtectedTarget(currentStep.interactionId.toString())
-            }
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.DemonKill) {
-                onConfirmDemonAttack(
-                    currentStep.interactionId.toString(),
-                    successorName,
-                )
-            }
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.MayorRedirect) {
-                onConfirmMayorRedirectTarget()
-            }
-            if (currentStep.isRealAction && currentStep.action == ClocktowerNightAction.ButlerMaster) {
-                onConfirmButlerMaster(
-                    requireNotNull(currentStep.actor).name,
-                    requireNotNull(butlerMaster) { "Butler must choose a master before proceeding." },
-                    currentStep.interactionId.toString(),
-                )
-            }
-            if (currentStep.roleEnName == "Spy") onConfirmSpyWake(requireNotNull(currentStep.interactionId).value)
-            if (currentStep.displayKind == ClocktowerDisplayKind.EvilInfo) {
-                onConfirmEvilInformation(requireNotNull(currentStep.interactionId).value, requireNotNull(currentInformationPreview?.informationSourceRevision))
-            }
+            // Every step's Next goes through the one Session dispatcher; steps without an action are no-ops.
+            onConfirmNightStep(ClocktowerNightStepConfirmation(
+                step = currentStep,
+                draft = requireNotNull(nightDraft) { "A current night step always has its draft." },
+                successorSeat = successorSeat,
+                previewRevision = currentInformationPreview?.informationSourceRevision,
+            ))
         }
         LaunchedEffect(recommendedMayorTargetName, currentStep.interactionId, selectedNightName, globalAiAssisted) {
             if (globalAiAssisted && currentStep.action == ClocktowerNightAction.MayorRedirect && selectedNightName == null) {
-                recommendedMayorTargetName?.let(onSelectMayorRedirectTarget)
+                recommendedMayorTargetName?.let(::seatOf)?.let { seat ->
+                    nightDraft?.let { draft -> updateNightDraft(draft.copy(seatSlots = listOf(seat))) }
+                }
             }
         }
 
@@ -771,7 +752,7 @@ internal fun ClocktowerJudgeScreen(
                             (!globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey))
                     ) {
                         OutlinedButton(
-                            onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex) },
+                            onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames) },
                             enabled = !globalAiAdviceBusy || globalAiAdviceKey != globalAiCurrentKey,
                         ) {
                             Text(if (globalAiAutomatic) text("重新请求 AI 信息", "Retry AI information")
@@ -824,46 +805,17 @@ internal fun ClocktowerJudgeScreen(
                 // automatically. Showing private information requires a live tap.
                 step = currentStep,
                 surfacePlan = currentSurfacePlan,
-                selectedName = selectedNightName,
-                fortuneTellerFirst = fortuneTellerFirst,
-                fortuneTellerSecond = fortuneTellerSecond,
-                redHerring = redHerring,
-                chambermaidFirst = chambermaidSelection.first,
-                chambermaidSecond = chambermaidSelection.second,
-                onSelectName = { name ->
-                        val nextSelection = clocktowerToggledSingleTargetSelection(
-                            currentSelection = selectedNightName,
-                            tappedSelection = name,
-                        )
-                        when (currentStep.action) {
-                            ClocktowerNightAction.RedHerring -> onSelectRedHerring(nextSelection)
-                            ClocktowerNightAction.Poison -> onSelectPoisonTarget(nextSelection)
-                            ClocktowerNightAction.ButlerMaster -> onSelectButlerMaster(nextSelection)
-                            ClocktowerNightAction.MonkProtect -> onSelectMonkProtectedTarget(nextSelection)
-                            ClocktowerNightAction.DemonKill -> onSelectNightDeath(nextSelection)
-                            ClocktowerNightAction.MayorRedirect -> onSelectMayorRedirectTarget(nextSelection)
-                            ClocktowerNightAction.Ravenkeeper -> {
-                                lastInformationPreview = null
-                                onSelectRavenkeeperTarget(nextSelection)
-                            }
-                            else -> Unit
-                        }
+                selectedSeatSlots = when (currentStep.action) {
+                    ClocktowerNightAction.RedHerring -> listOfNotNull(seatOf(redHerring))
+                    ClocktowerNightAction.Chambermaid ->
+                        listOf(seatOf(chambermaidSelection.first), seatOf(chambermaidSelection.second))
+                    else -> nightDraft?.seatSlots.orEmpty()
                 },
-                onSelectFortuneTellerFirst = {
-                    lastInformationPreview = null
-                    onSelectFortuneTellerFirst(if (fortuneTellerFirst == it) null else it)
-                },
-                onSelectFortuneTellerSecond = {
-                    lastInformationPreview = null
-                    onSelectFortuneTellerSecond(if (fortuneTellerSecond == it) null else it)
-                },
-                onSelectChambermaidFirst = {
-                    lastInformationPreview = null
-                    onSelectChambermaidFirst(if (chambermaidFirst == it) null else it)
-                },
-                onSelectChambermaidSecond = {
-                    lastInformationPreview = null
-                    onSelectChambermaidSecond(if (chambermaidSecond == it) null else it)
+                redHerringSeat = sessionState.redHerringSeat,
+                onSelectSeat = { seat ->
+                    if (currentStep.action in clocktowerNightSeatDraftActions) {
+                        nightDraft?.withTappedSeat(currentStep.action, seat)?.let(::updateNightDraft)
+                    }
                 },
                 onShowPlayerDisplay = { selectedStep ->
                     val preview = selectedStep.copy(informationSourceRevision =
