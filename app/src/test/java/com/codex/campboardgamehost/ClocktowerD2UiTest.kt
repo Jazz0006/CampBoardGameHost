@@ -72,7 +72,7 @@ class ClocktowerD2UiTest {
             clickSeat("P$second")
             if (role == "Washerwoman") {
                 ui.onNodeWithText("Choose character").performClick()
-                ui.onAllNodesWithText(initialRole).onLast().performClick()
+                ui.onAllNodesWithText(initialRole)[1].performClick()
             }
             ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
         }
