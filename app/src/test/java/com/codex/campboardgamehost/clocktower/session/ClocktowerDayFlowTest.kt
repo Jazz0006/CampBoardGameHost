@@ -57,6 +57,21 @@ class ClocktowerDayFlowTest {
         assertTrue(s.state.gameState.players.all { it.alive })
         assertEquals(1, s.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.NoExecution>().size)
     }
+    @Test fun `living nominator may nominate a dead player whose execution causes no second death`() {
+        val s = session("Imp", "Soldier", "Chef", "Saint", "Empath")
+        kill(s, 2)
+        vote(s, 3, 2, 1, 3, 4)
+        assertEquals(2, s.state.voteStanding.nomineeSeat)
+        s.confirmEndDay(1)
+        val facts = s.state.actionTimeline.entries.map { it.fact }
+        assertEquals(listOf(2), facts.filterIsInstance<ActionFact.Execution>().map { it.targetSeat })
+        assertEquals(1, facts.filterIsInstance<ActionFact.Death>().count { it.targetSeat == 2 })
+        assertFalse(s.state.gameState.playerAt(2)!!.alive)
+        assertEquals(StorytellerPhase.NIGHT, s.state.phase)
+        // The nominator, not the nominee, must be alive.
+        val dead = session("Imp", "Soldier", "Chef", "Saint", "Empath").also { kill(it, 3) }
+        assertThrows(IllegalArgumentException::class.java) { dead.confirmNomination(3, 2, null) }
+    }
     @Test fun `pending confirmed nomination survives serialization and blocks another nomination or end-day`() {
         val s = session("Imp", "Soldier", "Chef", "Saint", "Empath")
         s.confirmNomination(3, 2, null)
