@@ -1,21 +1,21 @@
-# 当前开发交接（2026-10-23，五批 Host 方桌和信息角色重建已合并）
+# 当前开发交接（2026-10-23：Host UI 职责重构 Batch 2 已合并）
 
-## 最新权威基线
+## 最新权威基线（优先于以下历史记录）
 
-- 仓库 `Jazz0006/CampBoardGameHost`；Oracle VM Mini MCP 别名 `clocktower`。2026-10-23 确认 [PR #350](https://github.com/Jazz0006/CampBoardGameHost/pull/350) 已 squash merge 到 `main`，合并 SHA **`b551d7f2efb074e45f2722c7bcd712d5f8bd56e8`**；开发机从干净的第五批分支切回 `main` 并 fast-forward 到相同 SHA，工作树 clean。
-- Stage 1 卡片视觉 #343、Stage 2 Numeric/Pair Resolver #344、Stage 3 Chef/Empath UI #348、Stage 4 Washerwoman/Librarian/Investigator Pair UI #349、Stage 5 NGJ Clockmaker/Chambermaid #350 **均已合并 main**。旧 #341/#342/#336 等为过往已关闭/替代路径，不能成为下一轮开发基线。
-- 第五批最后的**代码变更** `7c2950aa06b668d13230349957a3d844ce10e8a9`：[完整 Android CI #4572](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39768833600) / R2 #4132 **SUCCESS**。第五批后续仅文档提交 `4d3ce214a7799e23a64ca67643e86c1979365409`：CI #4573 / R2 #4133 SUCCESS，但 Android 单测按 docs-only 路径 **SKIPPED**；不能拿它替代代码测试。
-- 事实权威继续只有 `ClocktowerGameSession/ClocktowerSessionState`。数字与 Pair UI 从其只读 Resolver 取值、保留单一共享座位 renderer；遗留任意非负数字文本输入 UI 已删除。MANUAL / AI_ASSISTED / AI_AUTOMATIC 都保留真人显示交接；全屏预览可返修改，仅当前步骤 **Next** 写一次最终 `Observation`。
+- 仓库：`Jazz0006/CampBoardGameHost`；开发机 Mini MCP 别名 `clocktower`。本次文档更新前 `main` 精确 HEAD `1fe855e80efb006717275341b17b8a9d9e805fa7`，开发机 `main` 工作树 clean 且与远端一致。**合并本 docs-only PR #351 后应重新读取最新 `main` SHA 并同步开发机**，不把本行的旧 SHA 固定为未来基线。
+- Host 方桌和信息角色 Stage 1–5（#343、#344、#348、#349、#350）均已合并；相关真实 Android 设备/来电/强退恢复和付费模型现场验收**仍未完成**。
+- Host UI 职责重构 v3：**Batch 1 [#355](https://github.com/Jazz0006/CampBoardGameHost/pull/355) 已合并**（squash `7486d05c`）；**Batch 2a [#356](https://github.com/Jazz0006/CampBoardGameHost/pull/356) 已合并**（squash `e7ac9481`，完整 Android CI #4593 / R2 #4148 成功）；**Batch 2 [#357](https://github.com/Jazz0006/CampBoardGameHost/pull/357) 已合并**（squash `1fe855e8`，reviewed head `5871c355`，完整 Android CI #4597 / R2 #4151 成功）。PR #357 的 Session 派生 Host 交互、行动、角色、信息问题修复完成；AI Overlay 对旧 UI 模型及匹配器的依赖按所有者决定暂时接受。
+- 独立白天 P1（活人提名已死玩家）[PR #352](https://github.com/Jazz0006/CampBoardGameHost/pull/352) 已合并（squash `edcbf5a4`）；不要再作为未合并 Draft 重复开发。
+- **重构权威合同**：[Host UI FINAL v3](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)；[独立 Review，含 §13 决策与 §14 进度](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)。这两份文档位于 docs-only PR #351；合并后从 `main` 读取。
 
-## 下一项未完成工作（以实际现场证据为准）
+## 接下来要做的工作（以执行时最新仓库为准）
 
-1. **Stage 5 设备验收尚未完成，不要错误宣称五批全部现场通过。** 真机查看昼夜配色/蓝红卡/15 人与 360×520 可读性，醉酒/中毒/死亡/鬼票叠加、虚线/选中和按钮无溢出；检查 TB 5–15、NGJ 5–6 的代表局。
-2. 在 Android 真机上检查三工作模式、角色全屏展示→返回修改→再次展示→Next，以及中途来电/切后台/进程被杀后，仅用已记录的游戏事实能安全继续。用户要的是**能继续游戏的实用恢复**，不要求精确恢复未确认 UI 草稿；不引入独立存档/回放写入机制。
-3. 未经批准不实际调用付费 LLM API。若当前无法访问真机/ADB，只在文档里记录**待人工设备验收**，不得伪称自动测试等于真机测试。
-4. 独立 P1 不属于已合并的五批：**活人提名死人**的 Day UI；**健康 Fortune Teller 固定布尔线索**的 Host 求值。另立有界任务核实/修复，不借此重建旧 Rules/候选/评分或第二份游戏状态。
-5. **Host UI 职责重构（v3 定稿，未实施）：** 合同见 [HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)，两轮评审见 [评审](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)。`ClocktowerHostScreen.kt` 当前 51,102 B 超出 50,000 B 硬限制。顺序：先处理死者可被提名 P1（Draft PR #352，CI #4586 `testFull` 成功，待合并），再从最新 `main` 按 Batch 1 → 2a → 2 → FT P1 → 3 → 4 → 5 逐个 PR 实施。不改 Session API/JSON 格式。**CI 验收必须核对日志确实运行 `:app:testFull`**：PR 默认只跑 `testFast`（不含 `ClocktowerD2UiTest`），代码提交需带 `[full-ci]`，合并后还要看 `main` push 运行。
+1. **独立 P1 待办：健康 Fortune Teller 的可靠固定布尔结果**（与醉毒、Spy/Recluse 登记、红鲱鱼与目标改变的回归相关）。按 v3 顺序在 Batch 2 稳定后独立处理；不扩张 Host 为泛用 Rules/候选/评分引擎，不与 Batch 3 随手混改。
+2. **下一结构批次 Batch 3**：将 `ClocktowerJudgeScreen` 收敛为路由器，独立 `ClocktowerNightHostScreen` 拥有夜间 UI 草稿、最终预览及唯一 Next 意图；`ClocktowerSessionHost` 仍是唯一 Session 确认分发；同批删除老 Judge 夜间分支及其替代后的 `ClocktowerNightHostProjection` UI materializers，不建双轨。完成后再实施 Batch 4（Session 可观察快照/原子性）和 Batch 5（App 根职责及单一模式拥有者）。
+3. **已批准 AI 例外**：`ClocktowerNightAiOverlay` 当前仍以 `ClocktowerNightStepUi`、`PlayerCard`、语言和旧 AI matcher 生成推荐展示，**本轮不修改或误删生产 AI 能力**。只把它当 AI→UI 的临时只读适配器；`hostNightStep` 与 Session 不得依赖这些类型。下一独立 AI 推荐重建设计新合同并迁移生产消费者后，统一删除旧代码。不为临时 API 新建兼容层。
+4. **测试与现场验收**：代码 PR 精确 HEAD 需经真实 `./gradlew :app:testFull :app:assembleDebug` 的 GitHub CI 和 R2；文档 PR 的 Android tests 若 skipped 只证明文档检查。真机验证 5/15 人方桌、状态标记、三模式的全屏预览→Next、来电/后台/进程终止后的安全继续；付费 LLM API 需单独授权，不得伪称自动化代替真机或付费测试。
 
-**请先读：** [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[五批合同](HOST_TABLE_AND_INFORMATION_REBUILD_2026-10-22.md)、[Stage 5 验收](HOST_INFORMATION_STAGE5_ACCEPTANCE_2026-10-22.md)、[方桌视觉合同](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)、[测试策略](TESTING_STRATEGY.md)。继续修改前重新审计当时 main、工作树、PR 与 CI，勿把下方历史阶段原话当成最新指令。
+**开发前阅读**：[路线图](CURRENT_DEVELOPMENT_ROADMAP.md)、[v3 合同](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)、[Review](HOST_UI_RESPONSIBILITY_REFACTOR_REVIEW_2026-10-23.md)、[测试策略](TESTING_STRATEGY.md)。每次重新确认远端 HEAD、开放 PR、工作树与最新检查。下面内容均为历史交接，不覆盖本节当前状态。
 
 ## 历史 Stage 3 开工交接（完成后以本页顶部状态为准）
 
