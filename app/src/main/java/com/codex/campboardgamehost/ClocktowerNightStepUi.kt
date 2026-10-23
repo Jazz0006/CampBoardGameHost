@@ -62,17 +62,12 @@ internal fun ClocktowerNightStepCardLocalized(
     numericResolution: com.codex.campboardgamehost.clocktower.session.HostNumericResolution? = null,
     pairResolver: ((String, Int, Int?, Int?) -> com.codex.campboardgamehost.clocktower.session.HostPairResolution?)? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
-    selectedName: String?,
-    fortuneTellerFirst: String?,
-    fortuneTellerSecond: String?,
-    redHerring: String?,
-    chambermaidFirst: String?,
-    chambermaidSecond: String?,
-    onSelectName: (String) -> Unit,
-    onSelectFortuneTellerFirst: (String) -> Unit,
-    onSelectFortuneTellerSecond: (String) -> Unit,
-    onSelectChambermaidFirst: (String) -> Unit,
-    onSelectChambermaidSecond: (String) -> Unit,
+    /** The current step's draft seats; two-player queries keep first/second slots. */
+    selectedSeatSlots: List<Int?>,
+    /** Accepted Session Red Herring, marked on the Fortune Teller table. */
+    redHerringSeat: Int?,
+    /** A live seat tap; the screen applies the step's selection rule to its draft. */
+    onSelectSeat: (Int) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
     onInformationDraftChanged: () -> Unit = {},
     lastPreviewProposition: InformationProposition? = null,
@@ -108,15 +103,13 @@ internal fun ClocktowerNightStepCardLocalized(
     val usesSageSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage &&
             step.actor != null && step.isRealAction && cards.size >= 2
-    val usesRavenkeeperSquareTable = plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Ravenkeeper
-    val ravenkeeperSelectedSeat = if (usesRavenkeeperSquareTable) {
-        selectedName
-            ?.let { selected -> cards.indexOfFirst { card -> card.name == selected } }
-            ?.takeIf { index -> index >= 0 }
-            ?.plus(1)
-    } else {
-        null
+    val selectedSeats = selectedSeatSlots.filterNotNull()
+    val selectedSeat = selectedSeats.firstOrNull()
+    fun selectSeat(seat: Int) {
+        if (seat in 1..cards.size) onSelectSeat(seat)
     }
+    val usesRavenkeeperSquareTable = plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Ravenkeeper
+    val ravenkeeperSelectedSeat = selectedSeat.takeIf { usesRavenkeeperSquareTable }
     val recommendedRoleRevealOption = currentAiSuggestedOption
     val previewedRole = (lastPreviewProposition as? InformationProposition.RoleAt)?.let { result ->
         clocktowerDirectRoleRevealChoice(step, result.seat, cards.size, result.role.value, scriptRoles) { it }
@@ -126,12 +119,7 @@ internal fun ClocktowerNightStepCardLocalized(
             step, ravenkeeperSelectedSeat, cards.size, scriptRoles, recommendedRoleRevealOption,
         )
     } else null
-    val fortuneTellerSelectedSeats = listOfNotNull(fortuneTellerFirst, fortuneTellerSecond)
-        .mapNotNull { selectedName ->
-            cards.indexOfFirst { it.name == selectedName }
-                .takeIf { it >= 0 }
-                ?.plus(1)
-        }
+    val fortuneTellerSelectedSeats = selectedSeats
     val structuredFortuneTellerSelectedSeats = fortuneTellerSelectedSeats
         .takeIf { seats -> seats.size == 2 && seats.distinct().size == 2 }
     val fortuneTellerSelectableSeats = when (fortuneTellerSelectedSeats.size) {
@@ -279,7 +267,6 @@ internal fun ClocktowerNightStepCardLocalized(
             .mapNotNull { candidate -> seatNumberForName(candidate.name) }
             .toSet()
         val actionActorSeat = seatNumberForName(step.actor?.name)
-        val redHerringSeat = seatNumberForName(redHerring)
         val evilInfoTeam = step.actor
             ?.clocktowerRole
             ?.team
@@ -350,7 +337,7 @@ internal fun ClocktowerNightStepCardLocalized(
         }
         val onSingleTargetEvent: (ClocktowerSingleTargetEvent) -> Unit = { event ->
             when (event) {
-                is ClocktowerSingleTargetEvent.SelectSeat -> cards.getOrNull(event.seat - 1)?.name?.let(onSelectName)
+                is ClocktowerSingleTargetEvent.SelectSeat -> selectSeat(event.seat)
                 ClocktowerSingleTargetEvent.ShowResult -> onShowPlayerDisplay(step)
                 ClocktowerSingleTargetEvent.Next -> onNext()
             }
@@ -383,7 +370,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     clocktowerSingleTargetAbilityPresentation(
                         action = step.action,
                         selection = ClocktowerSingleTargetSelection(
-                            seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                            selectedSeat, selectableSeatNumbers(candidates), step.isRealAction,
                         ),
                         actorSeat = actionActorSeat,
                         wakeInstruction = command,
@@ -416,9 +403,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     },
                     language = language,
 
-                    onSeatSelected = { seatNumber ->
-                        cards.getOrNull(seatNumber - 1)?.name?.let(onSelectName)
-                    },
+                    onSeatSelected = ::selectSeat,
 
                     onHostTools = onHostTools,
                     onNext = onNext,
@@ -444,15 +429,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
 
-                    onSeatSelected = { seatNumber ->
-                        cards.getOrNull(seatNumber - 1)?.name?.let { name ->
-                            when (twoPlayerSelectionAction(fortuneTellerFirst, fortuneTellerSecond, name)) {
-                                TwoPlayerSelectionAction.ToggleFirst -> onSelectFortuneTellerFirst(name)
-                                TwoPlayerSelectionAction.ToggleSecond -> onSelectFortuneTellerSecond(name)
-                                TwoPlayerSelectionAction.RejectLimit -> Unit
-                            }
-                        }
-                    },
+                    onSeatSelected = ::selectSeat,
                     onResultSelected = ::showStructuredFortuneTellerResult,
 
                     onHostTools = onHostTools,
@@ -462,8 +439,6 @@ internal fun ClocktowerNightStepCardLocalized(
 
             ClocktowerNightFullScreenSurface.Chambermaid -> {
                 val candidates = chambermaidTargetCards.filter { it.name != step.actor?.name }
-                val selectedSeats = listOfNotNull(chambermaidFirst, chambermaidSecond)
-                    .mapNotNull(::seatNumberForName)
                 val candidateSeats = selectableSeatNumbers(candidates)
                 val selectableSeats = when (selectedSeats.size) {
                     0 -> candidateSeats
@@ -496,15 +471,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     automaticOnly = allowRuleDeterminedAutoUi,
                     language = language,
 
-                    onSeatSelected = { seatNumber ->
-                        cards.getOrNull(seatNumber - 1)?.name?.let { name ->
-                            when (twoPlayerSelectionAction(chambermaidFirst, chambermaidSecond, name)) {
-                                TwoPlayerSelectionAction.ToggleFirst -> onSelectChambermaidFirst(name)
-                                TwoPlayerSelectionAction.ToggleSecond -> onSelectChambermaidSecond(name)
-                                TwoPlayerSelectionAction.RejectLimit -> Unit
-                            }
-                        }
-                    },
+                    onSeatSelected = ::selectSeat,
                     onResultSelected = ::showRecommendedDisplayOption,
                     numericInput = if (selectedSeats.size == 2 && structuredActorSeat != null) ({
                         val current = numericResolution?.takeIf {
@@ -553,7 +520,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     clocktowerNightRulingPresentation(
                         action = step.action,
                         selection = ClocktowerSingleTargetSelection(
-                            seatNumberForName(selectedName), selectableSeatNumbers(candidates), step.isRealAction,
+                            selectedSeat, selectableSeatNumbers(candidates), step.isRealAction,
                         ),
                         mayorSeat = seatNumberForName(mayor?.name),
                     ),

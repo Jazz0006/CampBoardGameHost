@@ -235,6 +235,8 @@ class ClocktowerD2UiTest {
         val fullscreen = mutableStateOf(false)
         val confirmed = mutableListOf<InformationProposition>()
         private fun subjects() = listOfNotNull(first.value, second.value).map { name -> cards.indexOfFirst { it.name == name } + 1 }
+        private val twoSeatQuery = role in listOf("Fortune Teller", "Chambermaid")
+        private fun slots() = listOf(first.value, second.value).map { name -> name?.let { n -> cards.indexOfFirst { it.name == n } + 1 } }
         private fun step() = ClocktowerNightStepUi(
             title = role, actor = cards[0], isRealAction = true, reason = "", storytellerAction = "Wake P1",
             tellPlayer = role, explanation = "", roleEnName = role,
@@ -293,12 +295,16 @@ class ClocktowerD2UiTest {
                                 emptySet(), false,
                             ) else null,
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
-                        selectedName = "P2", fortuneTellerFirst = first.value, fortuneTellerSecond = second.value,
-                        chambermaidFirst = first.value, chambermaidSecond = second.value, redHerring = null,
-                        onSelectName = {}, onSelectFortuneTellerFirst = { first.value = it.takeUnless { it == first.value }; preview.value = null },
-                        onSelectFortuneTellerSecond = { second.value = it.takeUnless { it == second.value }; preview.value = null },
-                        onSelectChambermaidFirst = { first.value = it.takeUnless { it == first.value }; preview.value = null },
-                        onSelectChambermaidSecond = { second.value = it.takeUnless { it == second.value }; preview.value = null },
+                        selectedSeatSlots = if (twoSeatQuery) slots() else listOf(2), redHerringSeat = null,
+                        onSelectSeat = { seat ->
+                            if (twoSeatQuery) ClocktowerNightStepDraft("role-d2", StorytellerPhase.NIGHT, 2,
+                                com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId("role-d2"), slots(),
+                            ).withTappedSeat(current.action, seat)?.let { next ->
+                                first.value = next.seatSlots.getOrNull(0)?.let { cards[it - 1].name }
+                                second.value = next.seatSlots.getOrNull(1)?.let { cards[it - 1].name }
+                                preview.value = null
+                            }
+                        },
                         onShowPlayerDisplay = { preview.value = it; fullscreen.value = true },
                         onInformationDraftChanged = { preview.value = null }, lastPreviewProposition = preview.value?.displayProposition,
                         onHostTools = {},
@@ -475,6 +481,22 @@ class ClocktowerD2UiTest {
         }
     }
 
+    @Test fun unconfirmedImpTargetDoesNotCarryIntoTheNextNight() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
+            listOf("Imp", "Baron", "Chef", "Soldier", "Saint"))
+        host.enterOtherNight()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("P4").performClick()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        ui.runOnIdle { host.advanceToNextNight() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.runOnIdle {
+            assertEquals(3, host.session.state.round)
+            assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size)
+        }
+    }
+
     @Test fun troubleBrewingCompletesFirstNightDayNightAndEndingFromOnlySession() = completeGame(ClocktowerScript.TroubleBrewing)
     @Test fun noGreaterJoyCompletesFirstNightDayNightAndEndingFromOnlySession() = completeGame(ClocktowerScript.NoGreaterJoy)
 
@@ -569,7 +591,6 @@ class ClocktowerD2UiTest {
         }, 19L)
         var session = ClocktowerGameSession.createProduction("d2-ui", game.seed, game, ClocktowerSemanticHistoryMode.GLOBAL_V1)
         private val tick = mutableStateOf(0)
-        private val target = mutableStateOf<String?>(null)
         fun refresh() { tick.value++ }
         fun enterDay() {
             session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
@@ -582,6 +603,13 @@ class ClocktowerD2UiTest {
                 "ui-night", StorytellerPhase.DAY, 1, session.nextInputSequence, StorytellerPhase.NIGHT, 2), session.state.gameStateRevision)
             refresh()
         }
+        fun advanceToNextNight() {
+            enterDay()
+            session.commitConfirmedPhaseAdvance(com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft.PhaseAdvance(
+                "ui-night-${session.state.round + 1}", StorytellerPhase.DAY, session.state.round, session.nextInputSequence,
+                StorytellerPhase.NIGHT, session.state.round + 1), session.state.gameStateRevision)
+            refresh()
+        }
         fun reload() {
             session = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(session.state)))
             refresh()
@@ -591,7 +619,7 @@ class ClocktowerD2UiTest {
             adviceError.value = null
             choices.value = mapOf(id to SemanticResult(kind = "SCALAR_RESULT", scalarValue = value))
         }
-        private fun request(steps: List<ClocktowerNightStepUi>, i: Int) {
+        private fun request(steps: List<ClocktowerNightStepUi>, i: Int, @Suppress("UNUSED_PARAMETER") fortuneTellerNames: List<String>) {
             requests++
             val current = pendingGlobalNightScalarDecision(steps[i], ClocktowerPhase.FirstNight, 1, i,
                 cards, session.state.gameId, StorytellerDecisionRevision(session.state.gameStateRevision, session.state.playerInputRevision))
@@ -607,6 +635,8 @@ class ClocktowerD2UiTest {
         @Composable fun Content() {
             tick.value
             val state = session.state
+            val ruleset = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+                .fromContext(androidx.compose.ui.platform.LocalContext.current).ruleset(script)
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
                 cards = ClocktowerSessionPlayerCards(emptyList(), { session.state }, "en"), sessionState = state,
@@ -622,34 +652,19 @@ class ClocktowerD2UiTest {
                             else listOf(2, 3), "ROLE", roleId = pairRole.value)
                     else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
                         "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
-                demonAttackDraftTarget = target.value, poisonDraftTarget = target.value,
-                monkProtectedDraftTarget = null, mayorRedirectDraftTarget = null,
-                fortuneTellerFirst = null, fortuneTellerSecond = null,
-                chambermaidFirst = null, chambermaidSecond = null, ravenkeeperTarget = null, redHerring = null,
-                recommendedDemonBluffRoleNames = emptyList(), butlerMaster = target.value,
+                recommendedDemonBluffRoleNames = emptyList(),
                 onCommitConfirmedPrivateInformationPublication = { draft, revision ->
                     session.commitGlobalEpistemicObservation(draft, revision)
                     tick.value++
                 },
-                onHostTools = {}, onSelectNightDeath = { target.value = it }, onConfirmDemonAttack = { step, successor ->
-                    session.confirmNightAttack(cards.indexOfFirst { it.name == target.value } + 1, state.phase, state.round, step,
-                        successor?.let { name -> cards.indexOfFirst { it.name == name } + 1 })
+                onHostTools = {},
+                onRecordPlayerInput = { session.recordPlayerInput(); refresh() },
+                onConfirmNightStep = { confirmation ->
+                    session.confirmNightStep(confirmation, ruleset, confirmMayorRedirect = {})
                     refresh()
                 },
-                onSelectPoisonTarget = { target.value = it }, onConfirmPoisonTarget = { step ->
-                    session.confirmNightPoison(cards.indexOfFirst { it.name == target.value } + 1, state.phase, state.round, step)
-                    target.value = null
-                    refresh()
-                },
-                onSelectFortuneTellerFirst = {}, onSelectFortuneTellerSecond = {},
-                onSelectChambermaidFirst = {}, onSelectChambermaidSecond = {}, onSelectRavenkeeperTarget = {},
-                onSelectRedHerring = {}, onConfirmRedHerring = {}, onCommitDemonBluffs = {},
-                onSelectButlerMaster = { target.value = it }, onConfirmButlerMaster = { _, _, step ->
-                    session.confirmNightButlerMaster(1, cards.indexOfFirst { it.name == target.value } + 1, StorytellerPhase.FIRST_NIGHT, 1, step)
-                    refresh()
-                },
-                onSelectMonkProtectedTarget = {}, onConfirmMonkProtectedTarget = {},
-                onSelectMayorRedirectTarget = {}, onConfirmMayorRedirectTarget = {}, onConfirmNewDemon = { session.confirmImpNotification(); refresh() }, onConfirmSpyWake = {}, onConfirmEvilInformation = { _, _ -> },
+                onCommitDemonBluffs = {},
+                onConfirmNewDemon = { session.confirmImpNotification(); refresh() },
                 onConfirmKlutzChoice = { chosenName ->
                     session.confirmKlutzChoice(requireNotNull(session.state.pendingKlutzDeath()).actionId,
                         cards.indexOfFirst { it.name == chosenName } + 1)

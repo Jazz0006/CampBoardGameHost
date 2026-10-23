@@ -11,6 +11,7 @@ import com.codex.campboardgamehost.clocktower.domain.RulesetRef
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.session.*
 import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
@@ -25,6 +26,55 @@ import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevisio
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactDraft
 import com.codex.campboardgamehost.clocktower.epistemic.EpistemicObservationDraft
+import com.codex.campboardgamehost.debug.DebugFlightRecorder
+
+/**
+ * The only night-step Session confirmation dispatch. A draft from another game, night or
+ * interaction is rejected; the Session remains the only fact writer.
+ */
+internal fun ClocktowerGameSession.confirmNightStep(
+    confirmation: ClocktowerNightStepConfirmation,
+    ruleset: ValidatedClocktowerRuleset,
+    confirmMayorRedirect: (targetSeat: Int) -> Unit,
+): Boolean {
+    val step = confirmation.step
+    val draft = confirmation.draft
+    if (draft.gameId != state.gameId || draft.phase != state.phase || draft.round != state.round ||
+        draft.interactionId != step.interactionId
+    ) {
+        DebugFlightRecorder.record("NIGHT_STEP_CONFIRMATION_STALE")
+        return false
+    }
+    // Saved action IDs embed these exact step-ID strings; keep both forms for restored-game idempotency.
+    val actionStepId = step.interactionId.toString()
+    val boundaryStepId = draft.interactionId.value
+    val target = draft.selectedSeats.firstOrNull()
+    // Non-real night placeholders never commit an action. Only the active player/ruling has authority.
+    if (step.isRealAction) when (step.action) {
+        ClocktowerNightAction.RedHerring -> commitRedHerringSeat(
+            seat = requireNotNull(target ?: state.redHerringSeat) { "Red Herring requires a selected rules-legal player." },
+            phase = draft.phase, round = draft.round, sequence = nextInputSequence,
+        )
+        ClocktowerNightAction.Poison -> confirmNightPoison(target, draft.phase, draft.round, actionStepId)
+        ClocktowerNightAction.MonkProtect -> confirmNightProtection(requireNotNull(target), draft.phase, draft.round, actionStepId)
+        ClocktowerNightAction.DemonKill -> confirmNightAttack(
+            targetSeat = requireNotNull(target) { "Imp must choose a target before confirming the irreversible attack." },
+            phase = draft.phase, round = draft.round, stepId = actionStepId, successorSeat = confirmation.successorSeat,
+        )
+        ClocktowerNightAction.MayorRedirect -> confirmMayorRedirect(requireNotNull(target))
+        ClocktowerNightAction.ButlerMaster -> confirmNightButlerMaster(
+            actorSeat = requireNotNull(state.gameState.players.firstOrNull { it.name == step.actor?.name }).seat,
+            masterSeat = requireNotNull(target) { "Butler must choose a master before proceeding." },
+            phase = draft.phase, round = draft.round, stepId = actionStepId,
+        )
+        else -> Unit
+    }
+    if (step.roleEnName == "Spy") confirmSpyWake(ruleset, boundaryStepId)
+    if (step.displayKind == ClocktowerDisplayKind.EvilInfo) {
+        confirmEvilInformation(ruleset, boundaryStepId, requireNotNull(confirmation.previewRevision))
+    }
+    return true
+}
 
 /** Actual Session-to-Host UI adapter. Only drafts live here; all confirmations call the one Session. */
 @Composable
@@ -67,20 +117,7 @@ internal fun ClocktowerSessionHost(
     val liveAiAdviceText = aiConversation.liveAiAdviceText
     val liveAiAdviceBusy = aiConversation.liveAiAdviceBusy
     val liveAiAdviceError = aiConversation.liveAiAdviceError
-    var clocktowerDemonAttackDraftTarget by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerPoisonTarget by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerFortuneTellerFirst by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerFortuneTellerSecond by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerChambermaidFirst by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerChambermaidSecond by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerRavenkeeperTarget by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerButlerMaster by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerMonkProtectedTarget by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var clocktowerMayorRedirectTarget by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
-    var redHerringDraftName by remember(sessionState.gameId) { mutableStateOf<String?>(null) }
     // Accepted setup choices come from Session, not separate writable Compose state.
-    val clocktowerRedHerring = sessionState?.redHerringSeat
-        ?.let { seat -> cards.getOrNull(seat - 1)?.name }
     val clocktowerRecommendedDemonBluffRoleNames =
         sessionState?.demonBluffRoleIds?.map(RoleId::value).orEmpty()
     // This is a derived validity check, not a second mutable truth or stale-plan cache.
@@ -97,8 +134,6 @@ internal fun ClocktowerSessionHost(
             )
         }
     } == true
-    // UI-only selection; the Red Herring enters Session at its first-night Next step.
-
     fun refreshClocktowerUi() = onChanged()
     fun requireClocktowerGameSession() = session
     fun confirmClocktowerStep(confirm: () -> Unit) {
@@ -206,18 +241,48 @@ internal fun ClocktowerSessionHost(
     }
 
 
-    fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int) =
+    fun requestLiveGlobalAdvice(steps: List<ClocktowerNightStepUi>, stepIndex: Int, fortuneTellerSelectedNames: List<String>) =
         aiConversation.requestLiveGlobalAdvice(
             steps, stepIndex, aiSettings = aiSettings,
             activeGameClocktowerRulesetCatalog = activeGameClocktowerRulesetCatalog,
             currentSession = currentSession, currentMode = currentMode, isJudgeVisible = isJudgeVisible,
             cards = cards, clocktowerRulesetRef = clocktowerRulesetRef,
-            fortuneTellerSelectedNames = listOfNotNull(clocktowerFortuneTellerFirst, clocktowerFortuneTellerSecond),
+            fortuneTellerSelectedNames = fortuneTellerSelectedNames,
             mayorPending = runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull(),
             drunkAiScope = drunkAiScope,
         )
-    val renderedPhase = storytellerPhaseFor()
-    val renderedRound = round
+    fun confirmTroubleBrewingMayorRedirect(targetSeat: Int) {
+        if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return
+        val pendingDecision = requireNotNull(currentTroubleBrewingMayorRedirectPendingDecision())
+        require(pendingDecision.revision == StorytellerDecisionRevision(
+            clocktowerGameStateRevision, clocktowerPlayerInputRevision,
+        )) { "Stale Mayor confirmation." }
+        val session = requireClocktowerGameSession()
+        if (session.state.nightTargets.mayorRedirectSeat == targetSeat) return
+        val registry = activeGameClocktowerRulesetCatalog
+            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
+            gameSnapshot = session.toGameSnapshot(requireNotNull(clocktowerRulesetRef)),
+            phase = StorytellerPhase.NIGHT, round = round, characterRegistry = registry,
+        )
+        val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
+            decision = pendingDecision, snapshot = snapshot,
+            gameContext = StorytellerProviderGameContextBuilderV1.build(
+                snapshot, StorytellerProviderRevisionV1(
+                    session.state.gameStateRevision, session.state.playerInputRevision,
+                ), session.state,
+            ),
+        )
+        session.commitConfirmedMayorRedirect(
+            draft = ActionFactDraft.MayorRedirectChoice(
+                actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
+                phase = StorytellerPhase.NIGHT, round = round,
+                sequence = session.nextInputSequence,
+                mayorSeat = pendingDecision.mayorSeat, targetSeat = targetSeat,
+            ),
+            request = request, expectedGameStateRevision = session.state.gameStateRevision,
+        )
+    }
     ClocktowerJudgeScreen(
                         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                         cards = cards,
@@ -247,101 +312,23 @@ internal fun ClocktowerSessionHost(
                                 latest.nextTimelineGlobalSequence == plan.exclusiveGlobalSequence
                         }?.recommendation?.choices.orEmpty(),
                         onRequestGlobalAiAdvice = ::requestLiveGlobalAdvice,
-                        demonAttackDraftTarget = clocktowerDemonAttackDraftTarget,
-                        poisonDraftTarget = clocktowerPoisonTarget,
-                        monkProtectedDraftTarget = clocktowerMonkProtectedTarget,
-                        mayorRedirectDraftTarget = clocktowerMayorRedirectTarget,
-                        fortuneTellerFirst = clocktowerFortuneTellerFirst,
-                        fortuneTellerSecond = clocktowerFortuneTellerSecond,
-                        chambermaidFirst = clocktowerChambermaidFirst,
-                        chambermaidSecond = clocktowerChambermaidSecond,
-                        ravenkeeperTarget = clocktowerRavenkeeperTarget,
-                        redHerring = redHerringDraftName ?: clocktowerRedHerring,
-                        openingRecommendedRedHerring = openingRecommendedRedHerringSeat
-                            ?.takeIf { openingHintsUsable }
-                            ?.let { cards.getOrNull(it - 1)?.name },
                         recommendedDemonBluffRoleNames =
                             clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
                                 openingRecommendedBluffRoleNames.takeIf {
                                     openingHintsUsable
                                 }.orEmpty()
                             },
-                        butlerMaster = clocktowerButlerMaster,
                         onCommitConfirmedPrivateInformationPublication = ::commitClocktowerPrivateInformationPublication,
                         onHostTools = onHostTools,
-                        onSelectNightDeath = { selected ->
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerDemonAttackDraftTarget = selected
-                        },
-                        onConfirmDemonAttack = { stepId, successorName ->
+                        onRecordPlayerInput = ::advanceClocktowerPlayerInputRevision,
+                        onConfirmNightStep = { confirmation ->
                             confirmClocktowerStep {
-                                val session = requireClocktowerGameSession()
-                                val targetSeat = clocktowerSeatFor(requireNotNull(clocktowerDemonAttackDraftTarget) {
-                                    "Imp must choose a target before confirming the irreversible attack."
-                                })
-                                session.confirmNightAttack(
-                                    targetSeat = targetSeat,
-                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
-                                    successorSeat = successorName?.let(::clocktowerSeatFor),
+                                requireClocktowerGameSession().confirmNightStep(
+                                    confirmation,
+                                    activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript),
+                                    ::confirmTroubleBrewingMayorRedirect,
                                 )
                                 refreshClocktowerUi()
-                            }
-                        },
-                        onSelectPoisonTarget = { selected ->
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerPoisonTarget = selected
-                        },
-                        onConfirmPoisonTarget = { stepId ->
-                            confirmClocktowerStep {
-                                val session = requireClocktowerGameSession()
-                                session.confirmNightPoison(
-                                    targetSeat = clocktowerPoisonTarget?.let(::clocktowerSeatFor),
-                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
-                                )
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onSelectFortuneTellerFirst = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerFortuneTellerFirst = it
-                        },
-                        onSelectFortuneTellerSecond = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerFortuneTellerSecond = it
-                        },
-                        onSelectChambermaidFirst = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerChambermaidFirst = it
-                        },
-                        onSelectChambermaidSecond = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerChambermaidSecond = it
-                        },
-                        onSelectRavenkeeperTarget = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerRavenkeeperTarget = it
-                        },
-                        onSelectRedHerring = { name ->
-                            // A preview is never an actual accepted Red Herring choice.
-                            if (name != null) {
-                                require(cards.any { it.name == name }) {
-                                    "Red Herring draft must refer to a current seat."
-                                }
-                            }
-                            redHerringDraftName = name
-                        },
-                        onConfirmRedHerring = { name ->
-                            confirmClocktowerStep {
-                                val seat = cards.indexOfFirst { it.name == name }
-                                    .takeIf { it >= 0 }?.plus(1)
-                                    ?: error("Cannot confirm Red Herring outside the Session seats.")
-                                requireClocktowerGameSession().commitRedHerringSeat(
-                                    seat = seat,
-                                    phase = renderedPhase, round = renderedRound,
-                                    sequence = requireClocktowerGameSession().nextInputSequence,
-                                )
-                                refreshClocktowerUi()
-                                redHerringDraftName = null
                             }
                         },
                         onCommitDemonBluffs = { roleNames ->
@@ -349,101 +336,16 @@ internal fun ClocktowerSessionHost(
                                 if (roleNames != clocktowerRecommendedDemonBluffRoleNames) {
                                     requireClocktowerGameSession().commitDemonBluffs(
                                         roles = roleNames.map(::RoleId),
-                                        phase = renderedPhase, round = renderedRound,
+                                        phase = storytellerPhaseFor(), round = round,
                                         sequence = requireClocktowerGameSession().nextInputSequence,
                                     )
                                     refreshClocktowerUi()
                                 }
                             }
                         },
-                        onSelectButlerMaster = {
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerButlerMaster = it
-                        },
-                        onConfirmButlerMaster = { actorName, masterName, stepId ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmNightButlerMaster(
-                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
-                                    actorSeat = clocktowerSeatFor(actorName),
-                                    masterSeat = clocktowerSeatFor(masterName),
-                                )
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onSelectMonkProtectedTarget = { selected ->
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerMonkProtectedTarget = selected
-                        },
-                        onConfirmMonkProtectedTarget = { stepId ->
-                            confirmClocktowerStep {
-                                val session = requireClocktowerGameSession()
-                                session.confirmNightProtection(
-                                    targetSeat = clocktowerSeatFor(requireNotNull(clocktowerMonkProtectedTarget)),
-                                    phase = renderedPhase, round = renderedRound, stepId = stepId,
-                                )
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onSelectMayorRedirectTarget = { selected ->
-                            advanceClocktowerPlayerInputRevision()
-                            clocktowerMayorRedirectTarget = selected
-                        },
-                        onConfirmMayorRedirectTarget = {
-                            confirmClocktowerStep {
-                                if (currentClocktowerScript == ClocktowerScript.TroubleBrewing) {
-                                    val selectedTarget = requireNotNull(clocktowerMayorRedirectTarget)
-                                    val pendingDecision = requireNotNull(currentTroubleBrewingMayorRedirectPendingDecision())
-                                    require(pendingDecision.revision == StorytellerDecisionRevision(
-                                        clocktowerGameStateRevision, clocktowerPlayerInputRevision,
-                                    )) { "Stale Mayor confirmation." }
-                                    if (requireClocktowerGameSession().state.let { state ->
-                                        state.nightTargets.mayorRedirectSeat?.let(state.gameState::playerAt)?.name
-                                    } != selectedTarget) {
-                                        val targetSeat = clocktowerSeatFor(selectedTarget)
-                                        val session = requireClocktowerGameSession()
-                                        val registry = activeGameClocktowerRulesetCatalog
-                                            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
-                                        val snapshot = TroubleBrewingGameSnapshotProjector.fromRuntime(
-                                            gameSnapshot = session.toGameSnapshot(requireNotNull(clocktowerRulesetRef)),
-                                            phase = StorytellerPhase.NIGHT, round = round, characterRegistry = registry,
-                                        )
-                                        val request = StorytellerProviderRequestFactoryV1.fromMayorRedirect(
-                                            decision = pendingDecision, snapshot = snapshot,
-                                            gameContext = StorytellerProviderGameContextBuilderV1.build(
-                                                snapshot, StorytellerProviderRevisionV1(
-                                                    session.state.gameStateRevision, session.state.playerInputRevision,
-                                                ), session.state,
-                                            ),
-                                        )
-                                        session.commitConfirmedMayorRedirect(
-                                            draft = ActionFactDraft.MayorRedirectChoice(
-                                                actionId = clocktowerActionId("mayor-redirect", targetSeat = targetSeat),
-                                                phase = StorytellerPhase.NIGHT, round = round,
-                                                sequence = session.nextInputSequence,
-                                                mayorSeat = pendingDecision.mayorSeat, targetSeat = targetSeat,
-                                            ),
-                                            request = request, expectedGameStateRevision = session.state.gameStateRevision,
-                                        )
-                                        refreshClocktowerUi()
-                                    }
-                                }
-                            }
-                        },
                         onConfirmNewDemon = {
                             confirmClocktowerStep {
                                 requireClocktowerGameSession().confirmImpNotification()
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmSpyWake = { stepId ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmSpyWake(activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript), stepId)
-                                refreshClocktowerUi()
-                            }
-                        },
-                        onConfirmEvilInformation = { stepId, previewRevision ->
-                            confirmClocktowerStep {
-                                requireClocktowerGameSession().confirmEvilInformation(activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript), stepId, previewRevision)
                                 refreshClocktowerUi()
                             }
                         },
@@ -484,8 +386,6 @@ internal fun ClocktowerSessionHost(
                             confirmClocktowerStep {
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
                                 refreshClocktowerUi()
-                                clocktowerDemonAttackDraftTarget = null
-
                             }
                         },
                         onConfirmDay = { expectedRound ->
@@ -497,15 +397,7 @@ internal fun ClocktowerSessionHost(
                         onCompleteNight = {
                             confirmClocktowerStep {
                                 commitClocktowerPhaseAdvance(ClocktowerPhase.Day)
-                                clocktowerFortuneTellerFirst = null
-                                clocktowerFortuneTellerSecond = null
-                                clocktowerChambermaidFirst = null
-                                clocktowerChambermaidSecond = null
-                                clocktowerRavenkeeperTarget = null
-                                clocktowerMonkProtectedTarget = null
-                                // PhaseAdvance has already cleared transient night targets.
                                 refreshClocktowerUi()
-                                clocktowerMayorRedirectTarget = null
                             }
                         },
                     )

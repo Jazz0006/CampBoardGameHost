@@ -1,14 +1,60 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
+import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
-internal enum class TwoPlayerSelectionAction {
-    ToggleFirst,
-    ToggleSecond,
-    RejectLimit,
+/**
+ * UI-only seat selection for exactly one night interaction of one night. Interaction IDs carry
+ * no round, so the identity includes phase and round. Never persisted or recorded as an event;
+ * only that step's Next confirms it through the Session.
+ */
+internal data class ClocktowerNightStepDraft(
+    val gameId: String,
+    val phase: StorytellerPhase,
+    val round: Int,
+    val interactionId: ClocktowerInteractionId,
+    /** Two-player queries keep fixed first/second slots; a cleared slot is refilled by the next tap. */
+    val seatSlots: List<Int?> = emptyList(),
+) {
+    val selectedSeats: List<Int> get() = seatSlots.filterNotNull()
 }
+
+private val twoSeatNightActions = setOf(ClocktowerNightAction.FortuneTeller, ClocktowerNightAction.Chambermaid)
+
+/** Night actions whose current step records live seat taps in the draft. */
+internal val clocktowerNightSeatDraftActions = twoSeatNightActions + setOf(
+    ClocktowerNightAction.RedHerring, ClocktowerNightAction.Poison, ClocktowerNightAction.ButlerMaster,
+    ClocktowerNightAction.MonkProtect, ClocktowerNightAction.DemonKill, ClocktowerNightAction.MayorRedirect,
+    ClocktowerNightAction.Ravenkeeper,
+)
+
+/** One seat tap: two fixed slots for two-player queries, otherwise a single toggled target; null rejects a third seat. */
+internal fun ClocktowerNightStepDraft.withTappedSeat(action: ClocktowerNightAction, seat: Int): ClocktowerNightStepDraft? {
+    if (action !in twoSeatNightActions) {
+        return copy(seatSlots = if (selectedSeats.firstOrNull() == seat) emptyList() else listOf(seat))
+    }
+    val first = seatSlots.getOrNull(0)
+    val second = seatSlots.getOrNull(1)
+    return copy(seatSlots = when {
+        seat == first -> listOf(null, second)
+        seat == second -> listOf(first, null)
+        first == null -> listOf(seat, second)
+        second == null -> listOf(first, seat)
+        else -> return null
+    })
+}
+
+/** The current step's Next request; [ClocktowerGameSession.confirmNightStep] is its only Session dispatcher. */
+internal data class ClocktowerNightStepConfirmation(
+    val step: ClocktowerNightStepUi,
+    val draft: ClocktowerNightStepDraft,
+    val successorSeat: Int? = null,
+    val previewRevision: StorytellerDecisionRevision? = null,
+)
 
 /**
  * A real player target action is not confirmable until the live Host-legal
@@ -27,23 +73,6 @@ internal fun clocktowerLivePlayerTargetReady(
     ClocktowerNightAction.MonkProtect,
     ClocktowerNightAction.DemonKill,
 ) || (selectedName != null && selectedName in legalNames)
-
-internal fun clocktowerToggledSingleTargetSelection(
-    currentSelection: String?,
-    tappedSelection: String,
-): String? = tappedSelection.takeUnless { it == currentSelection }
-
-internal fun twoPlayerSelectionAction(
-    first: String?,
-    second: String?,
-    selectedName: String,
-): TwoPlayerSelectionAction = when {
-    selectedName == first -> TwoPlayerSelectionAction.ToggleFirst
-    selectedName == second -> TwoPlayerSelectionAction.ToggleSecond
-    first == null -> TwoPlayerSelectionAction.ToggleFirst
-    second == null -> TwoPlayerSelectionAction.ToggleSecond
-    else -> TwoPlayerSelectionAction.RejectLimit
-}
 
 internal data class RevalidatedTwoPlayerSelection(
     val first: String?,
