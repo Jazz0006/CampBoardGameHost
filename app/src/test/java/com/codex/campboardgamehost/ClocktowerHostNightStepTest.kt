@@ -49,6 +49,18 @@ class ClocktowerHostNightStepTest {
         assertTrue(host.isPrivateInformation)
     }
 
+    @Test fun empathQuestionTracksLivingNeighboursFromSession() {
+        val s = session("Empath", "Soldier", "Baron", "Imp", "Saint")
+        s.commitConfirmedPlayerDeath(ActionFactDraft.Death(
+            "death-5", s.state.phase, s.state.round, s.nextInputSequence, 5,
+        ), s.state.gameStateRevision)
+        val host = hostNightStep(s.state, ruleset, null)
+        assertEquals("Empath", host.facts.roleEnName)
+        assertEquals(NumericMetric.LIVING_EVIL_NEIGHBOURS, host.numericMetric)
+        assertEquals(listOf(4, 2),
+            (host.facts.question as ClocktowerInformationQuestion.Number).subjectSeats)
+    }
+
     @Test fun recluseAndDrunkPreserveDiscretionFromSessionFacts() {
         val recluse = hostNightStep(session("Chef", "Recluse", "Imp", "Soldier", "Baron").state, ruleset, null)
         assertTrue(recluse.numericResolution!!.values.size > 1)
