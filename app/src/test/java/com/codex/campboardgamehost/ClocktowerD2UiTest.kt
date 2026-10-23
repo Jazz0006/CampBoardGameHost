@@ -38,6 +38,11 @@ import org.robolectric.annotation.Config
 class ClocktowerD2UiTest {
     @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
 
+    /** Seat interaction must select the clickable square-table card, not its duplicated label. */
+    private fun clickSeat(name: String) {
+        ui.onNode(hasClickAction() and hasText(name, substring = true)).performClick()
+    }
+
     @Test fun manualChefPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.MANUAL)
     @Test fun assistedEmpathPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.AI_ASSISTED, "Empath")
     @Test fun automaticChefWaitsForActualPreviewAndExplicitNext() = numericHost(StorytellerOperationMode.AI_AUTOMATIC)
@@ -63,11 +68,11 @@ class ClocktowerD2UiTest {
             ui.onNode(hasClickAction() and hasText("P$first + P$second", substring = true)).performClick()
         } else {
             // Stage 4: choose two physical seats BEFORE choosing the matching role.
-            ui.onNodeWithText("P$first").performClick()
-            ui.onNodeWithText("P$second").performClick()
+            clickSeat("P$first")
+            clickSeat("P$second")
             if (role == "Washerwoman") {
                 ui.onNodeWithText("Choose character").performClick()
-                ui.onNodeWithText(initialRole).performClick()
+                ui.onNode(hasClickAction() and hasText(initialRole)).performClick()
             }
             ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
         }
@@ -79,9 +84,9 @@ class ClocktowerD2UiTest {
                 ui.onNodeWithText("Manual selection").performClick()
             }
             // Remove first seat, retain second, then select a new partner.
-            ui.onNodeWithText("P$first").performClick()
+            clickSeat("P$first")
             val newPartner = if (role == "Librarian") 2 else 4
-            ui.onNodeWithText("P$newPartner").performClick()
+            clickSeat("P$newPartner")
             ui.onNodeWithText("Next →").assertIsNotEnabled()
             // An asynchronous changed recommendation must not clear the human draft.
             ui.runOnIdle { host.pairRole.value = "Mayor" }
@@ -170,8 +175,8 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText(if (mode == StorytellerOperationMode.AI_AUTOMATIC) "YES" else "NO").performClick()
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next →").assertIsEnabled()
-        ui.onNodeWithText("P2").performClick()
-        ui.onNodeWithText("P4").performClick()
+        clickSeat("P2")
+        clickSeat("P4")
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         if (mode == StorytellerOperationMode.AI_AUTOMATIC) {
             ui.onNodeWithText("YES").assertDoesNotExist()
@@ -190,8 +195,8 @@ class ClocktowerD2UiTest {
         ui.setContent { f.Content() }
         ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
-        ui.onNodeWithText("P2").performClick()
-        ui.onNodeWithText("P4").performClick()
+        clickSeat("P2")
+        clickSeat("P4")
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
@@ -204,14 +209,14 @@ class ClocktowerD2UiTest {
     @Test fun manualSageRetainsPairAndInvalidatesChangedSeats() {
         val f = RoleCard("Sage", StorytellerOperationMode.MANUAL)
         ui.setContent { f.Content() }
-        ui.onNodeWithText("P2").performClick()
-        ui.onNodeWithText("P3").performClick()
+        clickSeat("P2")
+        clickSeat("P3")
         ui.onNodeWithText("Show this pair").performClick()
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next →").assertIsEnabled()
-        ui.onNodeWithText("P2").performClick()
+        clickSeat("P2")
         ui.onNodeWithText("Next →").assertIsNotEnabled()
-        ui.onNodeWithText("P4").performClick()
+        clickSeat("P4")
         ui.onNodeWithText("Show this pair").performClick()
         ui.onNodeWithText("Close display card").performClick()
         ui.onNodeWithText("Next →").performClick()
@@ -340,7 +345,7 @@ class ClocktowerD2UiTest {
     private fun playerTargetRequiresNext(role: String) {
         val host = Host(role, StorytellerOperationMode.AI_AUTOMATIC)
         ui.setContent { host.Content() }
-        ui.onNodeWithText("P2").performClick()
+        clickSeat("P2")
         ui.runOnIdle { org.junit.Assert.assertTrue(host.session.state.actionTimeline.entries.isEmpty()) }
         ui.onNodeWithText("Next →").performClick()
         ui.runOnIdle {
@@ -402,7 +407,7 @@ class ClocktowerD2UiTest {
         host.reload()
         ui.setContent { host.Content() }
         ui.onNodeWithText("Confirm Klutz choice").assertIsNotEnabled()
-        ui.onNodeWithText("P3").performClick()
+        clickSeat("P3")
         ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.KlutzChoice>().size) }
         ui.onNodeWithText("Confirm Klutz choice").performClick()
         ui.runOnIdle {
@@ -423,7 +428,7 @@ class ClocktowerD2UiTest {
         host.refresh()
         ui.setContent { host.Content() }
         ui.onNodeWithText("Next →").assertIsNotEnabled()
-        ui.onNodeWithText("P1").performClick()
+        clickSeat("P1")
         ui.onNodeWithText("Imp self-kill · successor").assertExists()
         ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size) }
         ui.onNodeWithText("#2 P2").performClick()
@@ -444,7 +449,7 @@ class ClocktowerD2UiTest {
                 .ruleset(ClocktowerScript.TroubleBrewing), "other_night:role:Spy")
         host.refresh()
         ui.setContent { host.Content() }
-        ui.onNodeWithText("P1").performClick()
+        clickSeat("P1")
         ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
         ui.onNodeWithText("Next →").assertIsEnabled().performClick()
         ui.runOnIdle {
@@ -460,7 +465,7 @@ class ClocktowerD2UiTest {
         host.session.confirmNightPoison(1, StorytellerPhase.NIGHT, 2, "other_night:role:Poisoner")
         host.refresh()
         ui.setContent { host.Content() }
-        ui.onNodeWithText("P1").performClick()
+        clickSeat("P1")
         ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
         ui.onNodeWithText("Next →").assertIsEnabled().performClick()
         ui.runOnIdle {
@@ -482,19 +487,18 @@ class ClocktowerD2UiTest {
         val original = host.session
         ui.setContent { host.Content() }
         if (script == ClocktowerScript.TroubleBrewing) {
-            ui.onNodeWithText("P3").performClick()
+            clickSeat("P3")
             ui.onNodeWithText("Next →").performClick()
         }
         if (script == ClocktowerScript.TroubleBrewing) {
             // Poisoner and Imp occupy neighbouring seats 4/5: Chef's Host value is 1.
             ui.onNodeWithText("Show to player: 1").performClick()
         } else {
-            ui.onNode(hasSetTextAction()).performTextReplacement("1")
-            ui.onNodeWithText("Show manually selected result").performClick()
+            ui.onNodeWithText("Show to player: 1").performClick()
         }
         ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Close display card").performClick()
-        ui.onNodeWithText("Next").performClick()
+        ui.onNodeWithText("Next →").performClick()
         ui.onNodeWithText("End day").assertIsEnabled().performClick()
         ui.runOnIdle {
             assertEquals(original, host.session)
@@ -502,10 +506,10 @@ class ClocktowerD2UiTest {
             assertEquals(2, host.session.state.round)
         }
         if (script == ClocktowerScript.TroubleBrewing) {
-            ui.onNodeWithText("P3").performClick()
+            clickSeat("P3")
             ui.onNodeWithText("Next →").performClick()
         }
-        ui.onNodeWithText("P2").performClick()
+        clickSeat("P2")
         ui.onNodeWithText("Next →").performClick()
         ui.onNodeWithText("End day").assertIsEnabled()
         ui.runOnIdle {
@@ -516,7 +520,7 @@ class ClocktowerD2UiTest {
             host.session.confirmNomination(1, 5, null)
             host.refresh()
         }
-        listOf("P1", "P3", "P4").forEach { ui.onNodeWithText(it).performClick() }
+        listOf("P1", "P3", "P4").forEach(::clickSeat)
         ui.onNodeWithText("Confirm vote").performClick()
         ui.onNodeWithText("End day").performClick()
         ui.runOnIdle {
