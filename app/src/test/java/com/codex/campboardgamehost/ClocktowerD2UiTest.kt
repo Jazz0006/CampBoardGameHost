@@ -40,7 +40,7 @@ class ClocktowerD2UiTest {
 
     /** Seat interaction must select the clickable square-table card, not its duplicated label. */
     private fun clickSeat(name: String) {
-        ui.onNode(hasClickAction() and hasText(name, substring = true)).performClick()
+        ui.onNode(hasClickAction() and hasText(name)).performClick()
     }
 
     @Test fun manualChefPublishesOnlyFinalPreviewOnNext() = numericHost(StorytellerOperationMode.MANUAL)
@@ -62,7 +62,7 @@ class ClocktowerD2UiTest {
         val initialRole = when (role) {
             "Washerwoman" -> "Soldier"
             "Librarian" -> "Saint"
-            else -> "Poisoner"
+            else -> "Baron"
         }
         if (mode != StorytellerOperationMode.MANUAL) {
             ui.onNode(hasClickAction() and hasText("P$first + P$second", substring = true)).performClick()
@@ -72,7 +72,7 @@ class ClocktowerD2UiTest {
             clickSeat("P$second")
             if (role == "Washerwoman") {
                 ui.onNodeWithText("Choose character").performClick()
-                ui.onNode(hasClickAction() and hasText(initialRole)).performClick()
+                ui.onAllNodesWithText(initialRole).onLast().performClick()
             }
             ui.onNode(hasClickAction() and hasText("Show to player:", substring = true)).performClick()
         }
@@ -103,7 +103,7 @@ class ClocktowerD2UiTest {
                 listOf(first, second) else listOf(second, if (role == "Librarian") 2 else 4).sorted(),
                 pair.map { it.seat })
             assertEquals(if (mode == StorytellerOperationMode.AI_AUTOMATIC) initialRole else
-                when (role) { "Washerwoman" -> "Mayor"; "Librarian" -> "Saint"; else -> "Poisoner" },
+                when (role) { "Washerwoman" -> "Mayor"; "Librarian" -> "Saint"; else -> "Baron" },
                 pair.first().role.value)
         }
     }
@@ -539,12 +539,12 @@ class ClocktowerD2UiTest {
     private class Host(role: String, val mode: StorytellerOperationMode,
         private val script: ClocktowerScript = ClocktowerScript.TroubleBrewing,
         roles: List<String> = listOf(role, "Soldier",
-            if (role == "Investigator") "Poisoner" else "Mayor", "Saint", "Recluse")) {
+            if (role == "Investigator") "Baron" else "Mayor", "Saint", "Recluse")) {
         val openingEnabled = mutableStateOf(true)
         val pairRole = mutableStateOf(when (role) {
             "Washerwoman" -> "Soldier"
             "Librarian" -> "Saint"
-            "Investigator" -> "Poisoner"
+            "Investigator" -> "Baron"
             else -> "Chef"
         })
         val adviceKey = mutableStateOf<String?>(null)
