@@ -4,13 +4,13 @@
 >
 > Status: **SUPERSEDED AS EXECUTION AUTHORITY — HISTORICAL LRE ROUTE; LRE-0/LRE-1 RESULTS PRESERVED**
 >
-> LRE-1 completion authority: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`
+> LRE-1 completion authority: `docs/archive/legacy-host/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`
 >
-> Evidence/audit authority: `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`
+> Evidence/audit authority: `docs/archive/legacy-host/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`
 >
 > Historical product-owner decision at 2026-10-04: improve and cut over new recommendation policies **family by family**, revoke unsupported legacy automatic authority early through Manual fallback, and delete the old recommendation engine only after production no longer depends on it.
 >
-> 2026-10-05 amendment: the family-by-family special-case policy loop is superseded by `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Preserve this file for the LRE-0/LRE-1 history and deletion inventory, but do not use LRE-P as current continuation authority.
+> 2026-10-05 amendment: the family-by-family special-case policy loop is superseded by `docs/archive/legacy-host/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Preserve this file for the LRE-0/LRE-1 history and deletion inventory, but do not use LRE-P as current continuation authority.
 
 ## 1. Core sequencing decision
 
@@ -171,7 +171,7 @@ Special registration additionally needs a durable typed factual history producer
 
 Status: **COMPLETE / ACCEPTED** at executable checkpoint `045b3a6884f765149d4f1802d5e369671d38d938`; CI #3752 / R2 #3448 GREEN.
 
-Completion record: `docs/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`.
+Completion record: `docs/archive/legacy-host/LRE_1_MANUAL_SAFETY_GATE_COMPLETION_2026-10-04.md`.
 
 Per product-owner instruction, recommendation-engine development is **PAUSED AFTER LRE-1**. Do not enter LRE-P or physical legacy deletion while this pause is active.
 
@@ -368,11 +368,11 @@ Historical authority order at the time this route was active:
 
 1. `docs/CURRENT_DEVELOPMENT_ROADMAP.md` — current priority/status;
 2. this document — then-current staged replacement / cutover / deletion route;
-3. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — retirement evidence and inventory;
-4. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` — long-lived SDE architecture;
+3. `docs/archive/legacy-host/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` — retirement evidence and inventory;
+4. `docs/archive/legacy-host/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md` — long-lived SDE architecture;
 5. historical RSR / TBGS post-2E audits under `docs/archive/`.
 
-Current execution authority is now `docs/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Where this file conflicts with GSP, GSP governs continuation; LRE-1's accepted fail-closed Manual invariant remains preserved.
+Current execution authority is now `docs/archive/legacy-host/GSP_GENERAL_STORYTELLER_POLICY_ROUTE_2026-10-05.md`. Where this file conflicts with GSP, GSP governs continuation; LRE-1's accepted fail-closed Manual invariant remains preserved.
 
 ## 10. Historical continuation / supersession
 

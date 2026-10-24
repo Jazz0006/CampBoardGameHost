@@ -4,7 +4,7 @@
 > Status: **ACTIVE NEXT IMPLEMENTATION CAMPAIGN**  
 > Live baseline when this handoff was written: `main@6f1ee4513cd149120c453c3b2623f989903a2493`  
 > Field-test target: **Friday 2026-09-04**  
-> Product reference: `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
+> Product reference: `docs/archive/legacy-host/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
 
 ## 1. Why this campaign is inserted now
 
@@ -445,7 +445,7 @@ If a true correctness bug is discovered during UI work, isolate it as a narrow h
 Start the next implementation conversation with:
 
 ```text
-请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md。
+请读取根目录 AGENTS.md、docs/CURRENT_DEVELOPMENT_ROADMAP.md、docs/archive/legacy-host/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md 和 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_UI_INFORMATION_CAMPAIGN.md。
 
 先重新确认 live main 和最近的 first-night evil info crash hotfix 已在 main，然后从 UI-R1 reusable square-table seat surface 开始。按 handoff 的 slice 边界实施，优先保证 2026-09-04 周五真机组局可用。不要开始 EPI-MQ、不要改变 recommendation/legal semantics、不要自行 merge。
 ```

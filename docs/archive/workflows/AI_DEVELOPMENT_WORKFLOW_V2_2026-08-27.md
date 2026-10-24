@@ -47,7 +47,7 @@ Use Luna only when at least one of these is true:
 
 Do not send work to Luna merely because Luna is already involved in the slice or because the target file is large.
 
-The normative large-file procedure, including YAML/Python quoting, LF/newline preservation, exact anchor counts, workflow startup failures, GitHub Actions bot-push behavior and self-cleanup, is `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
+The normative large-file procedure, including YAML/Python quoting, LF/newline preservation, exact anchor counts, workflow startup failures, GitHub Actions bot-push behavior and self-cleanup, is `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`.
 
 ## 3. Tests-first micro-cycle
 
@@ -122,7 +122,7 @@ Escalate a single slice earlier when it changes persistence/schema, transaction 
 
 ## 5. Luna instruction contract
 
-Luna is the fallback after the large-file one-shot path, not the default large-file writer. Before assigning a large/truncated-file edit to Luna, record why `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` cannot safely perform the edit.
+Luna is the fallback after the large-file one-shot path, not the default large-file writer. Before assigning a large/truncated-file edit to Luna, record why `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` cannot safely perform the edit.
 
 Every Luna instruction must be one continuous fenced code block and should normally contain only:
 

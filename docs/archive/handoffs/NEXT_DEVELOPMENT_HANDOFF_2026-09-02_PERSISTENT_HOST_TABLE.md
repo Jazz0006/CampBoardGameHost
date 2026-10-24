@@ -549,7 +549,7 @@ Prefer small cohesive new/existing owners for:
 
 Do not create generic `Utils`, `Helpers`, `Manager`, or giant context structures merely to reduce parameter count.
 
-For large/protected files, follow `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` and root `AGENTS.md`.
+For large/protected files, follow `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` and root `AGENTS.md`.
 
 ## 11. Tests-first / validation strategy
 
@@ -712,9 +712,9 @@ Read first:
 AGENTS.md
 docs/CURRENT_DEVELOPMENT_ROADMAP.md
 docs/NEXT_DEVELOPMENT_HANDOFF_2026-09-02_PERSISTENT_HOST_TABLE.md
-docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md
+docs/archive/legacy-host/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md
 docs/TESTING_STRATEGY.md
-docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md
+docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md
 ```
 
 Then re-query live GitHub state and begin from **R4D-1 Persistent Table Foundation**.

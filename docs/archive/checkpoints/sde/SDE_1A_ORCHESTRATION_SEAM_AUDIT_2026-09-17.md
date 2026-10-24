@@ -16,7 +16,7 @@ The audit followed, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. `docs/NEXT_DEVELOPMENT_HANDOFF.md`;
-5. `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
+5. `docs/archive/legacy-host/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`;
 6. live `main` at the baseline above.
 
 The audit did not reopen completed FN-BUNDLE candidate-space/setup-pair ownership work, did not introduce a second rules/state/world-solver authority, and did not cut production callers over.

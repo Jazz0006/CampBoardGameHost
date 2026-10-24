@@ -3,8 +3,8 @@
 > Date: 2026-09-18 Australia/Sydney  
 > Status: **LONG-LIVED / REQUIRED BEFORE SDE-3; current execution lives in roadmap/handoff**  
 > Base checkpoint: PR #144 merged to `main` as `89453c902741699b072d11320d85a5561172abe5`  
-> Parent architecture: `docs/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`  
-> Current D5F policy authority: `docs/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
+> Parent architecture: `docs/archive/legacy-host/STORYTELLER_DECISION_ENGINE_ROUTE_2026-09-17.md`
+> Current D5F policy authority: `docs/archive/legacy-host/SDE_2D5F_FIRST_NIGHT_INFORMATION_POLICY_SYNTHESIS_2026-09-21.md`
 
 ## 1. Purpose
 

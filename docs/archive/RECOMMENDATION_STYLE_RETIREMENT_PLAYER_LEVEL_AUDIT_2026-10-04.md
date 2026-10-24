@@ -6,7 +6,7 @@
 >
 > Status: **RSR-0 AUDIT COMPLETE / TARGET CONTRACT ACCEPTED**
 >
-> Historical production verdict at RSR-0: **NO STYLE-RETIREMENT CODE SLICE IS SAFE YET WITHOUT FIRST DEFINING STYLE-NEUTRAL POLICY SEMANTICS**. RSR-1A later completed the safe Storyteller-mode/style ownership decoupling. The planned family-by-family behavior-preserving continuation is now **superseded** by `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`, because the product owner has withdrawn trust from the whole legacy heuristic recommender rather than only its three styles.
+> Historical production verdict at RSR-0: **NO STYLE-RETIREMENT CODE SLICE IS SAFE YET WITHOUT FIRST DEFINING STYLE-NEUTRAL POLICY SEMANTICS**. RSR-1A later completed the safe Storyteller-mode/style ownership decoupling. The planned family-by-family behavior-preserving continuation is now **superseded** by `docs/archive/legacy-host/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md`, because the product owner has withdrawn trust from the whole legacy heuristic recommender rather than only its three styles.
 >
 > Product-owner direction: future recommendation differentiation should primarily use **per-player experience level**. The intended small vocabulary is **BEGINNER / NORMAL / EXPERT**. The product currently exposes no player-level setting, so every player is treated as **NORMAL** until the future player-profile/player-management slice exists.
 

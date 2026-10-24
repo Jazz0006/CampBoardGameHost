@@ -1,6 +1,6 @@
 # AI-STORYTELLER-CONTINUITY-1 — 连续对话、游戏记录驱动的按需裁量与长期战略记忆
 
-> **2026-10-16 PRIORITY AND SEMANTICS UPDATE:** 当前优先 [ARCH-CLEANUP-2](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) A1–A6。唯一可靠的当前 Session 与逻辑单份有序结构化实际历史是模型输入来源；AI 整局计划仅为待执行缓存，不是整包已采纳事实。删除首夜/后续一键采纳及相关双轨状态，确认或真实向玩家公布当前结果时才提交事实；恢复只需正确魔典/已公布信息/安全继续，不要求任意历史状态重建或精确 UI 恢复。下方 2026-10-15 实现差距和旧 API 描述作为历史证据保存，新代码不得按它复活已退役合同。
+> **2026-10-16 PRIORITY AND SEMANTICS UPDATE:** 当前优先 [ARCH-CLEANUP-2](archive/legacy-host/ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) A1–A6。唯一可靠的当前 Session 与逻辑单份有序结构化实际历史是模型输入来源；AI 整局计划仅为待执行缓存，不是整包已采纳事实。删除首夜/后续一键采纳及相关双轨状态，确认或真实向玩家公布当前结果时才提交事实；恢复只需正确魔典/已公布信息/安全继续，不要求任意历史状态重建或精确 UI 恢复。下方 2026-10-15 实现差距和旧 API 描述作为历史证据保存，新代码不得按它复活已退役合同。
 
 > 产品设计更新：2026-10-15（Australia/Sydney）。**最新批准的产品决策：开局联合全局规划，后续必要时仅请求当前一项线索。后续的“整包 remainingChoices”方案被替代，不得继续作为强制开发合同。** 当前仍需实施与验证；本文件不是生产实现验收。
 > 当前任务入口：[roadmap](CURRENT_DEVELOPMENT_ROADMAP.md) / [handoff](NEXT_DEVELOPMENT_HANDOFF.md)。旧 3E/3E2/3E3 文档是各阶段的实现证据，不能覆盖本文件的新产品目标。

@@ -8,7 +8,7 @@
 
 Step 4 began from merged `main` `b77560628054dee90c78a91d4bab8cb4185fda59`, which includes
 Step 3 via PR #126. The live fan-out and architecture pre-flight are recorded in section 11 of
-`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
+`docs/archive/legacy-host/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
 
 This slice is limited to the unfinished-night reconstruction/restore entry-point mismatch. It does
 not change persistence schema, recovery defaults, game mechanics, No Greater Joy setup, Host/App

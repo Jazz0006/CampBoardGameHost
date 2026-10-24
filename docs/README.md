@@ -1,21 +1,20 @@
-# 文档入口（2026-10-20，Codex 本地）
+# 文档入口
 
-## 现行权威与推荐阅读顺序
+## 当前阅读顺序
 
-1. [**Minimal Host Architecture Rebuild（已批准的唯一总设计与执行合同）**](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)：唯一 Session + 已确认有序事件 + 稳定步骤 ID；无 persistent Pending/夜间 Previous/Dawn；行动本步 Next 提交，D2 预览返回可改选且仅 Next 记录最后唯一 Observation；整链替换与同批删旧、P0–P5 验收。
-2. [A–D2 最新裁决](MINIMAL_HOST_FLOW_AUDIT_AND_DECISIONS_2026-10-20.md)：预览与最终确认边界、A/B/C 与迁移清单。
-3. [AGENTS](../AGENTS.md)：提交、安全与工程约束；[当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[新对话交接](NEXT_DEVELOPMENT_HANDOFF.md)：当前分支、PR、第一批实际任务。
-4. [测试策略](TESTING_STRATEGY.md)：业务行为与退出门槛；[Host 事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)：核心事件语义。
+1. [GameSession 简明共享说明](GAME_SESSION_SHARED_GUIDE.md)：三个项目共用的最小记录链、当前保存/恢复与 AI 续接，以及尚未实现的部分。
+2. [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[交接](NEXT_DEVELOPMENT_HANDOFF.md)：当前代码与下一项工作。
+3. [最小事实合同](MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)、[已批准重构合同](MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)：唯一 Session、确认顺序、隐私、原子保存等约束。
+4. [Host UI 职责分批计划](HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md)、[测试策略](TESTING_STRATEGY.md)、[方桌视觉合同](HOST_TABLE_VISUAL_CONTRACT_2026-10-22.md)。
 
-**冲突优先级**：新总纲 > AGENTS 最新段 > Roadmap/NEXT 最新段 > 事实合同/测试 > 历史文件。旧三模块新 Rules、旧 P1–P5、局部 F12 和 ARCH-CLEANUP-2 分批指令均只作为当时审计/提交证据，不能再次作为下一步执行命令。
+最新用户决定及 AGENTS 当前段优先；共享说明沿用已有合同，不另建事实模型。设计目标、已实现能力与验收证据必须分开。文件名包含 CURRENT、CONTRACT、NEXT 不代表其内容仍适用，尤其是归档文件。
 
-## 只作为库存和历史证据，不给出新的开发优先级
+## 当前验收与工具参考
 
-- [当前扫描源码索引](MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)：原扫描 717 个代码类文件的路径、大小与**初步分类**；需以最新 Git 树更新，不能视为完成逐文件行为审计。
-- [第一轮全仓扫描与删除台账](MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)：包含曾经误设的“Host 不计算规则”与 F12 过程记录，当前按新两职责 Host + 已有 AI 重构合同重新归属；仅保留历史大小与实际删除证据。
-- [2026-10-17 旧最小状态清理](MINIMAL_GAME_STATE_CLEANUP_2026-10-17.md)、[D 阶段拆分审计](APP_HOST_STAGE_D_AUDIT_2026-10-17.md)、[旧 ARCH-CLEANUP-2 / Recovery](ARCH_CLEANUP_2_SINGLE_SESSION_AND_PRACTICAL_RECOVERY_2026-10-16.md) 均是历史。
-- [历史归档](archive/README.md) 和 Git 提交保留设计追溯。旧 Rules 完整合法性、恢复/历史影子、多路径开发 NEXT 不再是生产必须保持的合同。
+- [Batch 3](HOST_UI_BATCH3_ACCEPTANCE.md)、[Batch 4](HOST_UI_BATCH4_ACCEPTANCE.md)、[Batch 5](HOST_UI_BATCH5_ACCEPTANCE.md)：Batches 3/4 已合并，Batch 5 仍是 Draft #361。
+- [实际整局验收](MINIMAL_HOST_MINIMUM_COMPLETE_ACCEPTANCE_2026-10-21.md)、[全仓清理验收](MINIMAL_HOST_WHOLE_TREE_CLEANUP_ACCEPTANCE_2026-10-21.md)：历史代码检查点，不替代最新 SHA。
+- [测试 APK 分发](FIELD_TEST_APK_DISTRIBUTION.md)、[日志诊断参考](AI_DIAG1_LIVE_ADB_LOGCAT_ROUTE_2026-10-12.md)、[docs-only CI 策略](CI_DOCS_ONLY_MAIN_PUSH_POLICY_2026-09-08.md)。
 
-新任务只维护顶部现行状态和 GitHub 可验证结果；历史旧路线尽量归档而不是不断叠加“最新指令”，不得与现行总纲竞争权威。
+## 历史资料
 
-当前在 Windows Codex 本地直接读写与验证，不使用 MiniMCP。开放 PR 只有 Draft #334（base main）和 #335（base #334）；每次从当前交接取得精确 HEAD/CI，而非沿旧快照执行。旧路线和交接已分别归档为 [路线历史](archive/checkpoints/CURRENT_DEVELOPMENT_ROADMAP_PRE_LOCAL_D2_2026-10-20.md) / [交接历史](archive/handoffs/NEXT_DEVELOPMENT_HANDOFF_PRE_LOCAL_D2_2026-10-20.md)。
+[归档入口](archive/README.md) · [本次清理清单](DOCS_CLEANUP_2026-10-24.md)。旧策略/评分/世界枚举、独立 Recovery、旧迁移与实验路线均只供追溯，不是重新开发或恢复旧代码的指令。史料、JSON/TSV 数据和验收证据不能仅因日期较早就删除。

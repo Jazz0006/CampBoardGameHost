@@ -14,7 +14,7 @@
 
 > **最终高价值测试清理**：PR #338 + #339 合并，精确代码 `4b9852cf5828c445b532550115aafbf2ddc8c4bf`，其中补回两项独立安全/可玩性覆盖的 #339 [Android CI #4528](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/39604089426) 与 R2 #4098 SUCCESS。最终静态 124 测试类/566 项（原 144 类/639 项），不把旧版 639 或中途 564 视为现在的应过数量。文件下方保留执行过程的分批计数供追踪，但以本段为最新基线；真机强退和付费 AI 未验收。
 
-> **当前唯一验收策略。** 先以 [开发路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[当前交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 [合并后独立审计](MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md) 判断应测什么；不照搬 F12/P1–P5 历史进度或机械 test-first。之前的详细时间线已存档至 [旧版测试策略](archive/checkpoints/TESTING_STRATEGY_PRE_POST_MERGE_AUDIT_2026-10-21.md)，仅用于溯源而非现行命令。
+> **当前唯一验收策略。** 先以 [开发路线](CURRENT_DEVELOPMENT_ROADMAP.md)、[当前交接](NEXT_DEVELOPMENT_HANDOFF.md) 和 [合并后独立审计](archive/legacy-host/MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md) 判断应测什么；不照搬 F12/P1–P5 历史进度或机械 test-first。之前的详细时间线已存档至 [旧版测试策略](archive/checkpoints/TESTING_STRATEGY_PRE_POST_MERGE_AUDIT_2026-10-21.md)，仅用于溯源而非现行命令。
 
 ## 事实和验证基线
 
@@ -25,7 +25,7 @@
 ## 优先级与行为测试
 
 1. **P1 Host 唯一结果**：健康 Chef/Empath 及固定布尔查询，在完成合法登记裁量后应由 Host 提供唯一结果，不依赖手动任意输入或 AI 猜测；Drunk/poisoned/Spy/Recluse 等有裁量边界的情况允许真正选择，按玩家实际收到的内容只写一条最终 Observation。对同一 Session 的输入、查询目标、能力状态、已确认事实分别测试，明确人工误播记录边界。
-2. **P1 Day 提名被提名者**：存活玩家可以提名死者，死者不能发起提名。验证活人→死人手势选择、确认 `Nomination`、投票/处决（死者执行不产生第二次死亡）、中断重载；同时保护每天一人提名一次、每人被提名一次和真人实际输入。当前 UI 过窄问题详见 [独立审计](MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md)。
+2. **P1 Day 提名被提名者**：存活玩家可以提名死者，死者不能发起提名。验证活人→死人手势选择、确认 `Nomination`、投票/处决（死者执行不产生第二次死亡）、中断重载；同时保护每天一人提名一次、每人被提名一次和真人实际输入。当前 UI 过窄问题详见 [独立审计](archive/legacy-host/MINIMAL_HOST_POST_MERGE_CODE_AUDIT_2026-10-21.md)。
 3. **夜间步骤与安全事务**：无 StartNight/独立 Dawn/跨夜 Previous；既有保护/毒/攻击/死/市长/继任/唤醒触发由唯一 Session 决定，正式 Next 立即原子提交、稳定 stepId 幂等，不能从 UI 第二游标提交。真实 Session 应能在磁盘写入失败回滚，并基于已确认记录安全重载。
 4. **D2 确认门禁**：选择→全屏预览→返回可修改→再预览→当前角色 Next 只写**最后一条私密 Observation**；上一轮预览、过期 AI、改变查询目标后旧结果不能被接受。三模式下自动只替代说书人裁量，不替代真人玩家的点击/目标输入。
 5. **保留产品边界**：TB 5–15、NGJ 5–6 实际支持人数与代表角色，已有 AI 联合开局/续规划 V3、receipt/记忆/凭据隔离、两项跨局角色阵容/同玩家身份防重复、游戏身份和隐私。不要为退休旧合法候选/评分/世界枚举恢复专属断言。
