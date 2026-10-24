@@ -38,6 +38,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
     wakeInstruction: String?,
     scriptRoles: List<ClocktowerRole>,
     recommendedOption: ClocktowerDisplayOption?,
+    resolution: com.codex.campboardgamehost.clocktower.session.HostRoleResolution?,
     lastPreviewRoleId: String?,
     automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
@@ -53,8 +54,14 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
             selectedSeat = selectedSeat, selectableSeats = selectableSeats, enabled = enabled,
         ),
     )
+    val availableRoles = scriptRoles.filter { com.codex.campboardgamehost.clocktower.domain.RoleId(it.enName) in resolution?.roles.orEmpty() }
+    val forced = resolution?.roles?.singleOrNull()?.let {
+        clocktowerDirectRoleRevealChoice(step, selectedSeat, seats.size, it.value, availableRoles, roleLabel)?.let { choice ->
+            choice.copy(displayOption = choice.displayOption.copy(isTruthful = true))
+        }
+    }
     val advised = clocktowerDirectRecommendedRoleReveal(
-        step, selectedSeat, seats.size, scriptRoles, recommendedOption,
+        step, selectedSeat, seats.size, availableRoles, recommendedOption,
     )
     var editing by remember(interactionKey, selectedSeat, automaticOnly) {
         mutableStateOf(!automaticOnly && (advised == null ||
@@ -102,6 +109,12 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                         else "请选择要查看身份的玩家",
                         textAlign = TextAlign.Center,
                     )
+                } else if (forced != null) {
+                    Button(onClick = { onConfirm(forced) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Show to player: ${forced.displayLabel}" else "展示给玩家：${forced.displayLabel}")
+                    }
+                } else if (resolution == null) {
+                    Text(if (language == "en") "Current information unavailable" else "当前信息不可用")
                 } else if (!editing && advised != null) {
                     ClocktowerSingleRecommendationButtons(
                         recommendations = listOf(advised),
@@ -131,7 +144,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                         DropdownMenu(
                             expanded = roleMenuExpanded, onDismissRequest = { roleMenuExpanded = false },
                         ) {
-                            scriptRoles.distinctBy { it.enName }.forEach { role ->
+                            availableRoles.distinctBy { it.enName }.forEach { role ->
                                 DropdownMenuItem(
                                     text = { Text(roleLabel(role.enName)) },
                                     onClick = { changeRole(role.enName); roleMenuExpanded = false },
@@ -142,7 +155,7 @@ internal fun ClocktowerRavenkeeperSquareTableDialog(
                     Spacer(Modifier.height(6.dp))
                     val choice = selectedRole?.let {
                         clocktowerDirectRoleRevealChoice(
-                            step, selectedSeat, seats.size, it, scriptRoles, roleLabel,
+                            step, selectedSeat, seats.size, it, availableRoles, roleLabel,
                         )
                     }
                     Button(

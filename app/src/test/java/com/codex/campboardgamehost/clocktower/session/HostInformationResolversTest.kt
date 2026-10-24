@@ -11,6 +11,43 @@ import org.junit.Test
 import java.io.File
 
 class HostInformationResolversTest {
+    @Test fun healthyRoleInformationUsesActualIdentityIncludingADeadDrunkTarget() {
+        for (role in listOf("Undertaker", "Ravenkeeper")) {
+            val s = session(role, "Drunk", "Soldier", "Baron", "Imp", shown = mapOf(2 to "Chef"))
+            update(s, 2, alive = false)
+            if (role == "Ravenkeeper") update(s, 1, alive = false)
+            val before = s.state
+            val result = requireNotNull(RoleInformationResolver.resolve(s.state, rules, role, 1, 2))
+            assertEquals(listOf(RoleId("Drunk")), result.roles)
+            assertTrue(result.accepts(InformationProposition.RoleAt(2, RoleId("Drunk"))))
+            assertFalse(result.accepts(InformationProposition.RoleAt(3, RoleId("Drunk"))))
+            assertFalse(result.accepts(InformationProposition.RoleAt(2, RoleId("Chef"))))
+            assertEquals(before, s.state)
+        }
+    }
+
+    @Test fun roleInformationKeepsSourceImpairmentAndOnlyRelevantTargetRegistrationDiscretion() {
+        for (role in listOf("Undertaker", "Ravenkeeper")) {
+            val s = session(role, "Spy", "Recluse", "Soldier", "Imp")
+            fun roles(seat: Int) = requireNotNull(RoleInformationResolver.resolve(s.state, rules, role, 1, seat)).roles
+            assertEquals(listOf(RoleId("Soldier")), roles(4))
+            assertTrue(roles(2).containsAll(listOf(RoleId("Spy"), RoleId("Chef"), RoleId("Drunk"))))
+            assertFalse(RoleId("Imp") in roles(2))
+            assertTrue(roles(3).containsAll(listOf(RoleId("Recluse"), RoleId("Imp"), RoleId("Poisoner"))))
+            assertFalse(RoleId("Chef") in roles(3))
+            update(s, 2, alive = false)
+            assertTrue(RoleId("Chef") in roles(2))
+            update(s, 2, poisoned = true)
+            update(s, 3, poisoned = true)
+            assertEquals(listOf(RoleId("Spy")), roles(2))
+            assertEquals(listOf(RoleId("Recluse")), roles(3))
+            update(s, 1, poisoned = true, alive = role != "Ravenkeeper")
+            assertTrue(roles(4).containsAll(listOf(RoleId("Soldier"), RoleId("Imp"), RoleId("Chef"))))
+            val drunk = session("Drunk", "Soldier", "Mayor", "Baron", "Imp", shown = mapOf(1 to role))
+            assertTrue(requireNotNull(RoleInformationResolver.resolve(drunk.state, rules, role, 1, 2)).roles.size > 1)
+        }
+    }
+
     private val catalog = BuiltInClocktowerRulesetCatalog {
         File("src/main/assets/$it").readText(Charsets.UTF_8)
     }
@@ -90,6 +127,29 @@ class HostInformationResolversTest {
         assertEquals(listOf(false, true), FortuneTellerInformationResolver.resolve(drunk.state, 1, listOf(2, 3))?.values)
         update(s, 1, alive = false)
         assertNull(FortuneTellerInformationResolver.resolve(s.state, 1, listOf(2, 3)))
+    }
+
+    @Test fun impairedChefUsesThePlausiblePlayerCountRangeAndHealthyChefStillUsesActualSeats() {
+        for ((count, maximum) in listOf(5 to 2, 8 to 2, 9 to 2, 10 to 3, 12 to 3, 13 to 4, 15 to 4)) {
+            val roles = listOf("Chef", "Imp") + List(count - 2) { "Soldier" }
+            val s = session(*roles.toTypedArray())
+            val metric = NumericMetric.ADJACENT_EVIL_PAIRS
+            assertEquals(listOf(0), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
+            update(s, 1, poisoned = true)
+            assertEquals((0..maximum).toList(), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
+            val drunk = session(*(listOf("Drunk") + roles.drop(1)).toTypedArray(), shown = mapOf(1 to "Chef"))
+            assertEquals((0..maximum).toList(), NumericInformationResolver.resolve(drunk.state, metric, 1)?.values)
+        }
+    }
+
+    @Test fun chefCanRegisterTheSameRecluseDifferentlyForEachNeighbouringPair() {
+        val s = session("Chef", "Imp", "Recluse", "Poisoner", "Soldier")
+        val before = s.state
+        val metric = NumericMetric.ADJACENT_EVIL_PAIRS
+        assertEquals(listOf(0, 1, 2), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
+        assertSame(before, s.state)
+        update(s, 3, poisoned = true)
+        assertEquals(listOf(0), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
     }
 
     @Test fun chefWraparoundCountsSpecialRegistrationsWithoutChangingSession() {

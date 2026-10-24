@@ -114,6 +114,45 @@ class ClocktowerNightFlowTest {
         assertEquals("other_night:role:Empath", next(s))
     }
 
+    @Test fun `day execution successor attacks that night in either seat order and after restore`() {
+        for (oldSeat in listOf(1, 2)) {
+            val newSeat = if (oldSeat == 1) 2 else 1
+            var s = if (oldSeat == 1) session("Imp", "Scarlet Woman", "Chef", "Soldier", "Saint")
+                else session("Scarlet Woman", "Imp", "Chef", "Soldier", "Saint")
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("day", StorytellerPhase.FIRST_NIGHT, 1,
+                s.nextInputSequence, StorytellerPhase.DAY, 1), s.state.gameStateRevision)
+            s.confirmNomination(3, oldSeat, null)
+            s.confirmVote(3, oldSeat, listOf(1, 2, 3))
+            s.confirmEndDay(1)
+            assertFalse(s.state.gameState.playerAt(oldSeat)!!.alive)
+            assertEquals(RoleId("Imp"), s.state.gameState.playerAt(newSeat)!!.actualRole)
+            s = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(s.state)))
+            assertEquals("other_night:event:imp:new_demon_identity", next(s))
+            s.confirmImpNotification()
+            s.confirmImpNotification()
+            s = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(s.state)))
+            assertEquals("other_night:role:Imp", next(s))
+            val host = com.codex.campboardgamehost.hostNightStep(s.state, tb, null)
+            assertEquals(newSeat, host.facts.actorSeat)
+            assertEquals(com.codex.campboardgamehost.ClocktowerNightAction.DemonKill, host.facts.action)
+            // Poison presentation must also refer to the new Imp, never the old corpse.
+            s.updateGameState(s.state.gameState.copy(players = s.state.gameState.players.map {
+                if (it.seat == newSeat) it.copy(poisoned = true) else it
+            }))
+            assertEquals(newSeat, s.state.poisonedSeatForRole("Imp"))
+            s.updateGameState(s.state.gameState.copy(players = s.state.gameState.players.map { it.copy(poisoned = false) }))
+            s.confirmNightAttack(3, StorytellerPhase.NIGHT, 2, requireNotNull(next(s)))
+            assertFalse(s.state.gameState.playerAt(3)!!.alive)
+            assertNull(next(s))
+            assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.Attack })
+            s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("day2", StorytellerPhase.NIGHT, 2,
+                s.nextInputSequence, StorytellerPhase.DAY, 2), s.state.gameStateRevision)
+            s.confirmEndDay(2)
+            assertEquals("other_night:role:Imp", next(s))
+            assertEquals(newSeat, com.codex.campboardgamehost.hostNightStep(s.state, tb, null).facts.actorSeat)
+        }
+    }
+
     @Test fun `Imp succession notification must be confirmed and does not grant another attack`() {
         val s = session("Imp", "Scarlet Woman", "Empath", "Soldier", "Saint", night = true)
         s.confirmNightAttack(1, StorytellerPhase.NIGHT, 2, requireNotNull(next(s)), 2)
@@ -125,6 +164,13 @@ class ClocktowerNightFlowTest {
         assertEquals(1, s.state.epistemicObservationLog.records.size)
         assertEquals(setOf(2), s.state.epistemicObservationLog.records.single().recipientSeats)
         assertEquals(1, s.state.actionTimeline.entries.count { it.fact is ActionFact.Attack })
+        information(s, "Empath", 3)
+        s.commitConfirmedPhaseAdvance(ActionFactDraft.PhaseAdvance("post-starpass-day", StorytellerPhase.NIGHT, 2,
+            s.nextInputSequence, StorytellerPhase.DAY, 2), s.state.gameStateRevision)
+        s.confirmEndDay(2)
+        val restored = ClocktowerGameSession.restore(ClocktowerSessionJson.decode(ClocktowerSessionJson.encode(s.state)))
+        assertEquals("other_night:role:Imp", next(restored))
+        assertEquals(2, com.codex.campboardgamehost.hostNightStep(restored.state, tb, null).facts.actorSeat)
     }
 
     @Test fun `Spy Next records one wake without a second Grimoire or another action`() {

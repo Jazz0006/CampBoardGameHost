@@ -30,7 +30,7 @@ internal fun ClocktowerJudgeScreen(
     val newDemonSeat = sessionState.takeIf { it.phase == StorytellerPhase.NIGHT }?.pendingImpNotification()?.targetSeat
     key(sessionState.gameId, sessionState.phase, sessionState.round) {
         when {
-            newDemonSeat != null -> ClocktowerNewDemonHostScreen(cards, newDemonSeat, onHostTools, onConfirmNewDemon)
+            newDemonSeat != null -> ClocktowerNewDemonHostScreen(cards, sessionState, onHostTools, onConfirmNewDemon)
             sessionState.phase == StorytellerPhase.FIRST_NIGHT && sessionState.demonBluffRoleIds.isEmpty() &&
                 sessionState.gameState.players.size >= 7 && sessionState.livingDemonSeat() != null ->
                 ClocktowerDemonBluffsHostScreen(sessionState, recommendedDemonBluffRoleNames,

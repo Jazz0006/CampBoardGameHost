@@ -1,5 +1,7 @@
 # 当前开发路线
 
+> **2026-10-24 真机修复更新：** #361/#362 与恶魔掩饰修复 #363 已合并，当前本批基线为 `492ecd267`。后续夜间重复预览、虚线、唤醒箭头、身份信息隐私/唯一结果、厨师小屏与认知范围、传承方桌及继任攻击修复见[完整问题记录](DEVICE_NIGHT_FLOW_FIXES_2026-10-24.md)。本地完整 644 项和 APK 通过，用户已授权本批合并与同步；以下 Batch 5 待合并状态为旧检查点，执行前以实际 Git/PR 为准。
+
 - 已合并：Host UI Batch 3 #359（`2aa7abbf`）、Batch 4 #360（`17949e72`）；main CI #4611 / APK #175 通过。
 - 待审阅：Batch 5 [Draft #361](https://github.com/Jazz0006/CampBoardGameHost/pull/361)，`05f6a21f`；完整 CI #4612 / R2 #4161 通过。[验收](HOST_UI_BATCH5_ACCEPTANCE.md)。未获进一步合并授权。
 - 本次文档工作：完成 [GameSession 简明共享说明](GAME_SESSION_SHARED_GUIDE.md)，清理文档入口及历史文件位置，不改运行代码或存档格式。

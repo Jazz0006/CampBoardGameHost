@@ -132,6 +132,80 @@ class ClocktowerD2UiTest {
     }
 
     @Test fun manualUndertakerRestoresPreviewAndRejectsUnshownEdits() = roleReveal("Undertaker", StorytellerOperationMode.MANUAL)
+    @Test fun daySuccessionShowsNewImpOnTableThenAllowsItsActualAttack() {
+        val host = Host("Imp", StorytellerOperationMode.MANUAL,
+            roles = listOf("Imp", "Scarlet Woman", "Chef", "Soldier", "Saint"))
+        host.enterDay()
+        host.session.confirmNomination(3, 1, null)
+        host.session.confirmVote(3, 1, listOf(1, 2, 3))
+        host.session.confirmEndDay(1)
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Wake seat 2").assertExists()
+        ui.onNodeWithText("Informed, continue").assertIsNotEnabled()
+        ui.onNodeWithText("Show full screen to player").performClick()
+        ui.onNodeWithText("You are now the Imp").assertExists()
+        assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("Informed, continue").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(InformationProposition.RoleAt(2, RoleId("Imp")),
+                host.session.state.epistemicObservationLog.records.single().proposition)
+            assertEquals(0, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.Attack })
+        }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P3")
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.runOnIdle {
+            assertEquals(false, host.session.state.gameState.playerAt(3)!!.alive)
+            assertEquals(true, host.session.state.gameState.playerAt(2)!!.alive)
+            assertEquals(1, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.Attack })
+        }
+    }
+
+    @Test fun healthyUndertakerInAutomaticModeNeedsNoAiAndOnlyShowsTheExecutedRole() {
+        val host = Host("Undertaker", StorytellerOperationMode.AI_AUTOMATIC,
+            roles = listOf("Undertaker", "Soldier", "Mayor", "Baron", "Imp"))
+        host.enterDay()
+        host.session.confirmNomination(1, 2, null)
+        host.session.confirmVote(1, 2, listOf(1, 2, 3), 1)
+        host.session.confirmEndDay(1)
+        val rules = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+            .ruleset(ClocktowerScript.TroubleBrewing)
+        // The Imp acts before the Undertaker on later nights.
+        host.session.confirmNightAttack(4, StorytellerPhase.NIGHT, 2, requireNotNull(host.session.state.nextNightInteraction(rules)).id.value)
+        host.refresh()
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Choose character").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("Show to player: Soldier").performClick()
+        ui.onNodeWithText("Soldier").assertExists()
+        ui.onNodeWithText("Record the actual shown character.").assertDoesNotExist()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.runOnIdle { assertEquals(0, host.requests); assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(InformationProposition.RoleAt(2, RoleId("Soldier")), host.session.state.epistemicObservationLog.records.single().proposition) }
+    }
+
+    @Test fun deadHealthyRavenkeeperChoosesTargetThenGetsOneHostRoleWithoutAi() {
+        val host = Host("Ravenkeeper", StorytellerOperationMode.AI_AUTOMATIC,
+            roles = listOf("Ravenkeeper", "Soldier", "Mayor", "Saint", "Imp"))
+        host.enterOtherNight()
+        val rules = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
+            .ruleset(ClocktowerScript.TroubleBrewing)
+        host.session.confirmNightAttack(1, StorytellerPhase.NIGHT, 2, requireNotNull(host.session.state.nextNightInteraction(rules)).id.value)
+        host.refresh()
+        ui.setContent { host.Content() }
+        clickSeat("P2")
+        ui.onNodeWithText("Choose character").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("Show to player: Soldier").performClick()
+        ui.onNodeWithText("Soldier").assertExists()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.runOnIdle { assertEquals(0, host.requests); assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(InformationProposition.RoleAt(2, RoleId("Soldier")), host.session.state.epistemicObservationLog.records.single().proposition) }
+    }
     @Test fun assistedUndertakerKeepsHumanInputWhenAdviceChanges() = roleReveal("Undertaker", StorytellerOperationMode.AI_ASSISTED)
     @Test fun automaticUndertakerRequiresPreviewBeforeNext() = roleReveal("Undertaker", StorytellerOperationMode.AI_AUTOMATIC)
     @Test fun manualRavenkeeperRestoresPreviewAndRejectsUnshownEdits() = roleReveal("Ravenkeeper", StorytellerOperationMode.MANUAL)
@@ -332,6 +406,11 @@ class ClocktowerD2UiTest {
                         booleanResolution = if (role == "Fortune Teller" && subjects().size == 2)
                             HostBooleanResolution(listOf(false, true), 1, subjects(),
                                 com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.POISONED) else null,
+                        // Card-only discretion fixture: the source is impaired, so arbitrary shown roles are deliberate.
+                        roleResolution = if (role in setOf("Undertaker", "Ravenkeeper")) HostRoleResolution(
+                            clocktowerRolesForScript(ClocktowerScript.TroubleBrewing).map { RoleId(it.enName) }, 1, 2,
+                            com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState.POISONED,
+                        ) else null,
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
                         selectedSeatSlots = if (twoSeatQuery) slots() else listOf(2), redHerringSeat = null,
                         onSelectSeat = { seat ->
@@ -472,11 +551,17 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.onNodeWithText("Show to player").performClick()
         ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("✓ Last preview (confirm with Next)", substring = true).assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Next →").performClick()
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.runOnIdle { assertEquals(setOf(6), host.session.state.epistemicObservationLog.records.single().recipientSeats) }
         ui.onNodeWithText("Show to player").performClick()
         ui.onNodeWithText("Close display card").performClick()
+        ui.onNodeWithText("✓ Last preview (confirm with Next)", substring = true).assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        ui.runOnIdle { assertEquals(1, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Next →").performClick()
         ui.runOnIdle { assertEquals(listOf(setOf(6), setOf(7)),
             host.session.state.epistemicObservationLog.records.map { it.recipientSeats }) }

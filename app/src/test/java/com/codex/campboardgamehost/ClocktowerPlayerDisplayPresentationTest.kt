@@ -35,7 +35,6 @@ class ClocktowerPlayerDisplayPresentationTest {
         assertEquals(ClocktowerDisplayKind.EitherOne, presentation.displayKind)
         assertEquals("information", presentation.title)
         assertEquals("Chef", presentation.primary)
-        assertEquals("player-visible footer", presentation.footer)
     }
 
     @Test
@@ -98,7 +97,6 @@ class ClocktowerPlayerDisplayPresentationTest {
 
         val presentation = requireNotNull(clocktowerPairPlayerRevealPresentation(step, roster()))
 
-        assertNull(presentation.footer)
     }
 
     @Test

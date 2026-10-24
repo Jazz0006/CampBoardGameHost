@@ -38,6 +38,7 @@ internal data class HostNightStep(
     val numericMetric: NumericMetric?,
     val numericResolution: HostNumericResolution?,
     val booleanResolution: HostBooleanResolution?,
+    val roleResolution: HostRoleResolution?,
     /** Washerwoman/Librarian/Investigator whose pair query Session resolves. */
     val pairRole: String?,
     val selectedSeat: Int?,
@@ -47,7 +48,7 @@ internal data class HostNightStep(
     val successorSeats: List<Int>,
 ) {
     val hostDeterminedNumeric: Boolean get() = numericResolution?.values?.size == 1
-    val hostDeterminedInformation: Boolean get() = hostDeterminedNumeric || booleanResolution?.values?.size == 1
+    val hostDeterminedInformation: Boolean get() = hostDeterminedNumeric || booleanResolution?.values?.size == 1 || roleResolution?.roles?.size == 1
     fun successorSeat(chosen: Int?): Int? = when (successorSeats.size) {
         0 -> null
         1 -> successorSeats.single()
@@ -84,7 +85,7 @@ private fun ClocktowerSessionState.currentNightStepFacts(
     val redHerring = current.id.value == "first_night:fortune_teller:red_herring"
     val mayorRuling = current.id.value == "other_night:event:mayor:death_resolution"
     val actorSeat = if (current.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION) {
-        gameState.players.firstOrNull { it.wakingRole() == current.roleId }?.seat
+        current.roleId?.let(::wakingPlayerForRole)?.seat
     } else null
     val action = when {
         redHerring -> ClocktowerNightAction.RedHerring
@@ -181,6 +182,9 @@ internal fun hostNightStep(
         booleanResolution = if (action == ClocktowerNightAction.FortuneTeller) facts.actorSeat?.let {
             FortuneTellerInformationResolver.resolve(state, it, draft?.selectedSeats.orEmpty())
         } else null,
+        roleResolution = (facts.question as? ClocktowerInformationQuestion.Role)?.let { query ->
+            facts.actorSeat?.let { RoleInformationResolver.resolve(state, ruleset, facts.roleEnName.orEmpty(), it, query.subjectSeat) }
+        },
         pairRole = facts.roleEnName?.takeIf { facts.isRealAction && it in pairInformationRoles },
         selectedSeat = selectedSeat,
         legalTargetSeats = legalTargetSeats,

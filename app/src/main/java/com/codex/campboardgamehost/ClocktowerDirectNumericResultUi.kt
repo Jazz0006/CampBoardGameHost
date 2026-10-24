@@ -6,10 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +72,7 @@ internal fun clocktowerMatchingNumericResult(
 
 /** Chef/Empath only. Display choices come from the current read-only Session resolution.
  * Uncommitted selection is local Compose state; the existing Host preview/Next is the sole fact writer. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ClocktowerResolvedNumericResultUi(
     values: List<Int>,
@@ -79,6 +83,7 @@ internal fun ClocktowerResolvedNumericResultUi(
     draftKey: String,
     onConfirm: (Int) -> Unit,
     onDraftChanged: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var manualSelection by remember(draftKey) {
         mutableStateOf(lastPreviewValue?.takeIf { it in values })
@@ -89,43 +94,46 @@ internal fun ClocktowerResolvedNumericResultUi(
         else -> manualSelection?.takeIf { it in values }
     }
     Column(
-        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         if (values.size > 1 && !automaticOnly) {
-            values.forEach { value ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    androidx.compose.material3.RadioButton(
+            FlowRow(
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                values.forEach { value ->
+                    FilterChip(
                         selected = chosen == value,
+                        modifier = Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp),
                         onClick = {
                             if (manualSelection != value) {
                                 manualSelection = value
                                 onDraftChanged()
                             }
                         },
+                        label = { Text(value.toString()) },
                     )
-                    androidx.compose.material3.TextButton(onClick = {
-                        if (manualSelection != value) {
-                            manualSelection = value
-                            onDraftChanged()
-                        }
-                    }) {
-                        Text(value.toString() + if (recommendedValue == value && language != "en") " · AI 推荐"
-                            else if (recommendedValue == value) " · AI suggested" else "")
-                    }
                 }
             }
+            if (recommendedValue in values) Text(
+                if (language == "en") "AI suggested: $recommendedValue" else "AI 推荐：$recommendedValue",
+            )
         }
         if (automaticOnly && values.size > 1 && chosen == null) {
             Text(if (language == "en") "Waiting for valid current AI advice."
                 else "等待当前有效的 AI 推荐，不会自动选择其他结果。")
         }
-        if (chosen != null) {
-            Button(onClick = { onConfirm(chosen) }, modifier = Modifier.fillMaxWidth()) {
-                Text(if (language == "en") "Show to player: $chosen" else "展示给玩家：$chosen")
-            }
+        Button(
+            onClick = { chosen?.let(onConfirm) },
+            enabled = chosen != null,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (chosen != null) {
+                if (language == "en") "Show to player: $chosen" else "展示给玩家：$chosen"
+            } else if (language == "en") "Show to player" else "展示给玩家")
         }
     }
 }
-
-

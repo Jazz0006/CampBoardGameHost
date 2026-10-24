@@ -113,6 +113,8 @@ internal fun nightAiOverlay(
     val validatedOption = proposedOption?.takeIf { option ->
         val pairRole = host.pairRole
         when {
+            host.roleResolution != null -> option.displayKind == ClocktowerDisplayKind.RoleReveal &&
+                (option.proposition as? InformationProposition.RoleAt)?.let(host.roleResolution::accepts) == true
             pairRole != null -> actorSeat != null && clocktowerCurrentPairRecommendation(
                 option = option,
                 abilityRole = pairRole,

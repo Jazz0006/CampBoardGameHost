@@ -20,7 +20,6 @@ internal data class ClocktowerPairPlayerRevealPresentation(
     val displayKind: ClocktowerDisplayKind,
     val title: String,
     val primary: String,
-    val footer: String?,
     val seats: List<ClocktowerPairPlayerRevealSeat>,
 )
 
@@ -41,7 +40,6 @@ internal fun clocktowerPairPlayerRevealPresentation(
         displayKind = step.displayKind,
         title = step.displayTitle,
         primary = step.displayPrimary ?: step.tellPlayer.orEmpty(),
-        footer = step.displayFooter?.takeIf { it.isNotBlank() },
         seats = seats,
     )
 }
