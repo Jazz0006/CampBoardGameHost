@@ -44,7 +44,7 @@ Archived beside this index:
 
 The durable product-design reference remains in the active docs root:
 
-- `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
+- `docs/archive/legacy-host/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`
 
 ## Device acceptance note
 

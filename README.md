@@ -15,7 +15,7 @@ Blood on the Clocktower Android 主持项目。**2026-10-19 已批准 Minimal Ho
 1. [**Minimal Host Architecture Rebuild：唯一现行设计及实施合同**](docs/MINIMAL_HOST_ARCHITECTURE_REBUILD_2026-10-19.md)
 2. [开发规范](AGENTS.md)、[当前路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)、[新对话交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)
 3. [测试策略](docs/TESTING_STRATEGY.md)、[Host 事实合同](docs/MINIMAL_HOST_PRODUCT_CONTRACT_2026-10-17.md)
-4. [源码库存（历史扫描）](docs/MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)、[清理证据（历史）](docs/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)、[文档索引](docs/README.md)
+4. [源码库存（历史扫描）](docs/MINIMAL_HOST_ALL_SOURCE_FILE_INDEX_2026-10-18.tsv)、[清理证据（历史）](docs/archive/legacy-host/MINIMAL_HOST_FULL_SOURCE_AUDIT_2026-10-18.md)、[文档索引](docs/README.md)
 
 ## 项目结构和运行
 

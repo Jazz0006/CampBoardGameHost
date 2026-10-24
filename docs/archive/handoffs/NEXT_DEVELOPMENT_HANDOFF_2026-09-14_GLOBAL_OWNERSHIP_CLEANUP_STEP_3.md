@@ -8,7 +8,7 @@
 
 1. Read root `AGENTS.md` and `docs/TESTING_STRATEGY.md`.
 2. Read `docs/CURRENT_DEVELOPMENT_ROADMAP.md`.
-3. Read `docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
+3. Read `docs/archive/legacy-host/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
 4. Query live `main`, PR #124 and PR #125 rather than assuming this handoff's recorded state.
 5. Confirm the worktree is clean and branch from the merged `main`.
 6. Perform a read-only producer/consumer and persistence/recovery fan-out audit before editing.

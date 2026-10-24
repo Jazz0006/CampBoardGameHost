@@ -235,7 +235,7 @@ RSR-1 readiness audit                              COMPLETE
 -> LRE-1 manual fallback + fail-closed recommendation authority
                                                    NEXT
 
-The product owner subsequently broadened the requirement: the problem is not merely the three legacy styles; the entire hand-tuned heuristic recommender is not trusted and should retire. `docs/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` is the continuation authority. RSR remains historical evidence for style/player-level ownership and the accepted RSR-1A decoupling.
+The product owner subsequently broadened the requirement: the problem is not merely the three legacy styles; the entire hand-tuned heuristic recommender is not trusted and should retire. `docs/archive/legacy-host/LEGACY_RECOMMENDATION_ENGINE_RETIREMENT_AUDIT_2026-10-04.md` is the continuation authority. RSR remains historical evidence for style/player-level ownership and the accepted RSR-1A decoupling.
 
 parallel later:
 player profile / management

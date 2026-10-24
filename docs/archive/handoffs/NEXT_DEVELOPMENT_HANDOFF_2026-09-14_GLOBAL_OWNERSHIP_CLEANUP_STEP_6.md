@@ -7,7 +7,7 @@
 
 Step 6 began from merged `main` `0aad20e341af912338f9fae7ea11aca5d71c539f`, which includes
 Step 5 via PR #128. The live fan-out and recorded architecture pre-flight are in section 13 of
-`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
+`docs/archive/legacy-host/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
 
 This final cleanup slice is limited to the repeated phase conversion, immutable Host mechanical
 projection and common night square-table presentation shell. It does not change gameplay rules,

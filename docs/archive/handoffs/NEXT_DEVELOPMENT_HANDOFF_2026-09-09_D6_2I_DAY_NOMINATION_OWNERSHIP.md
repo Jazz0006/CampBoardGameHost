@@ -18,7 +18,7 @@ Read, in order:
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`
 4. `docs/D6_2H_SURVIVING_SQUARE_TABLE_OWNERSHIP_AUDIT_2026-09-09.md`
 5. this handoff
-6. `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
+6. `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
 7. `docs/D6_2G_RETIRED_STORYTELLER_PLUMBING_PROGRESS_2026-09-09.md`
 8. `docs/D6_2F_LEGACY_STORYTELLER_RETIREMENT_PROGRESS_2026-09-09.md`
 
@@ -283,7 +283,7 @@ The current chat/container could not clone the repository directly. The working 
 
 Normative background:
 
-- `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
+- `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md`
 
 For D6.2i, use the following proven sequence.
 

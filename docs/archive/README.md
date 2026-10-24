@@ -5,6 +5,10 @@
 
 当前开发入口：[`../README.md`](../README.md) 与 [`../CURRENT_DEVELOPMENT_ROADMAP.md`](../CURRENT_DEVELOPMENT_ROADMAP.md)。
 
+## 2026-10-24 顶层旧路线归档
+
+[legacy-host](legacy-host/README.md) 收纳本次移出的旧路线；[逐文件清单](../DOCS_CLEANUP_2026-10-24.md) 记录范围。下方旧归档说明中的 NEXT/“当前”也属于历史，最新入口始终是 docs/README 与 CURRENT_DEVELOPMENT_ROADMAP。
+
 ## 2026-10-09 global documentation convergence
 
 The full pre-MEM0 authoritative texts are archived as **historical, non-executable snapshots**:

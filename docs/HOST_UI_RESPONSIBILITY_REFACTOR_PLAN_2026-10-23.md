@@ -183,13 +183,11 @@ Also:
 - [x] `ClocktowerGameLifecycle` has no `Screen`/navigation/dialog state.
 - [x] `ClocktowerGameLifecycle` exposes no game-fact fields (roles, phase, deaths, observations). Reference size: App root ≈ 20 KB.
 
-### Batch 6 (independent) — Portable Session JSON contract
+### Batch 6 — Owner clarification (2026-10-24)
 
-For a future TypeScript WebHost / EvidenceLab; no cross-language SDK, no second Session implementation, no format change.
-- Document the v1 JSON exactly as `ClocktowerSessionJson.kt` writes it: version/fields, seat and role identifiers, ordered `ActionFact`s, recipient-scoped Observations, special states, optional fields.
-- Add a few anonymized golden fixtures (TB mid-game, NGJ, Klutz/Slayer, information shown).
-- Kotlin decode → encode → decode test for semantic round-trip, event order and recipient privacy; byte equality only if the encoder is already canonical.
-- Never include Android UI state, provider credentials or UI drafts.
+The former portable-JSON expansion is narrowed to [the concise shared Session guide](GAME_SESSION_SHARED_GUIDE.md). The existing minimal state/event contract was already approved; no new SDK, parallel evidence/game model or broad compatibility platform is required. Documentation does not implement a new export format or importer.
+
+Next functional work: ensure a running game can finish when AI is unavailable, through a reachable manual takeover, explicit human-triggered random discretion where appropriate, and recovery/ID/cursor/delta/stale-response validation. These features remain unimplemented. Initial-layout retention and optional record notes can follow demonstrated need. Preserve the historical original plan through Git; do not report old proposed fixtures or adapters as delivered.
 
 ## 4. Order
 

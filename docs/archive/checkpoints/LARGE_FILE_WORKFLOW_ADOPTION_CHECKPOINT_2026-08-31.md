@@ -1,6 +1,6 @@
 # Large-file workflow adoption checkpoint — 2026-08-31
 
-The repository now treats `docs/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` as the normative detailed SOP for large/truncated-file edits.
+The repository now treats `docs/archive/legacy-host/LARGE_FILE_GITHUB_ACTIONS_PYTHON_PATCH_WORKFLOW.md` as the normative detailed SOP for large/truncated-file edits.
 
 Writer priority is now:
 

@@ -7,7 +7,7 @@
 
 Step 5 began from merged `main` `092ca62f7806bd353e683c2dee1c7a134e4304f5`, which includes
 Step 4 via PR #127. The live fan-out and architecture pre-flight are recorded in section 12 of
-`docs/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
+`docs/archive/legacy-host/GLOBAL_CODE_OWNERSHIP_AND_DEAD_CODE_AUDIT_2026-09-14.md`.
 
 This slice is limited to the No Greater Joy production setup cutover and the duplicated base-role
 distribution owner exposed by that cutover. It does not change Trouble Brewing template selection,

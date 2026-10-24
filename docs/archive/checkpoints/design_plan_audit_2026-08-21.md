@@ -38,10 +38,10 @@ This document records findings only. It does not change any status, spec, or cod
 `docs/storyteller_revision_driven_dynamic_decision_engine_plan.md` wants one unified state/revision/decision model. In code, version tracking exists (`session/DecisionEventStore.kt`, `session/ClocktowerRecommendationCoordinator.kt`) but recompute logic is scattered across Compose call-sites in `MainActivity.kt`; setup-recommendation keys lack full context (poison/protection/alive/observation history); Drunk investigator pre-fetch can lock early. Risk: adding future roles/scripts will scatter dynamic rules across UI code and cause hidden state-version drift. This is production-code work gated behind the entry audit — it belongs in the roadmap's open-items list, not as a doc edit.
 
 ### F4 — "52 golden contracts" headline vs. 24 executable — priority: low
-Docs headline "52 golden scenarios" (`docs/epistemic_reference_matrix.md`), but only ~24 are Clingo/oracle-executable first-night; ~28 are `ORACLE_NOT_APPLICABLE` (multi-night, deferred to B4). Accurate in detail, but the headline overstates validated coverage (~54% deferred). Worth a one-line caveat wherever "52" appears.
+Docs headline "52 golden scenarios" (`docs/archive/legacy-host/epistemic_reference_matrix.md`), but only ~24 are Clingo/oracle-executable first-night; ~28 are `ORACLE_NOT_APPLICABLE` (multi-night, deferred to B4). Accurate in detail, but the headline overstates validated coverage (~54% deferred). Worth a one-line caveat wherever "52" appears.
 
 ### F5 — ZDD (A4) fails its own latency gate; correctly kept in shadow — priority: low
-`docs/storyteller_a4_zdd_prototype.md`: P95 build 114–161 ms vs the 50 ms ceiling (heap OK at ~6.3 MiB); the 6-player benchmark is disabled (256 MB OOM). Production default is `ENUMERATED_ONLY` — design and code agree. Not a defect, but the "next A4 decision" checklist (7 open items) has no owner or trigger date.
+`docs/archive/legacy-host/storyteller_a4_zdd_prototype.md`: P95 build 114–161 ms vs the 50 ms ceiling (heap OK at ~6.3 MiB); the 6-player benchmark is disabled (256 MB OOM). Production default is `ENUMERATED_ONLY` — design and code agree. Not a defect, but the "next A4 decision" checklist (7 open items) has no owner or trigger date.
 
 ### F6 — Open design gaps flagged in prose but not tracked in the roadmap — priority: low
 Several unresolved items live only in prose, with no roadmap entry: `StoryDisruptionRisk` thresholds unset (v2.2 §C4); `MANUAL_ONLY` vs `INELIGIBLE` UI text undefined; whether `globalSequence` must enter `PlayerWorldSetIdentity` once evaluation becomes time-aware (`docs/r6_p1_2_knowledge_timeline_semantics_2026-08-21.md`); Drunk shown-role vs identity treatment. These risk being lost.
@@ -55,7 +55,7 @@ Several unresolved items live only in prose, with no roadmap entry: `StoryDisrup
 
 1. **F1:** Add a status banner to `docs/r6_p1_3_closeout_2026-08-21.md` §7/§8 noting P1.1/P1.2 were closed later the same day and pointing to the roadmap; retain the historical text.
 2. **F2:** Add a one-line "SUPERSEDED BY 2026-08-21 roadmap/handoff — do not continue the old long branch" banner atop `docs/r5_5_multiscript_progress_handoff_2026-08-20.md`.
-3. **F4:** Add a caveat ("24 oracle-executable; 28 deferred to B4 multi-night") next to the "52 scenarios" headline in `docs/epistemic_reference_matrix.md` and anywhere it is quoted.
+3. **F4:** Add a caveat ("24 oracle-executable; 28 deferred to B4 multi-night") next to the "52 scenarios" headline in `docs/archive/legacy-host/epistemic_reference_matrix.md` and anywhere it is quoted.
 4. **F3, F5, F6:** Add an "Open Items / Deferred Decisions" section to `CURRENT_DEVELOPMENT_ROADMAP.md` capturing: revision-engine unification, ZDD device-gate decision, StoryDisruptionRisk thresholds, MANUAL_ONLY UI text, and the globalSequence-in-identity decision — each with a trigger condition (e.g. "before production multi-night rollout").
 
 None of these change the recorded status or any spec; they only add navigational/caveat banners and a tracking list. F3's actual fix is production work gated behind the entry audit.

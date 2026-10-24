@@ -13,7 +13,7 @@ Read, in order:
 2. `docs/TESTING_STRATEGY.md`;
 3. `docs/CURRENT_DEVELOPMENT_ROADMAP.md`;
 4. this handoff;
-5. `docs/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
+5. `docs/archive/legacy-host/BOCT_INFORMATION_DISPLAY_AND_MANUAL_SELECTION_UI_DESIGN_2026-09-02.md`;
 6. query live `main` and only then inspect the current production UI sources.
 
 Do not assume the pre-merge PR #120 head remains the live baseline. Re-query `main` first.
