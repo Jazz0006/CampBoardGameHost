@@ -10,8 +10,6 @@ import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -213,7 +211,8 @@ internal fun ClocktowerNightHostScreen(
             nightDraft = next
         }
         var selectedSelfKillSuccessor by remember(
-            gameId, phase, round, currentStep.interactionId,
+            gameId, phase, round, currentStep.interactionId, gameStateRevision,
+            host.selectedSeat, host.successorSeats,
         ) { mutableStateOf<Int?>(null) }
         val successorSeat = host.successorSeat(selectedSelfKillSuccessor)
         val successorReady = host.successorReady(selectedSelfKillSuccessor)
@@ -275,6 +274,39 @@ internal fun ClocktowerNightHostScreen(
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
         ) {
+            if (host.successorSeats.size > 1) {
+                ClocktowerSingleTargetSquareTableDialog(
+                    seats = sessionGameState.toHostSeatPresentations { roleId ->
+                        clocktowerRoleByName(roleId.value)?.nameFor(language) ?: roleId.value
+                    }.map { seat ->
+                        seat.copy(hasUnspentGhostVote = hostSeatHasUnspentGhostVote(
+                            seat.seatId, seat.isAlive, ghostVoteAuthority,
+                        ))
+                    },
+                    selectedSeat = successorSeat,
+                    selectableSeats = host.successorSeats.toSet(),
+                    enabled = true,
+                    actorSeat = host.facts.actorSeat,
+                    title = text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor"),
+                    helper = text("在方桌上选择接任小恶魔的存活爪牙。", "Select a living Minion on the table to become the Imp."),
+                    language = language,
+                    onSeatSelected = { seat ->
+                        if (seat in host.successorSeats) {
+                            onRecordPlayerInput()
+                            selectedSelfKillSuccessor = seat.takeUnless { it == selectedSelfKillSuccessor }
+                        }
+                    },
+                    onHostTools = onHostTools,
+                    onNext = advanceNightStep,
+                    nextEnabled = host.targetReady && successorReady,
+                    secondaryActionLabel = text("修改攻击目标", "Change attack target"),
+                    secondaryActionEnabled = true,
+                    onSecondaryAction = {
+                        nightDraft?.let { updateNightDraft(it.copy(seatSlots = emptyList())) }
+                    },
+                )
+                return@ClocktowerNightActiveScreen
+            }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val aiKey = ai.currentKey
                 if (aiKey != null) {
@@ -371,22 +403,6 @@ internal fun ClocktowerNightHostScreen(
                         onHostTools = onHostTools,
                 onNext = advanceNightStep,
                 )
-                if (host.successorSeats.size > 1 && !successorReady) {
-                    AlertDialog(
-                        onDismissRequest = {},
-                        title = { Text(text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor")) },
-                        text = {
-                            Column {
-                                host.successorSeats.forEach { seat ->
-                                    TextButton(onClick = { selectedSelfKillSuccessor = seat }) {
-                                        Text(cards.getOrNull(seat - 1)?.seatLabel(cards).orEmpty())
-                                    }
-                                }
-                            }
-                        },
-                        confirmButton = {},
-                    )
-                }
             }
         }
         return

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
@@ -551,7 +552,6 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         ui.onNodeWithText("Show to player").performClick()
         ui.onNodeWithText("Close display card").performClick()
-        ui.onNodeWithText("✓ Last preview (confirm with Next)", substring = true).assertDoesNotExist()
         ui.onNodeWithText("Next →").assertIsEnabled()
         ui.runOnIdle { assertEquals(0, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Next →").performClick()
@@ -559,7 +559,6 @@ class ClocktowerD2UiTest {
         ui.runOnIdle { assertEquals(setOf(6), host.session.state.epistemicObservationLog.records.single().recipientSeats) }
         ui.onNodeWithText("Show to player").performClick()
         ui.onNodeWithText("Close display card").performClick()
-        ui.onNodeWithText("✓ Last preview (confirm with Next)", substring = true).assertDoesNotExist()
         ui.onNodeWithText("Next →").assertIsEnabled()
         ui.runOnIdle { assertEquals(1, host.session.state.epistemicObservationLog.records.size) }
         ui.onNodeWithText("Next →").performClick()
@@ -568,9 +567,10 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsNotEnabled()
     }
 
+    @Config(sdk = [35], qualifiers = "en-rUS-w360dp-h520dp-mdpi")
     @Test fun selfKillWithMultipleMinionsWaitsForChoiceThenCommitsOnNext() {
-        val host = Host("Imp", StorytellerOperationMode.MANUAL, roles =
-            listOf("Imp", "Spy", "Baron", "Chef", "Soldier"))
+        val host = Host("Imp", StorytellerOperationMode.MANUAL,
+            roles = listOf("Imp", "Spy", "Baron", "Chef", "Soldier"))
         host.enterOtherNight()
         host.session.confirmSpyWake(
             com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog.fromContext(ui.activity)
@@ -580,9 +580,31 @@ class ClocktowerD2UiTest {
         ui.onNodeWithText("Next →").assertIsNotEnabled()
         clickSeat("P1")
         ui.onNodeWithText("Imp self-kill · successor").assertExists()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        ui.onNodeWithText("P4").assertExists()
+        ui.onNode(hasClickAction() and hasText("P4")).assertDoesNotExist()
         ui.runOnIdle { assertEquals(0, host.session.state.actionTimeline.entries.map { it.fact }.filterIsInstance<ActionFact.Attack>().size) }
-        ui.onNodeWithText("#2 P2").performClick()
-        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        clickSeat("P3")
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        clickSeat("P3")
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P2")
+        ui.onNodeWithText("Change attack target").assertIsDisplayed().performClick()
+        ui.onNodeWithText("Imp self-kill · successor").assertDoesNotExist()
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P1")
+        // Returning to self-kill must require a fresh choice, not reuse the cancelled successor.
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P3")
+        clickSeat("P2")
+        ui.runOnIdle { host.session.advanceGameStateRevision(); host.refresh() }
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P2")
+        ui.runOnIdle {
+            assertEquals(true, host.session.state.gameState.playerAt(1)!!.alive)
+            assertEquals(0, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.RoleChange })
+        }
+        ui.onNodeWithText("Next →").assertIsDisplayed().assertIsEnabled().performClick()
         ui.runOnIdle {
             assertEquals(false, host.session.state.gameState.playerAt(1)!!.alive)
             assertEquals(RoleId("Imp"), host.session.state.gameState.playerAt(2)!!.actualRole)

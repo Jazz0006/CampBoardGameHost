@@ -45,9 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlin.math.abs
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.sin
 
 internal enum class ClocktowerSquareTableEdge {
     Top,
@@ -346,7 +343,8 @@ internal fun ClocktowerSquareTableSeatSurface(
                 ?.let { ringIndex -> resolvedLayout.slots[ringIndex] }
                 ?.let { slot -> Offset(slot.centerX, slot.centerY) }
         val arrowEndDp = if (activeDirectionalSourceRingIndex != null) {
-            directionalDragPointerPosition
+            directionalDragTargetRingIndex?.let { resolvedLayout.slots[it] }
+                ?.let { Offset(it.centerX, it.centerY) } ?: directionalDragPointerPosition
         } else {
             persistentDirectionalTargetRingIndex
                 ?.let { ringIndex -> resolvedLayout.slots[ringIndex] }
@@ -362,6 +360,7 @@ internal fun ClocktowerSquareTableSeatSurface(
         } else {
             MaterialTheme.colorScheme.outline
         }
+        val arrowOutlineColor = MaterialTheme.colorScheme.onPrimary
         val densityScale = density.density
 
         Surface(
@@ -381,33 +380,43 @@ internal fun ClocktowerSquareTableSeatSurface(
             Canvas(
                 modifier = Modifier
                     .fillMaxSize()
-                    .zIndex(0.5f),
+                    .zIndex(3f),
             ) {
-                val start = Offset(arrowStartDp.x * densityScale, arrowStartDp.y * densityScale)
-                val end = Offset(arrowEndDp.x * densityScale, arrowEndDp.y * densityScale)
-                val deltaX = end.x - start.x
-                val deltaY = end.y - start.y
-                if (deltaX * deltaX + deltaY * deltaY > 4f) {
-                    val strokeWidth = 4.dp.toPx()
-                    drawLine(
-                        color = arrowColor,
-                        start = start,
-                        end = end,
-                        strokeWidth = strokeWidth,
+                val delta = arrowEndDp - arrowStartDp
+                val distance = delta.getDistance()
+                if (distance > 2f) {
+                    val direction = delta / distance
+                    val cross = Offset(-direction.y, direction.x)
+                    // End just inside the facing card edges, above their borders but away from labels.
+                    val edgeDistance = minOf(
+                        seatCardWidth / 2f / abs(direction.x),
+                        seatCardHeight / 2f / abs(direction.y),
                     )
-                    val angle = atan2(deltaY.toDouble(), deltaX.toDouble())
-                    val headLength = 12.dp.toPx()
-                    val headSpread = 0.55
-                    val firstHead = Offset(
-                        x = (end.x - headLength * cos(angle - headSpread)).toFloat(),
-                        y = (end.y - headLength * sin(angle - headSpread)).toFloat(),
-                    )
-                    val secondHead = Offset(
-                        x = (end.x - headLength * cos(angle + headSpread)).toFloat(),
-                        y = (end.y - headLength * sin(angle + headSpread)).toFloat(),
-                    )
-                    drawLine(arrowColor, end, firstHead, strokeWidth)
-                    drawLine(arrowColor, end, secondHead, strokeWidth)
+                    val start = arrowStartDp + direction * (edgeDistance - 3f).coerceAtLeast(0f)
+                    val hasTarget = directionalDragTargetRingIndex != null || activeDirectionalSourceRingIndex == null
+                    val end = if (hasTarget) arrowEndDp - direction * (edgeDistance - 3f).coerceAtLeast(0f) else arrowEndDp
+                    val length = (end - start).x * direction.x + (end - start).y * direction.y
+                    if (length > 2f) {
+                        val headLength = minOf(18f, length * 0.55f)
+                        val halfHead = minOf(12f, length * 0.45f)
+                        val halfShaft = minOf(4f, halfHead / 2f)
+                        val neck = end - direction * headLength
+                        val points = listOf(start + cross * halfShaft, neck + cross * halfShaft,
+                            neck + cross * halfHead, end, neck - cross * halfHead,
+                            neck - cross * halfShaft, start - cross * halfShaft)
+                        val path = Path().apply {
+                            moveTo(points.first().x * densityScale, points.first().y * densityScale)
+                            points.drop(1).forEach { lineTo(it.x * densityScale, it.y * densityScale) }
+                            close()
+                        }
+                        // Contrasting casing keeps the outline visible on both alignment colors.
+                        drawPath(path, arrowOutlineColor, style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 5.dp.toPx(), join = androidx.compose.ui.graphics.StrokeJoin.Round,
+                        ))
+                        drawPath(path, arrowColor, style = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 2.5.dp.toPx(), join = androidx.compose.ui.graphics.StrokeJoin.Round,
+                        ))
+                    }
                 }
             }
         }
