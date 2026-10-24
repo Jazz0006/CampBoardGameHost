@@ -4,9 +4,12 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.ViewConfiguration
 
 /**
  * Shared Storyteller-private table shell.
@@ -74,6 +77,15 @@ internal fun HostTableShell(
             }
         }
 
+        val viewConfiguration = LocalViewConfiguration.current
+        val nominationViewConfiguration = remember(viewConfiguration) {
+            object : ViewConfiguration by viewConfiguration {
+                override val longPressTimeoutMillis = 300L
+            }
+        }
+        // Only nomination gestures use the shorter hold; seating reorder keeps platform timing.
+        CompositionLocalProvider(LocalViewConfiguration provides
+            if (directionalGesture != null) nominationViewConfiguration else viewConfiguration) {
         ClocktowerSquareTableSeatSurface(
             seats = renderSeats,
             modifier = Modifier.fillMaxSize(),
@@ -112,6 +124,7 @@ internal fun HostTableShell(
             },
             centerContent = centerContent,
         )
+        }
     }
 }
 

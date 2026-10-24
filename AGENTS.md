@@ -1,3 +1,12 @@
+# CURRENT OWNER TEST POLICY — 2026-10-25
+
+**Binding correction after repeated over-testing; supersedes conflicting historical test-first, every-change-test and blanket UI/full-suite requirements below.** Follow [testing strategy](docs/TESTING_STRATEGY.md).
+
+- Do not use test-first by default or add a test for every change. Pure visual/low-risk adjustments (arrows, dashes, colors, spacing, wording, long-press timing) do not get dedicated tests, pixel snapshots or geometry matrices. Use proportionate inspection/build checks.
+- Add a small behavioral regression only for a concrete important failure with a demonstrated gap in existing coverage: incorrect rules/death/succession, private-information leakage, save/recovery corruption, duplicate or stale commits, or blocked game progression. Reuse existing tests before adding new ones; a new file/function/component is not a reason for a new test.
+- Before adding a test, briefly identify the actual failure and missing coverage in the normal work update. If there is no clear independent value, do not add it. Do not expand across all player counts/modes/layouts without a distinct risk; keep representative cases.
+- Choose validation by actual risk. Do not default to full suites for small UI changes or repeatedly rerun them after cosmetic edits. Explicitly required acceptance/CI checks still apply. Do not use test counts as a quality goal or preserve obsolete/duplicate assertions merely to keep counts.
+
 # CURRENT AUTHORITY — Host UI Batch 5 (review branch)
 
 **Merged baseline:** owner authorized merging Batches 3/4. #359 merged as `2aa7abbf` (ancestry retained for stacked #360); #360 was retargeted to main and squash-merged as `17949e72705fda0785b2d982aacfcad09e7dfa3b`. Exact prior heads passed full CI #4608/R2 #4159 and #4609/R2 #4160. Combined main passed full CI #4611 and Field Test APK #175.

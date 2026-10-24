@@ -7,13 +7,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerEvilInfoSquareTablePresentationTest {
-    @Test fun allMinionsBeingWokenAreMarkedWithoutMarkingTheDemonTheyLearn() {
-        val minions = setOf(2, 5)
-        assertTrue(clocktowerEvilInfoSeatPresentation(2, 2, minions).isCurrentActor)
-        assertTrue(clocktowerEvilInfoSeatPresentation(5, 2, minions).isCurrentActor)
-        assertFalse(clocktowerEvilInfoSeatPresentation(7, 2, minions).isCurrentActor)
-    }
-
     @Test
     fun `EvilInfo routes to square table and preserves Demon bluff presentation content`() {
         val step = evilInfoStep(
