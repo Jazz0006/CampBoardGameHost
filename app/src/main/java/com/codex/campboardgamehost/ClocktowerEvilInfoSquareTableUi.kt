@@ -73,7 +73,7 @@ internal fun clocktowerEvilInfoSeatPresentation(
     highlightedSeats: Set<Int> = emptySet(),
 ): ClocktowerNightActionSeatPresentation = ClocktowerNightActionSeatPresentation(
     contextMarker = if (seatNumber in highlightedSeats) "队" else null,
-    isCurrentActor = seatNumber == actorSeat,
+    isCurrentActor = seatNumber == actorSeat || seatNumber in highlightedSeats,
 )
 
 @Composable

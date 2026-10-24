@@ -65,6 +65,7 @@ internal fun ClocktowerNumericInformationSquareTableDialog(
                 )
             } else {
                 ClocktowerResolvedNumericResultUi(
+                    modifier = Modifier.weight(1f),
                     values = values,
                     recommendedValue = recommendedValue,
                     lastPreviewValue = lastPreviewValue,

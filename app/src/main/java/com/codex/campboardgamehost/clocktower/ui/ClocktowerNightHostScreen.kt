@@ -274,14 +274,6 @@ internal fun ClocktowerNightHostScreen(
             onHostTools = onHostTools,
             onNext = advanceNightStep,
             contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
-            lastPreviewLabel = currentInformationPreview?.takeIf {
-                host.numericResolution == null && host.pairRole == null &&
-                    (host.isPrivateInformation || host.isEvilInformation)
-            }?.let { preview ->
-                text("✓ 上次预览（下一步确认）", "✓ Last preview (confirm with Next)") + " · " +
-                    listOfNotNull(preview.displayPrimary, preview.displaySecondary)
-                        .filter(String::isNotBlank).joinToString(" · ")
-            },
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val aiKey = ai.currentKey
@@ -334,6 +326,7 @@ internal fun ClocktowerNightHostScreen(
                 aiSuggestedInformationOption = ai.suggestedOption,
                 numericResolution = host.numericResolution,
                 booleanResolution = host.booleanResolution,
+                roleResolution = host.roleResolution,
                 pairResolver = { role, seat, first, second ->
                     PairInformationResolver.resolve(
                         sessionState, nightRuleset, RoleId(role), seat, first, second,

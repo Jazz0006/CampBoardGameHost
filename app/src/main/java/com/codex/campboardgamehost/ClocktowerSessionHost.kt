@@ -274,7 +274,13 @@ internal fun ClocktowerSessionHost(
         },
         onConfirmNewDemon = {
             sessionUi.commit {
-                requireClocktowerGameSession().confirmImpNotification()
+                val session = requireClocktowerGameSession()
+                if (session.state.gameId == sessionState.gameId &&
+                    session.state.phase == sessionState.phase && session.state.round == sessionState.round &&
+                    session.state.gameStateRevision == sessionState.gameStateRevision &&
+                    session.state.playerInputRevision == sessionState.playerInputRevision &&
+                    session.state.pendingImpNotification()?.actionId == sessionState.pendingImpNotification()?.actionId
+                ) session.confirmImpNotification()
             }
         },
         onConfirmKlutzChoice = { chosenName ->

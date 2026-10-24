@@ -26,6 +26,12 @@ internal fun ClocktowerSessionState.actualTypeSeats(type: CharacterType): List<I
 internal fun ClocktowerSessionState.livingDemonSeat(): Int? =
     gameState.players.singleOrNull { it.alive && it.actualRole.value == "Imp" }?.seat
 
+/** Old dead Imps retain their role after succession; only the living Imp can act.
+ * Other roles retain their established wake/death-trigger handling in nightInteractions. */
+internal fun ClocktowerSessionState.wakingPlayerForRole(role: RoleId): PlayerState? =
+    if (role.value == "Imp") livingDemonSeat()?.let(gameState::playerAt)
+    else gameState.players.firstOrNull { it.wakingRole() == role }
+
 internal fun ClocktowerSessionState.livingDemonPoisoned(): Boolean =
     gameState.players.any { it.alive && it.actualRole.value == "Imp" && it.poisoned }
 
@@ -49,7 +55,7 @@ internal fun ClocktowerSessionState.currentNightDeathTriggerSeat(role: String): 
 
 /** The waking role's seat if its ability is poisoned now; a death trigger uses the poison in force before that death. */
 internal fun ClocktowerSessionState.poisonedSeatForRole(role: String): Int? {
-    val player = gameState.players.firstOrNull { it.wakingRole() == RoleId(role) } ?: return null
+    val player = wakingPlayerForRole(RoleId(role)) ?: return null
     if (role in setOf("Ravenkeeper", "Sage") && !player.alive) {
         val death = currentNightDeaths().firstOrNull { (it.fact as ActionFact.Death).targetSeat == player.seat } ?: return null
         val poison = actionTimeline.entries.lastOrNull {

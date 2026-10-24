@@ -2,7 +2,13 @@ package com.codex.campboardgamehost
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -86,8 +92,38 @@ class ClocktowerNumericCompactUiTest {
             }
         }
         ui.onNodeWithText("15").performScrollTo().performClick()
-        ui.onNodeWithText("Show to player: 15").performScrollTo().performClick()
+        ui.onNodeWithText("Show to player: 15").assertIsDisplayed().performClick()
         ui.runOnIdle { assertEquals(15, shown) }
+    }
+
+    @Test fun squareTableKeepsShowVisibleWithMaximumChoicesAndReturnsToThePreviewedValue() {
+        val count = mutableStateOf(5)
+        val preview = mutableStateOf<Int?>(null)
+        var shown: Int? = null
+        ui.setContent {
+            ClocktowerDarkTheme {
+                val maximum = if (count.value >= 13) 4 else if (count.value >= 10) 3 else 2
+                Box(Modifier.size(360.dp, 448.dp)) {
+                    ClocktowerNumericInformationSquareTableDialog(
+                        seats = (1..count.value).map { HostSeatPresentation(ClocktowerSeatId(it), "P$it", isAlive = true) },
+                        actorSeat = 1, wakeInstruction = "Wake P1", values = (0..maximum).toList(),
+                        recommendedValue = maximum, lastPreviewValue = preview.value, automaticOnly = false,
+                        language = "en", draftKey = "square:${count.value}:${preview.value}",
+                        onHostTools = {}, onNext = {}, onConfirm = { shown = it }, onDraftChanged = {},
+                    )
+                }
+            }
+        }
+        for (players in listOf(5, 8, 10, 13, 15)) {
+            val maximum = if (players >= 13) 4 else if (players >= 10) 3 else 2
+            ui.runOnIdle { count.value = players; preview.value = null; shown = null }
+            ui.onNodeWithText("Show to player").assertIsDisplayed().assertIsNotEnabled()
+            ui.onNode(hasText(maximum.toString(), substring = false) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performScrollTo().performClick()
+            ui.onNodeWithText("Show to player: $maximum").assertIsDisplayed().performClick()
+            ui.runOnIdle { assertEquals(maximum, shown); preview.value = maximum }
+            ui.onNode(hasText(maximum.toString(), substring = false) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).assertIsSelected()
+            ui.onNodeWithText("Show to player: $maximum").assertIsDisplayed().performClick()
+        }
     }
 
     @Test fun automaticDiscretionWaitsWithoutValidRecommendation() {

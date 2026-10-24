@@ -63,6 +63,7 @@ internal fun ClocktowerNightStepCardLocalized(
     aiSuggestedInformationOption: ClocktowerDisplayOption? = null,
     numericResolution: com.codex.campboardgamehost.clocktower.session.HostNumericResolution? = null,
     booleanResolution: com.codex.campboardgamehost.clocktower.session.HostBooleanResolution? = null,
+    roleResolution: com.codex.campboardgamehost.clocktower.session.HostRoleResolution? = null,
     pairResolver: ((String, Int, Int?, Int?) -> com.codex.campboardgamehost.clocktower.session.HostPairResolution?)? = null,
     surfacePlan: ClocktowerNightSurfacePlan,
     /** The current step's draft seats; two-player queries keep first/second slots. */
@@ -399,6 +400,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    resolution = roleResolution,
                     lastPreviewRoleId = previewedRole,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->
@@ -633,6 +635,7 @@ internal fun ClocktowerNightStepCardLocalized(
                     step = step,
                     scriptRoles = scriptRoles,
                     recommendedOption = recommendedRoleRevealOption,
+                    resolution = roleResolution,
                     lastPreviewRoleId = previewedRole,
                     automaticOnly = allowRuleDeterminedAutoUi,
                     roleLabel = { roleId ->

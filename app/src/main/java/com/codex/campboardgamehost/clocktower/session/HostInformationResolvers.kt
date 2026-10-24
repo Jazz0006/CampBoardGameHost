@@ -51,7 +51,15 @@ internal object NumericInformationResolver {
         if (ability != AbilityFunctioningState.FUNCTIONING) {
             // An intoxicated information source may be told an arbitrary fitting number.
             // This finite list is a practical UI range, not a claim of exhaustive rules legality.
-            val upper = if (role == "Empath") 2 else circle.size
+            val upper = when {
+                role == "Empath" -> 2
+                game.script.value == "trouble_brewing" -> when {
+                    circle.size >= 13 -> 4
+                    circle.size >= 10 -> 3
+                    else -> 2
+                }
+                else -> circle.size
+            }
             return HostNumericResolution((0..upper).toList(), subjects, ability, emptySet(), true)
         }
         val special = relevant.filter(::hasFunctioningSpecialRegistration).mapTo(linkedSetOf(), PlayerState::seat)
@@ -172,26 +180,18 @@ internal object NumericInformationResolver {
         return counts
     }
 
-    /**
-     * Dynamic programming around the physical circle, including last -> first.
-     * Only (previous registration, adjacent-pair count) is retained, never possible worlds.
-     */
+    /** Each neighbouring pair is a separate registration, including last -> first.
+     * A functioning Recluse/Spy can register differently for their two neighbours. */
     private fun adjacentEvilPairCounts(circle: List<PlayerState>): Set<Int> {
-        val result = linkedSetOf<Int>()
-        for (first in evilRegistrations(circle.first())) {
-            var partial = setOf(first to 0)
-            for (player in circle.drop(1)) {
-                partial = partial.flatMapTo(linkedSetOf()) { (previousEvil, count) ->
-                    evilRegistrations(player).map { currentEvil ->
-                        currentEvil to (count + if (previousEvil && currentEvil) 1 else 0)
-                    }
-                }
-            }
-            partial.forEach { (lastEvil, count) ->
-                result += count + if (lastEvil && first) 1 else 0
-            }
+        var counts = setOf(0)
+        circle.forEachIndexed { index, player ->
+            val next = circle[(index + 1) % circle.size]
+            val edge = evilRegistrations(player).flatMap { first ->
+                evilRegistrations(next).map { second -> if (first && second) 1 else 0 }
+            }.toSet()
+            counts = counts.flatMapTo(linkedSetOf()) { prior -> edge.map { prior + it } }
         }
-        return result
+        return counts
     }
 }
 

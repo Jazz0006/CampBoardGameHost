@@ -32,9 +32,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -127,6 +131,55 @@ internal fun clocktowerSquareTablePlacements(
     }
 }
 
+/** A short hollow arrow at the table-facing edge, independent of target-selection borders. */
+internal fun clocktowerWakeArrowPoints(
+    slot: HostTableSpatialSlot,
+    layout: HostTableLayout,
+): List<Offset> {
+    val constraints = layout.constraints
+    val seatCenter = Offset(slot.centerX, slot.centerY)
+    val direction = when (slot.edge) {
+        ClocktowerSquareTableEdge.Top -> Offset(0f, -1f)
+        ClocktowerSquareTableEdge.Right -> Offset(1f, 0f)
+        ClocktowerSquareTableEdge.Bottom -> Offset(0f, 1f)
+        ClocktowerSquareTableEdge.Left -> Offset(-1f, 0f)
+    }
+    val vertical = direction.y != 0f
+    val edgeDistance = (if (vertical) constraints.seatCardHeight else constraints.seatCardWidth) / 2
+    val faceSpan = if (vertical) constraints.seatCardWidth else constraints.seatCardHeight
+    val cross = Offset(-direction.y, direction.x)
+    val centerLeft = (constraints.availableWidth - constraints.centerWorkspaceWidth) / 2 + HOST_TABLE_CENTER_CONTENT_PADDING
+    val centerRight = constraints.availableWidth - centerLeft
+    val centerTop = (constraints.availableHeight - constraints.centerWorkspaceHeight) / 2 + HOST_TABLE_CENTER_CONTENT_PADDING
+    val centerBottom = constraints.availableHeight - centerTop
+    val controls = androidx.compose.ui.geometry.Rect(centerLeft, centerTop, centerRight, centerBottom)
+    val cards = layout.slots.map {
+        androidx.compose.ui.geometry.Rect(
+            it.centerX - constraints.seatCardWidth / 2, it.centerY - constraints.seatCardHeight / 2,
+            it.centerX + constraints.seatCardWidth / 2, it.centerY + constraints.seatCardHeight / 2,
+        )
+    }
+    // Prefer the middle of the inward face. Near corners, shorten or slide along that same face.
+    for (shift in listOf(0f, -0.25f, 0.25f, -0.4f, 0.4f)) {
+        val tip = seatCenter - direction * (edgeDistance + 2f) + cross * (faceSpan * shift)
+        for (length in listOf(16f, 12f, 8f, 6f)) for (halfHead in listOf(4.5f, 3f)) {
+            val headLength = minOf(6f, length * 0.45f)
+            fun point(back: Float, side: Float) = tip - direction * back + cross * side
+            val points = listOf(tip, point(headLength, halfHead), point(headLength, 1.6f),
+                point(length, 1.6f), point(length, -1.6f), point(headLength, -1.6f), point(headLength, -halfHead))
+            val bounds = androidx.compose.ui.geometry.Rect(
+                points.minOf { it.x } - 1f, points.minOf { it.y } - 1f,
+                points.maxOf { it.x } + 1f, points.maxOf { it.y } + 1f,
+            )
+            if (bounds.left >= 0 && bounds.top >= 0 && bounds.right <= constraints.availableWidth &&
+                bounds.bottom <= constraints.availableHeight && !bounds.overlaps(controls) &&
+                cards.none { bounds.overlaps(it) }) return points
+        }
+    }
+    return emptyList()
+}
+
+private const val HOST_TABLE_CENTER_CONTENT_PADDING = 12f
 private const val HOST_TABLE_MINIMUM_SEPARATION = 4f
 private const val HOST_TABLE_CENTER_WIDTH_FRACTION = 0.56f
 private const val HOST_TABLE_CENTER_HEIGHT_FRACTION = 0.52f
@@ -359,6 +412,24 @@ internal fun ClocktowerSquareTableSeatSurface(
             }
         }
 
+        val wakeArrowColor = MaterialTheme.colorScheme.onBackground
+        val wakeArrows = remember(placements, resolvedLayout) {
+            placements.filter { it.seat.isCurrentActor }
+                .map { clocktowerWakeArrowPoints(it.spatialSlot, resolvedLayout) }.filter { it.isNotEmpty() }
+        }
+        if (wakeArrows.isNotEmpty()) {
+            Canvas(Modifier.fillMaxSize().zIndex(0.75f)) {
+                wakeArrows.forEach { points ->
+                    val path = Path().apply {
+                        moveTo(points.first().x.dp.toPx(), points.first().y.dp.toPx())
+                        points.drop(1).forEach { lineTo(it.x.dp.toPx(), it.y.dp.toPx()) }
+                        close()
+                    }
+                    drawPath(path, wakeArrowColor, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2.dp.toPx()))
+                }
+            }
+        }
+
         placements.forEach { placement ->
             key(placement.seat.motionKey) {
                 val slot = placement.spatialSlot
@@ -534,7 +605,7 @@ internal fun ClocktowerSquareTableSeatSurface(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(12.dp),
+                    .padding(HOST_TABLE_CENTER_CONTENT_PADDING.dp),
                 contentAlignment = Alignment.Center,
                 content = centerContent,
             )
@@ -552,7 +623,9 @@ private fun ClocktowerSquareTableSeat(
 ) {
     val canSelect = interactionMode == ClocktowerSquareTableInteractionMode.Selectable &&
         seat.isInteractionEnabled
+    val language = LocalContext.current.resources.configuration.locales[0].language
     val palette = clocktowerSquareTableSeatPalette(seat.actualAlignment, seat.isAlive)
+    val candidateDash = clocktowerSquareTableCandidateDashDp(seat)
     val lifeMarkers = clocktowerSquareTableLifeMarkers(
         isAlive = seat.isAlive,
         hasUnspentGhostVote = seat.hasUnspentGhostVote,
@@ -567,11 +640,15 @@ private fun ClocktowerSquareTableSeat(
     Surface(
         modifier = modifier
             .heightIn(min = 48.dp, max = density.cardHeight.dp)
+            .semantics {
+                if (seat.isCurrentActor) stateDescription = if (language == "en") "Current wake target" else "本步唤醒对象"
+            }
             .then(clickModifier),
         shape = RoundedCornerShape(12.dp),
         color = palette.container,
         contentColor = palette.content,
-        border = BorderStroke(
+        // Candidates own their entire outline; the Surface border would paint over their dashes.
+        border = if (candidateDash != null) null else BorderStroke(
             if (seat.isSelected || seat.selectionOrder != null) 3.dp else 1.5.dp,
             if (seat.isSelected || seat.selectionOrder != null) Color(0xFFFFD56B) else palette.border,
         ),
@@ -581,13 +658,17 @@ private fun ClocktowerSquareTableSeat(
             modifier = Modifier.fillMaxSize(),
         ) {
             // One stroke renderer for the supplied local candidate facts.
-            clocktowerSquareTableCandidateDashDp(seat)?.let { dash ->
+            candidateDash?.let { dash ->
                 Canvas(Modifier.fillMaxSize()) {
+                    val strokeWidth = 2.5.dp.toPx()
+                    val inset = strokeWidth / 2f
                     drawRoundRect(
                         color = if (seat.isSpecialCandidate) Color(0xFF53D9EC) else Color(0xFFFFD56B),
-                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx()),
+                        topLeft = Offset(inset, inset),
+                        size = androidx.compose.ui.geometry.Size(size.width - strokeWidth, size.height - strokeWidth),
+                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx() - inset),
                         style = androidx.compose.ui.graphics.drawscope.Stroke(
-                            width = 2.5.dp.toPx(),
+                            width = strokeWidth,
                             pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(
                                 dash.map { it.dp.toPx() }.toFloatArray(),
                             ),

@@ -79,6 +79,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
     wakeInstruction: String?,
     scriptRoles: List<ClocktowerRole>,
     recommendedOption: ClocktowerDisplayOption?,
+    resolution: com.codex.campboardgamehost.clocktower.session.HostRoleResolution?,
     lastPreviewRoleId: String?,
     automaticOnly: Boolean = false,
     roleLabel: (String) -> String,
@@ -90,8 +91,14 @@ internal fun ClocktowerUndertakerSquareTableDialog(
 ) {
     val executedSeat = (step.informationQuestion as? ClocktowerInformationQuestion.Role)?.subjectSeat
         ?.takeIf { it in 1..seats.size } ?: return
+    val availableRoles = scriptRoles.filter { com.codex.campboardgamehost.clocktower.domain.RoleId(it.enName) in resolution?.roles.orEmpty() }
+    val forced = resolution?.roles?.singleOrNull()?.let {
+        clocktowerDirectRoleRevealChoice(step, executedSeat, seats.size, it.value, availableRoles, roleLabel)?.let { choice ->
+            choice.copy(displayOption = choice.displayOption.copy(isTruthful = true))
+        }
+    }
     val advised = clocktowerDirectRecommendedRoleReveal(
-        step, executedSeat, seats.size, scriptRoles, recommendedOption,
+        step, executedSeat, seats.size, availableRoles, recommendedOption,
     )
     var editing by remember(interactionKey, executedSeat, automaticOnly) {
         mutableStateOf(!automaticOnly && (advised == null ||
@@ -136,7 +143,13 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                 verticalArrangement = Arrangement.Center,
             ) {
                 ClocktowerNightActionWakeInstruction(wakeInstruction)
-                if (!editing && advised != null) {
+                if (forced != null) {
+                    Button(onClick = { onConfirm(forced) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (language == "en") "Show to player: ${forced.displayLabel}" else "展示给玩家：${forced.displayLabel}")
+                    }
+                } else if (resolution == null) {
+                    Text(if (language == "en") "Current information unavailable" else "当前信息不可用")
+                } else if (!editing && advised != null) {
                     ClocktowerSingleRecommendationButtons(
                         recommendations = listOf(advised),
                         language = language,
@@ -163,7 +176,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                         DropdownMenu(
                             expanded = roleMenuExpanded, onDismissRequest = { roleMenuExpanded = false },
                         ) {
-                            scriptRoles.distinctBy { it.enName }.forEach { role ->
+                            availableRoles.distinctBy { it.enName }.forEach { role ->
                                 DropdownMenuItem(
                                     text = { Text(roleLabel(role.enName)) },
                                     onClick = { changeRole(role.enName); roleMenuExpanded = false },
@@ -174,7 +187,7 @@ internal fun ClocktowerUndertakerSquareTableDialog(
                     Spacer(Modifier.height(6.dp))
                     val actual = selectedRole?.let {
                         clocktowerDirectRoleRevealChoice(
-                            step, executedSeat, seats.size, it, scriptRoles, roleLabel,
+                            step, executedSeat, seats.size, it, availableRoles, roleLabel,
                         )
                     }
                     Button(

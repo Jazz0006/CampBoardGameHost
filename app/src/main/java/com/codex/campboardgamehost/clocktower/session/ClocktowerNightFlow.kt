@@ -31,7 +31,7 @@ internal fun ClocktowerSessionState.nightInteractions(ruleset: ValidatedClocktow
             when (token) {
                 is NightOrderToken.Character -> {
                     val role = token.roleId
-                    val actor = gameState.players.firstOrNull { it.wakingRole() == role } ?: return@forEach
+                    val actor = wakingPlayerForRole(role) ?: return@forEach
                     if (role.value in setOf("Mayor", "Scarlet Woman")) return@forEach
                     val triggered = !first && role.value in setOf("Ravenkeeper", "Sage") && actor.seat in deadSeats
                     if (!actor.alive && !triggered) return@forEach

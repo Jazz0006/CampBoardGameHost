@@ -91,7 +91,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
+            if (displayStep.displayKind != ClocktowerDisplayKind.RoleReveal) Text(
                 pairPresentation?.title ?: displayStep.displayTitle,
                 color = Color(0xFFF1EADC),
                 style = MaterialTheme.typography.titleLarge,
@@ -100,7 +100,7 @@ internal fun ClocktowerPlayerDisplayCardLocalized(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
             )
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().weight(1f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -137,14 +137,12 @@ private fun ClocktowerPairPlayerRevealContent(
         when (presentation.displayKind) {
             ClocktowerDisplayKind.EitherOne -> {
                 ClocktowerPairPlayerRevealPrimary(presentation)
-                ClocktowerPairPlayerRevealFooter(presentation)
                 ClocktowerPairPlayerRevealSeats(presentation, language)
             }
 
             ClocktowerDisplayKind.Number,
             ClocktowerDisplayKind.YesNo,
             -> {
-                ClocktowerPairPlayerRevealFooter(presentation)
                 ClocktowerPairPlayerRevealSeats(presentation, language)
                 ClocktowerPairPlayerRevealPrimary(presentation)
             }
@@ -152,7 +150,6 @@ private fun ClocktowerPairPlayerRevealContent(
             else -> {
                 ClocktowerPairPlayerRevealSeats(presentation, language)
                 ClocktowerPairPlayerRevealPrimary(presentation)
-                ClocktowerPairPlayerRevealFooter(presentation)
             }
         }
     }
@@ -226,26 +223,11 @@ private fun ClocktowerPairPlayerRevealPrimary(
 }
 
 @Composable
-private fun ClocktowerPairPlayerRevealFooter(
-    presentation: ClocktowerPairPlayerRevealPresentation,
-) {
-    presentation.footer?.let { footer ->
-        Text(
-            text = footer,
-            color = Color(0xFFAAA397),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
 private fun ClocktowerPlayerDisplayCenterContent(
     step: ClocktowerNightStepUi,
 ) {
     val primary = step.displayPrimary ?: step.tellPlayer.orEmpty()
     val secondary = step.displaySecondary
-    val footer = step.displayFooter ?: step.explanation
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -270,14 +252,6 @@ private fun ClocktowerPlayerDisplayCenterContent(
                         textAlign = TextAlign.Center,
                     )
                 }
-                if (footer.isNotBlank()) {
-                    Text(
-                        footer,
-                        color = Color(0xFFF1EADC),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                    )
-                }
             }
 
             ClocktowerDisplayKind.EitherOne -> {
@@ -288,14 +262,6 @@ private fun ClocktowerPlayerDisplayCenterContent(
                     fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
                 )
-                if (footer.isNotBlank()) {
-                    Text(
-                        footer,
-                        color = Color(0xFFAAA397),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
-                    )
-                }
                 secondary?.takeIf { it.isNotBlank() }?.let {
                     Text(
                         it,
@@ -325,14 +291,6 @@ private fun ClocktowerPlayerDisplayCenterContent(
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )
-                    if (footer.isNotBlank()) {
-                        Text(
-                            footer,
-                            color = Color(0xFFAAA397),
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
                 }
             }
 
