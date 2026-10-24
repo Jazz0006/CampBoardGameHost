@@ -1,10 +1,48 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ClocktowerDemonBluffPresentationTest {
+    @Test
+    fun `candidates exclude evil actual identities dead players and Drunk shown identity`() {
+        val game = GameState(ClocktowerScript.TroubleBrewing.toRecommendationScriptId(), listOf(
+            player(1, "Drunk", shown = "Fortune Teller"),
+            player(2, "Chef").copy(alive = false),
+            player(3, "Mayor"),
+            player(4, "Spy").copy(actualAlignment = Alignment.GOOD),
+            player(5, "Imp"),
+        ), 1L)
+        val candidates = clocktowerDemonBluffCandidates(game)
+        val names = candidates.map { it.enName }
+        assertTrue(candidates.all { it.team in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) })
+        assertTrue(names.none { it in setOf("Drunk", "Fortune Teller", "Chef", "Mayor", "Spy", "Imp", "Clockmaker") })
+        assertTrue(names.containsAll(listOf("Washerwoman", "Monk", "Butler", "Recluse", "Saint")))
+        assertEquals(names.size, names.distinct().size)
+    }
+
+    @Test
+    fun `candidates stay within the current builtin script`() {
+        val game = GameState(ClocktowerScript.NoGreaterJoy.toRecommendationScriptId(), listOf(
+            player(1, "Drunk", shown = "Empath"), player(2, "Imp"), player(3, "Clockmaker"),
+        ), 2L)
+        assertEquals(setOf("Investigator", "Chambermaid", "Artist", "Sage", "Klutz"),
+            clocktowerDemonBluffCandidates(game).map { it.enName }.toSet())
+    }
+
+    @Test
+    fun `occupied or Drunk shown identities cannot form a ready recommendation`() {
+        val game = GameState(ClocktowerScript.TroubleBrewing.toRecommendationScriptId(), listOf(
+            player(1, "Drunk", shown = "Monk"), player(2, "Chef"), player(3, "Imp"),
+        ), 3L)
+        val candidates = clocktowerDemonBluffCandidates(game)
+        assertTrue(!manualDemonBluffSelectionReady(listOf("Monk", "Mayor", "Saint"), candidates))
+        assertTrue(!manualDemonBluffSelectionReady(listOf("Chef", "Mayor", "Saint"), candidates))
+        assertTrue(manualDemonBluffSelectionReady(listOf("Washerwoman", "Mayor", "Saint"), candidates))
+    }
+
     @Test
     fun `exact three roles resolve in input order`() {
         val legal = listOf(
@@ -103,4 +141,17 @@ class ClocktowerDemonBluffPresentationTest {
         zhDescription = "",
         enDescription = "",
     )
+
+    private fun player(seat: Int, name: String, shown: String? = null): PlayerState {
+        val role = requireNotNull(clocktowerRoleByName(name))
+        val type = when (role.team) {
+            ClocktowerTeam.Townsfolk -> CharacterType.TOWNSFOLK
+            ClocktowerTeam.Outsider -> CharacterType.OUTSIDER
+            ClocktowerTeam.Minion -> CharacterType.MINION
+            ClocktowerTeam.Demon -> CharacterType.DEMON
+        }
+        return PlayerState(seat, "P$seat", RoleId(name),
+            if (type in setOf(CharacterType.MINION, CharacterType.DEMON)) Alignment.EVIL else Alignment.GOOD,
+            type, shown?.let(::RoleId))
+    }
 }

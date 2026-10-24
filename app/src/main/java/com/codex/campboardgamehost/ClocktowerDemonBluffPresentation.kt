@@ -1,5 +1,20 @@
 package com.codex.campboardgamehost
 
+import com.codex.campboardgamehost.clocktower.domain.GameState
+import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
+
+/** Read-only setup choices; actual identities and the Drunk's shown identity stay unavailable. */
+internal fun clocktowerDemonBluffCandidates(gameState: GameState): List<ClocktowerRole> {
+    val script = ClocktowerScript.entries.single { it.toRecommendationScriptId() == gameState.script }
+    val occupied = gameState.players.flatMap { player ->
+        listOfNotNull(player.actualRole.value,
+            player.shownRole?.value?.takeIf { player.actualRole.value == "Drunk" })
+    }.toSet()
+    return clocktowerRolesForScript(script).distinctBy { it.enName }.filter {
+        it.team in setOf(ClocktowerTeam.Townsfolk, ClocktowerTeam.Outsider) && it.enName !in occupied
+    }
+}
+
 internal sealed interface DemonBluffPresentationResolution {
     data class Ready(val roles: List<ClocktowerRole>) : DemonBluffPresentationResolution
 
