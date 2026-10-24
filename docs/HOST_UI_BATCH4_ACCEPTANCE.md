@@ -1,5 +1,7 @@
 # Host UI Batch 4 acceptance
 
+**Current status:** Merged as `17949e72` via #360 after #359; main full CI #4611 / APK #175 successful. The stacked-review details below are historical evidence.
+
 Status: implemented for stacked Draft review, not merged. Parent: Batch 3 #359 at `85d3833cb252e87db6ae61b99217d92c20a1b313`, full CI #4608 / R2 #4159 passed. Batch 3 remains unmerged; this branch does not merge or duplicate that review. Exact Batch 4 HEAD and remote full CI/R2 are recorded in its PR.
 
 ## Accepted snapshot ownership

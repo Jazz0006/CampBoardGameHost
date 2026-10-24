@@ -67,11 +67,7 @@ internal fun ClocktowerNightHostScreen(
     val language = context.resources.configuration.locales[0].language
     val gameId = sessionState.gameId
     val round = sessionState.round
-    val phase = when (sessionState.phase) {
-        StorytellerPhase.FIRST_NIGHT -> ClocktowerPhase.FirstNight
-        StorytellerPhase.DAY -> ClocktowerPhase.Day
-        StorytellerPhase.NIGHT -> ClocktowerPhase.Night
-    }
+    val phase = sessionState.phase.toClocktowerPhase()
     val script = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionGameState.script }
     val gameStateRevision = sessionState.gameStateRevision
     val playerInputRevision = sessionState.playerInputRevision
@@ -88,7 +84,6 @@ internal fun ClocktowerNightHostScreen(
     var nightDraft by remember(gameId, phase, round, nextNightInteraction?.id) {
         mutableStateOf(nextNightInteraction?.let { ClocktowerNightStepDraft(gameId, sessionState.phase, round, it.id) })
     }
-    fun seatOf(name: String?): Int? = cards.indexOfFirst { it.name == name }.takeIf { it >= 0 }?.plus(1)
     fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
     val fortuneTellerSubjectSeats = nightDraft?.takeIf {
         it.interactionId == ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")).interactionId(requireNotNull(flowPhase))
@@ -101,7 +96,7 @@ internal fun ClocktowerNightHostScreen(
     val empathNeighborSeats = sessionState.gameState.players.firstOrNull { it.wakingRole() == RoleId("Empath") }
         ?.seat?.let(sessionState::livingNeighbourSeats).orEmpty()
     fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
-        sessionState.abilitySubjectForRole(enName, seatOf(actor?.name))?.let {
+        sessionState.abilitySubjectForRole(enName, cards.seatOf(actor?.name))?.let {
             AbilityFunctioningSemantics.stateFor(it, enName)
         } in setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
 
@@ -135,7 +130,7 @@ internal fun ClocktowerNightHostScreen(
     // omitted; the true display proposition may only serve a reliable ability.
     fun shownPropositionFor(displayStep: ClocktowerNightStepUi): InformationProposition? {
         if (!displayIsUnreliable(displayStep)) return displayStep.displayProposition
-        val actorSeat = seatOf(displayStep.actor?.name) ?: return null
+        val actorSeat = cards.seatOf(displayStep.actor?.name) ?: return null
         if (displayStep.displayKind !in recordableUnreliableKinds) return null
         return clocktowerShownUnreliableProposition(
             step = displayStep,
@@ -150,7 +145,7 @@ internal fun ClocktowerNightHostScreen(
         !displayIsUnreliable(displayStep) || displayStep.displayKind !in recordableUnreliableKinds ||
             shownPropositionFor(displayStep) != null
     fun previewObservation(displayStep: ClocktowerNightStepUi, stepId: String): EpistemicObservationDraft? {
-        val actorSeat = seatOf(displayStep.actor?.name) ?: return null
+        val actorSeat = cards.seatOf(displayStep.actor?.name) ?: return null
         if (!informationDecisionPublicationAllowed(displayStep)) return null
         val proposition = shownPropositionFor(displayStep) ?: return null
         return EpistemicObservationDraft(

@@ -1,19 +1,13 @@
-# 当前开发交接：Batch 4 叠加于 Batch 3，待审阅
+# 当前开发交接：Batch 5 待审阅
 
-## 基线和实现
+- 用户已授权并完成合并 Batch 3 #359（`2aa7abbf`）、Batch 4 #360（`17949e72`）。combined main full CI #4611 / APK #175 成功。不要继续使用旧叠加分支基线。
+- 当前分支 `refactor/batch5-game-lifecycle-20261024` 基于 `17949e72`，未合并；精确 SHA 与远端 full CI/R2 见本批 Draft PR。
+- `ClocktowerGameLifecycle` 仅协调入口/退出：TB setup commit、NGJ start、restore、持久化绑定、finish/restart、两个轮换历史记录、当前对局 operationMode。SessionUi holder 仍只发布 accepted snapshot；Session 是唯一事实来源。
+- `ClocktowerActiveGameMetadata` 旁的 restore 解码并检查已存 AI/规则/轮换元数据；JSON 未变。生命周期返回恢复发牌/主持人等明确结果，App 映射为 Screen。新局先成功持久化后才安装 holder，失败保留开局草稿。
+- OpeningDraft 不再接收 screen getter/setter、mode getter/setter、Session getter或 setup commit 回调；通过具体 lifecycle 操作返回结果。jointRevealIndex 归 App；异步请求仍检查 pending 身份/serial/mode，卸载时使其失效。
+- AppPreferencesState 统一玩家/常用玩家/经验/语言，SettingsContent 两处共用。主题、PlayerCard builder、phase/seat 转换合并；删除 TroubleBrewingDealRoleResolver 及专属旧测试，Drunk 真实/展示身份断言迁入新生命周期测试。
 
-- main：P1 #358 → `01ef5e14`。Batch 3 #359 尚未合并，`85d3833c` full CI #4608 / R2 #4159 已成功。
-- 当前分支 `refactor/batch4-session-ui-state-20261024` 基于 Batch 3；仅审阅相对 Batch 3 的 Batch 4 增量，先前批次由 #359 单独承载。
-- `ClocktowerSessionUiState` 持有一个 Session 与只读 accepted snapshot。泛型 `commit` 保留返回值（含 nomination Boolean），只在 Session 操作成功后发布；IOException 保留旧快照并调用保存错误回调。
-- App 在替换/恢复/重开前停用旧 holder，卸载时亦停用。旧 holder 捕获的提交回调不会执行，不能写旧存档或新局。现有异步 AI 的 Session 实例/revision 校验继续保留。
-- SessionHost 统一经 holder 提交；不再接收独立状态副本或刷新回调。角色卡、round、phase、结果、主持人工具等读取可观察快照；卡片也保留同一回调中读取最新 accepted snapshot 的能力。
-- 手动 tick、刷新函数、两份确认 wrapper 及 nomination 专用错误 wrapper 已删除；Session 核心事务、API/JSON 没有改变。
-
-## 后续
-
-1. 按 [验收记录](HOST_UI_BATCH4_ACCEPTANCE.md) 核对精确 HEAD/full CI/R2，并依次审阅 Batch 3、Batch 4；未获授权不合并。
-2. Batch 5 仍未实施，处理 App 生命周期与导航职责；勿在 Batch 4 引入新的 lifecycle/controller。
-3. 真机小屏、三模式交接、来电/后台/杀进程及付费 provider 验收继续单列，不把 Robolectric 成功当作现场验证。
+下一步：按 [Batch 5 验收](HOST_UI_BATCH5_ACCEPTANCE.md) 审阅与核对完整 CI，再决定 Batch 6 独立 JSON 合同或设备验收。未获授权不合并 Batch 5；真机/物理杀进程/付费模型均不以自动化测试代替。
 
 ## 历史 Stage 3 开工交接（完成后以本页顶部状态为准）
 

@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import com.codex.campboardgamehost.clocktower.session.OpeningPlayerExperienceV1
 import com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
 import com.codex.campboardgamehost.clocktower.session.*
-import com.codex.campboardgamehost.clocktower.session.ClocktowerGameSession
 import com.codex.campboardgamehost.clocktower.session.PersonalDirectOpenAiV1
 import com.codex.campboardgamehost.clocktower.session.InitialJointOpeningDirectV2
 import com.codex.campboardgamehost.clocktower.session.StorytellerStrategicChangeCheckpointV2
@@ -19,8 +18,6 @@ import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelection
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingDrunkSelectionRouter
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingGameSnapshotProjector
 import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingPreparedSetup
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingSetupPresetJson
-import com.codex.campboardgamehost.clocktower.setup.TroubleBrewingProductionSetupPreparer
 import kotlinx.coroutines.launch
 
 internal data class PendingTroubleBrewingDrunkSelection(
@@ -39,6 +36,9 @@ internal data class PendingTroubleBrewingJointOpening(
 
 /** Pre-Session shown-role handoff and unconfirmed opening inputs; never stores a live game. */
 internal class ClocktowerOpeningDraft {
+    enum class Result { UNCHANGED, DEAL, JOINT, DRUNK, HOST, FAILED }
+    private fun started(result: ClocktowerGameLifecycle.StartResult) =
+        if (result == ClocktowerGameLifecycle.StartResult.STARTED) Result.DEAL else Result.FAILED
     var pendingTroubleBrewingDrunkSelection by mutableStateOf<PendingTroubleBrewingDrunkSelection?>(null)
     var pendingJointOpening by mutableStateOf<PendingTroubleBrewingJointOpening?>(null)
     var jointOpeningResult by mutableStateOf<HostOpeningSemanticAcceptanceV2?>(null)
@@ -47,42 +47,7 @@ internal class ClocktowerOpeningDraft {
     var jointOpeningBusy by mutableStateOf(false)
     var jointOpeningError by mutableStateOf<String?>(null)
     var jointOpeningSerial by mutableStateOf(0)
-    var jointRevealIndex by mutableStateOf(0)
     var shownOnlyDealCompleted by mutableStateOf(false)
-    fun prepare(
-        context: android.content.Context,
-        playerNames: List<String>, gameSeed: Long,
-        catalog: BuiltInClocktowerRulesetCatalog,
-    ): TroubleBrewingPreparedSetup {
-        val datasetJson = context.assets
-            .open("setup/trouble_brewing_setup_presets_v2_final.json")
-            .bufferedReader(Charsets.UTF_8)
-            .use { it.readText() }
-
-        val dataset = TroubleBrewingSetupPresetJson.parse(datasetJson)
-        val rotationHistoryStore = TroubleBrewingSetupRotationHistoryStore.fromContext(context)
-        val rotationHistory = rotationHistoryStore.historyFor(
-            datasetId = dataset.datasetId,
-            schemaVersion = dataset.schemaVersion,
-            playerCount = playerNames.size,
-        )
-        val playerRotationHistory = rotationHistoryStore.recentPlayerStartingIdentityHistoryFor(
-            datasetId = dataset.datasetId,
-            schemaVersion = dataset.schemaVersion,
-        )
-        val characterRegistry = catalog
-            .ruleset(ClocktowerScript.TroubleBrewing)
-            .characterRegistry
-        return TroubleBrewingProductionSetupPreparer.prepare(
-            dataset = dataset,
-            characterRegistry = characterRegistry,
-            orderedPlayerNames = playerNames.toList(),
-            gameSeed = gameSeed,
-            recentSetupRotationHistory = rotationHistory,
-            recentPlayerStartingIdentityHistory = playerRotationHistory,
-        )
-    }
-
     fun reset(conversation: ClocktowerAiConversation) {
         // Invalidate any prior asynchronous callback before preparing the next setup.
         jointOpeningSerial += 1
@@ -102,25 +67,23 @@ internal class ClocktowerOpeningDraft {
         jointOpeningResult = null
         jointOpeningBusy = false
         jointOpeningError = null
-        jointRevealIndex = 0
         pendingTroubleBrewingDrunkSelection = null
     }
     fun requestJointOpening(
         pending: PendingTroubleBrewingJointOpening,
         aiSettings: StorytellerAiSettings,
         activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
-        currentMode: () -> StorytellerOperationMode,
-        currentScreen: () -> Screen,
+        lifecycle: ClocktowerGameLifecycle,
         drunkAiScope: kotlinx.coroutines.CoroutineScope,
     ) {
         if (pendingJointOpening !== pending || jointOpeningBusy ||
-            currentMode() == StorytellerOperationMode.MANUAL ||
+            lifecycle.operationMode == StorytellerOperationMode.MANUAL ||
             !aiSettings.directEnabled) return
         if (aiSettings.token.isBlank() || !aiSettings.endpoint.startsWith("https://")) {
             jointOpeningError = "AI credentials unavailable. You can continue manually."
             return
         }
-        val requestedMode = currentMode()
+        val requestedMode = lifecycle.operationMode
         val requestedKey = aiSettings.token
         val requestedModel = aiSettings.model ?: PersonalDirectOpenAiV1.DEFAULT_MODEL
         pendingOpeningResponseId = null
@@ -147,9 +110,7 @@ internal class ClocktowerOpeningDraft {
             // Precommit has NO committed session. Never compare against a
             // fake session state; bind directly to this immutable pending game.
             if (serial != jointOpeningSerial || pendingJointOpening !== pending ||
-                currentMode() != requestedMode || !aiSettings.directEnabled ||
-                currentScreen() !in setOf(Screen.ClocktowerJointPass,
-                    Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)
+                lifecycle.operationMode != requestedMode || !aiSettings.directEnabled
             ) return@launch
             result.onSuccess { receipt ->
                 if (receipt.accepted.selection.validFor(pending.request)) {
@@ -178,15 +139,12 @@ internal class ClocktowerOpeningDraft {
         candidate: TroubleBrewingDrunkCandidate?,
         conversation: ClocktowerAiConversation,
         activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
-        currentMode: () -> StorytellerOperationMode,
-        currentSession: () -> ClocktowerGameSession?,
-        commitAndStartTroubleBrewingGame: (String, TroubleBrewingPreparedSetup, TroubleBrewingDrunkCandidate?) -> Unit,
-        onScreenChange: (Screen) -> Unit,
-    ) {
-        val accepted = jointOpeningResult ?: return
+        lifecycle: ClocktowerGameLifecycle,
+    ): Result {
+        val accepted = jointOpeningResult ?: return Result.UNCHANGED
         if (pendingJointOpening !== pending ||
             !accepted.selection.validFor(pending.request) ||
-            currentMode() == StorytellerOperationMode.MANUAL) return
+            lifecycle.operationMode == StorytellerOperationMode.MANUAL) return Result.UNCHANGED
         val legalRoute = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         when (legalRoute) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> require(candidate == null)
@@ -195,15 +153,13 @@ internal class ClocktowerOpeningDraft {
         }
         val selectedSeat = candidate?.seat
         val recommendationMatchesActualDrunk = selectedSeat == accepted.selection.drunkSeat
+        if (lifecycle.commitTroubleBrewingSetup(pending.preparedGameId, pending.preparedSetup, candidate) !=
+            ClocktowerGameLifecycle.StartResult.STARTED) return Result.FAILED
         jointOpeningSerial += 1
         jointOpeningBusy = false
         pendingJointOpening = null
         pendingTroubleBrewingDrunkSelection = null
         shownOnlyDealCompleted = false
-        // Drunk becomes true only after this explicit current-step confirmation.
-        commitAndStartTroubleBrewingGame(
-            pending.preparedGameId, pending.preparedSetup, candidate,
-        )
         // The recommendation is advice about this game, not a committed plan.
         // An overridden Drunk must invalidate all dependent opening display hints.
         conversation.openingPlanRecommendation = accepted
@@ -230,28 +186,25 @@ internal class ClocktowerOpeningDraft {
         pendingOpeningResponseId = null
         pendingOpeningModel = null
         jointOpeningResult = null
-        conversation.strategicLastReviewedHost = currentSession()?.let { committedSession ->
+        conversation.strategicLastReviewedHost = lifecycle.sessionUi?.session?.let { committedSession ->
             StorytellerStrategicChangeCheckpointV2.capture(committedSession,
                 StorytellerStrategicChangeCheckpointV2.Position(
                     committedSession.state.phase, committedSession.state.round))
         }
-        onScreenChange(Screen.ClocktowerJudge)
+        lifecycle.persistMetadata()
+        return Result.HOST
     }
 
     fun beginJointOpeningAtDrunkStep(
-        currentScreen: () -> Screen,
-        currentMode: () -> StorytellerOperationMode,
         conversation: ClocktowerAiConversation,
         activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
-        currentSession: () -> ClocktowerGameSession?,
-        commit: (String, TroubleBrewingPreparedSetup, TroubleBrewingDrunkCandidate?) -> Unit,
-        onScreenChange: (Screen) -> Unit,
-    ) {
-        val pending = pendingJointOpening ?: return
-        val accepted = jointOpeningResult ?: return
-        if (currentScreen() != Screen.ClocktowerJointReview || jointOpeningBusy ||
-            currentMode() == StorytellerOperationMode.MANUAL ||
-            !accepted.selection.validFor(pending.request)) return
+        lifecycle: ClocktowerGameLifecycle,
+    ): Result {
+        val pending = pendingJointOpening ?: return Result.UNCHANGED
+        val accepted = jointOpeningResult ?: return Result.UNCHANGED
+        if (jointOpeningBusy ||
+            lifecycle.operationMode == StorytellerOperationMode.MANUAL ||
+            !accepted.selection.validFor(pending.request)) return Result.UNCHANGED
         val legal = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         val recommended = when (legal) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
@@ -263,32 +216,26 @@ internal class ClocktowerOpeningDraft {
                     it.seat == accepted.selection.drunkSeat
                 } ?: run {
                     jointOpeningError = "This Drunk recommendation cannot be applied. Retry planning or take over manually."
-                    return
+                    return Result.UNCHANGED
                 }
         }
         if (legal !is TroubleBrewingDrunkSelectionRoute.ManualSelection ||
-            currentMode() == StorytellerOperationMode.AI_AUTOMATIC
+            lifecycle.operationMode == StorytellerOperationMode.AI_AUTOMATIC
         ) {
-            confirmJointOpeningDrunk(pending, recommended, conversation, activeGameClocktowerRulesetCatalog, currentMode, currentSession, commit, onScreenChange)
-            return
+            return confirmJointOpeningDrunk(pending, recommended, conversation, activeGameClocktowerRulesetCatalog, lifecycle)
         }
         pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
             pending.preparedGameId, pending.preparedSetup,
             legal.request.copy(recommendedCandidate = recommended),
         )
-        onScreenChange(Screen.ClocktowerDrunkSelection)
+        return Result.DRUNK
     }
 
     fun takeOverJointOpeningManually(
-        currentScreen: () -> Screen,
         conversation: ClocktowerAiConversation,
-        onModeChange: (StorytellerOperationMode) -> Unit,
-        commitAndStartTroubleBrewingGame: (String, TroubleBrewingPreparedSetup, TroubleBrewingDrunkCandidate?) -> Unit,
-        onScreenChange: (Screen) -> Unit,
-    ) {
-        val pending = pendingJointOpening ?: return
-        if (currentScreen() !in setOf(Screen.ClocktowerJointPass,
-                Screen.ClocktowerJointReveal, Screen.ClocktowerJointReview)) return
+        lifecycle: ClocktowerGameLifecycle,
+    ): Result {
+        val pending = pendingJointOpening ?: return Result.UNCHANGED
         jointOpeningSerial += 1
         jointOpeningBusy = false
         jointOpeningResult = null
@@ -298,22 +245,36 @@ internal class ClocktowerOpeningDraft {
         conversation.canonicalConversationModel = null
         jointOpeningError = null
         pendingJointOpening = null
-        onModeChange(StorytellerOperationMode.MANUAL)
+        lifecycle.takeOverManually()
         shownOnlyDealCompleted = true
         val route = TroubleBrewingDrunkSelectionRouter.route(pending.preparedSetup, null)
         when (route) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded -> {
-                commitAndStartTroubleBrewingGame(
-                    pending.preparedGameId, pending.preparedSetup, null)
-                onScreenChange(Screen.ClocktowerJudge) // shown roles already dealt
+                val result = lifecycle.commitTroubleBrewingSetup(pending.preparedGameId, pending.preparedSetup, null)
+                if (result != ClocktowerGameLifecycle.StartResult.STARTED) {
+                    pendingJointOpening = pending
+                    return Result.FAILED
+                }
+                shownOnlyDealCompleted = false
+                return Result.HOST
             }
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
                 pendingTroubleBrewingDrunkSelection = PendingTroubleBrewingDrunkSelection(
                     pending.preparedGameId, pending.preparedSetup, route.request)
-                onScreenChange(Screen.ClocktowerDrunkSelection)
                 // Deliberately NO standalone AI call. Manual fallback is local.
+                return Result.DRUNK
             }
         }
+    }
+
+    fun confirmManualDrunk(pending: PendingTroubleBrewingDrunkSelection,
+        candidate: TroubleBrewingDrunkCandidate, lifecycle: ClocktowerGameLifecycle): Result {
+        if (pendingTroubleBrewingDrunkSelection !== pending) return Result.UNCHANGED
+        require(candidate in pending.request.candidates)
+        val result = lifecycle.commitTroubleBrewingSetup(pending.preparedGameId, pending.preparedSetup, candidate)
+        if (result != ClocktowerGameLifecycle.StartResult.STARTED) return Result.FAILED
+        pendingTroubleBrewingDrunkSelection = null
+        return if (shownOnlyDealCompleted) { shownOnlyDealCompleted = false; Result.HOST } else Result.DEAL
     }
 
     fun beginPrepared(
@@ -321,13 +282,11 @@ internal class ClocktowerOpeningDraft {
         playerExperience: Map<Int, OpeningPlayerExperienceV1>,
         language: String, aiSettings: StorytellerAiSettings,
         activeGameClocktowerRulesetCatalog: BuiltInClocktowerRulesetCatalog,
-        currentMode: () -> StorytellerOperationMode, currentScreen: () -> Screen,
+        lifecycle: ClocktowerGameLifecycle,
         drunkAiScope: kotlinx.coroutines.CoroutineScope,
-        commitAndStartTroubleBrewingGame: (String, TroubleBrewingPreparedSetup, TroubleBrewingDrunkCandidate?) -> Unit,
-        onScreenChange: (Screen) -> Unit,
-    ) {
+    ): Result {
         if (aiSettings.directEnabled &&
-            currentMode() != StorytellerOperationMode.MANUAL
+            lifecycle.operationMode != StorytellerOperationMode.MANUAL
         ) {
             val snapshot = TroubleBrewingGameSnapshotProjector.fromIntermediate(
                 preparedGameId, preparedSetup.intermediateSetup)
@@ -339,22 +298,13 @@ internal class ClocktowerOpeningDraft {
                 val role = requireNotNull(completeTroubleBrewingRoles.singleOrNull { available ->
                     available.enName.filter(Char::isLetterOrDigit).lowercase() == assignment.shownRoleId
                 }) { "Missing shown-only precommit role." }
-                PlayerCard(
-                    name = assignment.playerName,
-                    roleLabel = role.nameFor(language),
-                    actualRoleLabel = null,
-                    clocktowerTeam = role.team,
-                    clocktowerRole = null, // No speculative actual Drunk identity.
-                    clocktowerShownRole = role,
-                )
+                clocktowerPlayerCard(assignment.playerName, null, role, language)
             }
             val pending = PendingTroubleBrewingJointOpening(
                 preparedGameId, preparedSetup, openingRequest, visibleCards)
             pendingJointOpening = pending
-            jointRevealIndex = 0
-            onScreenChange(Screen.ClocktowerJointPass)
-            requestJointOpening(pending, aiSettings, activeGameClocktowerRulesetCatalog, currentMode, currentScreen, drunkAiScope) // One network request, concurrently with visible-only dealing.
-            return
+            requestJointOpening(pending, aiSettings, activeGameClocktowerRulesetCatalog, lifecycle, drunkAiScope) // One network request, concurrently with visible-only dealing.
+            return Result.JOINT
         }
         when (
             val route = TroubleBrewingDrunkSelectionRouter.route(
@@ -363,9 +313,7 @@ internal class ClocktowerOpeningDraft {
             )
         ) {
             TroubleBrewingDrunkSelectionRoute.NoSelectionNeeded ->
-                commitAndStartTroubleBrewingGame(
-                    preparedGameId, preparedSetup, null,
-                )
+                return started(lifecycle.commitTroubleBrewingSetup(preparedGameId, preparedSetup, null))
 
             is TroubleBrewingDrunkSelectionRoute.ManualSelection -> {
                 val pending = PendingTroubleBrewingDrunkSelection(
@@ -374,9 +322,9 @@ internal class ClocktowerOpeningDraft {
                     request = route.request,
                 )
                 pendingTroubleBrewingDrunkSelection = pending
-                onScreenChange(Screen.ClocktowerDrunkSelection)
                 // Only the manual operator reaches this local picker. AI paid
                 // Drunk-only planning was replaced by the joint-opening request.
+                return Result.DRUNK
             }
         }
     }
