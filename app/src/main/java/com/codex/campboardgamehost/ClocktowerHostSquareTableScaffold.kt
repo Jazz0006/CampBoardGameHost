@@ -20,13 +20,14 @@ internal fun ClocktowerHostSquareTableScaffold(
     seatUiModel: (HostSeatPresentation) -> ClocktowerSquareTableSeatUiModel,
     onSeatSelected: ((Int) -> Unit)? = null,
     nextEnabled: Boolean = true,
+    nextLabel: String = if (language == "en") "Next →" else "下一步 →",
     onBack: () -> Unit = { if (previousEnabled) onPrevious() },
     centerContent: @Composable () -> Unit,
 ) {
     ClocktowerHostFullScreenScaffold(
         previousLabel = if (language == "en") "← Previous" else "← 上一步",
         hostToolsLabel = if (language == "en") "Host Tools" else "主持工具",
-        nextLabel = if (language == "en") "Next →" else "下一步 →",
+        nextLabel = nextLabel,
         previousEnabled = previousEnabled,
         nextEnabled = nextEnabled,
         onPrevious = onPrevious,

@@ -12,7 +12,8 @@ on:
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt
-      - app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
+      - app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffsHostScreen.kt
+      - app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffPresentation.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt
       - app/src/main/java/com/codex/campboardgamehost/ClocktowerAutomaticRegistrationEffect.kt
@@ -46,7 +47,7 @@ jobs:
           core=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostCoreSemantics.kt
           selection=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostSelectionSemantics.kt
           presentation=app/src/main/java/com/codex/campboardgamehost/ClocktowerHostPresentationModels.kt
-          recommendation_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerStorytellerRecommendationUi.kt
+          recommendation_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerDemonBluffsHostScreen.kt
           player_display_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerPlayerDisplayUi.kt
           registration_controls=app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationDecisionControls.kt
           legacy_registration_ui=app/src/main/java/com/codex/campboardgamehost/ClocktowerRegistrationUi.kt
@@ -227,12 +228,9 @@ jobs:
             echo "Dead RecommendationReasonSummary returned to production" >&2
             exit 1
           fi
-          if grep -q "fun ClocktowerStorytellerRecommendationScreen(" "$host"; then
-            echo "ClocktowerStorytellerRecommendationScreen still lives in ClocktowerHostScreen.kt" >&2
-            exit 1
-          fi
-          grep -q "internal fun ClocktowerStorytellerRecommendationScreen" "$recommendation_ui"
-          for symbol in StorytellerRecommendationCard RecommendationDecisionEditor; do
+          grep -q "internal fun ClocktowerDemonBluffsHostScreen" "$recommendation_ui"
+          grep -q "ClocktowerHostSquareTableScaffold(" "$recommendation_ui"
+          for symbol in ClocktowerStorytellerRecommendationScreen StorytellerRecommendationCard RecommendationDecisionEditor; do
             if grep -R -q "fun ${symbol}(" app/src/main/java/com/codex/campboardgamehost; then
               echo "Purged legacy recommendation UI returned: ${symbol}" >&2
               exit 1
