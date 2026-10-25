@@ -63,6 +63,7 @@ internal fun ClocktowerDrunkSelectionScreen(
     operationMode: StorytellerOperationMode = StorytellerOperationMode.MANUAL,
     language: String,
     roleNameForExternalId: (String) -> String,
+    aiActions: ClocktowerAiRecommendationActions? = null,
     onBack: () -> Unit,
     onConfirm: (TroubleBrewingDrunkCandidate) -> Unit,
 ) {
@@ -83,7 +84,7 @@ internal fun ClocktowerDrunkSelectionScreen(
         selectedSeatIds = listOfNotNull(selectedCandidate?.seat?.let(::ClocktowerSeatId)),
     )
 
-    ClocktowerDarkTheme {
+    ClocktowerAiRecommendationPage(aiActions) {
         ClocktowerHostFullScreenScaffold(
             previousLabel = text("← 返回", "← Back"),
             hostToolsLabel = text("主持工具", "Host Tools"),

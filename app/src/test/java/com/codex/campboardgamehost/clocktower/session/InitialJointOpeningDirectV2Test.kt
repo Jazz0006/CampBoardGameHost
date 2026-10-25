@@ -359,6 +359,7 @@ class InitialJointOpeningDirectV2Test {
 }"""
         val accepted = InitialJointOpeningDirectV2.decode(modelOutput, domain)
         assertEquals(4, accepted.selection.drunkSeat)
+        assertEquals(JSONObject(modelOutput).getString("tradeoffSummary"), accepted.tradeoffSummary)
         assertTrue(accepted.strategyMemory?.tensions?.isNotEmpty() == true)
     }
 

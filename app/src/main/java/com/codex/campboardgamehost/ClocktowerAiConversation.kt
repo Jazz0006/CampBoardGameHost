@@ -111,6 +111,7 @@ internal class ClocktowerAiConversation {
         fortuneTellerSelectedNames: List<String>,
         mayorPending: PendingMayorRedirectDecision?,
         drunkAiScope: kotlinx.coroutines.CoroutineScope,
+        language: String = "en",
     ) {
         val currentClocktowerScript = currentSession()?.state?.gameState?.script?.let { id ->
             ClocktowerScript.entries.single { it.toRecommendationScriptId() == id }
@@ -372,22 +373,13 @@ internal class ClocktowerAiConversation {
                         BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
                             wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                         liveAiAdviceText = buildString {
-                            append("本次整局续规划：")
-                            append(verified.choices.size)
-                            append(" 项当前合法选择（尚未发布，必须在 Host 确认）。")
-                            verified.choices.forEach { (id, meaning) ->
-                                val decision = legalOpen.single { it.decisionId == id }
-                                append("\n")
-                                append(decision.abilityRoleId ?: decision.family)
-                                append("（")
-                                append(decision.sourceSeat ?: "-")
-                                append("号）：")
-                                append(meaning.toString().take(160))
-                            }
-                            append("\n")
-                            append(proposal.strategicDirection.take(300))
-                            remainingScope.barrierReason?.let {
-                                append("\n尚未发生的玩家行动之后的决定仍保留为条件计划。")
+                            append(proposal.strategicDirection)
+                            if (proposal.revisions.isNotEmpty()) {
+                                append("\n\n策略调整：")
+                                proposal.revisions.forEach { revision ->
+                                    append("\n")
+                                    append(revision.reason)
+                                }
                             }
                         }
                         liveAiAdviceError = null
@@ -406,6 +398,15 @@ internal class ClocktowerAiConversation {
                             wholeCursor.version, phasePosition.phase.name, phasePosition.round)
                     }
                 }.onFailure { error ->
+                    if (error is StorytellerResponseValidationException) {
+                        liveAiAdviceError = if (language == "en")
+                            "AI returned a response, but validation rejected it (${error.safeDetail}). Retry or choose manually."
+                        else "AI 已返回，但响应未通过校验（${error.safeDetail}）。可重新推荐或手动选择。"
+                        DebugFlightRecorder.record("RESIDUAL_RESPONSE_REJECTED")
+                        BotcAiWireTrace.residualGate("HOST_REJECTED", legalOpen.size,
+                            wholeCursor.version, phasePosition.phase.name, phasePosition.round)
+                        return@onFailure
+                    }
                     // No retry on a paid call. An expired/missing provider chain
                     // can recover only on the NEXT explicit Host review using
                     // its complete snapshot; never advance a failed anchor.

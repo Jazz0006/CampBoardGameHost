@@ -7,14 +7,11 @@ import android.widget.Toast
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
@@ -42,6 +39,8 @@ internal fun ClocktowerNightHostScreen(
     /** A verified joint plan is advisory; only confirmed current steps affect Session. */
     globalAiAutomatic: Boolean = false,
     jointOpeningAvailable: Boolean = false,
+    jointOpeningReason: String? = null,
+    recommendedRedHerringSeat: Int? = null,
     jointOpeningSemantics: Map<Int, com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2> = emptyMap(),
     globalNightPendingDecision: PendingMayorRedirectDecision? = null,
     globalAiAdviceKey: String? = null,
@@ -78,9 +77,18 @@ internal fun ClocktowerNightHostScreen(
         else -> null
     }
     val nextNightInteraction = flowPhase?.let { sessionState.nextNightInteraction(nightRuleset) }
+    val redHerringSelectableSeats = clocktowerRedHerringSelectableSeats(sessionGameState)
+    val redHerringInteractionId = ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()
+        .interactionId(ClocktowerNightFlowPhase.FIRST_NIGHT)
     // UI-only, keyed to this exact interaction (IDs carry no round); outlives the fullscreen preview.
     var nightDraft by remember(gameId, phase, round, nextNightInteraction?.id) {
-        mutableStateOf(nextNightInteraction?.let { ClocktowerNightStepDraft(gameId, sessionState.phase, round, it.id) })
+        mutableStateOf(nextNightInteraction?.let {
+            val initialSeat = recommendedRedHerringSeat?.takeIf { seat ->
+                it.id == redHerringInteractionId && globalAiAssisted && jointOpeningAvailable &&
+                    seat in redHerringSelectableSeats
+            }
+            ClocktowerNightStepDraft(gameId, sessionState.phase, round, it.id, listOfNotNull(initialSeat))
+        })
     }
     fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
     val fortuneTellerSubjectSeats = nightDraft?.takeIf {
@@ -187,6 +195,8 @@ internal fun ClocktowerNightHostScreen(
             it.interactionId == currentStep.interactionId && informationDecisionPublicationAllowed(it)
         }
         val host = hostNightStep(sessionState, nightRuleset, nightDraft)
+        val redHerringReady = currentStep.action != ClocktowerNightAction.RedHerring ||
+            host.selectedSeat in redHerringSelectableSeats
         // Verify the UI materializer matches the actual pending Session interaction.
         // Display projections may not assign role, action, actor or numeric query authority.
         check(currentStep.interactionId == host.facts.interactionId &&
@@ -202,7 +212,10 @@ internal fun ClocktowerNightHostScreen(
             if (ai.shouldRequest) onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames)
         }
         val currentSurfacePlan = clocktowerNightSurfacePlan(currentStep, phase)
+        var recommendationSelectionVersion by remember(gameId, currentStep.interactionId) { mutableStateOf(0) }
+        var waitingForRequestedRecommendation by remember(gameId, currentStep.interactionId) { mutableStateOf(false) }
         fun updateNightDraft(next: ClocktowerNightStepDraft) {
+            waitingForRequestedRecommendation = false
             if (currentStep.action in setOf(
                     ClocktowerNightAction.Ravenkeeper, ClocktowerNightAction.FortuneTeller, ClocktowerNightAction.Chambermaid,
                 )) lastInformationPreview = null
@@ -218,7 +231,7 @@ internal fun ClocktowerNightHostScreen(
         val successorReady = host.successorReady(selectedSelfKillSuccessor)
         val advanceNightStep = advance@{
             // Check readiness before the only irreversible Observation write.
-            if (!host.targetReady || !successorReady) {
+            if (!host.targetReady || !successorReady || !redHerringReady) {
                 Toast.makeText(context, text(
                     "请先完成当前行动目标及必要的恶魔继任选择。",
                     "Select the current target and any required Imp successor before continuing.",
@@ -266,143 +279,156 @@ internal fun ClocktowerNightHostScreen(
             }
         }
 
-        ClocktowerNightActiveScreen(
-            progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
-            nextEnabled = (!(host.isPrivateInformation || host.isEvilInformation) || currentInformationPreview != null) &&
-                host.targetReady && successorReady,
-            onHostTools = onHostTools,
-            onNext = advanceNightStep,
-            contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
-        ) {
-            if (host.successorSeats.size > 1) {
-                ClocktowerSingleTargetSquareTableDialog(
-                    seats = sessionGameState.toHostSeatPresentations { roleId ->
-                        clocktowerRoleByName(roleId.value)?.nameFor(language) ?: roleId.value
-                    }.map { seat ->
-                        seat.copy(hasUnspentGhostVote = hostSeatHasUnspentGhostVote(
-                            seat.seatId, seat.isAlive, ghostVoteAuthority,
-                        ))
-                    },
-                    selectedSeat = successorSeat,
-                    selectableSeats = host.successorSeats.toSet(),
-                    enabled = true,
-                    actorSeat = host.facts.actorSeat,
-                    title = text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor"),
-                    helper = text("在方桌上选择接任小恶魔的存活爪牙。", "Select a living Minion on the table to become the Imp."),
-                    language = language,
-                    onSeatSelected = { seat ->
-                        if (seat in host.successorSeats) {
-                            onRecordPlayerInput()
-                            selectedSelfKillSuccessor = seat.takeUnless { it == selectedSelfKillSuccessor }
-                        }
-                    },
-                    onHostTools = onHostTools,
-                    onNext = advanceNightStep,
-                    nextEnabled = host.targetReady && successorReady,
-                    secondaryActionLabel = text("修改攻击目标", "Change attack target"),
-                    secondaryActionEnabled = true,
-                    onSecondaryAction = {
-                        nightDraft?.let { updateNightDraft(it.copy(seatSlots = emptyList())) }
-                    },
-                )
-                return@ClocktowerNightActiveScreen
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                val aiKey = ai.currentKey
-                if (aiKey != null) {
-                    if (!globalAiAutomatic ||
-                        (ai.validatedOption == null && (!globalAiAdviceBusy || globalAiAdviceKey != aiKey))
-                    ) {
-                        OutlinedButton(
-                            onClick = { onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames) },
-                            enabled = !globalAiAdviceBusy || globalAiAdviceKey != aiKey,
-                        ) {
-                            Text(if (globalAiAutomatic) text("重新请求 AI 信息", "Retry AI information")
-                                else text("AI 全局局势与当前合法裁量", "Global AI advice"))
-                        }
-                    }
-                    if (globalAiAdviceKey == aiKey) {
-                        if (globalAiAdviceBusy) Text(
-                            text("正在重新评估已确认的游戏事件…", "Analysing committed game history…"),
-                        )
-                        globalAiAdviceError?.let { error -> Text(text = error) }
-                        globalAiAdviceText?.let { advice ->
-                            Text(text = if (globalAiAutomatic && globalAiAdviceError == null)
-                                text("AI 已更新整局规划，合法结果将在相应夜晚步骤使用。",
-                                    "Whole-game strategy updated; legal results are used in their night steps.")
-                            else advice)
-                        }
-                    }
+        val currentAiRequest = globalAiAdviceKey == ai.currentKey && ai.currentKey != null
+        val hasCurrentRecommendation = currentAiRequest && !ai.requestBlocked &&
+            globalResidualRecommendedChoices.isNotEmpty() &&
+            (ai.suggestedOption != null || ai.recommendedMayorSeat != null)
+        LaunchedEffect(waitingForRequestedRecommendation, currentAiRequest, ai.suggestedOption,
+            ai.recommendedMayorSeat, globalAiAdviceBusy, globalAiAdviceError) {
+            if (waitingForRequestedRecommendation && currentAiRequest && !globalAiAdviceBusy) {
+                if (!ai.requestBlocked && (ai.suggestedOption != null || ai.recommendedMayorSeat != null)) {
+                    recommendationSelectionVersion += 1
                 }
-                ClocktowerNightStepCardLocalized(
-                scriptRoles = clocktowerRolesForScript(script),
-                allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
-                phase = phase,
-                gameId = gameId,
-                round = round,
-                sequence = currentStepIndex,
-                gameStateRevision = gameStateRevision,
-                playerInputRevision = playerInputRevision,
-                informationDecisionKey = "$gameId:$gameStateRevision:$playerInputRevision:${currentStep.interactionId}",
-                cards = cards,
-                actualAlignmentBySeat = sessionGameState.players.associate { it.seat to it.actualAlignment },
-                ghostVoteAuthority = ghostVoteAuthority,
-                poisonedPlayerName = nameAt(currentStep.roleEnName?.let(sessionState::poisonedSeatForRole)),
-                aliveSeats = aliveSeats,
-                chambermaidTargetSeats = aliveSeats,
-                mayorRedirectTargetSeats = mayorRedirectTargetSeats,
-                livingMayorSeat = sessionGameState.players.firstOrNull { it.alive && it.actualRole.value == "Mayor" }?.seat,
-                // One optional current-step suggestion for both AI modes.
-                // The card retains the complete Host legal domain for manual edits.
-                // Automatic mode can use the same verified choice at this step only.
-                aiSuggestedInformationOption = ai.suggestedOption,
-                numericResolution = host.numericResolution,
-                booleanResolution = host.booleanResolution,
-                roleResolution = host.roleResolution,
-                pairResolver = { role, seat, first, second ->
-                    PairInformationResolver.resolve(
-                        sessionState, nightRuleset, RoleId(role), seat, first, second,
-                    )
+                waitingForRequestedRecommendation = false
+            }
+        }
+        val aiActions = if (globalAiAssisted &&
+            (ai.currentKey != null || (jointOpeningAvailable &&
+                (host.isEvilInformation || currentStep.action == ClocktowerNightAction.RedHerring)))) {
+            ClocktowerAiRecommendationActions(
+                identity = listOf(gameId, currentStep.interactionId, ai.currentKey, gameStateRevision, playerInputRevision),
+                reason = if (hasCurrentRecommendation) globalAiAdviceText else jointOpeningReason.takeIf {
+                    phase == ClocktowerPhase.FirstNight && jointOpeningAvailable
                 },
-                // AI may select the result but NEVER open the player fullscreen
-                // automatically. Showing private information requires a live tap.
-                step = currentStep,
-                surfacePlan = currentSurfacePlan,
-                selectedSeatSlots = when (currentStep.action) {
-                    ClocktowerNightAction.RedHerring -> listOfNotNull(host.selectedSeat)
-                    ClocktowerNightAction.Chambermaid ->
-                        listOf(chambermaidSelection.first, chambermaidSelection.second)
-                    else -> nightDraft?.seatSlots.orEmpty()
-                },
-                redHerringSeat = sessionState.redHerringSeat,
-                onSelectSeat = { seat ->
-                    if (currentStep.action in clocktowerNightSeatDraftActions) {
-                        nightDraft?.withTappedSeat(currentStep.action, seat)?.let(::updateNightDraft)
-                    }
-                },
-                onShowPlayerDisplay = { selectedStep ->
-                    val preview = selectedStep.copy(informationSourceRevision =
-                        StorytellerDecisionRevision(gameStateRevision, playerInputRevision))
-                    if (!informationDecisionPublicationAllowed(preview) ||
-                        !unreliableInformationCanBeRecorded(preview)
-                    ) {
-                        Toast.makeText(context, text(
-                            "当前信息缺少准确的结构化展示值，不能预览。请重新选择。",
-                            "The selected information cannot be previewed safely. Choose a concrete result.",
-                        ), Toast.LENGTH_LONG).show()
-                    } else {
-                        // D2: these are UI-only previews. Returning to this role
-                        // permits replacing the selection. The final typed
-                        // observation is written only by this role's Next.
-                        lastInformationPreview = preview
-                        playerDisplayStep = preview
-                    }
-                },
-                onInformationDraftChanged = { lastInformationPreview = null },
-                lastPreviewProposition = currentInformationPreview?.displayProposition,
-                        onHostTools = onHostTools,
+                openingReason = !hasCurrentRecommendation && phase == ClocktowerPhase.FirstNight && jointOpeningAvailable,
+                busy = currentAiRequest && globalAiAdviceBusy,
+                error = globalAiAdviceError.takeIf { currentAiRequest },
+                onRetry = ai.currentKey?.let { {
+                    lastInformationPreview = null
+                    waitingForRequestedRecommendation = true
+                    onRequestGlobalAiAdvice(nightSteps, currentStepIndex, fortuneTellerSelectedNames)
+                } },
+            )
+        } else null
+        ClocktowerAiRecommendationPage(aiActions) {
+            ClocktowerNightActiveScreen(
+                progress = text("步骤 ${currentStepIndex + 1} / ${nightSteps.size}", "Step ${currentStepIndex + 1} / ${nightSteps.size}"),
+                nextEnabled = (!(host.isPrivateInformation || host.isEvilInformation) || currentInformationPreview != null) &&
+                    host.targetReady && successorReady && redHerringReady,
+                onHostTools = onHostTools,
                 onNext = advanceNightStep,
-                )
+                contentOwnsFullScreen = currentSurfacePlan.ownsFullScreenHostSurface,
+            ) {
+                if (host.successorSeats.size > 1) {
+                    ClocktowerSingleTargetSquareTableDialog(
+                        seats = sessionGameState.toHostSeatPresentations { roleId ->
+                            clocktowerRoleByName(roleId.value)?.nameFor(language) ?: roleId.value
+                        }.map { seat ->
+                            seat.copy(hasUnspentGhostVote = hostSeatHasUnspentGhostVote(
+                                seat.seatId, seat.isAlive, ghostVoteAuthority,
+                            ))
+                        },
+                        selectedSeat = successorSeat,
+                        selectableSeats = host.successorSeats.toSet(),
+                        enabled = true,
+                        actorSeat = host.facts.actorSeat,
+                        title = text("小恶魔自杀 · 选择继任者", "Imp self-kill · successor"),
+                        helper = text("在方桌上选择接任小恶魔的存活爪牙。", "Select a living Minion on the table to become the Imp."),
+                        language = language,
+                        onSeatSelected = { seat ->
+                            if (seat in host.successorSeats) {
+                                onRecordPlayerInput()
+                                selectedSelfKillSuccessor = seat.takeUnless { it == selectedSelfKillSuccessor }
+                            }
+                        },
+                        onHostTools = onHostTools,
+                        onNext = advanceNightStep,
+                        nextEnabled = host.targetReady && successorReady,
+                        secondaryActionLabel = text("修改攻击目标", "Change attack target"),
+                        secondaryActionEnabled = true,
+                        onSecondaryAction = {
+                            nightDraft?.let { updateNightDraft(it.copy(seatSlots = emptyList())) }
+                        },
+                    )
+                    return@ClocktowerNightActiveScreen
+                }
+                key(recommendationSelectionVersion) {
+                    ClocktowerNightStepCardLocalized(
+                    scriptRoles = clocktowerRolesForScript(script),
+                    allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
+                    phase = phase,
+                    gameId = gameId,
+                    round = round,
+                    sequence = currentStepIndex,
+                    gameStateRevision = gameStateRevision,
+                    playerInputRevision = playerInputRevision,
+                    informationDecisionKey = "$gameId:$gameStateRevision:$playerInputRevision:${currentStep.interactionId}",
+                    cards = cards,
+                    actualAlignmentBySeat = sessionGameState.players.associate { it.seat to it.actualAlignment },
+                    ghostVoteAuthority = ghostVoteAuthority,
+                    poisonedPlayerName = nameAt(currentStep.roleEnName?.let(sessionState::poisonedSeatForRole)),
+                    aliveSeats = aliveSeats,
+                    chambermaidTargetSeats = aliveSeats,
+                    mayorRedirectTargetSeats = mayorRedirectTargetSeats,
+                    livingMayorSeat = sessionGameState.players.firstOrNull { it.alive && it.actualRole.value == "Mayor" }?.seat,
+                    // One optional current-step suggestion for both AI modes.
+                    // The card retains the complete Host legal domain for manual edits.
+                    // Automatic mode can use the same verified choice at this step only.
+                    aiSuggestedInformationOption = ai.suggestedOption,
+                    numericResolution = host.numericResolution,
+                    booleanResolution = host.booleanResolution,
+                    roleResolution = host.roleResolution,
+                    pairResolver = { role, seat, first, second ->
+                        PairInformationResolver.resolve(
+                            sessionState, nightRuleset, RoleId(role), seat, first, second,
+                        )
+                    },
+                    // AI may select the result but NEVER open the player fullscreen
+                    // automatically. Showing private information requires a live tap.
+                    step = currentStep,
+                    surfacePlan = currentSurfacePlan,
+                    selectedSeatSlots = when (currentStep.action) {
+                        ClocktowerNightAction.RedHerring -> listOfNotNull(host.selectedSeat)
+                        ClocktowerNightAction.Chambermaid ->
+                            listOf(chambermaidSelection.first, chambermaidSelection.second)
+                        else -> nightDraft?.seatSlots.orEmpty()
+                    },
+                    redHerringSeat = sessionState.redHerringSeat,
+                    redHerringSelectableSeats = redHerringSelectableSeats,
+                    onSelectSeat = { seat ->
+                        if (currentStep.action in clocktowerNightSeatDraftActions &&
+                            (currentStep.action != ClocktowerNightAction.RedHerring || seat in redHerringSelectableSeats)) {
+                            nightDraft?.withTappedSeat(currentStep.action, seat)?.let(::updateNightDraft)
+                        }
+                    },
+                    onShowPlayerDisplay = { selectedStep ->
+                        val preview = selectedStep.copy(informationSourceRevision =
+                            StorytellerDecisionRevision(gameStateRevision, playerInputRevision))
+                        if (!informationDecisionPublicationAllowed(preview) ||
+                            !unreliableInformationCanBeRecorded(preview)
+                        ) {
+                            Toast.makeText(context, text(
+                                "当前信息缺少准确的结构化展示值，不能预览。请重新选择。",
+                                "The selected information cannot be previewed safely. Choose a concrete result.",
+                            ), Toast.LENGTH_LONG).show()
+                        } else {
+                            // D2: these are UI-only previews. Returning to this role
+                            // permits replacing the selection. The final typed
+                            // observation is written only by this role's Next.
+                            waitingForRequestedRecommendation = false
+                            lastInformationPreview = preview
+                            playerDisplayStep = preview
+                        }
+                    },
+                    onInformationDraftChanged = {
+                        waitingForRequestedRecommendation = false
+                        lastInformationPreview = null
+                    },
+                    lastPreviewProposition = currentInformationPreview?.displayProposition,
+                            onHostTools = onHostTools,
+                    onNext = advanceNightStep,
+                    )
+                }
             }
         }
         return

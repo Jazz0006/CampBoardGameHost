@@ -90,6 +90,13 @@ internal object BotcAiWireTrace {
     }
 
     /** Safe 3E3 Host gate summary; never contains player-visible clues or secret role data. */
+    fun openingAdvice(reason: String) {
+        bestEffort {
+            if (reason.matches(Regex("[A-Z_]{1,60}"))) Log.v(TAG, "stage=OPENING_ADVICE reason=$reason")
+        }
+    }
+
+    /** Safe 3E3 Host gate summary; never contains player-visible clues or secret role data. */
     fun residualGate(
         event: String,
         decisionCount: Int,

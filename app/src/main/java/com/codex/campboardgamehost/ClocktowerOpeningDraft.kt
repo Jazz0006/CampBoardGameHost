@@ -126,7 +126,9 @@ internal class ClocktowerOpeningDraft {
                 jointOpeningResult = null
                 pendingOpeningResponseId = null
                 pendingOpeningModel = null
-                jointOpeningError = "Whole-game AI plan failed (" +
+                jointOpeningError = if (error is StorytellerResponseValidationException)
+                    "AI returned an opening plan, but validation rejected it (${error.safeDetail}). Retry planning or continue manually."
+                else "Whole-game AI plan failed (" +
                     PersonalDirectOpenAiV1.safeFailure(error) + "). Manual takeover is available."
                 BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_FAILED")
             }

@@ -55,6 +55,50 @@ class ClocktowerD2UiTest {
     @Test fun assistedPairRetainsManualEditWhenAdviceChanges() = pairHost("Investigator", StorytellerOperationMode.AI_ASSISTED)
     @Test fun automaticPairWaitsForDisplayAndNext() = pairHost("Washerwoman", StorytellerOperationMode.AI_AUTOMATIC)
 
+    @Test fun firstNightSpyWakeKeepsTheOpeningWasherwomanAdviceWithoutAnotherRequest() {
+        val host = Host("Washerwoman", StorytellerOperationMode.AI_AUTOMATIC,
+            roles = listOf("Washerwoman", "Spy", "Soldier", "Imp", "Mayor"))
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Next →").assertIsEnabled().performClick()
+        ui.onNode(hasClickAction() and hasText("P2 + P3", substring = true)).assertIsEnabled().performClick()
+        ui.onNodeWithText("Close display card").performClick()
+        ui.runOnIdle {
+            assertEquals(0, host.requests)
+            assertEquals(1, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.NightWake })
+            assertEquals(0, host.session.state.epistemicObservationLog.records.size)
+        }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle { assertEquals(1, host.session.state.epistemicObservationLog.records.size) }
+    }
+
+    @Test fun redHerringPreselectsOpeningAdviceAndOnlyConfirmsAnAllowedManualOverrideOnNext() {
+        val host = Host("Fortune Teller", StorytellerOperationMode.AI_ASSISTED,
+            roles = listOf("Fortune Teller", "Soldier", "Recluse", "Imp", "Mayor", "Scarlet Woman"))
+        host.openingRedHerringSeat.value = 2
+        val before = host.session.state.playerInputRevision
+        ui.setContent { host.Content() }
+        ui.onNodeWithText("Selected: P2").assertExists()
+        ui.onNodeWithText("Next →").assertIsEnabled()
+        listOf("P3", "P4", "P6").forEach { name ->
+            ui.onNodeWithText(name).assertExists()
+            ui.onNode(hasClickAction() and hasText(name)).assertDoesNotExist()
+        }
+        clickSeat("P2")
+        ui.onNodeWithText("Next →").assertIsNotEnabled()
+        clickSeat("P5")
+        ui.onNodeWithText("Selected: P5").assertExists()
+        ui.runOnIdle {
+            assertEquals(null, host.session.state.redHerringSeat)
+            assertEquals(before, host.session.state.playerInputRevision)
+            assertEquals(0, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.RedHerringChoice })
+        }
+        ui.onNodeWithText("Next →").performClick()
+        ui.runOnIdle {
+            assertEquals(5, host.session.state.redHerringSeat)
+            assertEquals(1, host.session.state.actionTimeline.entries.count { it.fact is ActionFact.RedHerringChoice })
+        }
+    }
+
     private fun pairHost(role: String, mode: StorytellerOperationMode) {
         val host = Host(role, mode)
         ui.setContent { host.Content() }
@@ -114,7 +158,7 @@ class ClocktowerD2UiTest {
         val host = Host("Empath", StorytellerOperationMode.AI_AUTOMATIC)
         host.openingEnabled.value = false
         ui.setContent { host.Content() }
-        ui.onNodeWithText("Retry AI information").assertIsEnabled().performClick()
+        ui.onNodeWithText("Request again").assertIsEnabled().performClick()
         ui.runOnIdle { assertEquals(2, host.requests) }
         val oldKey = host.adviceKey.value
         val requestId = requireNotNull(host.requestId)
@@ -123,7 +167,7 @@ class ClocktowerD2UiTest {
         ui.runOnIdle { host.deliver(oldKey, requestId, "1") }
         ui.onNodeWithText("Show to player: 1").assertDoesNotExist()
         ui.onNodeWithText("Next →").assertIsNotEnabled()
-        ui.onNodeWithText("Retry AI information").performClick()
+        ui.onNodeWithText("Request again").performClick()
         ui.runOnIdle { host.deliver(host.adviceKey.value, requireNotNull(host.requestId), "1") }
         ui.onNodeWithText("Show to player: 1").performClick()
         ui.onNodeWithText("Close display card").performClick()
@@ -778,6 +822,7 @@ class ClocktowerD2UiTest {
         roles: List<String> = listOf(role, "Soldier",
             if (role == "Investigator") "Baron" else "Mayor", "Saint", "Recluse")) {
         val openingEnabled = mutableStateOf(true)
+        val openingRedHerringSeat = mutableStateOf<Int?>(null)
         val pairRole = mutableStateOf(when (role) {
             "Washerwoman" -> "Soldier"
             "Librarian" -> "Saint"
@@ -855,6 +900,16 @@ class ClocktowerD2UiTest {
             val state = holder.snapshot
             val ruleset = com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog
                 .fromContext(androidx.compose.ui.platform.LocalContext.current).ruleset(script)
+            val opening = if (!openingEnabled.value) emptyMap() else mapOf(1 to
+                if (cards[0].clocktowerRole?.enName in setOf("Washerwoman", "Librarian", "Investigator"))
+                    HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                        "FUNCTIONING", "EVIDENCE_PAIR",
+                        if (cards[0].clocktowerRole?.enName == "Librarian") listOf(3, 4) else listOf(2, 3),
+                        "ROLE", roleId = pairRole.value)
+                else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
+                    "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1))
+            val openingUsable = openingEnabled.value && ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
+                state, null, opening, openingRedHerringSeat.value, state.demonBluffRoleIds.map(RoleId::value))
             ClocktowerJudgeScreen(
                 allowRuleDeterminedAutoUi = mode == StorytellerOperationMode.AI_AUTOMATIC,
                 cards = ClocktowerSessionPlayerCards(emptyList(), { holder.snapshot }, "en"),
@@ -891,14 +946,9 @@ class ClocktowerD2UiTest {
                         globalAiAdviceError = adviceError.value,
                         globalResidualRecommendedChoices = choices.value,
                         onRequestGlobalAiAdvice = ::request,
-                        jointOpeningSemantics = if (!openingEnabled.value) emptyMap() else mapOf(1 to
-                            if (cards[0].clocktowerRole?.enName in listOf("Washerwoman", "Librarian", "Investigator"))
-                                HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
-                                    "FUNCTIONING", "EVIDENCE_PAIR",
-                                    if (cards[0].clocktowerRole?.enName == "Librarian") listOf(3, 4)
-                                    else listOf(2, 3), "ROLE", roleId = pairRole.value)
-                            else HostOpeningSemanticValueV2(1, requireNotNull(cards[0].clocktowerRole).enName, null,
-                                "FUNCTIONING", "NONE", emptyList(), "NUMBER", number = 1)),
+                        jointOpeningAvailable = openingUsable,
+                        recommendedRedHerringSeat = openingRedHerringSeat.value.takeIf { openingUsable },
+                        jointOpeningSemantics = opening.takeIf { openingUsable }.orEmpty(),
                         recommendedDemonBluffRoleNames = state.demonBluffRoleIds.map(RoleId::value),
                         onHostTools = {},
                         onRecordPlayerInput = { session.recordPlayerInput(); refresh() },

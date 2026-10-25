@@ -136,6 +136,8 @@ internal object StorytellerStrategicContinuationV2 {
     private fun integer() = JSONObject().put("type", "integer")
     private fun nullable(type: String) = JSONObject().put("type", JSONArray(listOf(type, "null")))
     private fun arr(item: JSONObject) = JSONObject().put("type", "array").put("items", item)
+    private fun memoryText() = str()
+        .put("pattern", "^[\\s\\S]{1,${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH}}$")
     private fun obj(vararg members: Pair<String, JSONObject>): JSONObject = JSONObject()
         .put("type", "object")
         .put("properties", JSONObject().apply { members.forEach { (k, v) -> put(k, v) } })
@@ -143,7 +145,7 @@ internal object StorytellerStrategicContinuationV2 {
         .put("additionalProperties", false)
 
     val responseSchema: JSONObject by lazy {
-        val intention = obj("trigger" to str(), "approach" to str(), "risk" to str())
+        val intention = obj("trigger" to memoryText(), "approach" to memoryText(), "risk" to memoryText())
         obj(
             "schemaVersion" to integer(),
             "source" to obj(
@@ -173,9 +175,9 @@ internal object StorytellerStrategicContinuationV2 {
                 ),
             ),
             "updatedStrategyMemory" to obj(
-                "tensions" to arr(str()),
-                "intentions" to arr(intention),
-                "uncertainties" to arr(str()),
+                "tensions" to arr(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
+                "intentions" to arr(intention).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
+                "uncertainties" to arr(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
             ),
             "strategicDirection" to str(),
         )
@@ -198,6 +200,8 @@ Host 决定哪些行动已真正发生；未来尚不可决定的项目不属于
 不能修改既有玩家收到的线索，也不能假造未登记的意图，不能自行断定含糊的间谍/隐士登记。
 如果说书人改变了选择，只能根据被记录的决定推断其后果，不得把未明说的人类动机当成事实。
 updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要，不能冒充 Host 事实。
+其中 tensions、intentions、uncertainties 各最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 项；每段字符串非空且最多 ${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字。
+strategicDirection 用简洁中文说明为什么推荐当前 currentResult、依据哪些已确认事实及主要取舍；区分事实与假设，不复述规则或逐步分析过程。非空且最多 600 字。
 semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOICE 之一。对应填写 scalarValue（数字或真假用字符串）、pairRoleId 与两个 pairSeats（无该类角色时 pairRoleId 为 null、pairSeats 为 []）、seat、或 registrationStatus 与 registrationRoleId；其他可空字段填 null、无关 pairSeats 为 []。只返回严格 JSON，不输出候选 ID、未来线索或执行命令。
 """
 
@@ -338,6 +342,17 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
     }
 
     fun decode(
+        hostPayload: String,
+        modelResponse: String,
+        openDecisions: List<OpenDecision>,
+    ): Result = try {
+        decodeResponse(hostPayload, modelResponse, openDecisions)
+    } catch (error: Exception) {
+        throw error as? StorytellerResponseValidationException
+            ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
+    }
+
+    private fun decodeResponse(
         hostPayload: String,
         modelResponse: String,
         openDecisions: List<OpenDecision>,

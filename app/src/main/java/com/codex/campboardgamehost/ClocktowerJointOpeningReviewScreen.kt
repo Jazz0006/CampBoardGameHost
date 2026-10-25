@@ -38,11 +38,20 @@ internal fun ClocktowerJointOpeningReviewScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .background(MaterialTheme.colorScheme.background),
         ) {
+            ClocktowerAiRecommendationToolbar(ClocktowerAiRecommendationActions(
+                identity = acceptance?.selection ?: "opening-review",
+                reason = acceptance?.tradeoffSummary,
+                openingReason = true,
+                busy = busy,
+                error = error,
+                onRetry = onRetry,
+            ))
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
             Text(
                 "说书人私密配置 · 首夜全局方案",
                 style = MaterialTheme.typography.headlineSmall,
@@ -85,13 +94,9 @@ internal fun ClocktowerJointOpeningReviewScreen(
                     }
                 }
             }
-            if (!busy) {
-                OutlinedButton(onClick = onRetry, modifier = Modifier.fillMaxWidth()) {
-                    Text("重新规划整套首夜方案")
-                }
-            }
             OutlinedButton(onClick = onManual, modifier = Modifier.fillMaxWidth()) {
                 Text("改为手动主持")
+            }
             }
         }
     }

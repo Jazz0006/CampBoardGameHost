@@ -1,6 +1,7 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
@@ -49,10 +50,11 @@ internal fun ClocktowerGameSession.confirmNightStep(
     val target = draft.selectedSeats.firstOrNull()
     // Non-real night placeholders never commit an action. Only the active player/ruling has authority.
     if (step.isRealAction) when (step.action) {
-        ClocktowerNightAction.RedHerring -> commitRedHerringSeat(
-            seat = requireNotNull(target ?: state.redHerringSeat) { "Red Herring requires a selected rules-legal player." },
-            phase = draft.phase, round = draft.round, sequence = nextInputSequence,
-        )
+        ClocktowerNightAction.RedHerring -> {
+            val seat = target ?: state.redHerringSeat
+            if (seat !in clocktowerRedHerringSelectableSeats(state.gameState)) return false
+            commitRedHerringSeat(requireNotNull(seat), draft.phase, draft.round, nextInputSequence)
+        }
         ClocktowerNightAction.Poison -> confirmNightPoison(target, draft.phase, draft.round, actionStepId)
         ClocktowerNightAction.MonkProtect -> confirmNightProtection(requireNotNull(target), draft.phase, draft.round, actionStepId)
         ClocktowerNightAction.DemonKill -> confirmNightAttack(
@@ -115,9 +117,9 @@ internal fun ClocktowerSessionHost(
     // This is a derived validity check, not a second mutable truth or stale-plan cache.
     // A confirmed Host action or an overridden published clue can invalidate
     // the whole linked opening proposal while leaving actual Session facts intact.
-    val openingHintsUsable = openingPlanRecommendation?.let { opening ->
+    val openingInvalidation = openingPlanRecommendation?.let { opening ->
         sessionState.let { actual ->
-            ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
+            ClocktowerJointOpeningDisplayMatcherV2.invalidation(
                 session = actual,
                 plannedDrunkSeat = opening.selection.drunkSeat,
                 plannedInformation = openingRecommendedInformation,
@@ -125,7 +127,12 @@ internal fun ClocktowerSessionHost(
                 plannedBluffRoleNames = openingRecommendedBluffRoleNames,
             )
         }
-    } == true
+    }
+    val openingHintsUsable = openingPlanRecommendation != null && openingInvalidation == null
+    LaunchedEffect(sessionState.gameId, openingPlanRecommendation != null, openingInvalidation) {
+        if (openingPlanRecommendation != null) BotcAiWireTrace.openingAdvice(
+            openingInvalidation?.name ?: "REUSABLE")
+    }
     fun requireClocktowerGameSession() = session
     fun currentTroubleBrewingMayorRedirectPendingDecision(): PendingMayorRedirectDecision? {
         if (
@@ -216,6 +223,7 @@ internal fun ClocktowerSessionHost(
             fortuneTellerSelectedNames = fortuneTellerSelectedNames,
             mayorPending = runCatching { currentTroubleBrewingMayorRedirectPendingDecision() }.getOrNull(),
             drunkAiScope = drunkAiScope,
+            language = context.resources.configuration.locales[0].language,
         )
     fun confirmTroubleBrewingMayorRedirect(targetSeat: Int) {
         if (currentClocktowerScript != ClocktowerScript.TroubleBrewing) return
@@ -254,6 +262,7 @@ internal fun ClocktowerSessionHost(
         cards = cards,
         sessionState = sessionState,
         jointOpeningAvailable = openingHintsUsable,
+        jointOpeningReason = openingPlanRecommendation?.tradeoffSummary.takeIf { openingHintsUsable },
         recommendedDemonBluffRoleNames =
             clocktowerRecommendedDemonBluffRoleNames.ifEmpty {
                 openingRecommendedBluffRoleNames.takeIf {
@@ -324,6 +333,8 @@ internal fun ClocktowerSessionHost(
                 globalAiAssisted = storytellerOperationMode != StorytellerOperationMode.MANUAL,
                 globalAiAutomatic = storytellerOperationMode == StorytellerOperationMode.AI_AUTOMATIC,
                 jointOpeningAvailable = openingHintsUsable,
+                jointOpeningReason = openingPlanRecommendation?.tradeoffSummary.takeIf { openingHintsUsable },
+                recommendedRedHerringSeat = openingRecommendedRedHerringSeat.takeIf { openingHintsUsable },
                 jointOpeningSemantics = openingRecommendedInformation.takeIf {
                     openingHintsUsable
                 }.orEmpty(),

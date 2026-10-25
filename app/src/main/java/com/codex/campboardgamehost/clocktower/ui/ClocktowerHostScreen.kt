@@ -13,6 +13,7 @@ internal fun ClocktowerJudgeScreen(
     cards: List<PlayerCard>,
     sessionState: ClocktowerSessionState,
     jointOpeningAvailable: Boolean = false,
+    jointOpeningReason: String? = null,
     recommendedDemonBluffRoleNames: List<String>,
     onHostTools: () -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
@@ -34,7 +35,8 @@ internal fun ClocktowerJudgeScreen(
             sessionState.phase == StorytellerPhase.FIRST_NIGHT && sessionState.demonBluffRoleIds.isEmpty() &&
                 sessionState.gameState.players.size >= 7 && sessionState.livingDemonSeat() != null ->
                 ClocktowerDemonBluffsHostScreen(sessionState, recommendedDemonBluffRoleNames,
-                    allowRuleDeterminedAutoUi && jointOpeningAvailable, onHostTools, onCommitDemonBluffs)
+                    allowRuleDeterminedAutoUi && jointOpeningAvailable, onHostTools, onCommitDemonBluffs,
+                    jointOpeningAvailable, jointOpeningReason)
             sessionState.phase == StorytellerPhase.DAY ->
                 ClocktowerDayHostScreen(sessionState, cards, script, allowRuleDeterminedAutoUi, onHostTools,
                     onConfirmDay, onConfirmKlutzChoice, onConfirmArtistQuestion, onSlayerShot,

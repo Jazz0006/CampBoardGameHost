@@ -47,17 +47,18 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
         assertNull(ClocktowerJointOpeningDisplayMatcherV2.match(chefOne, 1, emptyList()))
     }
 
-    private fun currentSession(): ClocktowerGameSession {
-        val players = listOf("Chef", "Butler", "Imp").mapIndexed { index, role ->
+    private fun currentSession(roles: List<String> = listOf("Chef", "Butler", "Imp")): ClocktowerGameSession {
+        val players = roles.mapIndexed { index, role ->
             val type = when (role) {
-                "Butler" -> CharacterType.OUTSIDER
+                "Butler", "Recluse" -> CharacterType.OUTSIDER
+                "Spy", "Poisoner" -> CharacterType.MINION
                 "Imp" -> CharacterType.DEMON
                 else -> CharacterType.TOWNSFOLK
             }
             PlayerState(
                 seat = index + 1, name = "P${index + 1}",
                 actualRole = RoleId(role), shownRole = RoleId(role),
-                actualAlignment = if (role == "Imp") Alignment.EVIL else Alignment.GOOD,
+                actualAlignment = if (type in setOf(CharacterType.DEMON, CharacterType.MINION)) Alignment.EVIL else Alignment.GOOD,
                 actualType = type,
             )
         }
@@ -74,7 +75,7 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
         fun valid() = ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
             session.state, null, mapOf(1 to chefOne), 1, bluffs)
         assertTrue(valid())
-        session.commitDemonBluffs(bluffs.map(::RoleId), StorytellerPhase.FIRST_NIGHT, 1, 0)
+        session.commitDemonBluffs(bluffs.reversed().map(::RoleId), StorytellerPhase.FIRST_NIGHT, 1, 0)
         session.commitRedHerringSeat(1, StorytellerPhase.FIRST_NIGHT, 1, 1)
         assertTrue(valid())
         session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
@@ -86,8 +87,50 @@ class ClocktowerJointOpeningDisplayMatcherV2Test {
         ))
         assertTrue(valid())
         session.commitAcceptedTestAction(ActionFactDraft.Poison(
-            "poison-changes-opening-context", StorytellerPhase.FIRST_NIGHT, 1, 3, 2))
+            "irrelevant-poison", StorytellerPhase.FIRST_NIGHT, 1, 3, 2))
+        assertTrue(valid())
+        session.commitAcceptedTestAction(ActionFactDraft.ButlerMasterChoice(
+            "butler-master", StorytellerPhase.FIRST_NIGHT, 1, 4, 2, 1))
+        assertTrue(valid())
+        session.commitAcceptedTestAction(ActionFactDraft.Death(
+            "mechanical-change", StorytellerPhase.FIRST_NIGHT, 1, 5, 2))
         assertFalse(valid())
+    }
+
+    @Test fun poisonInvalidatesOnlyUnpublishedInformationWhoseBasisItChanges() {
+        fun valid(roles: List<String>, plan: HostOpeningSemanticValueV2, target: Int): Boolean {
+            val session = currentSession(roles)
+            session.commitAcceptedTestAction(ActionFactDraft.Poison(
+                "poison", StorytellerPhase.FIRST_NIGHT, 1, 0, target))
+            return ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
+                session.state, null, mapOf(1 to plan), null, emptyList())
+        }
+        val numericRoles = listOf("Chef", "Soldier", "Spy", "Recluse", "Imp")
+        assertTrue(valid(numericRoles, chefOne, 2))
+        assertFalse(valid(numericRoles, chefOne, 1))
+        assertFalse(valid(numericRoles, chefOne, 3))
+        val pairRoles = listOf("Washerwoman", "Soldier", "Spy", "Recluse", "Imp")
+        val pair = chefOne.copy(abilityRoleId = "washerwoman", effectiveAbilityRoleId = "washerwoman",
+            observationKind = "ROLE", subjectMode = "EVIDENCE_PAIR", subjectSeats = listOf(2, 3),
+            roleId = "soldier", number = null)
+        assertFalse(valid(pairRoles, pair, 3))
+        assertTrue(valid(pairRoles, pair.copy(subjectSeats = listOf(2, 4)), 3))
+    }
+
+    @Test fun librarianZeroMatchesOnlyTheCompleteTypedOutsiderAbsence() {
+        val plan = chefOne.copy(abilityRoleId = "librarian", effectiveAbilityRoleId = "librarian",
+            observationKind = "ZERO_OUTSIDERS", number = null)
+        val absent = requireNotNull(ClocktowerJointOpeningDisplayMatcherV2.match(plan, 1, emptyList())).proposition!!
+        fun valid(proposition: InformationProposition): Boolean {
+            val session = currentSession(listOf("Librarian", "Soldier", "Imp"))
+            session.commitGlobalEpistemicObservation(EpistemicObservationDraft(
+                "zero", StorytellerPhase.FIRST_NIGHT, 1, 0, 1, RoleId("Librarian"),
+                ObservationVisibility.PRIVATE, setOf(1), ObservationReliability.RECEIVED_AS_FUNCTIONING, proposition))
+            return ClocktowerJointOpeningDisplayMatcherV2.stillUsable(
+                session.state, null, mapOf(1 to plan), null, emptyList())
+        }
+        assertTrue(valid(absent))
+        assertFalse(valid(InformationProposition.AllOf(listOf(InformationProposition.RoleInPlay(RoleId("Saint"), false)))))
     }
 
     @Test fun openingAdviceRejectsConfirmedHumanOverrides() {

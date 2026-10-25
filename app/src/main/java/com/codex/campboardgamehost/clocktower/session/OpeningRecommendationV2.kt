@@ -1,5 +1,11 @@
 package com.codex.campboardgamehost.clocktower.session
 
+/** A local AI response-contract violation; safeDetail never contains raw model output. */
+internal class StorytellerResponseValidationException(
+    val safeDetail: String,
+    cause: Exception? = null,
+) : IllegalArgumentException(safeDetail, cause)
+
 internal data class HostOpeningSemanticValueV2(
     val sourceSeat: Int,
     val abilityRoleId: String,
@@ -56,7 +62,7 @@ internal data class HostOpeningStrategicIntentionV2(
     val risk: String,
 ) {
     init {
-        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= 300 }) {
+        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH }) {
             "Opening strategic intention exceeded its bounded text contract."
         }
     }
@@ -67,11 +73,18 @@ internal data class HostOpeningStrategyMemoryV2(
     val intentions: List<HostOpeningStrategicIntentionV2>,
     val uncertainties: List<String>,
 ) {
+    companion object {
+        const val MAX_ENTRIES = 3
+        const val MAX_TEXT_LENGTH = 300
+    }
+
     init {
-        require(tensions.size <= 3 && intentions.size <= 3 && uncertainties.size <= 3) {
-            "Opening strategy memory exceeded three entries per section."
+        listOf("tensions" to tensions.size, "intentions" to intentions.size,
+            "uncertainties" to uncertainties.size).forEach { (field, count) ->
+            if (count > MAX_ENTRIES) throw StorytellerResponseValidationException(
+                "strategyMemory.$field has $count entries; maximum is $MAX_ENTRIES.")
         }
-        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= 300 }) {
+        require((tensions + uncertainties).all { it.isNotBlank() && it.length <= MAX_TEXT_LENGTH }) {
             "Opening strategy memory contains blank or oversized text."
         }
     }
@@ -82,6 +95,7 @@ internal data class HostOpeningSemanticAcceptanceV2(
     val selection: OpeningSelectionV2,
     val conditional: List<HostOpeningConditionalIntentV2>,
     val strategyMemory: HostOpeningStrategyMemoryV2? = null,
+    val tradeoffSummary: String? = null,
 )
 
 internal data class OpeningSelectionV2(

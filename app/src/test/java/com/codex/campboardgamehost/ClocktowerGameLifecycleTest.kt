@@ -118,7 +118,8 @@ class ClocktowerGameLifecycleTest {
             val pending = PendingTroubleBrewingJointOpening(request.snapshot.gameId, prepared, request, emptyList())
             val recommendation = HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(request.snapshot.gameId,
                 request.gameStateRevision, request.playerInputRevision, request.rosterFingerprint,
-                legal.candidates.first().seat, null, null, emptyMap()), emptyList(), null)
+                legal.candidates.first().seat, null, null, emptyMap()), emptyList(), null,
+                tradeoffSummary = "Opening plan rationale")
             val draft = ClocktowerOpeningDraft().apply {
                 pendingJointOpening = pending
                 jointOpeningResult = recommendation // Already-accepted advice fixture; no network call.
@@ -145,6 +146,9 @@ class ClocktowerGameLifecycleTest {
                 draft.confirmJointOpeningDrunk(pending, chosen, conversation, catalog, lifecycle))
             assertEquals(mode.name, store.load()?.metadata?.getString("mode"))
             assertEquals(recommendation, ClocktowerActiveGameMetadata.opening(requireNotNull(store.load()).metadata))
+            val legacyMetadata = requireNotNull(store.load()).metadata
+            legacyMetadata.getJSONObject("opening").remove("tradeoffSummary")
+            assertEquals(recommendation.copy(tradeoffSummary = null), ClocktowerActiveGameMetadata.opening(legacyMetadata))
         }
     }
 
