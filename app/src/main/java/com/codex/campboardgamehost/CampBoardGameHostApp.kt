@@ -371,6 +371,21 @@ internal fun CampBoardGameHostApp(
                             request = pending.request,
                             operationMode = storytellerOperationMode,
                             language = language,
+                            aiActions = pendingJointOpening?.takeIf {
+                                storytellerOperationMode != StorytellerOperationMode.MANUAL &&
+                                    jointOpeningResult?.selection?.validFor(it.request) == true
+                            }?.let { opening ->
+                                ClocktowerAiRecommendationActions(
+                                    identity = jointOpeningResult!!.selection,
+                                    reason = jointOpeningResult?.tradeoffSummary,
+                                    openingReason = true,
+                                    onRetry = {
+                                        pendingTroubleBrewingDrunkSelection = null
+                                        screen = Screen.ClocktowerJointReview
+                                        requestJointOpening(opening)
+                                    },
+                                )
+                            },
                             roleNameForExternalId = { externalId ->
                                 val definition = requireNotNull(
                                     characterRegistry.findByExternalId(externalId),

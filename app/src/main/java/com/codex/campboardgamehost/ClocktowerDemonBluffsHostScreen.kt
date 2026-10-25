@@ -34,6 +34,8 @@ internal fun ClocktowerDemonBluffsHostScreen(
     acceptOpeningRecommendation: Boolean,
     onHostTools: () -> Unit,
     onCommitDemonBluffs: (List<String>) -> Unit,
+    openingRecommendationAvailable: Boolean = false,
+    openingRecommendationReason: String? = null,
 ) {
     val language = LocalContext.current.resources.configuration.locales[0].language
     fun text(zh: String, en: String) = if (language == "en") en else zh
@@ -52,7 +54,9 @@ internal fun ClocktowerDemonBluffsHostScreen(
     val seats = sessionState.gameState.toHostSeatPresentations { roleId ->
         clocktowerRoleByName(roleId.value)?.nameFor(language) ?: roleId.value
     }
-    ClocktowerDarkTheme {
+    ClocktowerAiRecommendationPage(if (openingRecommendationAvailable) {
+        ClocktowerAiRecommendationActions(sessionState.gameId, openingRecommendationReason, openingReason = true)
+    } else null) {
         ClocktowerHostSquareTableScaffold(
             seats = seats, language = language, previousEnabled = false,
             onHostTools = onHostTools,

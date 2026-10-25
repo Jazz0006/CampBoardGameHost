@@ -27,7 +27,6 @@ class ClocktowerGameRecordsTest {
         assertTrue(answer.summary.startsWith("Fortune Teller information"))
         assertTrue(answer.summary.contains("Fortune Teller"))
         assertTrue(answer.summary.endsWith(", No"))
-        assertEquals(setOf(1, 2, 3), answer.seats)
         assertTrue(answer.details.contains("malfunctioning"))
         assertEquals(listOf(answer), rows.filter { it.category == GameRecordCategory.INFORMATION })
         gameRecordRows(restored, "zh")

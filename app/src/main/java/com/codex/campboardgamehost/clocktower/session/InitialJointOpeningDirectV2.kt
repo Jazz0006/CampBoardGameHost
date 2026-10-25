@@ -34,6 +34,8 @@ internal object InitialJointOpeningDirectV2 {
     private fun enum(vararg values: String): JSONObject = field("string")
         .put("enum", JSONArray(values.toList()))
     private fun array(items: JSONObject): JSONObject = field("array").put("items", items)
+    private fun memoryText(): JSONObject = field("string")
+        .put("pattern", "^[\\s\\S]{1,${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH}}$")
 
     val responseSchema: JSONObject by lazy {
         val subject = objectSchema(
@@ -83,13 +85,13 @@ internal object InitialJointOpeningDirectV2 {
                 "deferredActions" to array(event),
             ),
             "strategyMemory" to objectSchema(
-                "tensions" to array(field("string")),
+                "tensions" to array(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
                 "intentions" to array(objectSchema(
-                    "trigger" to field("string"),
-                    "approach" to field("string"),
-                    "risk" to field("string"),
-                )),
-                "uncertainties" to array(field("string")),
+                    "trigger" to memoryText(),
+                    "approach" to memoryText(),
+                    "risk" to memoryText(),
+                )).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
+                "uncertainties" to array(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
             ),
             "tradeoffSummary" to field("string"),
         )
@@ -131,14 +133,15 @@ NONE 观察及真实 waitingForEvents，不猜测未来目标或结果。
 deferredActions 必须只对应 decisionInventory.events 中本局已知待确认事件，
 decisionId、event、actorSeat 与实际身份一致；不得编造事件。
 Host 只检查响应结构、座位/角色引用、请求身份和版本；推荐不会自动成为已确认事实。
-需要 Red Herring 时，按本局实际阵容选择座位。不要输出或推断未确认的登记事实。
+需要 Red Herring 时，选择实际善良阵营且真实身份不是 Recluse 的玩家；排除 Recluse 是当前 Host 的开局偏好。
+不要用 Spy/Recluse 的登记可能性替代实际阵营，也不要输出或推断未确认的登记事实。
 demonBluffRoleIds 根据剧本角色目录选三个不同且未在场的善良身份，
 否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
 配合 observation.kind=ROLE 与 roleId 表示该身份在二人之一；不另输出固定规则文案。
 NONE / PLAYER_QUERY_PENDING 不填目标；没有用到的 number、roleId、boolean 填 null。
 Librarian 观察到没有外来者时使用 ZERO_OUTSIDERS。
-strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各字符串非空且不超过
-300 字，tradeoffSummary 不超过 1200 字。只返回符合 JSON Schema 的结构化结果。
+strategyMemory 的 tensions、intentions、uncertainties 各最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 项；各字符串非空且不超过
+${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字，tradeoffSummary 不超过 1200 字。只返回符合 JSON Schema 的结构化结果。
 """
 
     fun encode(
@@ -209,7 +212,12 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         response: String,
         request: InitialOpeningRequestV2,
     ): HostOpeningSemanticAcceptanceV2 {
-        return parseRecommendation(JSONObject(response), request)
+        return try {
+            parseRecommendation(JSONObject(response), request)
+        } catch (error: Exception) {
+            throw error as? StorytellerResponseValidationException
+                ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
+        }
     }
 
     private fun JSONObject.exact(vararg keys: String) {
@@ -331,7 +339,6 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         val strategy = raw.getJSONObject("strategyMemory")
         strategy.exact("tensions", "intentions", "uncertainties")
         val intentions = strategy.getJSONArray("intentions")
-        require(intentions.length() <= 3)
         val memory = HostOpeningStrategyMemoryV2(strategy.getJSONArray("tensions").strings(),
             (0 until intentions.length()).map { index ->
                 val entry = intentions.getJSONObject(index)
@@ -341,7 +348,8 @@ strategyMemory 的 tensions、intentions、uncertainties 各最多三项；各�
         require(raw.getString("tradeoffSummary").length <= 1200)
         return HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(request.snapshot.gameId,
             request.gameStateRevision, request.playerInputRevision, request.rosterFingerprint,
-            drunk, red, bluffs, information.toMap()), conditional.toList(), memory)
+            drunk, red, bluffs, information.toMap()), conditional.toList(), memory,
+            raw.getString("tradeoffSummary").takeIf(String::isNotBlank))
     }
 
     /** Provider ID is provisional: only the caller's actual Host adoption may promote it. */

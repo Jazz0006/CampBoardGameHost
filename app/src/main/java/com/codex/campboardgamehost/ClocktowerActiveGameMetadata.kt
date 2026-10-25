@@ -59,6 +59,7 @@ internal object ClocktowerActiveGameMetadata {
             put("conditional", JSONArray(v.conditional.map { JSONObject().put("id", it.decisionId)
                 .put("proposed", it.proposed?.let(::semantic)).put("waiting", JSONArray(it.waitingForEvents)) }))
             v.strategyMemory?.let { put("memory", memory(it)) }
+            v.tradeoffSummary?.let { put("tradeoffSummary", it) }
         }) }
         cursor?.let { put("cursor", JSONObject().put("gameId", it.gameId).put("revision", it.gameStateRevision)
             .put("input", it.playerInputRevision).put("global", it.exclusiveGlobalSequence).put("version", it.version).put("memory", memory(it.memory))) }
@@ -77,7 +78,8 @@ internal object ClocktowerActiveGameMetadata {
             v.getString("roster"), v.nullInt("drunk"), v.nullInt("redHerring"), v.optJSONArray("bluffs")?.strings(),
             v.getJSONArray("information").objects().map(::semantic).associateBy { it.sourceSeat }),
             v.getJSONArray("conditional").objects().map { HostOpeningConditionalIntentV2(it.getString("id"), it.optJSONObject("proposed")?.let(::semantic),
-                it.getJSONArray("waiting").strings()) }, v.optJSONObject("memory")?.let(::memory)) }
+                it.getJSONArray("waiting").strings()) }, v.optJSONObject("memory")?.let(::memory),
+            v.optString("tradeoffSummary").takeIf(String::isNotBlank)) }
     fun cursor(j: JSONObject): StorytellerStrategicContinuationV2.MemoryCursor? = j.optJSONObject("cursor")?.let { v ->
         StorytellerStrategicContinuationV2.MemoryCursor(v.getString("gameId"), v.getLong("revision"), v.getLong("input"),
             v.getLong("global"), v.getInt("version"), memory(v.getJSONObject("memory"))) }

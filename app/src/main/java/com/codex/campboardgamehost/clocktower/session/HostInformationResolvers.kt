@@ -239,6 +239,13 @@ internal data class HostPairResolution(
 
 /** Query exactly one chosen physical pair, not all N×N pairs. */
 internal object PairInformationResolver {
+    private fun informationType(role: RoleId): CharacterType? = when (role.value) {
+        "Washerwoman" -> CharacterType.TOWNSFOLK
+        "Librarian" -> CharacterType.OUTSIDER
+        "Investigator" -> CharacterType.MINION
+        else -> null
+    }
+
     fun resolve(
         session: ClocktowerSessionState,
         ruleset: ValidatedClocktowerRuleset,
@@ -248,12 +255,7 @@ internal object PairInformationResolver {
         secondSeat: Int?,
     ): HostPairResolution? {
         if (session.gameState.script != ruleset.script.id) return null
-        val kind = when (role.value) {
-            "Washerwoman" -> CharacterType.TOWNSFOLK
-            "Librarian" -> CharacterType.OUTSIDER
-            "Investigator" -> CharacterType.MINION
-            else -> return null
-        }
+        val kind = informationType(role) ?: return null
         val players = session.gameState.players
         val actor = session.gameState.playerAt(sourceSeat) ?: return null
         val source = sourceAbility(actor, role.value) ?: return null
@@ -319,12 +321,17 @@ internal object PairInformationResolver {
     ): Boolean = resolve(session, ruleset, role, sourceSeat, firstSeat, secondSeat)
         ?.options?.any { it.role == suggestedRole } == true
 
+    internal fun poisoningCanChangePairRegistration(role: RoleId, subject: PlayerState): Boolean =
+        informationType(role)?.let { canRegisterAs(subject, it) } == true
+
     private fun specialRegistersAs(player: PlayerState, kind: CharacterType): Boolean =
-        hasFunctioningSpecialRegistration(player) && when (player.actualRole.value) {
-            "Spy" -> kind == CharacterType.TOWNSFOLK || kind == CharacterType.OUTSIDER
-            "Recluse" -> kind == CharacterType.MINION
-            else -> false
-        }
+        hasFunctioningSpecialRegistration(player) && canRegisterAs(player, kind)
+
+    private fun canRegisterAs(player: PlayerState, kind: CharacterType): Boolean = when (player.actualRole.value) {
+        "Spy" -> kind == CharacterType.TOWNSFOLK || kind == CharacterType.OUTSIDER
+        "Recluse" -> kind == CharacterType.MINION
+        else -> false
+    }
 }
 
 /** Registration survives death but not poisoning; it never inherits source ability state. */
@@ -341,3 +348,29 @@ private fun sourceAbility(player: PlayerState, role: String): AbilityFunctioning
         AbilitySubject(player.actualRole.value, player.shownRole?.value, player.poisoned, player.alive),
         role,
     )
+
+/** Narrow, read-only basis check for an already proposed first-night information item. */
+internal fun ClocktowerSessionState.poisonChangesInformationBasis(
+    sourceSeat: Int,
+    subjectSeats: List<Int>,
+    poisonedSeat: Int,
+): Boolean {
+    val source = gameState.playerAt(sourceSeat) ?: return true
+    // Poison does not give a Drunk an ability, or further constrain arbitrary misinformation.
+    if (source.actualRole.value == "Drunk") return false
+    if (sourceSeat == poisonedSeat) return true
+    val role = source.wakingRole()
+    if (sourceAbility(source, role.value) != AbilityFunctioningState.FUNCTIONING) return false
+    val target = gameState.playerAt(poisonedSeat) ?: return true
+    val specialRegistration = target.actualRole.value in setOf("Spy", "Recluse")
+    return when (role.value) {
+        "Chef" -> specialRegistration && (NumericInformationResolver.resolve(this, NumericMetric.ADJACENT_EVIL_PAIRS, sourceSeat)
+            ?.subjectSeats?.contains(poisonedSeat) ?: true)
+        "Empath" -> specialRegistration && (NumericInformationResolver.resolve(this, NumericMetric.LIVING_EVIL_NEIGHBOURS, sourceSeat)
+            ?.subjectSeats?.contains(poisonedSeat) ?: true)
+        "Washerwoman", "Librarian", "Investigator" -> poisonedSeat in subjectSeats &&
+            PairInformationResolver.poisoningCanChangePairRegistration(role, target)
+        "Fortune Teller" -> poisonedSeat in subjectSeats && target.actualRole.value == "Recluse"
+        else -> true // Unknown information abilities must not silently inherit this exception.
+    }
+}

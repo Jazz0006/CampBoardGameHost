@@ -88,6 +88,7 @@ internal object PersonalDirectOpenAiV1 {
 
     /** Show only a safe network/error category; never expose payloads, tokens or responses. */
     fun safeFailure(error: Throwable): String = when (error) {
+        is StorytellerResponseValidationException -> "AI response rejected: ${error.safeDetail}"
         is javax.net.ssl.SSLException -> "TLS certificate"
         is java.net.UnknownHostException -> "DNS"
         is java.net.SocketTimeoutException -> "timeout"

@@ -23,11 +23,10 @@ internal fun ClocktowerGameRecords(sessionState: ClocktowerSessionState?, modifi
     }
     key(sessionState.gameId) {
         val rows = remember(sessionState, language) { gameRecordRows(sessionState, language) }
-        var selectedSeat by remember { mutableStateOf<Int?>(null) }
         var category by remember { mutableStateOf<GameRecordCategory?>(null) }
         var phase by remember { mutableStateOf<Pair<StorytellerPhase, Int>?>(null) }
-        val visible = rows.filter { (selectedSeat == null || selectedSeat in it.seats) &&
-            (category == null || category == it.category) && (phase == null || phase == (it.phase to it.round)) }
+        val visible = rows.filter { (category == null || category == it.category) &&
+            (phase == null || phase == (it.phase to it.round)) }
         val groups = visible.groupBy { if (it.category == GameRecordCategory.SETUP) null else it.phase to it.round }
         fun phaseLabel(p: Pair<StorytellerPhase, Int>) = when(p.first) {
             StorytellerPhase.FIRST_NIGHT -> t("首夜", "First night")
@@ -43,16 +42,11 @@ internal fun ClocktowerGameRecords(sessionState: ClocktowerSessionState?, modifi
         }
         val listState = rememberLazyListState()
         // Land on the latest confirmed entry; changing a filter starts at its first result.
-        LaunchedEffect(selectedSeat, category, phase) {
+        LaunchedEffect(category, phase) {
             listState.scrollToItem(0)
         }
         Column(modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                RecordFilter(
-                    label = selectedSeat?.let { t("${it}号", "#$it") } ?: t("全部玩家", "All players"),
-                    options = listOf<Int?>(null) + sessionState.gameState.players.map { it.seat },
-                    optionLabel = { n -> n?.let { t("${it}号", "#$it") + " " + sessionState.gameState.playerAt(it)?.name.orEmpty() } ?: t("全部玩家", "All players") },
-                    onSelect = { selectedSeat = it }, modifier = Modifier.weight(1f))
                 RecordFilter(label = category?.let(::categoryLabel) ?: t("全部类型", "All types"),
                     options = listOf<GameRecordCategory?>(null) + GameRecordCategory.entries,
                     optionLabel = { it?.let(::categoryLabel) ?: t("全部类型", "All types") },

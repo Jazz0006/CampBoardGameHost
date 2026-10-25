@@ -1,11 +1,17 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
+
+/** Optional presentation supplied by the owning page; the table knows no feature state. */
+internal val LocalClocktowerTableCenterHeader = compositionLocalOf<@Composable () -> Unit> { {} }
 
 /** Shared full-screen navigation and stable-seat routing for Clocktower square-table surfaces. */
 @Composable
@@ -22,6 +28,7 @@ internal fun ClocktowerHostSquareTableScaffold(
     nextEnabled: Boolean = true,
     nextLabel: String = if (language == "en") "Next →" else "下一步 →",
     onBack: () -> Unit = { if (previousEnabled) onPrevious() },
+    centerHeader: @Composable () -> Unit = LocalClocktowerTableCenterHeader.current,
     centerContent: @Composable () -> Unit,
 ) {
     ClocktowerHostFullScreenScaffold(
@@ -59,7 +66,10 @@ internal fun ClocktowerHostSquareTableScaffold(
             CompositionLocalProvider(
                 LocalContentColor provides MaterialTheme.colorScheme.onBackground,
             ) {
-                centerContent()
+                Column(Modifier.fillMaxSize()) {
+                    centerHeader()
+                    Box(Modifier.weight(1f)) { centerContent() }
+                }
             }
         }
     }

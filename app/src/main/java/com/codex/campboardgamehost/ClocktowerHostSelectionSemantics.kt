@@ -32,6 +32,14 @@ internal val clocktowerNightSeatDraftActions = twoSeatNightActions + setOf(
     ClocktowerNightAction.Ravenkeeper,
 )
 
+/** Host-page selection policy: actual good players, with the owner's Recluse exclusion. */
+internal fun clocktowerRedHerringSelectableSeats(
+    game: com.codex.campboardgamehost.clocktower.domain.GameState,
+): Set<Int> = game.players.filter {
+    it.actualAlignment == com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD &&
+        it.actualRole.value != "Recluse"
+}.mapTo(linkedSetOf()) { it.seat }
+
 /** One seat tap: two fixed slots for two-player queries, otherwise a single toggled target; null rejects a third seat. */
 internal fun ClocktowerNightStepDraft.withTappedSeat(action: ClocktowerNightAction, seat: Int): ClocktowerNightStepDraft? {
     if (action !in twoSeatNightActions) {

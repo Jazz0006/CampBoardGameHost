@@ -70,6 +70,8 @@ internal fun ClocktowerNightStepCardLocalized(
     selectedSeatSlots: List<Int?>,
     /** Accepted Session Red Herring, marked on the Fortune Teller table. */
     redHerringSeat: Int?,
+    /** Current Host-page shortlist; excludes the Recluse by owner preference. */
+    redHerringSelectableSeats: Set<Int> = emptySet(),
     /** A live seat tap; the screen applies the step's selection rule to its draft. */
     onSelectSeat: (Int) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,
@@ -107,7 +109,9 @@ internal fun ClocktowerNightStepCardLocalized(
     val usesSageSquareTable =
         plannedFullScreenSurface == ClocktowerNightFullScreenSurface.Sage &&
             step.actor != null && step.isRealAction && cards.size >= 2
-    val selectedSeats = selectedSeatSlots.filterNotNull()
+    val selectedSeats = selectedSeatSlots.filterNotNull().filter {
+        step.action != ClocktowerNightAction.RedHerring || it in redHerringSelectableSeats
+    }
     val selectedSeat = selectedSeats.firstOrNull()
     fun selectSeat(seat: Int) {
         if (seat in 1..cards.size) onSelectSeat(seat)
@@ -211,7 +215,7 @@ internal fun ClocktowerNightStepCardLocalized(
     val helper = when {
         step.action == ClocktowerNightAction.Chambermaid -> if (language == "en") "Have them choose two players, then show only the number." else "让她选择两名玩家，点查询后直接展示数字。"
         step.action == ClocktowerNightAction.FortuneTeller -> if (language == "en") "Have them choose two players, then show Yes or No." else "让他选择两名玩家，点查询后展示“有”或“没有”。"
-        step.action == ClocktowerNightAction.RedHerring -> if (language == "en") "Choose a good player as the red herring. The Fortune Teller detects that player as a Demon." else "选择一名善良玩家成为红鲱鱼。占卜师查询他时，结果为“有”，他会被标记为恶魔。"
+        step.action == ClocktowerNightAction.RedHerring -> if (language == "en") "Choose a good player other than the Recluse as the red herring." else "选择一名善良且非隐士的玩家作为红鲱鱼。"
         step.action == ClocktowerNightAction.Poison -> if (language == "en") "Record the poisoned player." else "记录中毒的玩家。"
         step.action == ClocktowerNightAction.ButlerMaster -> if (language == "en") "Have the Butler choose a master. During voting, the Butler may vote only if their master votes." else "让他选择主人。白天计票时，只有主人投票时，管家才能投票，需要管家自律。"
         step.action == ClocktowerNightAction.MonkProtect -> if (language == "en") "Record the protected player." else "记录被保护的玩家。"
@@ -366,7 +370,7 @@ internal fun ClocktowerNightStepCardLocalized(
         when (plannedFullScreenSurface) {
             ClocktowerNightFullScreenSurface.SingleTarget -> {
                 val candidates = when (step.action) {
-                    ClocktowerNightAction.RedHerring -> allSeats
+                    ClocktowerNightAction.RedHerring -> redHerringSelectableSeats
                     ClocktowerNightAction.ButlerMaster -> allSeats - listOfNotNull(actionActorSeat).toSet()
                     ClocktowerNightAction.MonkProtect -> allSeats
                     else -> aliveSeats

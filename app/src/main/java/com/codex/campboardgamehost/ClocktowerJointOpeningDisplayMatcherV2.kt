@@ -6,6 +6,7 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState
 import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2
+import com.codex.campboardgamehost.clocktower.session.poisonChangesInformationBasis
 
 /**
  * Strict V2 public-semantic -> current Host UI manual-option adapter.
@@ -14,6 +15,10 @@ import com.codex.campboardgamehost.clocktower.session.HostOpeningSemanticValueV2
  * owns confirmation, effective poison, revision, legality and player display.
  */
 internal object ClocktowerJointOpeningDisplayMatcherV2 {
+    internal enum class Invalidation {
+        DRUNK_CHANGED, RED_HERRING_CHANGED, DEMON_BLUFFS_CHANGED,
+        POISON_AFFECTS_INFORMATION, MECHANICAL_ACTION, CONFIRMED_INFORMATION_CHANGED,
+    }
     fun match(
         plan: HostOpeningSemanticValueV2,
         currentSourceSeat: Int,
@@ -70,8 +75,9 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
      * plan state or require a role-specific invalidation callback.
      *
      * Opening choices that were planned and confirmed (bluffs, Red Herring) are
-     * harmless. A later gameplay action or a different published clue forces
-     * remaining current-step decisions to use a fresh strategic recommendation.
+     * harmless, as are the first-night Spy handoff and Butler's master choice.
+     * The Host resolves poison's information basis. Mechanical changes or a different
+     * published clue still require a fresh recommendation for the remaining decisions.
      */
     fun stillUsable(
         session: ClocktowerSessionState,
@@ -79,24 +85,45 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
         plannedInformation: Map<Int, HostOpeningSemanticValueV2>,
         plannedRedHerringSeat: Int?,
         plannedBluffRoleNames: List<String>,
-    ): Boolean {
+    ): Boolean = invalidation(session, plannedDrunkSeat, plannedInformation,
+        plannedRedHerringSeat, plannedBluffRoleNames) == null
+
+    fun invalidation(
+        session: ClocktowerSessionState,
+        plannedDrunkSeat: Int?,
+        plannedInformation: Map<Int, HostOpeningSemanticValueV2>,
+        plannedRedHerringSeat: Int?,
+        plannedBluffRoleNames: List<String>,
+    ): Invalidation? {
         val actualDrunkSeat = session.gameState.players.singleOrNull {
             it.actualRole.value == "Drunk"
         }?.seat
-        if (actualDrunkSeat != plannedDrunkSeat) return false
+        if (actualDrunkSeat != plannedDrunkSeat) return Invalidation.DRUNK_CHANGED
 
-        if (session.actionTimeline.entries.any { event ->
-                when (val action = event.fact) {
-                    is ActionFact.PhaseAdvance -> false
+        session.actionTimeline.entries.forEach { event ->
+                val reason = when (val action = event.fact) {
+                    is ActionFact.PhaseAdvance -> null
+                    is ActionFact.NightWake -> if (event.point.phase == StorytellerPhase.FIRST_NIGHT &&
+                        action.role.value == "Spy") null else Invalidation.MECHANICAL_ACTION
+                    is ActionFact.ButlerMasterChoice -> if (event.point.phase == StorytellerPhase.FIRST_NIGHT)
+                        null else Invalidation.MECHANICAL_ACTION
+                    is ActionFact.Poison -> if (action.targetSeat != null && plannedInformation.values.any { plan ->
+                        session.epistemicObservationLog.records.none { actual ->
+                            actual.phase == StorytellerPhase.FIRST_NIGHT && actual.round == 1 &&
+                                actual.sourceSeat == plan.sourceSeat && actual.visibility == ObservationVisibility.PRIVATE
+                        } && session.poisonChangesInformationBasis(plan.sourceSeat, plan.subjectSeats, action.targetSeat)
+                    }) Invalidation.POISON_AFFECTS_INFORMATION else null
                     is ActionFact.RedHerringChoice ->
-                        action.selectedSeat != plannedRedHerringSeat
+                        if (action.selectedSeat != plannedRedHerringSeat) Invalidation.RED_HERRING_CHANGED else null
                     is ActionFact.DemonBluffChoice ->
-                        action.roles.map { it.value } != plannedBluffRoleNames
-                    else -> true
+                        if (action.roles.map { it.value }.toSet() != plannedBluffRoleNames.toSet())
+                            Invalidation.DEMON_BLUFFS_CHANGED else null
+                    else -> Invalidation.MECHANICAL_ACTION
                 }
-            }) return false
+                if (reason != null) return reason
+        }
 
-        return session.epistemicObservationLog.records.all { actual ->
+        val compatibleHistory = session.epistemicObservationLog.records.all { actual ->
             val planned = actual.sourceSeat?.let(plannedInformation::get)
                 ?: return@all true
             if (actual.phase != StorytellerPhase.FIRST_NIGHT ||
@@ -108,6 +135,7 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
                     normalize(planned.abilityRoleId) &&
                 compatible(planned, actual.proposition)
         }
+        return if (compatibleHistory) null else Invalidation.CONFIRMED_INFORMATION_CHANGED
     }
 
     private fun compatible(
@@ -129,10 +157,17 @@ internal object ClocktowerJointOpeningDisplayMatcherV2 {
                 pair.alternatives.filterIsInstance<InformationProposition.RoleAt>()
                     .map { it.seat }.sorted() == plan.subjectSeats.sorted() &&
                 pair.alternatives.filterIsInstance<InformationProposition.RoleAt>()
-                    .all { normalize(it.role.value) == plan.roleId }
+                    .all { normalize(it.role.value) == normalize(plan.roleId.orEmpty()) }
         }
-        // A zero-Outsider statement requires its own typed semantic observation;
-        // never pretend NONE or a UI label is reliable evidence of that result.
+        "ZERO_OUTSIDERS" -> {
+            val all = proposition as? InformationProposition.AllOf
+            val absent = all?.propositions?.filterIsInstance<InformationProposition.RoleInPlay>()
+            val outsiders = clocktowerRolesForScript(ClocktowerScript.TroubleBrewing)
+                .filter { it.team == ClocktowerTeam.Outsider }.map { normalize(it.enName) }.toSet()
+            absent != null && absent.size == all.propositions.size && absent.size == outsiders.size &&
+                absent.all { !it.inPlay } && absent.map { normalize(it.role.value) }.toSet() == outsiders
+        }
+        // Deferred/unsupported kinds and UI labels cannot stand in for a confirmed result.
         else -> false
     }
 }

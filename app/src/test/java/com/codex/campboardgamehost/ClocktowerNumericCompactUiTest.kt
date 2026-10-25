@@ -97,7 +97,9 @@ class ClocktowerNumericCompactUiTest {
                 }
             }
         }
-        ui.onNodeWithText("Show to player").assertIsDisplayed().assertIsNotEnabled()
+        ui.onNodeWithText("Show to player: $maximum").assertIsDisplayed().assertIsEnabled()
+        ui.onNode(hasText((maximum - 1).toString(), substring = false) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performScrollTo().performClick()
+        ui.onNodeWithText("Show to player: ${maximum - 1}").assertIsEnabled()
         ui.onNode(hasText(maximum.toString(), substring = false) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performScrollTo().performClick()
         ui.onNodeWithText("Show to player: $maximum").assertIsDisplayed().performClick()
         ui.runOnIdle { assertEquals(maximum, shown); preview.value = maximum }
@@ -120,5 +122,35 @@ class ClocktowerNumericCompactUiTest {
         ui.onNodeWithText("Show to player: 0").assertDoesNotExist()
         ui.onNodeWithText("Show to player: 1").assertDoesNotExist()
         ui.onNodeWithText("Show to player: 2").assertDoesNotExist()
+    }
+
+    @Test fun withdrawnAdviceOrPreviewCannotBecomeAnImplicitManualSelection() {
+        val advice = mutableStateOf<Int?>(1)
+        val preview = mutableStateOf<Int?>(null)
+        var shown: Int? = null
+        ui.setContent {
+            ClocktowerDarkTheme {
+                ClocktowerResolvedNumericResultUi(
+                    values = listOf(0, 1, 2), recommendedValue = advice.value,
+                    lastPreviewValue = preview.value, automaticOnly = false,
+                    language = "en", draftKey = "same-interaction",
+                    onConfirm = { shown = it }, onDraftChanged = {},
+                )
+            }
+        }
+        ui.onNodeWithText("Show to player: 1").assertIsEnabled()
+        // Busy/failed retries withdraw the current suggestion without changing the step key.
+        ui.runOnIdle { advice.value = null }
+        ui.onNodeWithText("Show to player").assertIsNotEnabled()
+        ui.runOnIdle { preview.value = 1 }
+        ui.onNodeWithText("Show to player: 1").assertIsEnabled()
+        ui.runOnIdle { preview.value = null }
+        ui.onNodeWithText("Show to player").assertIsNotEnabled()
+        ui.runOnIdle { advice.value = 2 }
+        ui.onNodeWithText("Show to player: 2").assertIsEnabled()
+        ui.onNode(hasText("0", substring = false) and SemanticsMatcher.keyIsDefined(SemanticsProperties.Selected)).performClick()
+        ui.runOnIdle { advice.value = null }
+        ui.onNodeWithText("Show to player: 0").assertIsEnabled().performClick()
+        ui.runOnIdle { assertEquals(0, shown) }
     }
 }

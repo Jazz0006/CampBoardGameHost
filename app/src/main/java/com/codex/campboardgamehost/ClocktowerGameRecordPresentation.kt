@@ -15,7 +15,6 @@ internal data class GameRecordRow(
     val category: GameRecordCategory,
     val summary: String,
     val details: String,
-    val seats: Set<Int>,
 )
 
 internal fun gameRecordRows(state: ClocktowerSessionState, language: String): List<GameRecordRow> =
@@ -59,20 +58,6 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         }) + (if (p.subjectSeats.isEmpty()) "" else " · ${seats(p.subjectSeats)}") + "：${p.value}"
         is InformationProposition.BooleanResult -> (if (p.metric == BooleanMetric.PLAYER_QUESTION_ANSWER) t("问题回答", "Question answer") else t("查询 ${seats(p.subjectSeats)}", "Query ${seats(p.subjectSeats)}")) + "：${yes(p.value)}"
     }
-    fun referenced(p: InformationProposition): Set<Int> = when (p) {
-        is InformationProposition.RoleAt -> setOf(p.seat)
-        is InformationProposition.ShownRoleAt -> setOf(p.seat)
-        is InformationProposition.AlignmentAt -> setOf(p.seat)
-        is InformationProposition.CharacterTypeAt -> setOf(p.seat)
-        is InformationProposition.AliveAt -> setOf(p.seat)
-        is InformationProposition.AbilityStateAt -> setOf(p.seat)
-        is InformationProposition.NumericResult -> p.subjectSeats.toSet() + p.sourceSeat
-        is InformationProposition.BooleanResult -> p.subjectSeats.toSet() + p.sourceSeat
-        is InformationProposition.AnyOf -> p.alternatives.flatMap { referenced(it) }.toSet()
-        is InformationProposition.AllOf -> p.propositions.flatMap { referenced(it) }.toSet()
-        is InformationProposition.Not -> referenced(p.proposition)
-        else -> emptySet()
-    }
     fun number(n: Int) = t("${n}号", "#$n")
     fun compact(p: InformationProposition): String = when (p) {
         is InformationProposition.AnyOf -> {
@@ -101,19 +86,17 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 state.actionTimeline.entries.any { it.fact is ActionFact.Nomination && f.actionId == "vote:${it.fact.actionId}" }) return@mapNotNull null
             var displayOrder = entry.point.globalSequence
             var category = GameRecordCategory.ACTION
-            var involved = emptySet<Int>()
             var details = ""
-            fun target(n: Int): String { involved = involved + n; return seat(n) }
             val summary = when (f) {
                 is ActionFact.PhaseAdvance -> return@mapNotNull null // phase is the section heading
-                is ActionFact.Poison -> f.targetSeat?.let { t("投毒 → ${target(it)}", "Poison → ${target(it)}") } ?: t("未选择投毒目标", "No poison target selected")
-                is ActionFact.Protect -> t("保护 → ${target(f.targetSeat)}", "Protect → ${target(f.targetSeat)}")
-                is ActionFact.Attack -> t("攻击 → ${target(f.targetSeat)}", "Attack → ${target(f.targetSeat)}")
-                is ActionFact.ButlerMasterChoice -> t("${target(f.butlerSeat)} 选择主人 → ${target(f.masterSeat)}", "${target(f.butlerSeat)} chose master → ${target(f.masterSeat)}")
-                is ActionFact.Death -> { category = GameRecordCategory.CHANGE; t("${target(f.targetSeat)} 死亡", "${target(f.targetSeat)} died") }
-                is ActionFact.Execution -> { category = GameRecordCategory.CHANGE; t("${target(f.targetSeat)} 被处决", "${target(f.targetSeat)} was executed") }
+                is ActionFact.Poison -> f.targetSeat?.let { t("投毒 → ${seat(it)}", "Poison → ${seat(it)}") } ?: t("未选择投毒目标", "No poison target selected")
+                is ActionFact.Protect -> t("保护 → ${seat(f.targetSeat)}", "Protect → ${seat(f.targetSeat)}")
+                is ActionFact.Attack -> t("攻击 → ${seat(f.targetSeat)}", "Attack → ${seat(f.targetSeat)}")
+                is ActionFact.ButlerMasterChoice -> t("${seat(f.butlerSeat)} 选择主人 → ${seat(f.masterSeat)}", "${seat(f.butlerSeat)} chose master → ${seat(f.masterSeat)}")
+                is ActionFact.Death -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 死亡", "${seat(f.targetSeat)} died") }
+                is ActionFact.Execution -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 被处决", "${seat(f.targetSeat)} was executed") }
                 is ActionFact.NoExecution -> { category = GameRecordCategory.CHANGE; t("今日无人被处决", "No execution today") }
-                is ActionFact.RoleChange -> { category = GameRecordCategory.CHANGE; t("${target(f.targetSeat)} 变为 ${role(f.role)} · ${alignment(f.alignment)}", "${target(f.targetSeat)} became ${role(f.role)} · ${alignment(f.alignment)}") }
+                is ActionFact.RoleChange -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 变为 ${role(f.role)} · ${alignment(f.alignment)}", "${seat(f.targetSeat)} became ${role(f.role)} · ${alignment(f.alignment)}") }
                 is ActionFact.Nomination -> { category = GameRecordCategory.VOTE
                     details = f.nominatorRegistersAsTownsfolk?.let { t("提名者登记为镇民：${yes(it)}", "Nominator registers as Townsfolk: ${yes(it)}") }.orEmpty()
                     val voteEntry = state.actionTimeline.entries.singleOrNull { it.fact.actionId == "vote:${f.actionId}" && it.fact is ActionFact.Vote }
@@ -121,30 +104,28 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                     val virgin = state.actionTimeline.entries.any { it.fact is ActionFact.Execution && it.fact.actionId == "${f.actionId}:virgin-execution" }
                     if (vote != null) {
                         displayOrder = requireNotNull(voteEntry).point.globalSequence
-                        involved = involved + vote.voterSeats
                         details += t("\n幽灵票：", "\nGhost votes: ") + vote.ghostVoterSeats.joinToString("、") { number(it) }.ifEmpty { t("无", "None") }
                     }
-                    t("${target(f.nominatorSeat)} 提名 ${target(f.nomineeSeat)}", "${target(f.nominatorSeat)} nominated ${target(f.nomineeSeat)}") + when {
+                    t("${seat(f.nominatorSeat)} 提名 ${seat(f.nomineeSeat)}", "${seat(f.nominatorSeat)} nominated ${seat(f.nomineeSeat)}") + when {
                         virgin -> t("，处女能力触发", ", Virgin triggered")
                         vote != null -> t("（${vote.voterSeats.size}票：${vote.voterSeats.joinToString(" ")}）", " (${vote.voterSeats.size} votes: ${vote.voterSeats.joinToString(" ")})")
                         else -> t("（未完成投票）", " (vote incomplete)")
                     } }
-                is ActionFact.Vote -> { category = GameRecordCategory.VOTE; involved = f.voterSeats.toSet()
+                is ActionFact.Vote -> { category = GameRecordCategory.VOTE
                     details = t("投票：${seats(f.voterSeats)}\n幽灵票：${seats(f.ghostVoterSeats).ifEmpty { "无" }}", "Voters: ${seats(f.voterSeats)}\nGhost votes: ${seats(f.ghostVoterSeats).ifEmpty { "None" }}")
-                    t("${target(f.nominatorSeat)} → ${target(f.nomineeSeat)}：${f.voterSeats.size} 票", "${target(f.nominatorSeat)} → ${target(f.nomineeSeat)}: ${f.voterSeats.size} votes") }
+                    t("${seat(f.nominatorSeat)} → ${seat(f.nomineeSeat)}：${f.voterSeats.size} 票", "${seat(f.nominatorSeat)} → ${seat(f.nomineeSeat)}: ${f.voterSeats.size} votes") }
                 is ActionFact.SlayerShot -> {
                     details = t("消耗能力：${yes(f.abilityConsumed)}", "Ability consumed: ${yes(f.abilityConsumed)}") + f.targetRegistersAsDemon?.let { t("\n目标登记为恶魔：${yes(it)}", "\nTarget registers as Demon: ${yes(it)}") }.orEmpty()
-                    t("${target(f.claimantSeat)} 猎手开枪 → ${target(f.targetSeat)}：${if(f.hit) "命中" else "未命中"}", "${target(f.claimantSeat)} Slayer shot → ${target(f.targetSeat)}: ${if(f.hit) "hit" else "miss"}") }
-                is ActionFact.KlutzChoice -> t("${target(f.klutzSeat)} 呆瓜选择 → ${target(f.chosenSeat)}", "${target(f.klutzSeat)} Klutz chose → ${target(f.chosenSeat)}")
-                is ActionFact.MayorRedirectChoice -> t("${target(f.mayorSeat)} 市长转移 → ${target(f.targetSeat)}", "${target(f.mayorSeat)} Mayor redirected → ${target(f.targetSeat)}")
-                is ActionFact.RedHerringChoice -> { category = GameRecordCategory.SETUP; f.selectedSeat?.let { t("红鲱鱼：${target(it)}", "Red Herring: ${target(it)}") } ?: t("清除红鲱鱼", "Red Herring cleared") }
+                    t("${seat(f.claimantSeat)} 猎手开枪 → ${seat(f.targetSeat)}：${if(f.hit) "命中" else "未命中"}", "${seat(f.claimantSeat)} Slayer shot → ${seat(f.targetSeat)}: ${if(f.hit) "hit" else "miss"}") }
+                is ActionFact.KlutzChoice -> t("${seat(f.klutzSeat)} 呆瓜选择 → ${seat(f.chosenSeat)}", "${seat(f.klutzSeat)} Klutz chose → ${seat(f.chosenSeat)}")
+                is ActionFact.MayorRedirectChoice -> t("${seat(f.mayorSeat)} 市长转移 → ${seat(f.targetSeat)}", "${seat(f.mayorSeat)} Mayor redirected → ${seat(f.targetSeat)}")
+                is ActionFact.RedHerringChoice -> { category = GameRecordCategory.SETUP; f.selectedSeat?.let { t("红鲱鱼：${seat(it)}", "Red Herring: ${seat(it)}") } ?: t("清除红鲱鱼", "Red Herring cleared") }
                 is ActionFact.DemonBluffChoice -> { category = GameRecordCategory.SETUP; t("恶魔伪装身份：", "Demon bluffs: ") + f.roles.joinToString("、") { role(it) } }
-                is ActionFact.NightWake -> t("${target(f.actorSeat)} · ${role(f.role)} 已查看魔典", "${target(f.actorSeat)} · ${role(f.role)} viewed the Grimoire")
+                is ActionFact.NightWake -> t("${seat(f.actorSeat)} · ${role(f.role)} 已查看魔典", "${seat(f.actorSeat)} · ${role(f.role)} viewed the Grimoire")
                 is ActionFact.ArtistAnswer -> {
                     details = t("消耗能力：${yes(f.abilityConsumed)}；问题原文未记录", "Ability consumed: ${yes(f.abilityConsumed)}; question text not recorded")
-                    t("${target(f.claimantSeat)} 使用艺术家问答", "${target(f.claimantSeat)} used Artist question") }
+                    t("${seat(f.claimantSeat)} 使用艺术家问答", "${seat(f.claimantSeat)} used Artist question") }
                 is ActionFact.GameEnded -> { category = GameRecordCategory.CHANGE
-                    f.subjectSeat?.let { target(it) }
                     val reason = when(f.reason) {
                         GameEndReason.NO_DEMON -> t("无存活恶魔", "No living Demon")
                         GameEndReason.TWO_ALIVE -> t("仅剩两名存活玩家", "Two players alive")
@@ -154,7 +135,7 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                     }
                     t("游戏结束：$reason", "Game ended: $reason") }
             }
-            GameRecordRow("action:${f.actionId}", displayOrder, entry.point.phase, entry.point.round, category, summary, details, involved)
+            GameRecordRow("action:${f.actionId}", displayOrder, entry.point.phase, entry.point.round, category, summary, details)
         }
         val observations = state.epistemicObservationLog.records.mapNotNull { r ->
             val point = (r.timelineBinding as? ObservationTimelineBinding.Global)?.point ?: return@mapNotNull null
@@ -181,8 +162,7 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 absent.propositions.all { it is InformationProposition.RoleInPlay && !it.inPlay })
                 t("无外来者", "No Outsiders") else compact(r.proposition)
             GameRecordRow("observation:${r.recordId}", point.globalSequence, point.phase, point.round, GameRecordCategory.INFORMATION,
-                "$ability：$content", detail,
-                r.recipientSeats + referenced(r.proposition) + listOfNotNull(r.sourceSeat))
+                "$ability：$content", detail)
         }
         val all = actions + observations
         val setup = all.filter { it.category == GameRecordCategory.SETUP }.groupBy {

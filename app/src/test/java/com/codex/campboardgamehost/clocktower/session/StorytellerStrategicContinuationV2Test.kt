@@ -25,6 +25,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /** Mechanical contract tests; not a model strategy-quality benchmark. */
@@ -127,6 +128,29 @@ class StorytellerStrategicContinuationV2Test {
                 .put("semantic", value))
             .put("updatedStrategyMemory", host.getJSONObject("priorStrategyMemory"))
             .put("strategicDirection", "Reconsider the current decision in whole-game context.")
+
+    @Test fun oversizedMemoryIsAResponseRejectionAndTheWireContractHasTheSameBounds() {
+        val game = session()
+        val before = game.state
+        val host = JSONObject(StorytellerStrategicContinuationV2.encode(before, prior(), open))
+        val result = response(host)
+        result.getJSONObject("updatedStrategyMemory").put("tensions", JSONArray(listOf("one", "two", "three")))
+        assertEquals(3, StorytellerStrategicContinuationV2.decode(host.toString(), result.toString(), open).updatedMemory.tensions.size)
+        result.getJSONObject("updatedStrategyMemory").getJSONArray("tensions").put("four")
+        val error = assertThrows(StorytellerResponseValidationException::class.java) {
+            StorytellerStrategicContinuationV2.decode(host.toString(), result.toString(), open)
+        }
+        assertEquals("strategyMemory.tensions has 4 entries; maximum is 3.", error.safeDetail)
+        assertEquals(before, game.state)
+        listOf(InitialJointOpeningDirectV2.responseSchema to "strategyMemory",
+            StorytellerStrategicContinuationV2.responseSchema to "updatedStrategyMemory").forEach { (schema, key) ->
+            val fields = schema.getJSONObject("properties").getJSONObject(key).getJSONObject("properties")
+            listOf("tensions", "intentions", "uncertainties").forEach { field ->
+                assertEquals(HostOpeningStrategyMemoryV2.MAX_ENTRIES, fields.getJSONObject(field).getInt("maxItems"))
+            }
+            assertEquals("^[\\s\\S]{1,300}$", fields.getJSONObject("tensions").getJSONObject("items").getString("pattern"))
+        }
+    }
 
     @Test fun carriesActualRosterHistoryAndPlayerClaimsWithoutLegalMenu() {
         val game = session()

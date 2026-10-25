@@ -86,12 +86,14 @@ internal fun ClocktowerResolvedNumericResultUi(
     modifier: Modifier = Modifier,
 ) {
     var manualSelection by remember(draftKey) {
-        mutableStateOf(lastPreviewValue?.takeIf { it in values })
+        mutableStateOf<Int?>(null)
     }
     val chosen = when {
         values.size == 1 -> values.single()
         automaticOnly -> recommendedValue?.takeIf { it in values }
         else -> manualSelection?.takeIf { it in values }
+            ?: lastPreviewValue?.takeIf { it in values }
+            ?: recommendedValue?.takeIf { it in values }
     }
     Column(
         modifier = modifier.fillMaxWidth(),
