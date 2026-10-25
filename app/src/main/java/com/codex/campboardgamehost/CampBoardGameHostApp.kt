@@ -114,7 +114,7 @@ internal fun CampBoardGameHostApp(
     // Current-step recommendation only: never a separate adoption or game-state fact.
     val drunkAiScope = rememberCoroutineScope()
     var showHostTools by remember { mutableStateOf(false) }
-    var hostToolTab by remember { mutableStateOf(HostToolTab.Roles) }
+    var hostToolTab by remember { mutableStateOf(HostToolTab.Records) }
     var showNewGameConfirmation by remember { mutableStateOf(false) }
     var currentDealIndex by remember { mutableStateOf(0) }
     var selectedClocktowerScript by remember { mutableStateOf<ClocktowerScript?>(null) }
@@ -429,7 +429,7 @@ internal fun CampBoardGameHostApp(
                         },
                         onHostTools = {
                             
-                                hostToolTab = HostToolTab.Roles
+                                hostToolTab = HostToolTab.Records
                                 showHostTools = true
                             
                         },
@@ -475,7 +475,7 @@ internal fun CampBoardGameHostApp(
                         aiSettings = aiSettings,
                         isJudgeVisible = { screen == Screen.ClocktowerJudge },
                         drunkAiScope = drunkAiScope,
-                        onHostTools = { hostToolTab = HostToolTab.Roles; showHostTools = true },
+                        onHostTools = { hostToolTab = HostToolTab.Records; showHostTools = true },
                     )
 
                         }
@@ -494,7 +494,7 @@ internal fun CampBoardGameHostApp(
                 val hostUiIsNight = clocktowerSessionUi?.snapshot?.phase != StorytellerPhase.DAY
                 if (showHostTools) {
                     HostGameToolsScreen(
-                        cards = cards,
+                        sessionState = clocktowerSessionUi?.snapshot,
                         isNight = hostUiIsNight,
                         initialTab = hostToolTab,
                         settingsContent = {
