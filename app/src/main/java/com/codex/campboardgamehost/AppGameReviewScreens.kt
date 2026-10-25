@@ -9,15 +9,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -38,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 internal enum class HostToolTab {
-    Roles,
+    Records,
     Settings,
 }
 @Composable
@@ -96,7 +90,7 @@ internal fun NewGameConfirmationDialog(
 
 @Composable
 internal fun HostGameToolsScreen(
-    cards: List<PlayerCard>,
+    sessionState: com.codex.campboardgamehost.clocktower.session.ClocktowerSessionState?,
     isNight: Boolean,
     initialTab: HostToolTab,
     settingsContent: @Composable () -> Unit,
@@ -150,7 +144,7 @@ internal fun HostGameToolsScreen(
                 ) {
                     HostToolTab.entries.forEach { tab ->
                         val label = when (tab) {
-                            HostToolTab.Roles -> text("角色身份", "Roles")
+                            HostToolTab.Records -> text("游戏记录", "Game records")
                             HostToolTab.Settings -> text("设置", "Settings")
                         }
                         if (selectedTab == tab) {
@@ -181,8 +175,8 @@ internal fun HostGameToolsScreen(
                 HorizontalDivider(modifier = Modifier.padding(top = 12.dp))
 
                 when (selectedTab) {
-                    HostToolTab.Roles -> HostRolesList(
-                        cards = cards,
+                    HostToolTab.Records -> ClocktowerGameRecords(
+                        sessionState = sessionState,
                         modifier = Modifier.weight(1f),
                     )
                     HostToolTab.Settings -> {
@@ -213,79 +207,6 @@ internal fun HostGameToolsScreen(
                             fontWeight = FontWeight.Black,
                         )
                     }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HostRolesList(
-    cards: List<PlayerCard>,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val language = context.resources.configuration.locales[0].language
-    fun text(zh: String, en: String): String = if (language == "en") en else zh
-    LazyColumn(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item {
-            Text(
-                text("请确认屏幕仅对主持人可见。", "Make sure only the host can see this screen."),
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        items(cards) { card ->
-            val role = card.hostRoleLabel(context)
-            val shown = if (
-                card.clocktowerShownAsDifferentRole() &&
-                card.clocktowerShownRole != null
-            ) {
-                text(
-                    " · 展示为 ${card.clocktowerShownRole.nameFor(language)}",
-                    " · shown as ${card.clocktowerShownRole.nameFor(language)}",
-                )
-            } else {
-                ""
-            }
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Surface(
-                        modifier = Modifier.size(38.dp),
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                (cards.indexOf(card) + 1).toString(),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Black,
-                            )
-                        }
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(card.name, fontWeight = FontWeight.Bold)
-                        Text(role + shown, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    Text(
-                        card.eliminatedRound?.let { text("死亡", "Dead") } ?: text("存活", "Alive"),
-                        color = if (card.eliminatedRound == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
                 }
             }
         }
