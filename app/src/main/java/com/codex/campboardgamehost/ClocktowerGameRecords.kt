@@ -28,7 +28,7 @@ internal fun ClocktowerGameRecords(sessionState: ClocktowerSessionState?, modifi
         var phase by remember { mutableStateOf<Pair<StorytellerPhase, Int>?>(null) }
         val visible = rows.filter { (selectedSeat == null || selectedSeat in it.seats) &&
             (category == null || category == it.category) && (phase == null || phase == (it.phase to it.round)) }
-        val groups = visible.groupBy { it.phase to it.round }
+        val groups = visible.groupBy { if (it.category == GameRecordCategory.SETUP) null else it.phase to it.round }
         fun phaseLabel(p: Pair<StorytellerPhase, Int>) = when(p.first) {
             StorytellerPhase.FIRST_NIGHT -> t("首夜", "First night")
             StorytellerPhase.DAY -> t("第 ${p.second} 天", "Day ${p.second}")
@@ -44,9 +44,7 @@ internal fun ClocktowerGameRecords(sessionState: ClocktowerSessionState?, modifi
         val listState = rememberLazyListState()
         // Land on the latest confirmed entry; changing a filter starts at its first result.
         LaunchedEffect(selectedSeat, category, phase) {
-            if (selectedSeat == null && category == null && phase == null && visible.isNotEmpty())
-                listState.scrollToItem(visible.size + groups.size - 1)
-            else listState.scrollToItem(0)
+            listState.scrollToItem(0)
         }
         Column(modifier.fillMaxWidth()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -68,7 +66,7 @@ internal fun ClocktowerGameRecords(sessionState: ClocktowerSessionState?, modifi
             LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)) {
                 groups.forEach { (p, entries) ->
                     item(key = "phase:$p") {
-                        Text(phaseLabel(p), Modifier.padding(top = 12.dp, bottom = 8.dp), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        Text(p?.let(::phaseLabel) ?: t("开局配置", "Opening setup"), Modifier.padding(top = 12.dp, bottom = 8.dp), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     entries.forEach { record ->
                         item(key = record.id) {

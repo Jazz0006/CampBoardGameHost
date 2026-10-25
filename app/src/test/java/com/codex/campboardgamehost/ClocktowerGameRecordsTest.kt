@@ -20,13 +20,13 @@ class ClocktowerGameRecordsTest {
         val saved = ClocktowerSessionJson.encode(session.state)
         val restored = ClocktowerSessionJson.decode(saved)
         val rows = gameRecordRows(restored, "en")
-        assertEquals(listOf(0L, 1L, 2L), rows.map { it.order })
+        assertEquals(listOf(1L, 2L), rows.map { it.order })
         assertEquals(rows, gameRecordRows(session.state, "en"))
-        assertEquals(3, rows.map { it.id }.distinct().size)
-        val answer = rows[1]
-        assertTrue(answer.summary.startsWith("Told #1 "))
+        assertEquals(2, rows.map { it.id }.distinct().size)
+        val answer = rows[0]
+        assertTrue(answer.summary.startsWith("Fortune Teller information"))
         assertTrue(answer.summary.contains("Fortune Teller"))
-        assertTrue(answer.summary.endsWith("：No"))
+        assertTrue(answer.summary.endsWith(", No"))
         assertEquals(setOf(1, 2, 3), answer.seats)
         assertTrue(answer.details.contains("malfunctioning"))
         assertEquals(listOf(answer), rows.filter { it.category == GameRecordCategory.INFORMATION })
