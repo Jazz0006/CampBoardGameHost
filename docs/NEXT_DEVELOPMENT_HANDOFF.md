@@ -1,12 +1,12 @@
 # 当前开发交接
 
-> **2026-10-24 真机修复更新：** #361/#362 与恶魔掩饰修复 #363 已合并，当前本批基线为 `492ecd267`。后续夜间重复预览、虚线、唤醒箭头、身份信息隐私/唯一结果、厨师小屏与认知范围、传承方桌及继任攻击修复见[完整问题记录](DEVICE_NIGHT_FLOW_FIXES_2026-10-24.md)。本地完整 644 项和 APK 通过，用户已授权本批合并与同步；以下 Batch 5 待合并状态为旧检查点，执行前以实际 Git/PR 为准。
+> **2026-10-26 更新：** 重构 Batch 1–5、周末真机修复，以及 2026-10-26 审查的修复（#369、#370 与审查小项修复批）已合并。详见 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) 与 AGENTS.md 当前权威一节。
 
-1. 先核对实际 Git HEAD、工作区及 PR 状态。main 基线 `17949e72`；Batch 5 #361 仍为 Draft，代码 `05f6a21f` 已通过 full CI #4612 / R2 #4161。
-2. 当前文档分支叠加于 Batch 5，新增 [共享说明](GAME_SESSION_SHARED_GUIDE.md)，归档顶层旧路线并修复引用。审阅本次增量时以 Batch 5 分支为 base；不擅自合并或改写历史。
-3. 用户确认的模型：一局 GameSession，保存布局/配置与按顺序发生的行动和实际信息；说书人理由属于可选附加说明。EvidenceLab 采集同样过程，WebHost 按相同语义实施。
-4. 当前续局使用当前状态+已确认记录；AI 对话 ID/游标/记忆在 metadata 中。独立初始布局副本、通用逐步备注、统一夜间手动接管及人工触发随机尚不能视为已实现。以后优先保证断网能继续游戏。
-5. Session 唯一写事实；无持久 UI pending、第二游戏对象或独立恢复系统；D2 预览不入账，Next 保存最后一次展示。保留确定规则、隐私、原子保存、两 builtin 与现有 AI。
-6. 仅文档变更检查引用和差异即可，不把 docs-only CI 当作新代码测试。真机/付费模型未验收；无后续合并或付费调用授权。
+1. 先核对 live main、工作区、开放 PR 与精确 SHA 的 CI/R2；Android tests 日志须确实运行 `./gradlew :app:testFull :app:assembleDebug`（PR 默认只跑 `testFast`，代码提交需带 `[full-ci]`），合并后再看 main push 运行。
+2. 夜间 Host 事实由 `ClocktowerNightFacts`（Session 快照一次读取）与 `ClocktowerNightDraftSubjects`（草稿座位路由）统一提供；`ClocktowerNightPresentation` 只把座位映射为卡片与文字。新增夜间事实放在这里，不在 UI 中重复计算。
+3. 规则改动须在 PR 中说明改了什么、为什么；同一条规则只在 Session 侧实现一次，AI 解析、UI 草稿与确认共用（如红鲱鱼规则）。存档/metadata 格式改动须说明旧存档如何恢复。
+4. 下一项功能：AI 不可用或恢复后仍能完成本局（统一夜间手动接管、人工触发的可选随机、恢复后过期响应校验）。
+5. Session 唯一写事实；无持久 UI pending、第二游戏对象或独立恢复系统；D2 预览不入账，Next 记录最后一次展示。保留两套内置剧本、三种模式、两类跨局防重复、隐私与原子保存。
+6. 测试按 2026-10-25 测试政策：只为有明确缺口的重要失败加小型行为回归。真机与付费模型未验收；付费调用需授权。
 
 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) · [旧累计交接](archive/legacy-host/PRE_SHARED_GUIDE_NEXT_DEVELOPMENT_HANDOFF.md) · [归档清理清单](DOCS_CLEANUP_2026-10-24.md)。

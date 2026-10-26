@@ -8,12 +8,31 @@ import org.json.JSONObject
 
 /** Advisory AI state and immutable setup identity travel with the one active Session save. */
 internal object ClocktowerActiveGameMetadata {
+    /** A loaded save; reading it changes nothing until [applyTo] after the restore save succeeds. */
     data class Restored(val session: ClocktowerGameSession, val mode: StorytellerOperationMode,
-        val ref: RulesetRef?, val rotation: TroubleBrewingSetupRotationRecord?, val needsDeal: Boolean)
+        val ref: RulesetRef?, val rotation: TroubleBrewingSetupRotationRecord?, val needsDeal: Boolean,
+        private val opening: HostOpeningSemanticAcceptanceV2?,
+        private val bluffNames: List<String>,
+        private val cursor: StorytellerStrategicContinuationV2.MemoryCursor?,
+        private val responseId: String?,
+        private val responseModel: String?,
+    ) {
+        fun applyTo(conversation: ClocktowerAiConversation) {
+            val state = session.state
+            conversation.openingPlanRecommendation = opening
+            conversation.openingRecommendedInformation = opening?.selection?.information.orEmpty()
+            conversation.openingRecommendedRedHerringSeat = opening?.selection?.redHerringSeat
+            conversation.openingRecommendedBluffRoleNames = bluffNames
+            conversation.strategicPolicyCursor = cursor
+            conversation.canonicalConversationResponseId = responseId
+            conversation.canonicalConversationModel = responseModel
+            conversation.strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.capture(session,
+                StorytellerStrategicChangeCheckpointV2.Position(state.phase, state.round))
+        }
+    }
 
     fun restore(saved: ClocktowerActiveGameStore.Saved,
-        catalog: com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog,
-        conversation: ClocktowerAiConversation): Restored {
+        catalog: com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog): Restored {
         val state = saved.state
         val metadata = saved.metadata
         val session = ClocktowerGameSession.restore(state)
@@ -21,22 +40,15 @@ internal object ClocktowerActiveGameMetadata {
         val cursor = cursor(metadata)
         require(opening == null || opening.selection.gameId == state.gameId)
         require(cursor == null || (cursor.gameId == state.gameId && cursor.exclusiveGlobalSequence <= state.nextTimelineGlobalSequence))
-        val restored = Restored(session, StorytellerOperationMode.valueOf(metadata.getString("mode")),
-            ruleset(metadata), rotation(metadata), state.phase == StorytellerPhase.FIRST_NIGHT &&
-                state.actionTimeline.entries.isEmpty() && state.epistemicObservationLog.records.isEmpty())
         val bluffNames = opening?.selection?.demonBluffs.orEmpty().map { external ->
             requireNotNull(catalog.ruleset(ClocktowerScript.TroubleBrewing).characterRegistry.findByExternalId(external)).id.value
         }
-        conversation.openingPlanRecommendation = opening
-        conversation.openingRecommendedInformation = opening?.selection?.information.orEmpty()
-        conversation.openingRecommendedRedHerringSeat = opening?.selection?.redHerringSeat
-        conversation.openingRecommendedBluffRoleNames = bluffNames
-        conversation.strategicPolicyCursor = cursor
-        conversation.canonicalConversationResponseId = metadata.optString("responseId").takeIf { it.isNotBlank() }
-        conversation.canonicalConversationModel = metadata.optString("responseModel").takeIf { it.isNotBlank() }
-        conversation.strategicLastReviewedHost = StorytellerStrategicChangeCheckpointV2.capture(session,
-            StorytellerStrategicChangeCheckpointV2.Position(state.phase, state.round))
-        return restored
+        return Restored(session, StorytellerOperationMode.valueOf(metadata.getString("mode")),
+            ruleset(metadata), rotation(metadata), state.phase == StorytellerPhase.FIRST_NIGHT &&
+                state.actionTimeline.entries.isEmpty() && state.epistemicObservationLog.records.isEmpty(),
+            opening, bluffNames, cursor,
+            metadata.optString("responseId").takeIf { it.isNotBlank() },
+            metadata.optString("responseModel").takeIf { it.isNotBlank() })
     }
 
     fun encode(mode: StorytellerOperationMode, ref: RulesetRef?, rotation: TroubleBrewingSetupRotationRecord?,

@@ -345,20 +345,25 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         hostPayload: String,
         modelResponse: String,
         openDecisions: List<OpenDecision>,
-    ): Result = try {
-        decodeResponse(hostPayload, modelResponse, openDecisions)
-    } catch (error: Exception) {
-        throw error as? StorytellerResponseValidationException
-            ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
+    ): Result {
+        // Check the Host's own payload outside the wrapper: its failures are Host defects,
+        // not "AI response rejected".
+        val input = JSONObject(hostPayload)
+        require(input.getString("schemaId") == REQUEST_SCHEMA)
+        listOf("source", "priorStrategyMemory", "currentDecision", "state").forEach { input.getJSONObject(it) }
+        return try {
+            decodeResponse(input, modelResponse, openDecisions)
+        } catch (error: Exception) {
+            throw error as? StorytellerResponseValidationException
+                ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
+        }
     }
 
     private fun decodeResponse(
-        hostPayload: String,
+        input: JSONObject,
         modelResponse: String,
         openDecisions: List<OpenDecision>,
     ): Result {
-        val input = JSONObject(hostPayload)
-        require(input.getString("schemaId") == REQUEST_SCHEMA)
         val raw = JSONObject(modelResponse)
         require(raw.keys().asSequence().toSet() == setOf("schemaVersion", "source",
             "revisions", "affectedOpenDecisionIds", "currentResult",
