@@ -197,6 +197,11 @@ internal fun CampBoardGameHostApp(
                 selectedClocktowerScript = result.script
                 hostSeatingSetupFlow = HostSeatingSetupFlow(confirmHostSeating(result.players))
                 startClocktowerGame()
+                // The old game is finished. If the new one did not start, do not stay on a screen
+                // that reads the live Session; return to the start screen with the same seating.
+                if (lifecycle.sessionUi == null && screen in setOf(
+                        Screen.PassPhone, Screen.RevealCard, Screen.ClocktowerAutoPause, Screen.ClocktowerJudge,
+                    )) screen = Screen.ClocktowerSettings
             }
         }
     }

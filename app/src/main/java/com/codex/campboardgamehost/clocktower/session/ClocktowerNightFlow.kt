@@ -43,10 +43,10 @@ internal fun ClocktowerSessionState.nightInteractions(ruleset: ValidatedClocktow
                     if (!first && role.value == "Imp" && mayorRulingSeat() != null) add(interaction(
                         "other_night:event:mayor:death_resolution", RoleId("Mayor"), ClocktowerHostInteractionKind.EVENT_RESOLUTION))
                 }
-                NightOrderToken.System.MINION_INFO -> if (first && gameState.players.size >= 7 &&
+                NightOrderToken.System.MINION_INFO -> if (first && firstNightEvilInformationRequired() &&
                     gameState.players.any { it.actualType == CharacterType.MINION }) add(interaction(
                     "first_night:system:minion_info", null, ClocktowerHostInteractionKind.EVIL_INFORMATION))
-                NightOrderToken.System.DEMON_INFO -> if (first && gameState.players.size >= 7 &&
+                NightOrderToken.System.DEMON_INFO -> if (first && firstNightEvilInformationRequired() &&
                     gameState.players.any { it.actualType == CharacterType.DEMON }) add(interaction(
                     "first_night:system:demon_info", null, ClocktowerHostInteractionKind.EVIL_INFORMATION))
                 NightOrderToken.System.DUSK, NightOrderToken.System.DAWN -> Unit

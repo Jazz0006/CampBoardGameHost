@@ -391,7 +391,7 @@ class InitialJointOpeningDirectV2Test {
         return JSONObject().put("schemaVersion", 2).put("asOfRevision", request.gameStateRevision)
             .put("requestIdentity", wire.getJSONObject("requestIdentity"))
             .put("openingPlan", JSONObject().put("drunkSeat", if (request.hasDrunk) 1 else JSONObject.NULL)
-                .put("redHerringSeat", 8).put("demonBluffRoleIds", JSONArray(listOf("imp", "baron", "chef")))
+                .put("redHerringSeat", 3).put("demonBluffRoleIds", JSONArray(listOf("imp", "baron", "chef")))
                 .put("information", information).put("deferredActions", JSONArray().also { actions ->
                     request.events.forEach { (id, action) -> actions.put(JSONObject().put("decisionId", id)
                         .put("event", action.first).put("actorSeat", action.second)) }
@@ -407,7 +407,7 @@ class InitialJointOpeningDirectV2Test {
         assertEquals(999, accepted.selection.information.getValue(1).number)
         assertEquals("saint", accepted.selection.information.getValue(5).roleId)
         assertEquals(listOf(7, 8), accepted.selection.information.getValue(5).subjectSeats)
-        assertEquals(8, accepted.selection.redHerringSeat)
+        assertEquals(3, accepted.selection.redHerringSeat)
         assertEquals(listOf("imp", "baron", "chef"), accepted.selection.demonBluffs)
         assertTrue(accepted.selection.validFor(request))
         assertFalse(accepted.selection.validFor(build(false, eight)))
@@ -444,6 +444,9 @@ class InitialJointOpeningDirectV2Test {
     @Test fun rejectsUnknownReferencesMalformedTypedValuesAndUnboundedStrategy() {
         rejects { it.getJSONObject("openingPlan").put("drunkSeat", 99) }
         rejects { it.getJSONObject("openingPlan").put("redHerringSeat", 99) }
+        // Host Red Herring rule: an actually good player who is not the Recluse.
+        rejects { it.getJSONObject("openingPlan").put("redHerringSeat", 6) }
+        rejects { it.getJSONObject("openingPlan").put("redHerringSeat", 8) }
         rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(2)
             .getJSONObject("subject").put("seats", JSONArray(listOf(8, 8))) }
         rejects { it.getJSONObject("openingPlan").getJSONArray("information").getJSONObject(2)

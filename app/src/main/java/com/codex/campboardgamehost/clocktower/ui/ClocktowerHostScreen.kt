@@ -33,7 +33,7 @@ internal fun ClocktowerJudgeScreen(
         when {
             newDemonSeat != null -> ClocktowerNewDemonHostScreen(cards, sessionState, onHostTools, onConfirmNewDemon)
             sessionState.phase == StorytellerPhase.FIRST_NIGHT && sessionState.demonBluffRoleIds.isEmpty() &&
-                sessionState.gameState.players.size >= 7 && sessionState.livingDemonSeat() != null ->
+                sessionState.firstNightEvilInformationRequired() && sessionState.livingDemonSeat() != null ->
                 ClocktowerDemonBluffsHostScreen(sessionState, recommendedDemonBluffRoleNames,
                     allowRuleDeterminedAutoUi && jointOpeningAvailable, onHostTools, onCommitDemonBluffs,
                     jointOpeningAvailable, jointOpeningReason)

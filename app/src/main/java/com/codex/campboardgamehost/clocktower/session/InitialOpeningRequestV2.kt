@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCatalogTeam
 import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
 import com.codex.campboardgamehost.clocktower.domain.SnapshotField
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingGameSnapshotV1
@@ -17,6 +18,8 @@ internal class InitialOpeningRequestV2 private constructor(
     val gameStateRevision: Long,
     val playerInputRevision: Long,
     val rosterFingerprint: String,
+    /** Seats the Host would accept as Red Herring ([redHerringEligible]). */
+    val redHerringEligibleSeats: Set<Int>,
 ) {
     val shownRoles: Map<Int, String> = snapshot.grimoireSeats.associate {
         it.seat to (it.shownRoleId as SnapshotField.Known<String>).value
@@ -69,9 +72,15 @@ internal class InitialOpeningRequestV2 private constructor(
             val fingerprint = MessageDigest.getInstance("SHA-256")
                 .digest(rosterKey.toByteArray(Charsets.UTF_8))
                 .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+            // Shown roles match actual alignment and Recluse status for every seat: the Drunk shows a good Townsfolk.
+            val redHerringEligible = seats.filter { seat ->
+                val shown = requireNotNull(registry.findByExternalId((seat.shownRoleId as SnapshotField.Known<String>).value))
+                redHerringEligible(shown.team == ClocktowerCatalogTeam.TOWNSFOLK || shown.team == ClocktowerCatalogTeam.OUTSIDER,
+                    shown.id.value)
+            }.mapTo(sortedSetOf()) { it.seat }
             return InitialOpeningRequestV2(snapshot, hasDrunk, roles,
                 seats.associate { it.seat to (playerExperience[it.seat] ?: OpeningPlayerExperienceV1.BEGINNER) },
-                gameStateRevision, playerInputRevision, fingerprint)
+                gameStateRevision, playerInputRevision, fingerprint, redHerringEligible)
         }
     }
 }

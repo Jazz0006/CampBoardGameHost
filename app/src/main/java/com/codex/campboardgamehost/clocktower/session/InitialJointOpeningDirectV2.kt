@@ -258,7 +258,9 @@ ${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字，tradeoffSummary 不超过 1
         val red = plan.seat("redHerringSeat")
         require(request.hasDrunk == (drunk != null))
         require(drunk == null || drunk in request.shownRoles)
-        require(red == null || red in request.shownRoles)
+        require(red == null || red in request.redHerringEligibleSeats) {
+            "redHerringSeat must be an actually good player who is not the Recluse."
+        }
         val bluffs = if (plan.isNull("demonBluffRoleIds")) null else plan.getJSONArray("demonBluffRoleIds").strings()
         bluffs?.let {
             require(it.size == 3 && it.distinct().size == 3 && it.all(request.knownRoleIds::contains))
