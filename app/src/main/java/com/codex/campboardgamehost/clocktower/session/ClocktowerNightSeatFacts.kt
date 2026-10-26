@@ -87,7 +87,7 @@ internal fun redHerringEligible(isGood: Boolean, roleId: String): Boolean = isGo
 
 internal fun ClocktowerSessionState.redHerringSelectableSeats(): Set<Int> = gameState.players
     .filter { redHerringEligible(it.actualAlignment == Alignment.GOOD, it.actualRole.value) }
-    .mapTo(sortedSetOf()) { it.seat }
+    .sortedBy { it.seat }.mapTo(linkedSetOf()) { it.seat } // callers test nullable seats; a TreeSet would throw
 
 internal enum class ClocktowerRoleAvailability { ACTIVE, DEAD, DRUNK_SHOWN_ONLY, NOT_IN_PLAY }
 

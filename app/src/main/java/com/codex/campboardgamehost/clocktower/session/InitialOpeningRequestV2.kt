@@ -77,7 +77,7 @@ internal class InitialOpeningRequestV2 private constructor(
                 val shown = requireNotNull(registry.findByExternalId((seat.shownRoleId as SnapshotField.Known<String>).value))
                 redHerringEligible(shown.team == ClocktowerCatalogTeam.TOWNSFOLK || shown.team == ClocktowerCatalogTeam.OUTSIDER,
                     shown.id.value)
-            }.mapTo(sortedSetOf()) { it.seat }
+            }.mapTo(linkedSetOf()) { it.seat }
             return InitialOpeningRequestV2(snapshot, hasDrunk, roles,
                 seats.associate { it.seat to (playerExperience[it.seat] ?: OpeningPlayerExperienceV1.BEGINNER) },
                 gameStateRevision, playerInputRevision, fingerprint, redHerringEligible)
