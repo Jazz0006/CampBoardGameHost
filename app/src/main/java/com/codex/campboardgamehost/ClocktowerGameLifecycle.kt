@@ -39,6 +39,12 @@ internal class ClocktowerGameLifecycle(
         private set
     private var rotation: TroubleBrewingSetupRotationRecord? = null
     private var active = true
+    /** Metadata last written with the Session; an unchanged request does not rewrite the file. */
+    private var savedMetadata: String? = null
+    private fun save(state: ClocktowerSessionState, metadata: org.json.JSONObject) {
+        store.save(state, metadata)
+        savedMetadata = metadata.toString()
+    }
 
     fun dispose() { active = false; sessionUi?.deactivate() }
     fun readyForNewGame(script: ClocktowerScript) = storytellerNewGameConfigurationReady(
@@ -102,7 +108,7 @@ internal class ClocktowerGameLifecycle(
                     ?.let { player.seat to StorytellerPlayerContextInputV1(experienceLevel = it) }
             }.toMap())
         return try {
-            session.persistWith { confirmed -> store.save(confirmed, metadata(ref, record)) }
+            session.persistWith { confirmed -> save(confirmed, metadata(ref, record)) }
             sessionUi?.deactivate()
             rulesetRef = ref; rotation = record
             sessionUi = ClocktowerSessionUiState(session, onSaveError)
@@ -111,7 +117,8 @@ internal class ClocktowerGameLifecycle(
     }
 
     fun persistMetadata() {
-        sessionUi?.commit { session -> session.persistWith { store.save(it, metadata()) } }
+        if (metadata().toString() == savedMetadata) return
+        sessionUi?.commit { session -> session.persistWith { save(it, metadata()) } }
     }
 
     suspend fun restore(): RestoreResult {
@@ -119,9 +126,13 @@ internal class ClocktowerGameLifecycle(
         return try {
             val saved = withContext(Dispatchers.IO) { store.load() } ?: return RestoreResult.NONE
             if (!active || sessionUi != null) return RestoreResult.NONE
-            val restored = ClocktowerActiveGameMetadata.restore(saved, catalog, conversation)
+            val restored = ClocktowerActiveGameMetadata.restore(saved, catalog)
+            var adopted = false
+            // The first save rewrites the loaded metadata unchanged; nothing is adopted if it fails.
+            restored.session.persistWith { save(it, if (adopted) metadata() else saved.metadata) }
+            restored.applyTo(conversation)
             rulesetRef = restored.ref; rotation = restored.rotation; operationMode = restored.mode
-            restored.session.persistWith { store.save(it, metadata()) }
+            adopted = true
             sessionUi = ClocktowerSessionUiState(restored.session, onSaveError)
             if (restored.needsDeal) RestoreResult.DEAL else RestoreResult.HOST
         } catch (cancelled: CancellationException) { throw cancelled }
@@ -134,7 +145,7 @@ internal class ClocktowerGameLifecycle(
             !TroubleBrewingSetupRotationHistoryStore.fromContext(context).recordCompletedGame(session.state.gameId, requireNotNull(rotation))) return false
         return try {
             store.clear()
-            sessionUi?.deactivate(); sessionUi = null; rotation = null; rulesetRef = null
+            sessionUi?.deactivate(); sessionUi = null; rotation = null; rulesetRef = null; savedMetadata = null
             true
         } catch (_: IOException) { onSaveError(); false }
     }

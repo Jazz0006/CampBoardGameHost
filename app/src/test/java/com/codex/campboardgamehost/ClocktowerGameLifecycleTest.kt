@@ -66,6 +66,35 @@ class ClocktowerGameLifecycleTest {
         assertEquals(StorytellerOperationMode.AI_AUTOMATIC, restored.operationMode)
     }
 
+    @Test fun `restore whose re-save fails adopts no restored mode or AI conversation state`() = runBlocking {
+        val file = File(context.cacheDir, "lifecycle-restore-fail.json")
+        val blockedWrite = File(file.path + ".new")
+        file.delete(); File(file.path + ".bak").delete(); blockedWrite.deleteRecursively()
+        val store = ClocktowerActiveGameStore(file)
+        val settings = settings(StorytellerOperationMode.AI_AUTOMATIC)
+        val firstConversation = ClocktowerAiConversation()
+        val first = create(settings, store, conversation = firstConversation)
+        assertTrue(first.beginNewGame(ClocktowerScript.TroubleBrewing))
+        first.commitTroubleBrewingSetup("restore-fail", first.prepareTroubleBrewing(names), null)
+        firstConversation.canonicalConversationResponseId = "response-of-saved-game"
+        first.takeOverManually()
+        assertEquals("response-of-saved-game", requireNotNull(store.load()).metadata.optString("responseId"))
+        first.dispose()
+        // A non-empty directory at AtomicFile's temporary path: loading still works, the re-save cannot start.
+        File(blockedWrite, "occupied").apply { parentFile?.mkdirs(); writeText("x") }
+        try {
+            val conversation = ClocktowerAiConversation()
+            val restored = create(settings, store, conversation = conversation)
+            assertEquals(ClocktowerGameLifecycle.RestoreResult.FAILED, restored.restore())
+            assertNull(restored.sessionUi)
+            assertEquals(StorytellerOperationMode.AI_AUTOMATIC, restored.operationMode)
+            assertNull(conversation.canonicalConversationResponseId)
+            assertNull(conversation.strategicLastReviewedHost)
+        } finally {
+            blockedWrite.deleteRecursively()
+        }
+    }
+
     @Test fun `failed manual Drunk setup keeps draft and can retry then restore dealing`() = runBlocking {
         val parent = File(context.cacheDir, "lifecycle-storage-blocker").apply { writeText("not a directory") }
         val store = ClocktowerActiveGameStore(File(parent, "game.json"))

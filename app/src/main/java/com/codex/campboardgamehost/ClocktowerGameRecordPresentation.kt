@@ -80,10 +80,13 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         else -> proposition(p)
     }
     fun rows(): List<GameRecordRow> {
-        val actions = state.actionTimeline.entries.mapNotNull { entry ->
+        val entries = state.actionTimeline.entries
+        val byId = entries.associateBy { it.fact.actionId }
+        val actions = entries.mapNotNull { entry ->
             val f = entry.fact
-            if (f is ActionFact.NightWake || f is ActionFact.ArtistAnswer || f is ActionFact.Vote &&
-                state.actionTimeline.entries.any { it.fact is ActionFact.Nomination && f.actionId == "vote:${it.fact.actionId}" }) return@mapNotNull null
+            // A vote belonging to a nomination is shown on that nomination's row.
+            if (f is ActionFact.Vote && f.actionId.startsWith("vote:") &&
+                byId[f.actionId.removePrefix("vote:")]?.fact is ActionFact.Nomination) return@mapNotNull null
             var displayOrder = entry.point.globalSequence
             var category = GameRecordCategory.ACTION
             var details = ""
@@ -99,9 +102,9 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 is ActionFact.RoleChange -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 变为 ${role(f.role)} · ${alignment(f.alignment)}", "${seat(f.targetSeat)} became ${role(f.role)} · ${alignment(f.alignment)}") }
                 is ActionFact.Nomination -> { category = GameRecordCategory.VOTE
                     details = f.nominatorRegistersAsTownsfolk?.let { t("提名者登记为镇民：${yes(it)}", "Nominator registers as Townsfolk: ${yes(it)}") }.orEmpty()
-                    val voteEntry = state.actionTimeline.entries.singleOrNull { it.fact.actionId == "vote:${f.actionId}" && it.fact is ActionFact.Vote }
+                    val voteEntry = byId["vote:${f.actionId}"]?.takeIf { it.fact is ActionFact.Vote }
                     val vote = voteEntry?.fact as? ActionFact.Vote
-                    val virgin = state.actionTimeline.entries.any { it.fact is ActionFact.Execution && it.fact.actionId == "${f.actionId}:virgin-execution" }
+                    val virgin = byId["${f.actionId}:virgin-execution"]?.fact is ActionFact.Execution
                     if (vote != null) {
                         displayOrder = requireNotNull(voteEntry).point.globalSequence
                         details += t("\n幽灵票：", "\nGhost votes: ") + vote.ghostVoterSeats.joinToString("、") { number(it) }.ifEmpty { t("无", "None") }
@@ -121,10 +124,8 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 is ActionFact.MayorRedirectChoice -> t("${seat(f.mayorSeat)} 市长转移 → ${seat(f.targetSeat)}", "${seat(f.mayorSeat)} Mayor redirected → ${seat(f.targetSeat)}")
                 is ActionFact.RedHerringChoice -> { category = GameRecordCategory.SETUP; f.selectedSeat?.let { t("红鲱鱼：${seat(it)}", "Red Herring: ${seat(it)}") } ?: t("清除红鲱鱼", "Red Herring cleared") }
                 is ActionFact.DemonBluffChoice -> { category = GameRecordCategory.SETUP; t("恶魔伪装身份：", "Demon bluffs: ") + f.roles.joinToString("、") { role(it) } }
-                is ActionFact.NightWake -> t("${seat(f.actorSeat)} · ${role(f.role)} 已查看魔典", "${seat(f.actorSeat)} · ${role(f.role)} viewed the Grimoire")
-                is ActionFact.ArtistAnswer -> {
-                    details = t("消耗能力：${yes(f.abilityConsumed)}；问题原文未记录", "Ability consumed: ${yes(f.abilityConsumed)}; question text not recorded")
-                    t("${seat(f.claimantSeat)} 使用艺术家问答", "${seat(f.claimantSeat)} used Artist question") }
+                // Hidden by design (GAME_RECORDS_V1): Spy Grimoire views and Artist use; the answer is an observation.
+                is ActionFact.NightWake, is ActionFact.ArtistAnswer -> return@mapNotNull null
                 is ActionFact.GameEnded -> { category = GameRecordCategory.CHANGE
                     val reason = when(f.reason) {
                         GameEndReason.NO_DEMON -> t("无存活恶魔", "No living Demon")
@@ -137,19 +138,20 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
             }
             GameRecordRow("action:${f.actionId}", displayOrder, entry.point.phase, entry.point.round, category, summary, details)
         }
+        val deathsByPhase = entries.mapNotNullTo(hashSetOf()) { e ->
+            when (val f = e.fact) {
+                is ActionFact.Death -> Triple(e.point.phase, e.point.round, f.targetSeat)
+                is ActionFact.Execution -> Triple(e.point.phase, e.point.round, f.targetSeat)
+                else -> null
+            }
+        }
         val observations = state.epistemicObservationLog.records.mapNotNull { r ->
             val point = (r.timelineBinding as? ObservationTimelineBinding.Global)?.point ?: return@mapNotNull null
             if (r.recordId.contains("first_night:system:minion_info") || r.recordId.contains("first_night:system:demon_info") ||
                 r.recordId.startsWith("role-notification:")) return@mapNotNull null
             val alive = r.proposition as? InformationProposition.AliveAt
             if (r.visibility == ObservationVisibility.PUBLIC && alive != null && !alive.alive &&
-                state.actionTimeline.entries.any { e -> e.point.phase == point.phase && e.point.round == point.round &&
-                    when (val f = e.fact) {
-                        is ActionFact.Death -> f.targetSeat == alive.seat
-                        is ActionFact.Execution -> f.targetSeat == alive.seat
-                        else -> false
-                    }
-                }) return@mapNotNull null
+                Triple(point.phase, point.round, alive.seat) in deathsByPhase) return@mapNotNull null
             val recipient = if(r.visibility == ObservationVisibility.PUBLIC) t("公开信息", "Public information") else t("告知 ${seats(r.recipientSeats)}", "Told ${seats(r.recipientSeats)}")
             val ability = r.sourceAbility?.let { role(it) + if (it.value == "Artist") t("回答", " answer") else t("信息", " information") } ?: recipient
             val detail = when(r.reliability) {
@@ -166,7 +168,7 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         }
         val all = actions + observations
         val setup = all.filter { it.category == GameRecordCategory.SETUP }.groupBy {
-            state.actionTimeline.entries.single { e -> "action:${e.fact.actionId}" == it.id }.fact.javaClass
+            requireNotNull(byId[it.id.removePrefix("action:")]).fact.javaClass
         }.values.map { history ->
             val latest = history.maxBy { it.order }
             latest.copy(details = history.sortedByDescending { it.order }.drop(1).joinToString("\n") { it.summary })

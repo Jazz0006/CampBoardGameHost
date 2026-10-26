@@ -9,7 +9,7 @@
 
 # CURRENT AUTHORITY — 2026-10-26: restructure complete; owner-directed fixes and features
 
-**Verified main:** `b77a93ac` (#367). Main push CI #4625 ran `:app:testFull :app:assembleDebug` and passed; Field Test APK #181 passed. No open PRs. Confirm the live HEAD, PRs and exact-SHA CI again before every change.
+**Main:** contains everything through the 2026-10-26 review fixes (#368 AGENTS.md, #369 night facts/Red Herring/restart, #370 Chef rule, and the small-findings PR). Confirm the live HEAD, open PRs and the exact-SHA CI (the Android tests log must show `testFull`) before every change; do not trust a SHA written here.
 
 **Restructure finished.** Host UI responsibility refactor Batches 1–5 are merged (#355 night draft/dispatcher, #356 Session seat facts, #357 Host step + AI overlay, #359 night screen, #360 accepted Session snapshots, #361 game lifecycle). [FINAL v3 plan](docs/HOST_UI_RESPONSIBILITY_REFACTOR_PLAN_2026-10-23.md) and [Batch 5 acceptance](docs/HOST_UI_BATCH5_ACCEPTANCE.md) are now the historical record of that work, not open instructions. Device-driven fixes since then are also merged: #358 Fortune Teller Boolean, #363 Demon bluffs, #364 night privacy/table/Imp succession, #365 table succession and nomination gestures, #366 game records ([v1](docs/GAME_RECORDS_V1.md)), #367 first-night AI alignment ([notes](docs/FIRST_NIGHT_AI_REUSE_FIX_2026-10-25.md)).
 
@@ -21,13 +21,13 @@
 **Still binding:** one `ClocktowerGameSession`/`ClocktowerSessionState` writer and ordered confirmed facts; no persistent UI pending/cursor, second game object or duplicate recovery; D2 (preview is UI-only, current-step Next records one last-previewed Observation); private information, stale-callback and idempotency checks; atomic save/recovery; TB 5–15 and NGJ 5–6; MANUAL/AI_ASSISTED/AI_AUTOMATIC; both inter-game diversity histories; every source file ≤ 50,000 B; replace means delete (no permanent dual paths); no generic Context/Manager facade; Host facts are computed once from Session (UI maps seats to labels). No paid API call without authorization. Real-device, interruption/process-kill and paid-provider checks are only claimed when actually run.
 
 **Open work, in order:**
-1. 2026-10-26 code review fixes (quick-restart crash and AI Red Herring check done in #369): metadata saved twice per change; Host-side decode failures reported as AI response rejections; restore assigns AI conversation state before its save succeeds; game-record dead branches and quadratic row building; redundant Chef resolve in `poisonChangesInformationBasis`.
+1. Done: 2026-10-26 code review fixes — #369 (restart crash, AI Red Herring check), #370 (Chef rule) and the small-findings PR (metadata saved once per change, Host decode errors not labelled as AI rejections, restore adopts AI state only after its save succeeds, game-record cleanup, redundant Chef check).
 2. Done in #369: night Host facts are read once (`ClocktowerNightFacts`, `ClocktowerNightDraftSubjects`); the display builders only map seats to labels. Keep new night facts there.
 3. Decided 2026-10-26: Chef follows the official rule — a functioning Spy/Recluse registers once per Chef reading, not per neighbouring pair. The Red Herring rule (actually good, not the Recluse) is one Session-side rule used everywhere.
 4. Next functional priority ([shared guide](docs/GAME_SESSION_SHARED_GUIDE.md)): finish a game when AI is unavailable or after recovery — unified night manual takeover, explicit optional random discretion, stale-response checks after restore. Not a broad interoperability/evidence platform.
 5. Real-device checks: phone legibility at 5/15 seats, stacked markers, three-mode handoff, call/background/process kill → continue.
 
-**Docs:** the top sections of [roadmap](docs/CURRENT_DEVELOPMENT_ROADMAP.md) and [handoff](docs/NEXT_DEVELOPMENT_HANDOFF.md) stop at #363. Where they conflict with this section, this section wins; refresh them with the next merged change.
+**Docs:** [roadmap](docs/CURRENT_DEVELOPMENT_ROADMAP.md) and [handoff](docs/NEXT_DEVELOPMENT_HANDOFF.md) were refreshed on 2026-10-26. Where they conflict with this section, this section wins.
 
 ## Historical authority: 2026-10-21 post-merge independent audit (superseded where inconsistent)
 

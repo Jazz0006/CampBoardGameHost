@@ -371,8 +371,7 @@ internal fun ClocktowerSessionState.poisonChangesInformationBasis(
     val target = gameState.playerAt(poisonedSeat) ?: return true
     val specialRegistration = target.actualRole.value in setOf("Spy", "Recluse")
     return when (role.value) {
-        "Chef" -> specialRegistration && (NumericInformationResolver.resolve(this, NumericMetric.ADJACENT_EVIL_PAIRS, sourceSeat)
-            ?.subjectSeats?.contains(poisonedSeat) ?: true)
+        "Chef" -> specialRegistration // a Chef's subjects are the whole circle
         "Empath" -> specialRegistration && (NumericInformationResolver.resolve(this, NumericMetric.LIVING_EVIL_NEIGHBOURS, sourceSeat)
             ?.subjectSeats?.contains(poisonedSeat) ?: true)
         "Washerwoman", "Librarian", "Investigator" -> poisonedSeat in subjectSeats &&
