@@ -180,18 +180,25 @@ internal object NumericInformationResolver {
         return counts
     }
 
-    /** Each neighbouring pair is a separate registration, including last -> first.
-     * A functioning Recluse/Spy can register differently for their two neighbours. */
+    /**
+     * Official rule: a functioning Spy/Recluse registers once per Chef reading, so both of
+     * their neighbouring pairs see the same registration. Dynamic programming around the
+     * physical circle, including last -> first; only (previous registration, count) is kept.
+     */
     private fun adjacentEvilPairCounts(circle: List<PlayerState>): Set<Int> {
-        var counts = setOf(0)
-        circle.forEachIndexed { index, player ->
-            val next = circle[(index + 1) % circle.size]
-            val edge = evilRegistrations(player).flatMap { first ->
-                evilRegistrations(next).map { second -> if (first && second) 1 else 0 }
-            }.toSet()
-            counts = counts.flatMapTo(linkedSetOf()) { prior -> edge.map { prior + it } }
+        val result = linkedSetOf<Int>()
+        for (first in evilRegistrations(circle.first())) {
+            var partial = setOf(first to 0)
+            for (player in circle.drop(1)) {
+                partial = partial.flatMapTo(linkedSetOf()) { (previousEvil, count) ->
+                    evilRegistrations(player).map { currentEvil ->
+                        currentEvil to (count + if (previousEvil && currentEvil) 1 else 0)
+                    }
+                }
+            }
+            partial.forEach { (lastEvil, count) -> result += count + if (lastEvil && first) 1 else 0 }
         }
-        return counts
+        return result
     }
 }
 
