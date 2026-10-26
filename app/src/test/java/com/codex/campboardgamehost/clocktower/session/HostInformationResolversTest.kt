@@ -142,11 +142,12 @@ class HostInformationResolversTest {
         }
     }
 
-    @Test fun chefCanRegisterTheSameRecluseDifferentlyForEachNeighbouringPair() {
+    @Test fun chefRegistersARecluseOnceForBothNeighbouringPairs() {
         val s = session("Chef", "Imp", "Recluse", "Poisoner", "Soldier")
         val before = s.state
         val metric = NumericMetric.ADJACENT_EVIL_PAIRS
-        assertEquals(listOf(0, 1, 2), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
+        // Imp-Recluse-Poisoner: the Recluse is evil for both pairs (2) or good for both (0), never 1.
+        assertEquals(listOf(0, 2), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
         assertSame(before, s.state)
         update(s, 3, poisoned = true)
         assertEquals(listOf(0), NumericInformationResolver.resolve(s.state, metric, 1)?.values)
