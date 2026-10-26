@@ -458,6 +458,7 @@ class ClocktowerD2UiTest {
                         ) else null,
                         aiSuggestedInformationOption = advice.value.takeIf { mode != StorytellerOperationMode.MANUAL },
                         selectedSeatSlots = if (twoSeatQuery) slots() else listOf(2), redHerringSeat = null,
+                        redHerringSelectableSeats = emptySet(),
                         onSelectSeat = { seat ->
                             if (twoSeatQuery) ClocktowerNightStepDraft("role-d2", StorytellerPhase.NIGHT, 2,
                                 com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId("role-d2"), slots(),

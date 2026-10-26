@@ -77,7 +77,9 @@ internal fun ClocktowerNightHostScreen(
         else -> null
     }
     val nextNightInteraction = flowPhase?.let { sessionState.nextNightInteraction(nightRuleset) }
-    val redHerringSelectableSeats = clocktowerRedHerringSelectableSeats(sessionGameState)
+    // Each night fact is read once from this Session snapshot and shared below.
+    val facts = remember(sessionState, nightRuleset) { ClocktowerNightFacts(sessionState, nightRuleset) }
+    val redHerringSelectableSeats = facts.redHerringSelectableSeats
     val redHerringInteractionId = ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()
         .interactionId(ClocktowerNightFlowPhase.FIRST_NIGHT)
     // UI-only, keyed to this exact interaction (IDs carry no round); outlives the fullscreen preview.
@@ -91,20 +93,11 @@ internal fun ClocktowerNightHostScreen(
         })
     }
     fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
-    val fortuneTellerSubjectSeats = nightDraft?.takeIf {
-        it.interactionId == ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")).interactionId(requireNotNull(flowPhase))
-    }?.selectedSeats.orEmpty()
+    val subjects = ClocktowerNightDraftSubjects(nightDraft, sessionState.phase, facts.aliveSeats)
+    val fortuneTellerSubjectSeats = subjects.fortuneTellerSeats
     val fortuneTellerSelectedNames = fortuneTellerSubjectSeats.mapNotNull(::nameAt)
-    val aliveSeats = sessionState.aliveSeats()
-    val mayorRedirectTargetSeats = sessionState.mayorRedirectEligibleSeats()
-    val slots = nightDraft?.seatSlots.orEmpty()
-    val chambermaidSelection = revalidateTwoPlayerSelection(slots.getOrNull(0), slots.getOrNull(1), aliveSeats)
-    val empathNeighborSeats = sessionState.gameState.players.firstOrNull { it.wakingRole() == RoleId("Empath") }
-        ?.seat?.let(sessionState::livingNeighbourSeats).orEmpty()
     fun actorIsUnreliable(enName: String, actor: PlayerCard?): Boolean =
-        sessionState.abilitySubjectForRole(enName, cards.seatOf(actor?.name))?.let {
-            AbilityFunctioningSemantics.stateFor(it, enName)
-        } in setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
+        facts.abilityState(enName, cards.seatOf(actor?.name)) in setOf(AbilityFunctioningState.DRUNK, AbilityFunctioningState.POISONED)
 
     var playerDisplayStep by remember(gameId, phase, round, nextNightInteraction?.id) { mutableStateOf<ClocktowerNightStepUi?>(null) }
     // UI-only D2 draft must outlive the fullscreen early return below.
@@ -142,7 +135,7 @@ internal fun ClocktowerNightHostScreen(
             step = displayStep,
             actorSeat = actorSeat,
             allSeats = cards.indices.map { it + 1 },
-            empathNeighborSeats = empathNeighborSeats,
+            empathNeighborSeats = facts.empathNeighbourSeats,
             fortuneTellerSubjectSeats = fortuneTellerSubjectSeats,
         )
     }
@@ -175,8 +168,7 @@ internal fun ClocktowerNightHostScreen(
             proposition = proposition,
         )
     }
-    val nightSteps = clocktowerNightPresentation(sessionState, nightRuleset, cards, nightDraft,
-        recommendedDemonBluffRoleNames, language)
+    val nightSteps = clocktowerNightPresentation(facts, subjects, script, cards, recommendedDemonBluffRoleNames, language)
     // Later nights and first nights without an outstanding real setup decision
     // enter their first actionable step directly, regardless of the old UI start flag.
     if (phase == ClocktowerPhase.FirstNight || phase == ClocktowerPhase.Night) {
@@ -194,7 +186,7 @@ internal fun ClocktowerNightHostScreen(
         val currentInformationPreview = lastInformationPreview?.takeIf {
             it.interactionId == currentStep.interactionId && informationDecisionPublicationAllowed(it)
         }
-        val host = hostNightStep(sessionState, nightRuleset, nightDraft)
+        val host = hostNightStep(sessionState, nightRuleset, nightDraft, facts)
         val redHerringReady = currentStep.action != ClocktowerNightAction.RedHerring ||
             host.selectedSeat in redHerringSelectableSeats
         // Verify the UI materializer matches the actual pending Session interaction.
@@ -366,11 +358,11 @@ internal fun ClocktowerNightHostScreen(
                     cards = cards,
                     actualAlignmentBySeat = sessionGameState.players.associate { it.seat to it.actualAlignment },
                     ghostVoteAuthority = ghostVoteAuthority,
-                    poisonedPlayerName = nameAt(currentStep.roleEnName?.let(sessionState::poisonedSeatForRole)),
-                    aliveSeats = aliveSeats,
-                    chambermaidTargetSeats = aliveSeats,
-                    mayorRedirectTargetSeats = mayorRedirectTargetSeats,
-                    livingMayorSeat = sessionGameState.players.firstOrNull { it.alive && it.actualRole.value == "Mayor" }?.seat,
+                    poisonedPlayerName = nameAt(currentStep.roleEnName?.let(facts::poisonedSeat)),
+                    aliveSeats = facts.aliveSeats,
+                    chambermaidTargetSeats = facts.aliveSeats,
+                    mayorRedirectTargetSeats = facts.mayorRedirectSeats,
+                    livingMayorSeat = facts.livingMayorSeat,
                     // One optional current-step suggestion for both AI modes.
                     // The card retains the complete Host legal domain for manual edits.
                     // Automatic mode can use the same verified choice at this step only.
@@ -390,7 +382,7 @@ internal fun ClocktowerNightHostScreen(
                     selectedSeatSlots = when (currentStep.action) {
                         ClocktowerNightAction.RedHerring -> listOfNotNull(host.selectedSeat)
                         ClocktowerNightAction.Chambermaid ->
-                            listOf(chambermaidSelection.first, chambermaidSelection.second)
+                            listOf(subjects.chambermaid.first, subjects.chambermaid.second)
                         else -> nightDraft?.seatSlots.orEmpty()
                     },
                     redHerringSeat = sessionState.redHerringSeat,

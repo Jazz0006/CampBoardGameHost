@@ -71,7 +71,8 @@ internal fun ClocktowerNightStepCardLocalized(
     /** Accepted Session Red Herring, marked on the Fortune Teller table. */
     redHerringSeat: Int?,
     /** Current Host-page shortlist; excludes the Recluse by owner preference. */
-    redHerringSelectableSeats: Set<Int> = emptySet(),
+    /** Session Red Herring rule; required so no caller silently gets an unselectable step. */
+    redHerringSelectableSeats: Set<Int>,
     /** A live seat tap; the screen applies the step's selection rule to its draft. */
     onSelectSeat: (Int) -> Unit,
     onShowPlayerDisplay: (ClocktowerNightStepUi) -> Unit,

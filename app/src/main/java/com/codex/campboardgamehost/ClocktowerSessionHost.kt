@@ -52,7 +52,7 @@ internal fun ClocktowerGameSession.confirmNightStep(
     if (step.isRealAction) when (step.action) {
         ClocktowerNightAction.RedHerring -> {
             val seat = target ?: state.redHerringSeat
-            if (seat !in clocktowerRedHerringSelectableSeats(state.gameState)) return false
+            if (seat !in state.redHerringSelectableSeats()) return false
             commitRedHerringSeat(requireNotNull(seat), draft.phase, draft.round, nextInputSequence)
         }
         ClocktowerNightAction.Poison -> confirmNightPoison(target, draft.phase, draft.round, actionStepId)

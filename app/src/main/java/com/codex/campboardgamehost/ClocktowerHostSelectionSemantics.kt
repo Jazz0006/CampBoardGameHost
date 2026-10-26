@@ -4,7 +4,10 @@ import com.codex.campboardgamehost.clocktower.domain.StorytellerPhase
 import com.codex.campboardgamehost.clocktower.epistemic.ObservationVisibility
 import com.codex.campboardgamehost.clocktower.epistemic.RecordedEpistemicObservation
 import com.codex.campboardgamehost.clocktower.epistemic.InformationProposition
+import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerInteractionId
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
+import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.session.StorytellerDecisionRevision
 
 /**
@@ -32,13 +35,32 @@ internal val clocktowerNightSeatDraftActions = twoSeatNightActions + setOf(
     ClocktowerNightAction.Ravenkeeper,
 )
 
-/** Host-page selection policy: actual good players, with the owner's Recluse exclusion. */
-internal fun clocktowerRedHerringSelectableSeats(
-    game: com.codex.campboardgamehost.clocktower.domain.GameState,
-): Set<Int> = game.players.filter {
-    it.actualAlignment == com.codex.campboardgamehost.clocktower.domain.Alignment.GOOD &&
-        it.actualRole.value != "Recluse"
-}.mapTo(linkedSetOf()) { it.seat }
+/** The current draft's two query seats that are still [eligible] (Chambermaid: living players). */
+internal fun ClocktowerNightStepDraft?.revalidatedPair(eligible: Set<Int>): RevalidatedTwoPlayerSelection<Int> =
+    revalidateTwoPlayerSelection(this?.seatSlots?.getOrNull(0), this?.seatSlots?.getOrNull(1), eligible)
+
+/** The current draft's seats routed to the one step that owns them; every other step sees none. */
+internal class ClocktowerNightDraftSubjects(
+    private val draft: ClocktowerNightStepDraft?,
+    phase: StorytellerPhase,
+    aliveSeats: Set<Int>,
+) {
+    private val flowPhase = if (phase == StorytellerPhase.FIRST_NIGHT) ClocktowerNightFlowPhase.FIRST_NIGHT
+        else ClocktowerNightFlowPhase.OTHER_NIGHT
+    private fun owns(identity: ClocktowerProductionNightStepIdentity) = draft?.interactionId == identity.interactionId(flowPhase)
+    private fun roleSlots(role: String): List<Int?> =
+        if (owns(ClocktowerProductionNightStepIdentity.role(RoleId(role)))) draft?.seatSlots.orEmpty() else emptyList()
+
+    val fortuneTellerSeats: List<Int> = roleSlots("Fortune Teller").filterNotNull()
+    val chambermaid: RevalidatedTwoPlayerSelection<Int> =
+        draft.takeIf { roleSlots("Chambermaid").isNotEmpty() }.revalidatedPair(aliveSeats)
+    val ravenkeeperSeat: Int? = roleSlots("Ravenkeeper").firstOrNull()
+    val butlerMasterSeat: Int? = roleSlots("Butler").firstOrNull()
+    /** Only the first-night Red Herring step has a Red Herring draft. */
+    val redHerringSeat: Int? = draft?.seatSlots?.firstOrNull()?.takeIf {
+        flowPhase == ClocktowerNightFlowPhase.FIRST_NIGHT && owns(ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring())
+    }
+}
 
 /** One seat tap: two fixed slots for two-player queries, otherwise a single toggled target; null rejects a third seat. */
 internal fun ClocktowerNightStepDraft.withTappedSeat(action: ClocktowerNightAction, seat: Int): ClocktowerNightStepDraft? {

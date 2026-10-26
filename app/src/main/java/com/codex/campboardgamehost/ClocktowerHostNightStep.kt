@@ -75,6 +75,8 @@ private val singleTargetActions = setOf(
 private fun ClocktowerSessionState.currentNightStepFacts(
     ruleset: ValidatedClocktowerRuleset,
     draft: ClocktowerNightStepDraft?,
+    night: ClocktowerNightFacts,
+    chambermaidSubjects: List<Int>,
 ): ClocktowerNightStepFacts {
     val current = requireNotNull(nextNightInteraction(ruleset)) { "No pending Session night interaction." }
     require(draft == null || (
@@ -100,26 +102,20 @@ private fun ClocktowerSessionState.currentNightStepFacts(
         role == "Ravenkeeper" -> ClocktowerNightAction.Ravenkeeper
         else -> ClocktowerNightAction.None
     }
-    val selected = draft?.seatSlots.orEmpty()
-    val querySeats = selected.filterNotNull()
-    val chambermaidSubjects = revalidateTwoPlayerSelection(
-        selected.getOrNull(0), selected.getOrNull(1), aliveSeats(),
-    ).let { listOfNotNull(it.first, it.second) }
+    val querySeats = draft?.selectedSeats.orEmpty()
     val question = when (role) {
-        "Chef" -> ClocktowerInformationQuestion.Number(NumericMetric.ADJACENT_EVIL_PAIRS, allSeats().sorted())
+        "Chef" -> ClocktowerInformationQuestion.Number(NumericMetric.ADJACENT_EVIL_PAIRS, night.allSeats.sorted())
         "Empath" -> ClocktowerInformationQuestion.Number(
-            NumericMetric.LIVING_EVIL_NEIGHBOURS, actorSeat?.let(::livingNeighbourSeats).orEmpty(),
+            NumericMetric.LIVING_EVIL_NEIGHBOURS, actorSeat?.let(night::livingNeighbourSeats).orEmpty(),
         )
-        "Clockmaker" -> ClocktowerInformationQuestion.Number(NumericMetric.STEPS_TO_NEAREST_MINION, allSeats().sorted())
+        "Clockmaker" -> ClocktowerInformationQuestion.Number(NumericMetric.STEPS_TO_NEAREST_MINION, night.allSeats.sorted())
         "Chambermaid" -> chambermaidSubjects.takeIf { it.size == 2 && it.distinct().size == 2 }?.let {
             ClocktowerInformationQuestion.Number(NumericMetric.PLAYERS_WAKING_FOR_ABILITY, it)
         }
         "Fortune Teller" -> querySeats.takeIf { !redHerring && it.size == 2 && it.distinct().size == 2 }?.let {
             ClocktowerInformationQuestion.Boolean(BooleanMetric.DEMON_OR_RED_HERRING_PRESENT, it)
         }
-        "Undertaker" -> actionTimeline.entries.asReversed().firstNotNullOfOrNull {
-            (it.fact as? ActionFact.Execution)?.targetSeat
-        }?.takeIf { gameState.playerAt(it) != null }?.let(ClocktowerInformationQuestion::Role)
+        "Undertaker" -> night.lastExecutedSeat?.let(ClocktowerInformationQuestion::Role)
         "Ravenkeeper" -> querySeats.firstOrNull()?.let(ClocktowerInformationQuestion::Role)
         else -> null
     }
@@ -137,16 +133,15 @@ internal fun hostNightStep(
     state: ClocktowerSessionState,
     ruleset: ValidatedClocktowerRuleset,
     draft: ClocktowerNightStepDraft?,
+    night: ClocktowerNightFacts = ClocktowerNightFacts(state, ruleset),
 ): HostNightStep {
-    val facts = state.currentNightStepFacts(ruleset, draft)
+    val chambermaidSubjects = draft.revalidatedPair(night.aliveSeats).let { listOfNotNull(it.first, it.second) }
+    val facts = state.currentNightStepFacts(ruleset, draft, night, chambermaidSubjects)
     val action = facts.action
     // Builders put Chef/Empath/Clockmaker metrics on the question; Chambermaid's appears only
     // once two targets are chosen, so its action identifies it before then.
     val metric = (facts.question as? ClocktowerInformationQuestion.Number)?.metric
         ?: NumericMetric.PLAYERS_WAKING_FOR_ABILITY.takeIf { action == ClocktowerNightAction.Chambermaid }
-    val chambermaidSubjects = draft?.seatSlots.orEmpty().let { slots ->
-        revalidateTwoPlayerSelection(slots.getOrNull(0), slots.getOrNull(1), state.aliveSeats())
-    }.let { listOfNotNull(it.first, it.second) }
     // Chef/Empath truth and discretionary domains come from Session, never a display or AI narrative.
     val numericResolution = if (facts.isRealAction && metric != null &&
         (action == ClocktowerNightAction.None || action == ClocktowerNightAction.Chambermaid)
@@ -164,9 +159,9 @@ internal fun hostNightStep(
         else -> null
     }
     val legalTargetSeats = when (action) {
-        ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill -> state.aliveSeats()
-        ClocktowerNightAction.ButlerMaster -> state.allSeats() - listOfNotNull(facts.actorSeat).toSet()
-        ClocktowerNightAction.MonkProtect -> state.allSeats()
+        ClocktowerNightAction.Poison, ClocktowerNightAction.DemonKill -> night.aliveSeats
+        ClocktowerNightAction.ButlerMaster -> night.allSeats - listOfNotNull(facts.actorSeat).toSet()
+        ClocktowerNightAction.MonkProtect -> night.allSeats
         else -> emptySet()
     }
     val succession = if (action == ClocktowerNightAction.DemonKill && facts.isRealAction) {

@@ -1,64 +1,42 @@
 package com.codex.campboardgamehost
 
 import androidx.compose.runtime.Composable
-import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerNightFlowPhase
 import com.codex.campboardgamehost.clocktower.flow.ClocktowerProductionNightStepIdentity
 import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningState
-import com.codex.campboardgamehost.clocktower.rules.AbilityFunctioningSemantics
 import com.codex.campboardgamehost.clocktower.session.*
 
-/** Disposable display assembly. Session owns order, wake/skip and facts; this owns labels only. */
+/**
+ * Disposable display assembly. Session owns order, wake/skip and facts ([ClocktowerNightFacts]);
+ * the current draft's seats come routed through [ClocktowerNightDraftSubjects]. This maps seats
+ * to cards and labels only.
+ */
 @Composable
 internal fun clocktowerNightPresentation(
-    sessionState: ClocktowerSessionState,
-    nightRuleset: ValidatedClocktowerRuleset,
+    facts: ClocktowerNightFacts,
+    subjects: ClocktowerNightDraftSubjects,
+    script: ClocktowerScript,
     cards: List<PlayerCard>,
-    nightDraft: ClocktowerNightStepDraft?,
     recommendedDemonBluffRoleNames: List<String>,
     language: String,
 ): List<ClocktowerNightStepUi> {
-    val sessionGameState = sessionState.gameState
-    val phase = sessionState.phase
-    val script = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionGameState.script }
-    val round = sessionState.round
-    val flowPhase = if (phase == StorytellerPhase.FIRST_NIGHT) ClocktowerNightFlowPhase.FIRST_NIGHT else ClocktowerNightFlowPhase.OTHER_NIGHT
-    val poisonTarget = sessionState.confirmedPoisonTargetName(round)
     fun text(zh: String, en: String) = if (language == "en") en else zh
-    fun nameAt(seat: Int?): String? = seat?.let { cards.getOrNull(it - 1)?.name }
-    // Builders run for every step; only the current interaction gets its draft.
-    fun draftSlotsFor(identity: ClocktowerProductionNightStepIdentity): List<Int?> =
-        if (nightDraft?.interactionId == identity.interactionId(flowPhase)) nightDraft?.seatSlots.orEmpty() else emptyList()
-    val fortuneTellerSlots = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Fortune Teller")))
-    val chambermaidSlots = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Chambermaid")))
-    val ravenkeeperTargetSeat = draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Ravenkeeper"))).firstOrNull()
-    val butlerMaster = nameAt(draftSlotsFor(ClocktowerProductionNightStepIdentity.role(RoleId("Butler"))).firstOrNull())
-    // Accepted Red Herring comes from Session; its draft exists only on its own first-night step.
-    val redHerring = nameAt((if (flowPhase == ClocktowerNightFlowPhase.FIRST_NIGHT) draftSlotsFor(
-        ClocktowerProductionNightStepIdentity.fortuneTellerRedHerring()).firstOrNull() else null) ?: sessionState.redHerringSeat)
-
-    // Host night facts are Session seat reads; cards only provide labels.
-    val spySeatLabel = sessionState.actualRoleSeats("Spy").firstOrNull()?.let({ cards.getOrNull(it - 1) })?.seatLabel(cards)
-    val nightInteractions = sessionState.nightInteractions(nightRuleset)
-    val aliveSeats = sessionState.aliveSeats()
-    val demonCard = sessionState.livingDemonSeat()?.let({ cards.getOrNull(it - 1) })
+    fun cardAt(seat: Int?): PlayerCard? = seat?.let { cards.getOrNull(it - 1) }
+    fun nameAt(seat: Int?): String? = cardAt(seat)?.name
+    val redHerring = nameAt(subjects.redHerringSeat ?: facts.redHerringSeat)
+    val demonCard = cardAt(facts.livingDemonSeat)
     fun abilityStateFor(enName: String, actor: PlayerCard?): AbilityFunctioningState? =
-        sessionState.abilitySubjectForRole(enName, cards.seatOf(actor?.name))?.let { AbilityFunctioningSemantics.stateFor(it, enName) }
-    val chambermaidSelection = revalidateTwoPlayerSelection(chambermaidSlots.getOrNull(0), chambermaidSlots.getOrNull(1), aliveSeats)
-    val chambermaidPresentation = clocktowerChambermaidSelectionPresentation(cards, chambermaidSelection)
-    fun roleActor(enName: String): PlayerCard? = sessionGameState.players.firstOrNull {
-        it.alive && it.wakingRole() == RoleId(enName)
-    }?.let { cards.getOrNull(it.seat - 1) }
-
+        facts.abilityState(enName, cards.seatOf(actor?.name))
+    fun roleActor(enName: String): PlayerCard? = cardAt(facts.wakingSeat(enName))
     fun roleMissingReason(enName: String): String {
-        val rolePlayer = sessionGameState.players.firstOrNull { it.actualRole.value == enName }
-        val roleCard = rolePlayer?.let { cards.getOrNull(it.seat - 1) }
-        val drunkShownAsRole = sessionGameState.players.any { it.actualRole.value == "Drunk" && it.shownRole?.value == enName }
+        val status = facts.roleStatus(enName)
+        val notInPlay = text("本局没有这个角色。", "This character is not in play.")
+        val roleCard = cardAt(status.seat)
         return when {
-            rolePlayer == null && drunkShownAsRole -> ""
-            rolePlayer == null || roleCard == null -> text("本局没有这个角色。", "This character is not in play.")
-            !rolePlayer.alive -> text(
+            status.availability == ClocktowerRoleAvailability.DRUNK_SHOWN_ONLY -> ""
+            status.availability == ClocktowerRoleAvailability.NOT_IN_PLAY || roleCard == null -> notInPlay
+            status.availability == ClocktowerRoleAvailability.DEAD -> text(
                 "${roleCard.seatLabel(cards)} 已经死亡，死亡后不再执行这个能力。",
                 "${roleCard.seatLabel(cards)} is dead and no longer uses this ability.",
             )
@@ -75,17 +53,12 @@ internal fun clocktowerNightPresentation(
         abilityStateFor = ::abilityStateFor,
     )
 
-    val empathActor = roleActor("Empath")
-    val empathNeighborSeats = cards.seatOf(empathActor?.name)?.let(sessionState::livingNeighbourSeats).orEmpty()
-    val fortuneTellerSubjectSeats = fortuneTellerSlots.filterNotNull()
     // Evil-team introductions always use true identities. Registration choices
     // for the Spy/Recluse only affect abilities that explicitly allow them.
-    val minionCards = sessionState.actualTypeSeats(CharacterType.MINION).mapNotNull { cards.getOrNull(it - 1) }
-    val shouldGiveFirstNightEvilInfo = sessionGameState.players.size >= 7
+    val minionCards = facts.minionSeats.mapNotNull(::cardAt)
     val legalDemonBluffs = clocktowerRolesForScript(script).distinctBy { it.enName }
-    val demonBluffRoleNames = recommendedDemonBluffRoleNames.takeIf { it.isNotEmpty() }
     val demonBluffPresentation = resolveDemonBluffPresentation(
-        recommendedRoleNames = demonBluffRoleNames,
+        recommendedRoleNames = recommendedDemonBluffRoleNames.takeIf { it.isNotEmpty() },
         legalRoles = legalDemonBluffs,
     )
     val firstNightEvilInformationSteps = clocktowerFirstNightEvilInformationSteps(
@@ -93,7 +66,7 @@ internal fun clocktowerNightPresentation(
         demonActor = demonCard,
         minionSeatLabels = minionCards.map { it.seatLabel(cards) },
         demonSeatLabel = demonCard?.seatLabel(cards),
-        shouldGiveInformation = shouldGiveFirstNightEvilInfo,
+        shouldGiveInformation = facts.evilInformationRequired,
         demonBluffPresentation = demonBluffPresentation,
         language = language,
     )
@@ -105,62 +78,54 @@ internal fun clocktowerNightPresentation(
             displayFooter = text("查询这两名玩家", "Checking these two players"),
             hostInstruction = text("唤醒侍女，记录她选择的两名玩家，再输入展示数字。", "Wake the Chambermaid, record the two chosen players, then enter the shown number."),
         ),
-        presentation = chambermaidPresentation,
+        presentation = clocktowerChambermaidSelectionPresentation(cards, subjects.chambermaid),
     )
     val empathStepMaterializer = clocktowerEmpathStepMaterializer(
-        informationStepBuilder, empathNeighborSeats, ::text,
+        informationStepBuilder, facts.empathNeighbourSeats, ::text,
     )
     val fortuneTellerStepMaterializer = clocktowerFortuneTellerStepMaterializer(
-        informationStepBuilder, fortuneTellerSubjectSeats, ::text,
+        informationStepBuilder, subjects.fortuneTellerSeats, ::text,
     )
 
     val commonRoleMaterializers = clocktowerCommonNightMaterializers(
-        informationStepBuilder, cards, ::text, poisonTarget, butlerMaster, spySeatLabel,
+        informationStepBuilder, cards, ::text, nameAt(facts.confirmedPoisonTargetSeat), nameAt(subjects.butlerMasterSeat),
+        cardAt(facts.spySeat)?.seatLabel(cards),
     ) + listOf(empathStepMaterializer, chambermaidMaterializer, fortuneTellerStepMaterializer)
 
-    return if (phase == StorytellerPhase.FIRST_NIGHT) {
-        val firstNightMaterializers = ClocktowerNightStepMaterializerRegistry(
+    return if (facts.phase == StorytellerPhase.FIRST_NIGHT) {
+        ClocktowerNightStepMaterializerRegistry(
             phase = ClocktowerNightFlowPhase.FIRST_NIGHT,
             entries = commonRoleMaterializers + clocktowerFirstNightMaterializers(
                 informationStepBuilder, cards, ::text, firstNightEvilInformationSteps, redHerring,
-                fortuneTellerInPlay = sessionState.actualRoleSeats("Fortune Teller").isNotEmpty(),
+                fortuneTellerInPlay = facts.fortuneTellerInPlay,
             ),
-        )
-        firstNightMaterializers.materialize(nightInteractions)
+        ).materialize(facts.interactions)
     } else {
         ClocktowerNightStepMaterializerRegistry(
             phase = ClocktowerNightFlowPhase.OTHER_NIGHT,
             entries = commonRoleMaterializers + otherNightDisplayEntries(
-                cards, sessionState, informationStepBuilder, ::text, ravenkeeperTargetSeat,
+                cards, facts, informationStepBuilder, ::text, subjects.ravenkeeperSeat,
             ),
-        ).materialize(nightInteractions)
+        ).materialize(facts.interactions)
     }
 }
 
-/**
- * Later-night step builders: display only. Night facts come from Session seat reads
- * ([livingDemonSeat], [currentNightDeathTriggerSeat], [deathTriggerAbilityState]); order and
- * mechanical effects stay with Session.
- */
+/** Later-night step builders: display only; facts come from [ClocktowerNightFacts]. */
 private fun otherNightDisplayEntries(
     cards: List<PlayerCard>,
-    state: ClocktowerSessionState,
+    facts: ClocktowerNightFacts,
     informationStepBuilder: ClocktowerInformationStepBuilder,
     text: (String, String) -> String,
     ravenkeeperTargetSeat: Int?,
 ): List<ClocktowerNightStepMaterializerRegistry.Entry> {
-    val game = state.gameState
     fun cardAt(seat: Int?) = seat?.let { cards.getOrNull(it - 1) }
-    val demonCard = cardAt(state.livingDemonSeat())
-    val demonPoisonedForActionExplanation = state.livingDemonPoisoned()
-    val mayorTarget = cardAt(state.mayorRulingSeat())
-    val lastExecutedSeat = state.actionTimeline.entries.asReversed().firstNotNullOfOrNull {
-        (it.fact as? ActionFact.Execution)?.targetSeat
-    }
-    val undertakerTargetSeat = lastExecutedSeat?.takeIf { game.playerAt(it) != null }
-    val monkProtectedTarget = state.nightTargets.monkSeat?.let(game::playerAt)?.name
-    val pendingNightDeath = state.nightTargets.attackSeat?.let(game::playerAt)?.name
-    val mayorRedirectTarget = state.nightTargets.mayorRedirectSeat?.let(game::playerAt)?.name
+    val demonCard = cardAt(facts.livingDemonSeat)
+    val demonPoisonedForActionExplanation = facts.livingDemonPoisoned
+    val mayorTarget = cardAt(facts.mayorRulingSeat)
+    val undertakerTargetSeat = facts.lastExecutedSeat
+    val monkProtectedTarget = cardAt(facts.monkSeat)?.name
+    val pendingNightDeath = cardAt(facts.attackSeat)?.name
+    val mayorRedirectTarget = cardAt(facts.mayorRedirectSeat)?.name
     return listOf(
 
         ClocktowerNightStepMaterializerRegistry.Entry(
@@ -239,8 +204,8 @@ private fun otherNightDisplayEntries(
         ),
         clocktowerSageStepMaterializer(
             builder = informationStepBuilder,
-            triggerActor = cardAt(state.currentNightDeathTriggerSeat("Sage")),
-            abilityState = state.deathTriggerAbilityState("Sage"),
+            triggerActor = cardAt(facts.deathTriggerSeat("Sage")),
+            abilityState = facts.deathTriggerAbilityState("Sage"),
             content = ClocktowerSageStepContent(
                 explanation = text("贤者被恶魔杀死时，得知恶魔是两名玩家之一。", "When killed by the Demon, the Sage learns that the Demon is one of two players."),
                 displayTitle = text("贤者信息", "Sage information"),
@@ -254,8 +219,8 @@ private fun otherNightDisplayEntries(
             build = {
                 informationStepBuilder.build(
                     roleName = "守鸦人", enName = "Ravenkeeper", tellPlayer = null,
-                    actorOverride = requireNotNull(cardAt(state.currentNightDeathTriggerSeat("Ravenkeeper"))),
-                    abilityStateOverride = state.deathTriggerAbilityState("Ravenkeeper"),
+                    actorOverride = requireNotNull(cardAt(facts.deathTriggerSeat("Ravenkeeper"))),
+                    abilityStateOverride = facts.deathTriggerAbilityState("Ravenkeeper"),
                     action = ClocktowerNightAction.Ravenkeeper,
                     explanation = text("记录实际展示的角色。", "Record the actual shown character."),
                     displayKind = ClocktowerDisplayKind.RoleReveal,
