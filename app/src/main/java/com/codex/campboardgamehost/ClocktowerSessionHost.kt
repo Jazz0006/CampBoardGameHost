@@ -257,6 +257,10 @@ internal fun ClocktowerSessionHost(
             request = request, expectedGameStateRevision = session.state.gameStateRevision,
         )
     }
+    fun confirmBmr(action: BmrHostAction) {
+        sessionUi.commit { it.confirmBmrHostAction(action, StorytellerDecisionRevision(sessionState.gameStateRevision,
+            sessionState.playerInputRevision), activeGameClocktowerRulesetCatalog.ruleset(ClocktowerScript.BadMoonRising)) }
+    }
     ClocktowerJudgeScreen(
         allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
         cards = cards,
@@ -325,8 +329,15 @@ internal fun ClocktowerSessionHost(
                 requireClocktowerGameSession().confirmEndDay(expectedRound)
             }
         },
+        dayContent = if (currentClocktowerScript == ClocktowerScript.BadMoonRising) { {
+            ClocktowerBmrDayControls(sessionState, cards, onHostTools, ::confirmBmr,
+                onNomination = { nominator, nominee, spy, expectedRound -> sessionUi.commit { it.confirmNomination(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), spy, expectedRound) } ?: false },
+                onVote = { nominator, nominee, vote, expectedRound -> sessionUi.commit { it.confirmVote(clocktowerSeatFor(nominator), clocktowerSeatFor(nominee), vote.voters.map { voter -> clocktowerSeatFor(voter.playerName) }, expectedRound) } })
+        } } else null,
         nightContent = {
-            ClocktowerNightHostScreen(
+            if (currentClocktowerScript == ClocktowerScript.BadMoonRising) ClocktowerBmrNightControls(sessionState,
+                activeGameClocktowerRulesetCatalog.ruleset(currentClocktowerScript), onHostTools, ::confirmBmr)
+            else ClocktowerNightHostScreen(
                 allowRuleDeterminedAutoUi = allowRuleDeterminedAutoUi,
                 cards = cards,
                 sessionState = sessionState,

@@ -27,7 +27,7 @@ internal object StorytellerGlobalEventProjectionV1 {
             fromGlobalSequence <= requireNotNull(prefix.exclusiveGlobalSequence))
         val all = prefix.entries
         val executions = all.filterIsInstance<StorytellerProviderHistoryEntryV1.Action>()
-            .filter { it.fact is ActionFact.Execution }
+            .filter { (it.fact as? ActionFact.Execution)?.causedDeath == true }
         fun isExecuted(seat: Int, phase: StorytellerPhase, round: Int): Boolean =
             executions.any { action ->
                 (action.fact as ActionFact.Execution).targetSeat == seat &&
@@ -101,7 +101,17 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.Protect -> JSONObject().put("type", "protect").put("target", fact.targetSeat)
         is ActionFact.Attack -> JSONObject().put("type", "attack").put("target", fact.targetSeat)
         is ActionFact.Execution -> JSONObject().put("type", "execution").put("seat", fact.targetSeat)
+            .also { if (!fact.causedDeath) it.put("died", false) }
         is ActionFact.Death -> JSONObject().put("type", "death").put("seat", fact.targetSeat)
+        is ActionFact.GossipStatement -> JSONObject().put("type", "gossip_statement").put("seat", fact.claimantSeat).put("statement", fact.statement).put("truthful", fact.truthful)
+        is ActionFact.MoonchildChoice -> JSONObject().put("type", "moonchild_choice").put("seat", fact.actorSeat).put("target", fact.targetSeat).put("alignmentAtChoice", fact.chosenAlignment.name)
+        is ActionFact.BmrAbilityUse -> JSONObject().put("type", "bmr_ability").put("actorSeat", fact.actorSeat).put("role", fact.role.value).put("targets", JSONArray(fact.targetSeats)).put("chosenRole", fact.chosenRole?.value).put("used", fact.used)
+        is ActionFact.BmrDrunkenness -> JSONObject().put("type", "drunkenness").put("sourceSeat", fact.sourceSeat).put("role", fact.sourceRole.value).put("targets", JSONArray(fact.targetSeats)).put("throughDay", fact.throughDayRound).put("active", fact.active)
+        is ActionFact.AlignmentChange -> JSONObject().put("type", "alignment_change").put("seat", fact.targetSeat).put("alignment", fact.alignment.name)
+        is ActionFact.PukkaChoice -> JSONObject().put("type", "pukka_choice").put("actorSeat", fact.actorSeat).put("seat", fact.targetSeat).put("poisonApplied", fact.poisonApplied)
+        is ActionFact.PukkaPoisonEnded -> null
+        is ActionFact.Revival -> JSONObject().put("type", "revival").put("seat", fact.targetSeat)
+        is ActionFact.DeathRegistration -> JSONObject().put("type", "death_registration").put("seat", fact.targetSeat).put("dead", true)
         is ActionFact.NoExecution -> JSONObject().put("type", "no_execution")
         is ActionFact.SlayerShot -> JSONObject().put("type", "slayer")
             .put("seat", fact.claimantSeat).put("target", fact.targetSeat)

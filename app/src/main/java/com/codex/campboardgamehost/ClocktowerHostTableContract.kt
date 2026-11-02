@@ -37,6 +37,7 @@ internal data class HostSeatPresentation(
     val shownRole: HostRolePresentation? = null,
     /** Read-only projection of Session's current actual alignment, never an independent authority. */
     val actualAlignment: com.codex.campboardgamehost.clocktower.domain.Alignment? = null,
+    val isDrunk: Boolean = false,
 )
 
 /** Bounded table interaction families. Domain legality remains outside this presentation contract. */

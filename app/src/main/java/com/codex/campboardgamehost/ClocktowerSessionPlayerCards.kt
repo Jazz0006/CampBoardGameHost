@@ -33,11 +33,12 @@ internal class ClocktowerSessionPlayerCards(
                 "Unknown confirmed displayed Clocktower role $roleId."
             }
         }
-        val deathRound = if (player.alive) null else {
-            requireNotNull(session.actionTimeline.entries.firstOrNull { entry ->
+        val deathRound = if (player.publiclyAlive) null else {
+            requireNotNull(session.actionTimeline.entries.lastOrNull { entry ->
                 when (val fact = entry.fact) {
                     is ActionFact.Death -> fact.targetSeat == seat
-                    is ActionFact.Execution -> fact.targetSeat == seat
+                    is ActionFact.Execution -> fact.causedDeath && fact.targetSeat == seat
+                    is ActionFact.DeathRegistration -> fact.targetSeat == seat
                     else -> false
                 }
             }?.point?.round) {

@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 class ClocktowerCompleteAppUiTest {
     @get:Rule val ui = createAndroidComposeRule<ComponentActivity>()
     private val mounted = mutableStateOf(true)
-    private val players = (1..5).map { "P$it" }
+    private var players = (1..5).map { "P$it" }
     private val store get() = ClocktowerActiveGameStore.fromContext(ui.activity)
     private fun state() = requireNotNull(store.load()).state
     private fun click(label: String) = ui.onNodeWithText(label).performClick()
@@ -33,7 +33,7 @@ class ClocktowerCompleteAppUiTest {
             ui.activity.getSharedPreferences("camp_board_game_host", Context.MODE_PRIVATE).edit().clear().commit()
             AppPreferencesStore(ui.activity).apply {
                 saveLanguageMode(LanguageMode.English)
-                saveStorytellerOperationMode(StorytellerOperationMode.MANUAL)
+                saveStorytellerOperationMode(if (script == ClocktowerScript.BadMoonRising) StorytellerOperationMode.AI_AUTOMATIC else StorytellerOperationMode.MANUAL)
                 saveCommonPlayers(emptyList())
             }
             store.clear()
@@ -50,12 +50,16 @@ class ClocktowerCompleteAppUiTest {
         ui.onNodeWithText("Continue").performScrollTo().performClick()
         ui.onNodeWithText(script.nameFor("en")).performScrollTo().performClick()
         ui.onNodeWithText("Continue").performScrollTo().performClick()
-        ui.onNodeWithText("Start Dealing").performScrollTo().assertIsEnabled().performClick()
+        if (script == ClocktowerScript.BadMoonRising) {
+            ui.onNodeWithText("Generate and review roster").performScrollTo().assertIsEnabled().performClick()
+            ui.onNode(hasScrollAction()).performScrollToNode(hasText("Confirm and deal"))
+            ui.onNodeWithText("Confirm and deal").assertIsEnabled().performClick()
+        } else ui.onNodeWithText("Start Dealing").performScrollTo().assertIsEnabled().performClick()
         waitFor("Show identity")
     }
 
     private fun deal() {
-        repeat(5) {
+        repeat(players.size) {
             click("Show identity")
             click("Hide role and return to Storyteller")
             click("Next")
@@ -164,6 +168,40 @@ class ClocktowerCompleteAppUiTest {
         assertEquals(players, state().gameState.players.map { it.name })
         if (script == ClocktowerScript.TroubleBrewing) assertNotEquals(
             ended.gameState.players.map { it.actualRole }.toSet(), state().gameState.players.map { it.actualRole }.toSet())
+    }
+
+
+    @Test fun bmrOpeningDealsOnlyShownIdentityAndResumesTheSameGameWithoutAi() {
+        players = (1..8).map { "P$it" }
+        // Pick a deterministic fixture containing a Lunatic and Po; does not enumerate game combinations.
+        val seed = (1L..200L).first { candidate ->
+            val layout = BadMoonRisingOpening.generate(players, candidate)
+            layout.players.any { it.actualRole.value == "Lunatic" } && layout.players.any { it.actualRole.value == "Po" }
+        }
+        launch(ClocktowerScript.BadMoonRising, seed)
+        val accepted = state()
+        assertTrue(accepted.actionTimeline.entries.isEmpty())
+        assertEquals(StorytellerOperationMode.MANUAL.name, store.load()!!.metadata.getString("mode"))
+        val lunatic = accepted.gameState.players.single { it.actualRole.value == "Lunatic" }
+        repeat(players.size) { index ->
+            click("Show identity")
+            if (index + 1 == lunatic.seat) {
+                ui.onNodeWithText("Po", useUnmergedTree = true).assertExists()
+                ui.onNodeWithText("Lunatic", substring = true, useUnmergedTree = true).assertDoesNotExist()
+                ui.onNodeWithText("Outsider", useUnmergedTree = true).assertDoesNotExist()
+            }
+            click("Hide role and return to Storyteller")
+            click("Next")
+        }
+        waitFor("Confirm Demon bluffs")
+        ui.onNodeWithText("Confirm Demon bluffs").assertIsNotEnabled()
+        assertEquals(accepted, state())
+        remount()
+        waitFor("Show identity")
+        assertEquals(accepted, state())
+        deal()
+        waitFor("Confirm Demon bluffs")
+        assertEquals(accepted, state())
     }
 
     @Test fun interruptedDealingRestoresTheSameSessionAndSafelyRepeatsIdentityDisplay() {

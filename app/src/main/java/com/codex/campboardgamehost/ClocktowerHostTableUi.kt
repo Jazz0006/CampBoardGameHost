@@ -32,6 +32,7 @@ internal fun HostTableShell(
     directionalGesture: HostTableDirectionalGesturePolicy? = null,
     directionalLink: HostTableDirectionalLink? = null,
     onDirectionalGestureCommit: (ClocktowerSeatId, ClocktowerSeatId) -> Unit = { _, _ -> },
+    wakingSeatIds: Set<ClocktowerSeatId> = emptySet(),
     centerContent: @Composable BoxScope.() -> Unit = {},
 ) {
     BoxWithConstraints(modifier = modifier) {
@@ -63,7 +64,7 @@ internal fun HostTableShell(
                 badge = seatBadge(frame.seat),
                 hasUnspentGhostVote = seatHasUnspentGhostVote(frame.seat),
                 language = language,
-            )
+            ).copy(isCurrentActor = frame.seat.seatId in wakingSeatIds)
         }
         val knownSeatIds = frames.map { frame -> frame.seat.seatId }.toSet()
         directionalGesture?.let { gesture ->
@@ -151,7 +152,7 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         contextMarker = if (isHighlighted && !isSelected) "•" else null,
         isAlive = seat.isAlive,
         hasUnspentGhostVote = hasUnspentGhostVote,
-        isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
+        isDrunk = seat.isDrunk || seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
         isPoisoned = seat.isPoisoned,
         isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,

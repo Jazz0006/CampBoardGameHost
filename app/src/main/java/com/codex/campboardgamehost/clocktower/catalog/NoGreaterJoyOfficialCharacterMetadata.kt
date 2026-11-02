@@ -1,5 +1,6 @@
 package com.codex.campboardgamehost.clocktower.catalog
 
+import com.codex.campboardgamehost.chambermaidRole
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.RuleCoverage
 import java.math.BigDecimal
@@ -27,7 +28,7 @@ internal object NoGreaterJoyOfficialCharacterMetadata {
             externalId = "chambermaid",
             name = "Chambermaid",
             team = ClocktowerCatalogTeam.TOWNSFOLK,
-            abilityText = "Each night, choose 2 alive players (not yourself): you learn how many woke tonight due to their ability.",
+            abilityText = chambermaidRole.enDescription,
             firstNightOrder = BigDecimal("10"),
             otherNightOrder = BigDecimal("12"),
             behaviorKey = "chambermaid",

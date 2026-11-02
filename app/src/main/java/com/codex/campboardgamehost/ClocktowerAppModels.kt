@@ -47,6 +47,7 @@ internal enum class ClocktowerDisplayKind {
 internal enum class ClocktowerScript {
     TroubleBrewing,
     NoGreaterJoy,
+    BadMoonRising,
 }
 
 internal data class ClocktowerRole(
@@ -55,4 +56,11 @@ internal data class ClocktowerRole(
     val enName: String,
     val zhDescription: String,
     val enDescription: String,
+)
+
+// Shared by NGJ/BMR presentation and ability metadata; avoid script-order-dependent lookup.
+internal val chambermaidRole = ClocktowerRole(
+    ClocktowerTeam.Townsfolk, "侍女", "Chambermaid",
+    "每晚选择两名除你以外的存活玩家，得知其中有几人因能力醒来。",
+    "Each night, choose 2 alive players (not yourself): you learn how many woke tonight due to their ability.",
 )

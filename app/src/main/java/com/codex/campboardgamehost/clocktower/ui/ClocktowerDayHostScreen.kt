@@ -24,6 +24,8 @@ internal fun ClocktowerDayHostScreen(
     onSlayerShot: (String, String, Boolean?) -> Unit,
     onConfirmedNomination: (String, String, Boolean?, Int) -> Boolean,
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord, Int) -> Unit,
+    extraContent: (@Composable () -> Unit)? = null,
+    publicNightLifeChanges: List<ClocktowerPublicLifeChange> = sessionState.publicLifeChangesAtNight(sessionState.round),
 ) {
     val sessionGameState = sessionState.gameState
     val round = sessionState.round
@@ -38,9 +40,7 @@ internal fun ClocktowerDayHostScreen(
     val artistAnswers = sessionState.actionTimeline.entries.mapNotNull { it.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.ArtistAnswer }
     val artistUsed = artistAnswers.any { it.abilityConsumed }
     val artistClaimedNames = artistAnswers.mapNotNull { sessionGameState.playerAt(it.claimantSeat)?.name }
-    val confirmedNightDeathSeats = sessionState.actionTimeline.entries.filter {
-        it.point.phase == com.codex.campboardgamehost.clocktower.domain.StorytellerPhase.NIGHT && it.point.round == round
-    }.mapNotNull { (it.fact as? com.codex.campboardgamehost.clocktower.domain.ActionFact.Death)?.targetSeat }
+    val confirmedNightDeathSeats = publicNightLifeChanges.filterNot { it.revived }.map { it.seat }.distinct()
     val registrationState = remember(gameId, round) { ClocktowerRegistrationInteractionState() }
     var dayMode by remember(gameId, round) { mutableStateOf(ClocktowerDayMode.Overview) }
     val nominationDraft = remember(gameId, round) { ClocktowerNominationDraft() }
@@ -130,7 +130,7 @@ internal fun ClocktowerDayHostScreen(
                 aliveCount = publicAliveCards.size,
                 executionThreshold = executionThreshold,
                 highestVoteText = highestVoteText,
-                lastNightDeathLabels = if (round > 1) confirmedNightDeathSeats.mapNotNull { seat ->
+                lastNightDeathLabels = if (round > 1 || confirmedNightDeathSeats.isNotEmpty()) confirmedNightDeathSeats.mapNotNull { seat ->
                     sessionGameState.playerAt(seat)?.name?.let { playerSeatLabel(cards, it) }
                 } else null,
                 showSlayerAction = scriptHasSlayer,
@@ -138,7 +138,7 @@ internal fun ClocktowerDayHostScreen(
                 showArtistAction = scriptHasArtist,
                 artistActionEnabled = artistClaimantCandidates.isNotEmpty(),
                 actionsEnabled = gameOutcome == null,
-                diagnosticContent = null,
+                diagnosticContent = extraContent,
                 onHostTools = onHostTools,
                 onNominationGesture = { sourceSeatId, targetSeatId ->
                     val sourceName = dayTableState.seats

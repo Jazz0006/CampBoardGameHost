@@ -140,6 +140,9 @@ internal class ClocktowerGameSession private constructor(
             "Demon bluffs may only be set during the first-night setup."
         }
         require(roles.distinct().size == roles.size) { "Demon bluff roles must be distinct." }
+        if (state.gameState.script == BadMoonRisingOpening.script) require(
+            com.codex.campboardgamehost.manualDemonBluffSelectionReady(roles.map { it.value },
+                com.codex.campboardgamehost.clocktowerDemonBluffCandidates(state.gameState)))
         if (state.demonBluffRoleIds == roles) return state
         check(state.playerInputRevision != Long.MAX_VALUE)
         val committed = commitGlobalActionFact(
@@ -196,7 +199,7 @@ internal class ClocktowerGameSession private constructor(
     private fun prepareGlobalActionDraft(draft: ActionFactDraft): ActionFactDraft {
         val deathSeat = when (draft) {
             is ActionFactDraft.Death -> draft.targetSeat
-            is ActionFactDraft.Execution -> draft.targetSeat
+            is ActionFactDraft.Execution -> draft.targetSeat.takeIf { draft.causedDeath }
             else -> null
         }
         // External callers cannot assert death-time ability state. Read the one canonical
@@ -303,7 +306,7 @@ internal class ClocktowerGameSession private constructor(
             ),
             voteStanding = when (val fact = committed.entry.fact) {
                 is ActionFact.Vote -> state.voteStanding.confirm(fact.nomineeSeat,
-                    fact.voterSeats.size, (state.gameState.players.count { it.alive } + 1) / 2)
+                    fact.voterSeats.size, (state.gameState.players.count { it.publiclyAlive } + 1) / 2)
                 is ActionFact.PhaseAdvance -> if (fact.phase == StorytellerPhase.NIGHT ||
                     (fact.phase == StorytellerPhase.DAY && draft.phase != StorytellerPhase.DAY))
                     ClocktowerVoteStanding() else state.voteStanding
@@ -747,7 +750,7 @@ internal class ClocktowerGameSession private constructor(
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
-        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state)
+        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state).withBmrDrunkenness().withPukkaPoisonState()
         if (accepted == state) return state
         if (!confirmingBatch) persist?.invoke(accepted)
         state = accepted

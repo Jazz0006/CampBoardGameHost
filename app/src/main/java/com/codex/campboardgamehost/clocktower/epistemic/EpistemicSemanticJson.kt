@@ -17,6 +17,8 @@ object EpistemicSemanticJson {
     fun decodeRecordedEpistemicObservation(json: String): RecordedEpistemicObservation = recordedObservation(checkedRoot(json))
 
     private fun proposition(value: InformationProposition): Map<String, Any?> = when (value) {
+        is InformationProposition.PlayerTargets -> mapOf("kind" to "player-targets", "actor" to value.actorSeat, "targets" to value.targetSeats)
+        is InformationProposition.CharactersInPlay -> mapOf("kind" to "characters-in-play", "characterType" to value.characterType.name, "roles" to value.roles.map { it.value })
         is InformationProposition.RoleAt -> mapOf("kind" to "role-at", "role" to value.role.value, "seat" to value.seat)
         is InformationProposition.ShownRoleAt -> mapOf("kind" to "shown-role-at", "role" to value.role.value, "seat" to value.seat)
         is InformationProposition.AlignmentAt -> mapOf("alignment" to value.alignment.name, "kind" to "alignment-at", "seat" to value.seat)
@@ -57,6 +59,8 @@ object EpistemicSemanticJson {
     )
 
     private fun proposition(json: JSONObject): InformationProposition = when (json.getString("kind")) {
+        "player-targets" -> InformationProposition.PlayerTargets(json.getInt("actor"), json.getJSONArray("targets").let { a -> (0 until a.length()).map(a::getInt) })
+        "characters-in-play" -> InformationProposition.CharactersInPlay(CharacterType.valueOf(json.getString("characterType")), json.getJSONArray("roles").let { a -> (0 until a.length()).map { RoleId(a.getString(it)) } })
         "role-at" -> InformationProposition.RoleAt(json.getInt("seat"), RoleId(json.getString("role")))
         "shown-role-at" -> InformationProposition.ShownRoleAt(json.getInt("seat"), RoleId(json.getString("role")))
         "alignment-at" -> InformationProposition.AlignmentAt(json.getInt("seat"), Alignment.valueOf(json.getString("alignment")))

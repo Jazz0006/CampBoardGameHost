@@ -45,7 +45,7 @@ internal fun ClocktowerHostSquareTableScaffold(
         ClocktowerSquareTableSeatSurface(
             seats = seats.map { seat ->
                 seatUiModel(seat).copy(
-                    isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
+                    isDrunk = seat.isDrunk || seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
                     isPoisoned = seat.isPoisoned,
                 )
             },

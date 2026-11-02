@@ -35,7 +35,7 @@ private fun EvilInfoDisplay(
     secondary: String?,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
@@ -53,6 +53,7 @@ private fun EvilInfoDisplay(
                     lines.firstOrNull().orEmpty(),
                     color = Color(0xFFC5A56A),
                     fontSize = 20.sp,
+                    lineHeight = 28.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
@@ -61,6 +62,7 @@ private fun EvilInfoDisplay(
                         detailLines.joinToString("\n"),
                         color = Color(0xFFF7F1E6),
                         fontSize = 30.sp,
+                        lineHeight = 40.sp,
                         fontWeight = FontWeight.Black,
                         textAlign = TextAlign.Center,
                     )

@@ -37,13 +37,13 @@ internal val completeTroubleBrewingRoles = (troubleBrewingRoles + listOf(
 
 private val noGreaterJoyExtraRoles = listOf(
     ClocktowerRole(ClocktowerTeam.Townsfolk, "钟表匠", "Clockmaker", "第一夜得知恶魔到最近爪牙相隔几步。", "On the first night, learn how many steps from the Demon to their nearest Minion."),
-    ClocktowerRole(ClocktowerTeam.Townsfolk, "侍女", "Chambermaid", "每晚选择两名存活玩家，得知其中有几人当晚因自己的能力醒来。", "Each night, choose two alive players and learn how many woke tonight due to their ability."),
+    chambermaidRole,
     ClocktowerRole(ClocktowerTeam.Townsfolk, "艺术家", "Artist", "每局一次，白天私下向说书人询问一个是非问题。", "Once per game during the day, privately ask the Storyteller a yes/no question."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "贤者", "Sage", "如果被恶魔杀死，得知恶魔是两名玩家之一。", "If the Demon kills you, learn that it is one of two players."),
     ClocktowerRole(ClocktowerTeam.Outsider, "呆瓜", "Klutz", "当你得知自己死亡时，公开选择一名存活玩家；若对方邪恶，你的阵营失败。", "When you learn that you died, publicly choose one alive player: if they are evil, your team loses."),
 )
 
-private val completeClocktowerRoles = (completeTroubleBrewingRoles + noGreaterJoyExtraRoles).distinctBy { it.enName }
+private val completeClocktowerRoles = (completeTroubleBrewingRoles + noGreaterJoyExtraRoles + badMoonRisingRoles).distinctBy { it.enName }
 
 private val noGreaterJoyRoleNames = setOf(
     "Clockmaker",
@@ -60,6 +60,7 @@ private val noGreaterJoyRoleNames = setOf(
 )
 
 internal fun clocktowerRolesForScript(script: ClocktowerScript): List<ClocktowerRole> = when (script) {
+    ClocktowerScript.BadMoonRising -> badMoonRisingRoles
     ClocktowerScript.TroubleBrewing -> completeTroubleBrewingRoles
     ClocktowerScript.NoGreaterJoy -> completeClocktowerRoles.filter { it.enName in noGreaterJoyRoleNames }
 }
@@ -78,4 +79,5 @@ internal fun ClocktowerRole.descriptionFor(language: String): String = if (langu
 internal fun ClocktowerScript.nameFor(language: String): String = when (this) {
     ClocktowerScript.TroubleBrewing -> if (language == "en") "Trouble Brewing" else "暗流涌动"
     ClocktowerScript.NoGreaterJoy -> "No Greater Joy"
+    ClocktowerScript.BadMoonRising -> if (language == "en") "Bad Moon Rising" else "暗月初升"
 }

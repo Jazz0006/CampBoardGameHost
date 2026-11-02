@@ -9,6 +9,11 @@
 
 最新用户决定及 AGENTS 当前段优先；共享说明沿用已有合同，不另建事实模型。设计目标、已实现能力与验收证据必须分开。文件名包含 CURRENT、CONTRACT、NEXT 不代表其内容仍适用，尤其是归档文件。
 
+## 新剧本规划
+
+- [暗月初升总路线](CURRENT_DEVELOPMENT_ROADMAP.md)
+- [BMR-A 剧本与人工开局实施方案](BMR_A_IMPLEMENTATION_PLAN_2026-11-02.md)：下一步实施范围、入口、隐私/存档与验收边界。
+
 ## 当前验收与工具参考
 
 - [Batch 3](HOST_UI_BATCH3_ACCEPTANCE.md)、[Batch 4](HOST_UI_BATCH4_ACCEPTANCE.md)、[Batch 5](HOST_UI_BATCH5_ACCEPTANCE.md)：Batches 3/4 已合并，Batch 5 仍是 Draft #361。

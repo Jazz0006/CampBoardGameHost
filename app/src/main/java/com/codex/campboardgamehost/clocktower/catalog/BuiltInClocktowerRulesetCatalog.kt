@@ -48,6 +48,8 @@ internal class BuiltInClocktowerRulesetCatalog(
         )
 
         return mapOf(
+            ClocktowerScript.BadMoonRising to loadScript(ClocktowerScript.BadMoonRising, "bad_moon_rising.json",
+                ClocktowerCharacterRegistry(BadMoonRisingCharacterMetadata.definitions)),
             ClocktowerScript.TroubleBrewing to loadScript(
                 script = ClocktowerScript.TroubleBrewing,
                 assetName = "trouble_brewing.json",

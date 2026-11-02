@@ -15,6 +15,8 @@ internal object ClocktowerSessionJson {
             put("seat", p.seat); put("name", p.name); put("role", p.actualRole.value)
             put("alignment", p.actualAlignment.name); put("type", p.actualType.name)
             put("shown", p.shownRole?.value); put("alive", p.alive); put("poisoned", p.poisoned)
+            if (p.drunk) put("drunk", true)
+            if (p.registersAsDead) put("registeredDead", true)
         } }))
         put("actions", JSONArray(s.actionTimeline.entries.map { e -> action(e.fact).apply {
             put("id", e.fact.actionId); put("global", e.point.globalSequence)
@@ -34,12 +36,15 @@ internal object ClocktowerSessionJson {
         val game = GameState(ScriptId(j.getString("script")), j.getJSONArray("players").objects().map { p ->
             PlayerState(p.getInt("seat"), p.getString("name"), RoleId(p.getString("role")),
                 Alignment.valueOf(p.getString("alignment")), CharacterType.valueOf(p.getString("type")),
-                p.stringOrNull("shown")?.let(::RoleId), p.getBoolean("alive"), p.getBoolean("poisoned"))
+                p.stringOrNull("shown")?.let(::RoleId), p.getBoolean("alive"), p.getBoolean("poisoned"), p.optBoolean("registeredDead", false), p.optBoolean("drunk", false))
         }, seed)
-        require(game.script.value in setOf("trouble_brewing", "no_greater_joy"))
+        require(game.script.value in setOf("trouble_brewing", "no_greater_joy", "bad_moon_rising"))
         require(game.players.map { it.seat }.sorted() == (1..game.players.size).toList())
         require(game.players.map { it.name }.distinct().size == game.players.size)
         require(game.players.size in if(game.script.value == "no_greater_joy") 5..6 else 5..15)
+        if (game.script == BadMoonRisingOpening.script) {
+            require(game.players.all { p -> com.codex.campboardgamehost.badMoonRisingRoles.any { it.enName == p.actualRole.value } })
+        }
         val actions = ActionFactTimeline(j.getJSONArray("actions").objects().map { e ->
             TimelineBoundActionFact(action(e), TimelinePoint(StorytellerPhase.valueOf(e.getString("phase")),
                 e.getInt("round"), e.getInt("local"), e.getLong("global")))
@@ -55,15 +60,18 @@ internal object ClocktowerSessionJson {
         var redHerring: Int? = null
         var bluffs = emptyList<RoleId>()
         // Standing uses the alive count at EACH vote, not the final count after later deaths.
-        // Deaths are irreversible in the supported scripts; start at all seats alive.
+        // Reconstruct only current vote standing from confirmed life changes, never rerun gameplay.
         val dead = mutableSetOf<Int>()
+        val actualDead = mutableSetOf<Int>()
         actions.entries.forEach { e ->
             targets = targets.after(e, null, true)
             when(val f = e.fact) {
                 is ActionFact.RedHerringChoice -> redHerring = f.selectedSeat
                 is ActionFact.DemonBluffChoice -> bluffs = f.roles
-                is ActionFact.Death -> dead.add(f.targetSeat)
-                is ActionFact.Execution -> dead.add(f.targetSeat)
+                is ActionFact.Death -> { dead.add(f.targetSeat); actualDead.add(f.targetSeat) }
+                is ActionFact.Execution -> if (f.causedDeath) { dead.add(f.targetSeat); actualDead.add(f.targetSeat) } else Unit
+                is ActionFact.Revival -> { dead.remove(f.targetSeat); actualDead.remove(f.targetSeat) }
+                is ActionFact.DeathRegistration -> dead.add(f.targetSeat)
                 is ActionFact.Vote -> standing = standing.confirm(f.nomineeSeat, f.voterSeats.size, (game.players.size - dead.size + 1) / 2)
                 is ActionFact.PhaseAdvance -> standing = ClocktowerVoteStanding()
                 else -> Unit
@@ -76,21 +84,28 @@ internal object ClocktowerSessionJson {
             game, actions, observations, ClocktowerSemanticHistoryMode.GLOBAL_V1, j.getLong("cursor"), contexts,
             targets, standing, redHerring, bluffs)
         require(restored.phase == phase && restored.round == round)
-        require(actions.entries.all { entry -> when(val f = entry.fact) {
-            is ActionFact.Death -> game.playerAt(f.targetSeat)?.alive == false
-            is ActionFact.Execution -> game.playerAt(f.targetSeat)?.alive == false
-            else -> true
-        } })
+        require(game.players.all { p -> p.alive == (p.seat !in actualDead) && p.publiclyAlive == (p.seat !in dead) }) {
+            "Saved life state and confirmed life changes disagree."
+        }
         return restored
     }
 
     private fun action(f: ActionFact): JSONObject = JSONObject().apply {
         put("kind", when(f) {
             is ActionFact.Poison -> "Poison"
+            is ActionFact.GossipStatement -> "GossipStatement"
+            is ActionFact.MoonchildChoice -> "MoonchildChoice"
+            is ActionFact.BmrAbilityUse -> "BmrAbilityUse"
+            is ActionFact.BmrDrunkenness -> "BmrDrunkenness"
+            is ActionFact.AlignmentChange -> "AlignmentChange"
+            is ActionFact.PukkaChoice -> "PukkaChoice"
+            is ActionFact.PukkaPoisonEnded -> "PukkaPoisonEnded"
             is ActionFact.Protect -> "Protect"
             is ActionFact.Attack -> "Attack"
             is ActionFact.Death -> "Death"
             is ActionFact.Execution -> "Execution"
+            is ActionFact.Revival -> "Revival"
+            is ActionFact.DeathRegistration -> "DeathRegistration"
             is ActionFact.NoExecution -> "NoExecution"
             is ActionFact.SlayerShot -> "SlayerShot"
             is ActionFact.Nomination -> "Nomination"
@@ -108,10 +123,19 @@ internal object ClocktowerSessionJson {
         })
         when(f) {
             is ActionFact.Poison -> put("target", f.targetSeat)
+            is ActionFact.GossipStatement -> { put("actor", f.claimantSeat); put("statement", f.statement); put("truth", f.truthful) }
+            is ActionFact.MoonchildChoice -> { put("actor", f.actorSeat); put("target", f.targetSeat); put("alignment", f.chosenAlignment.name); put("death", f.deathActionId) }
+            is ActionFact.BmrAbilityUse -> { put("actor", f.actorSeat); put("role", f.role.value); put("targets", JSONArray(f.targetSeats)); put("chosenRole", f.chosenRole?.value); put("used", f.used); put("step", f.stepId); put("woke", f.woke); put("effective", f.tookEffect) }
+            is ActionFact.BmrDrunkenness -> { put("effect", f.effectId); put("actor", f.sourceSeat); put("role", f.sourceRole.value); put("targets", JSONArray(f.targetSeats)); put("throughDay", f.throughDayRound); put("active", f.active) }
+            is ActionFact.AlignmentChange -> { put("target", f.targetSeat); put("alignment", f.alignment.name) }
+            is ActionFact.PukkaChoice -> { put("actor", f.actorSeat); put("target", f.targetSeat); put("applied", f.poisonApplied) }
+            is ActionFact.PukkaPoisonEnded -> put("choice", f.choiceActionId)
             is ActionFact.Protect -> put("target", f.targetSeat)
             is ActionFact.Attack -> put("target", f.targetSeat)
             is ActionFact.Death -> { put("target", f.targetSeat); proof(f.klutzDeathTrigger)?.let { put("proof", it) } }
-            is ActionFact.Execution -> { put("target", f.targetSeat); proof(f.klutzDeathTrigger)?.let { put("proof", it) } }
+            is ActionFact.Execution -> { put("target", f.targetSeat); proof(f.klutzDeathTrigger)?.let { put("proof", it) }; if (!f.causedDeath) put("died", false) }
+            is ActionFact.Revival -> put("target", f.targetSeat)
+            is ActionFact.DeathRegistration -> put("target", f.targetSeat)
             is ActionFact.NoExecution -> Unit
             is ActionFact.SlayerShot -> { put("actor", f.claimantSeat); put("target", f.targetSeat); put("consumed", f.abilityConsumed); put("hit", f.hit); put("registration", f.targetRegistersAsDemon) }
             is ActionFact.Nomination -> { put("actor", f.nominatorSeat); put("target", f.nomineeSeat); put("first", f.firstVirginNomination); put("registration", f.nominatorRegistersAsTownsfolk) }
@@ -135,10 +159,19 @@ internal object ClocktowerSessionJson {
         fun registration() = if(j.isNull("registration")) null else j.getBoolean("registration")
         return when(j.getString("kind")) {
             "Poison" -> ActionFact.Poison(id, seq, j.intOrNull("target"))
+            "GossipStatement" -> ActionFact.GossipStatement(id, seq, actor(), j.getString("statement"), j.getBoolean("truth"))
+            "MoonchildChoice" -> ActionFact.MoonchildChoice(id, seq, actor(), target(), Alignment.valueOf(j.getString("alignment")), j.getString("death"))
+            "BmrAbilityUse" -> ActionFact.BmrAbilityUse(id, seq, actor(), RoleId(j.getString("role")), j.getJSONArray("targets").ints(), j.stringOrNull("chosenRole")?.let(::RoleId), j.getBoolean("used"), j.getString("step"), j.getBoolean("woke"), j.getBoolean("effective"))
+            "BmrDrunkenness" -> ActionFact.BmrDrunkenness(id, seq, j.getString("effect"), actor(), RoleId(j.getString("role")), j.getJSONArray("targets").ints(), j.getInt("throughDay"), j.getBoolean("active"))
+            "AlignmentChange" -> ActionFact.AlignmentChange(id, seq, target(), Alignment.valueOf(j.getString("alignment")))
+            "PukkaChoice" -> ActionFact.PukkaChoice(id, seq, actor(), target(), j.getBoolean("applied"))
+            "PukkaPoisonEnded" -> ActionFact.PukkaPoisonEnded(id, seq, j.getString("choice"))
             "Protect" -> ActionFact.Protect(id, seq, target())
             "Attack" -> ActionFact.Attack(id, seq, target())
             "Death" -> ActionFact.Death(id, seq, target(), j.optJSONObject("proof")?.let(::proof))
-            "Execution" -> ActionFact.Execution(id, seq, target(), j.optJSONObject("proof")?.let(::proof))
+            "Execution" -> ActionFact.Execution(id, seq, target(), j.optJSONObject("proof")?.let(::proof), j.optBoolean("died", true))
+            "Revival" -> ActionFact.Revival(id, seq, target())
+            "DeathRegistration" -> ActionFact.DeathRegistration(id, seq, target())
             "NoExecution" -> ActionFact.NoExecution(id, seq)
             "SlayerShot" -> ActionFact.SlayerShot(id, seq, actor(), target(), j.getBoolean("consumed"), j.getBoolean("hit"), registration())
             "Nomination" -> ActionFact.Nomination(id, seq, actor(), target(), j.getBoolean("first"), registration())

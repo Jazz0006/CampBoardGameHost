@@ -25,6 +25,7 @@ internal fun ClocktowerJudgeScreen(
     onConfirmedVote: (String, String, ClocktowerConfirmedVoteRecord, Int) -> Unit,
     onConfirmDay: (Int) -> Unit,
     nightContent: @Composable () -> Unit,
+    dayContent: (@Composable () -> Unit)? = null,
 ) {
     if (sessionState.outcome != null) return
     val script = ClocktowerScript.entries.single { it.toRecommendationScriptId() == sessionState.gameState.script }
@@ -37,7 +38,7 @@ internal fun ClocktowerJudgeScreen(
                 ClocktowerDemonBluffsHostScreen(sessionState, recommendedDemonBluffRoleNames,
                     allowRuleDeterminedAutoUi && jointOpeningAvailable, onHostTools, onCommitDemonBluffs,
                     jointOpeningAvailable, jointOpeningReason)
-            sessionState.phase == StorytellerPhase.DAY ->
+            sessionState.phase == StorytellerPhase.DAY -> if (dayContent != null) dayContent() else
                 ClocktowerDayHostScreen(sessionState, cards, script, allowRuleDeterminedAutoUi, onHostTools,
                     onConfirmDay, onConfirmKlutzChoice, onConfirmArtistQuestion, onSlayerShot,
                     onConfirmedNomination, onConfirmedVote)
