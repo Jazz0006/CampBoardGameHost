@@ -115,7 +115,7 @@ internal fun ClocktowerSessionState.bmrNightSelection(step: ClocktowerHostIntera
         (targets + if(role == "Sailor") listOf(actor.seat) else emptyList()).toSet() else emptySet()
     val roleRequired = role == "Gambler" || role == "Courtier" && use == true
     return BmrNightSelection(minimum, maximum, selected, optional, chargeAllowed, roleRequired,
-        if(roleRequired) badMoonRisingRoles.mapTo(mutableSetOf()) { RoleId(it.enName) } else emptySet(),
+        if(roleRequired || role == "Courtier") badMoonRisingRoles.mapTo(mutableSetOf()) { RoleId(it.enName) } else emptySet(),
         drunk, deaths, forced,
         if(role == "Chambermaid" && targets.size == 2 && targets.distinct().size == 2 && targets.all { it in bmrChambermaidTargets(actor.seat) }) bmrChambermaidValues(actor.seat, targets) else emptySet(),
         badMoonRisingRoles.filter { r -> when {

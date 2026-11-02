@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -28,6 +30,7 @@ internal data class ClocktowerEvilInfoSquareTablePresentation(
     val showHostDetails: Boolean = true,
     val highlightedSeats: Set<Int> = emptySet(),
     val groupLines: List<String> = emptyList(),
+    val hostInstruction: String? = null,
 )
 
 /**
@@ -84,6 +87,8 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
     onHostTools: () -> Unit,
     onNext: () -> Unit,
     onShowPlayerDisplay: () -> Unit,
+    nextEnabled: Boolean = true,
+    hostControls: @Composable () -> Unit = {},
 ) {
     ClocktowerNightActionSquareTableDialog(
         seats = seats,
@@ -100,6 +105,7 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
 
         onHostTools = onHostTools,
         onNext = onNext,
+        nextEnabled = nextEnabled,
     ) {
         Column(
             modifier = Modifier
@@ -110,7 +116,8 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
@@ -141,6 +148,14 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
                     Spacer(Modifier.height(4.dp))
                 } else {
                     ClocktowerNightActionWakeInstruction(presentation.wakeInstruction)
+                }
+                presentation.hostInstruction?.takeIf { it.isNotBlank() }?.let { instruction ->
+                    Text(
+                        text = instruction,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(6.dp))
                 }
                 if (presentation.showHostDetails) {
                     Text(
@@ -176,6 +191,7 @@ internal fun ClocktowerEvilInfoSquareTableDialog(
                         )
                     }
                 }
+                hostControls()
                 if (presentation.showPlayerDisplayAction) {
                     Spacer(Modifier.height(10.dp))
                     OutlinedButton(
