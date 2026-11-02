@@ -1,3 +1,5 @@
+**Owner authorization — 2026-11-02:** 用户已明确授权整个项目的推送和发布（“授权推送和发布，适用于整个项目”）。对现有项目 origin 的后续推送与 PR 发布不重复请求授权；现有合并及付费 API 边界保持原约定。
+
 # CURRENT OWNER TEST POLICY — 2026-10-25
 
 **Binding correction after repeated over-testing; supersedes conflicting historical test-first, every-change-test and blanket UI/full-suite requirements below.** Follow [testing strategy](docs/TESTING_STRATEGY.md).
