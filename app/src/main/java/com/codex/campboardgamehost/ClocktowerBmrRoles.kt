@@ -4,7 +4,7 @@ package com.codex.campboardgamehost
 internal val badMoonRisingRoles = listOf(
     ClocktowerRole(ClocktowerTeam.Townsfolk, "祖母", "Grandmother", "开局得知一名善良玩家及其角色；若恶魔杀死该玩家，你也死亡。", "You start knowing a good player & their character. If the Demon kills them, you die too."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "水手", "Sailor", "每晚选择一名存活玩家，你或他醉酒直到黄昏。你不会死亡。", "Each night, choose an alive player: either you or they are drunk until dusk. You can't die."),
-    ClocktowerRole(ClocktowerTeam.Townsfolk, "侍女", "Chambermaid", "每晚选择两名除你以外的存活玩家，得知其中有几人因能力醒来。", "Each night, choose 2 alive players (not yourself): you learn how many woke tonight due to their ability."),
+    chambermaidRole,
     ClocktowerRole(ClocktowerTeam.Townsfolk, "旅店老板", "Innkeeper", "每晚（首夜除外）选择两名玩家，他们今晚不会死亡，其中一人醉酒直到黄昏。", "Each night*, choose 2 players: they can't die tonight, but 1 is drunk until dusk."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "赌徒", "Gambler", "每晚（首夜除外）选择一名玩家并猜测其角色，猜错则你死亡。", "Each night*, choose a player & guess their character: if you guess wrong, you die."),
     ClocktowerRole(ClocktowerTeam.Townsfolk, "驱魔人", "Exorcist", "每晚（首夜除外）选择一名与昨晚不同的玩家；若是恶魔，他得知你是谁且今晚不醒来。", "Each night*, choose a player (different to last night): the Demon, if chosen, learns who you are then doesn't wake tonight."),

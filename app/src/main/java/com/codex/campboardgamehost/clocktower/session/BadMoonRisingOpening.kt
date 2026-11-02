@@ -27,8 +27,9 @@ internal object BadMoonRisingOpening {
         fun pool(team: ClocktowerTeam) = badMoonRisingRoles.filter { it.team == team }.map { it.enName }.shuffled(random)
         val demons = pool(ClocktowerTeam.Demon).take(1)
         val minions = pool(ClocktowerTeam.Minion).take(base.minions)
-        val outsiderCount = if ("Godfather" in minions)
-            listOf(base.outsiders - 1, base.outsiders + 1).filter { it in 0..4 }.random(random) else base.outsiders
+        val hasGodfather = "Godfather" in minions
+        val counts = outsiderCounts(base.outsiders, hasGodfather)
+        val outsiderCount = if (hasGodfather) counts.random(random) else counts.single()
         val roles = (demons + minions + pool(ClocktowerTeam.Outsider).take(outsiderCount) +
             pool(ClocktowerTeam.Townsfolk).take(names.size - 1 - minions.size - outsiderCount)).shuffled(random)
         return GameState(script, roles.mapIndexed { index, role ->
@@ -49,6 +50,9 @@ internal object BadMoonRisingOpening {
         } })
     }
 
+    private fun outsiderCounts(base: Int, hasGodfather: Boolean): List<Int> =
+        if (hasGodfather) listOf(base - 1, base + 1).filter { it in 0..4 } else listOf(base)
+
     fun errors(state: GameState): List<Error> = buildList {
         val players = state.players
         if (state.script != script || players.size !in 5..15 || players.any { it.name.isBlank() } || players.map { it.name }.distinct().size != players.size) add(Error.PLAYERS)
@@ -61,7 +65,7 @@ internal object BadMoonRisingOpening {
         if (players.size in 5..15) {
             val base = clocktowerSetupDistribution(players.size)
             val outsiders = players.count { it.actualType == CharacterType.OUTSIDER }
-            val allowed = if (players.any { it.actualRole.value == "Godfather" }) listOf(base.outsiders - 1, base.outsiders + 1).filter { it in 0..4 } else listOf(base.outsiders)
+            val allowed = outsiderCounts(base.outsiders, players.any { it.actualRole.value == "Godfather" })
             if (outsiders !in allowed || players.count { it.actualType == CharacterType.MINION } != base.minions ||
                 players.count { it.actualType == CharacterType.DEMON } != 1) add(Error.DISTRIBUTION)
         }

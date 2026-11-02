@@ -144,3 +144,13 @@ Godfather 的初始外来者调整属于 A；其后续死亡/额外击杀留给 
 - 没有删除生产文件或独占测试；本批主代码/资源净增 38,707 字节，所有生产 Kotlin 文件均小于 50,000 字节。替换了“7人以上强制 TB”与“其余剧本默认 NGJ”的入口判断，无平行恢复或夜间执行链。
 - APK：`app/build/outputs/apk/debug/app-debug.apk`；未做真机或实际进程强杀验证，未调用付费 API。
 - 用户随后明确授权整个项目的推送和发布；按此授权推送 BMR 分支并创建 Draft PR，精确 SHA 的远端 CI/R2 结果以 PR 检查为准。
+
+### 审计修复：单一规则来源与跨项目记忆
+
+按跨项目工程经验和本项目 AGENTS.md 的单一来源要求，替换时迁移消费者并同批删除旧路径；本次删除重复定义，不保留兜底副本。BMR PR 保持 Draft。
+
+- 教父的合法外来者数量只在 `outsiderCounts()` 定义，生成与校验共用。保留原随机数调用顺序，避免无关地改变固定种子的阵容。
+- NGJ/BMR 的侍女列表和能力文本共用 `chambermaidRole`；删除两份内联角色资料及一份重复能力字符串。修正玩家卡缺少“不能选择自己”的说明，各剧本原有夜序元数据不变。
+- 没有新增文件、测试方法、框架、恢复字段或 UI 状态；没有删除生产文件或独占测试。生产代码净增 30 字节，所有生产 Kotlin 文件仍小于 50,000 字节。
+
+本地复用 `BadMoonRisingOpeningTest`、`BuiltInClocktowerRulesetCatalogTest` 和 `ClocktowerCompleteAppUiTest` 定向回归及 Debug APK 构建通过；测试方法零增删，未重复本地全量套件。远端精确提交的 full CI/R2 结果以 PR 为准，真机验证仍未执行。
