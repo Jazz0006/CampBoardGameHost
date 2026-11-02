@@ -95,6 +95,11 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 is ActionFact.DeathRegistration -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 登记为死亡", "${seat(f.targetSeat)} registers as dead") }
                 is ActionFact.PhaseAdvance -> return@mapNotNull null // phase is the section heading
                 is ActionFact.Poison -> f.targetSeat?.let { t("投毒 → ${seat(it)}", "Poison → ${seat(it)}") } ?: t("未选择投毒目标", "No poison target selected")
+                is ActionFact.PukkaChoice -> {
+                    details = if (f.poisonApplied) "" else t("中毒未生效", "Poison did not take effect")
+                    t("普卡选择：${seat(f.targetSeat)}", "Pukka chose ${seat(f.targetSeat)}")
+                }
+                is ActionFact.PukkaPoisonEnded -> return@mapNotNull null
                 is ActionFact.Protect -> t("保护 → ${seat(f.targetSeat)}", "Protect → ${seat(f.targetSeat)}")
                 is ActionFact.Attack -> t("攻击 → ${seat(f.targetSeat)}", "Attack → ${seat(f.targetSeat)}")
                 is ActionFact.ButlerMasterChoice -> t("${seat(f.butlerSeat)} 选择主人 → ${seat(f.masterSeat)}", "${seat(f.butlerSeat)} chose master → ${seat(f.masterSeat)}")

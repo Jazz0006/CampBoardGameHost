@@ -103,6 +103,8 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.Execution -> JSONObject().put("type", "execution").put("seat", fact.targetSeat)
             .also { if (!fact.causedDeath) it.put("died", false) }
         is ActionFact.Death -> JSONObject().put("type", "death").put("seat", fact.targetSeat)
+        is ActionFact.PukkaChoice -> JSONObject().put("type", "pukka_choice").put("actorSeat", fact.actorSeat).put("seat", fact.targetSeat).put("poisonApplied", fact.poisonApplied)
+        is ActionFact.PukkaPoisonEnded -> null
         is ActionFact.Revival -> JSONObject().put("type", "revival").put("seat", fact.targetSeat)
         is ActionFact.DeathRegistration -> JSONObject().put("type", "death_registration").put("seat", fact.targetSeat).put("dead", true)
         is ActionFact.NoExecution -> JSONObject().put("type", "no_execution")

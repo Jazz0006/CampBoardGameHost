@@ -34,6 +34,21 @@ sealed interface ActionFact {
         val targetSeat: Int?,
     ) : ActionFact
 
+    /** Actual Pukka choice; impaired selections are still choices, not active poison. */
+    data class PukkaChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val actorSeat: Int,
+        val targetSeat: Int,
+        val poisonApplied: Boolean,
+    ) : ActionFact
+
+    data class PukkaPoisonEnded(
+        override val actionId: String,
+        override val sequence: Long,
+        val choiceActionId: String,
+    ) : ActionFact
+
     data class Protect(
         override val actionId: String,
         override val sequence: Long,

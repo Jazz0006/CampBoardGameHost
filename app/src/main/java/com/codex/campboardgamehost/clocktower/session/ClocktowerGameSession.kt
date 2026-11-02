@@ -747,7 +747,7 @@ internal class ClocktowerGameSession private constructor(
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
-        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state)
+        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state).withPukkaPoisonState()
         if (accepted == state) return state
         if (!confirmingBatch) persist?.invoke(accepted)
         state = accepted

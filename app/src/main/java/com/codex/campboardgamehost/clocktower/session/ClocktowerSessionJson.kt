@@ -92,6 +92,8 @@ internal object ClocktowerSessionJson {
     private fun action(f: ActionFact): JSONObject = JSONObject().apply {
         put("kind", when(f) {
             is ActionFact.Poison -> "Poison"
+            is ActionFact.PukkaChoice -> "PukkaChoice"
+            is ActionFact.PukkaPoisonEnded -> "PukkaPoisonEnded"
             is ActionFact.Protect -> "Protect"
             is ActionFact.Attack -> "Attack"
             is ActionFact.Death -> "Death"
@@ -115,6 +117,8 @@ internal object ClocktowerSessionJson {
         })
         when(f) {
             is ActionFact.Poison -> put("target", f.targetSeat)
+            is ActionFact.PukkaChoice -> { put("actor", f.actorSeat); put("target", f.targetSeat); put("applied", f.poisonApplied) }
+            is ActionFact.PukkaPoisonEnded -> put("choice", f.choiceActionId)
             is ActionFact.Protect -> put("target", f.targetSeat)
             is ActionFact.Attack -> put("target", f.targetSeat)
             is ActionFact.Death -> { put("target", f.targetSeat); proof(f.klutzDeathTrigger)?.let { put("proof", it) } }
@@ -144,6 +148,8 @@ internal object ClocktowerSessionJson {
         fun registration() = if(j.isNull("registration")) null else j.getBoolean("registration")
         return when(j.getString("kind")) {
             "Poison" -> ActionFact.Poison(id, seq, j.intOrNull("target"))
+            "PukkaChoice" -> ActionFact.PukkaChoice(id, seq, actor(), target(), j.getBoolean("applied"))
+            "PukkaPoisonEnded" -> ActionFact.PukkaPoisonEnded(id, seq, j.getString("choice"))
             "Protect" -> ActionFact.Protect(id, seq, target())
             "Attack" -> ActionFact.Attack(id, seq, target())
             "Death" -> ActionFact.Death(id, seq, target(), j.optJSONObject("proof")?.let(::proof))

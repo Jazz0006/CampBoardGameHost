@@ -32,6 +32,28 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class PukkaChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val actorSeat: Int,
+        val targetSeat: Int,
+        val poisonApplied: Boolean,
+    ) : ActionFactDraft {
+        init { requireIdentity(actionId, round, sequence); requireSeat(actorSeat); requireSeat(targetSeat) }
+    }
+
+    data class PukkaPoisonEnded(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val choiceActionId: String,
+    ) : ActionFactDraft {
+        init { requireIdentity(actionId, round, sequence); require(choiceActionId.isNotBlank()) }
+    }
+
     data class Protect(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -346,6 +368,8 @@ internal fun ActionFactDraft.matches(entry: TimelineBoundActionFact): Boolean =
 
 private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = when (this) {
     is ActionFactDraft.Poison -> ActionFact.Poison(actionId, globalSequence, targetSeat)
+    is ActionFactDraft.PukkaChoice -> ActionFact.PukkaChoice(actionId, globalSequence, actorSeat, targetSeat, poisonApplied)
+    is ActionFactDraft.PukkaPoisonEnded -> ActionFact.PukkaPoisonEnded(actionId, globalSequence, choiceActionId)
     is ActionFactDraft.Protect -> ActionFact.Protect(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Attack -> ActionFact.Attack(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger, causedDeath)
