@@ -65,6 +65,7 @@ sealed interface ActionFactDraft {
         override val sequence: Int,
         val targetSeat: Int,
         val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
+        val causedDeath: Boolean = true,
     ) : ActionFactDraft {
         init {
             requireIdentity(actionId, round, sequence)
@@ -85,6 +86,24 @@ sealed interface ActionFactDraft {
             requireSeat(targetSeat)
         }
     }
+
+    /** A real resurrection; it starts a new life for vote and once-per-game ability use. */
+    data class Revival(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val targetSeat: Int,
+    ) : ActionFactDraft
+
+    /** Changes public death registration without killing or resurrecting the player. */
+    data class DeathRegistration(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val targetSeat: Int,
+    ) : ActionFactDraft
 
     data class NoExecution(
         override val actionId: String,
@@ -329,8 +348,10 @@ private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = whe
     is ActionFactDraft.Poison -> ActionFact.Poison(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Protect -> ActionFact.Protect(actionId, globalSequence, targetSeat)
     is ActionFactDraft.Attack -> ActionFact.Attack(actionId, globalSequence, targetSeat)
-    is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger)
+    is ActionFactDraft.Execution -> ActionFact.Execution(actionId, globalSequence, targetSeat, klutzDeathTrigger, causedDeath)
     is ActionFactDraft.Death -> ActionFact.Death(actionId, globalSequence, targetSeat, klutzDeathTrigger)
+    is ActionFactDraft.Revival -> ActionFact.Revival(actionId, globalSequence, targetSeat)
+    is ActionFactDraft.DeathRegistration -> ActionFact.DeathRegistration(actionId, globalSequence, targetSeat)
     is ActionFactDraft.NoExecution -> ActionFact.NoExecution(actionId, globalSequence)
     is ActionFactDraft.SlayerShot -> ActionFact.SlayerShot(
         actionId, globalSequence, claimantSeat, targetSeat, abilityConsumed, hit, targetRegistersAsDemon,

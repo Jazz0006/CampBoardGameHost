@@ -14,7 +14,7 @@ internal fun ClocktowerGameSession.commitConfirmedPlayerDeath(
 ): TimelineBoundActionFact {
     val targetSeat = when (draft) {
         is ActionFactDraft.Death -> draft.targetSeat
-        is ActionFactDraft.Execution -> draft.targetSeat
+        is ActionFactDraft.Execution -> { require(draft.causedDeath); draft.targetSeat }
         else -> error("Only a confirmed death or execution can eliminate a player.")
     }
     val current = state.gameState
@@ -24,7 +24,8 @@ internal fun ClocktowerGameSession.commitConfirmedPlayerDeath(
     }
     val next = current.copy(
         players = current.players.map { player ->
-            if (player.seat == targetSeat) player.copy(alive = false, poisoned = false) else player
+            if (player.seat == targetSeat) player.copy(alive = false, registersAsDead = false,
+                poisoned = if (current.script == BadMoonRisingOpening.script) player.poisoned else false) else player
         },
     )
     return commitConfirmedGameAction(

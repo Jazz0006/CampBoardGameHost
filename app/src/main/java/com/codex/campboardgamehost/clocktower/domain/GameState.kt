@@ -35,7 +35,10 @@ data class PlayerState(
     val shownRole: RoleId? = null,
     val alive: Boolean = true,
     val poisoned: Boolean = false,
+    val registersAsDead: Boolean = false,
 ) {
+    val publiclyAlive: Boolean get() = alive && !registersAsDead
+
     init {
         require(seat > 0) { "Seat numbers start at 1." }
     }

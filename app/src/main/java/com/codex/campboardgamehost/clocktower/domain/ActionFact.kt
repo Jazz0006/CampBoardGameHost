@@ -51,6 +51,7 @@ sealed interface ActionFact {
         override val sequence: Long,
         val targetSeat: Int,
         val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
+        val causedDeath: Boolean = true,
     ) : ActionFact
 
     data class Death(
@@ -58,6 +59,20 @@ sealed interface ActionFact {
         override val sequence: Long,
         val targetSeat: Int,
         val klutzDeathTrigger: KlutzDeathTriggerEvidenceV1? = null,
+    ) : ActionFact
+
+    /** A real resurrection; it starts a new life for vote and once-per-game ability use. */
+    data class Revival(
+        override val actionId: String,
+        override val sequence: Long,
+        val targetSeat: Int,
+    ) : ActionFact
+
+    /** Changes public death registration without killing or resurrecting the player. */
+    data class DeathRegistration(
+        override val actionId: String,
+        override val sequence: Long,
+        val targetSeat: Int,
     ) : ActionFact
 
     /**

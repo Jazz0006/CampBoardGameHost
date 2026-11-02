@@ -37,7 +37,6 @@ internal object ClocktowerActiveGameMetadata {
         val metadata = saved.metadata
         val session = ClocktowerGameSession.restore(state)
         if (state.gameState.script == BadMoonRisingOpening.script) {
-            BadMoonRisingOpening.requireValid(state.gameState)
             require(metadata.getString("mode") == StorytellerOperationMode.MANUAL.name)
             require(!metadata.has("ruleset") && !metadata.has("rotation") && !metadata.has("opening") && !metadata.has("cursor"))
         }

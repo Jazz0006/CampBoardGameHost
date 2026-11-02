@@ -196,7 +196,7 @@ internal class ClocktowerGameSession private constructor(
     private fun prepareGlobalActionDraft(draft: ActionFactDraft): ActionFactDraft {
         val deathSeat = when (draft) {
             is ActionFactDraft.Death -> draft.targetSeat
-            is ActionFactDraft.Execution -> draft.targetSeat
+            is ActionFactDraft.Execution -> draft.targetSeat.takeIf { draft.causedDeath }
             else -> null
         }
         // External callers cannot assert death-time ability state. Read the one canonical
@@ -303,7 +303,7 @@ internal class ClocktowerGameSession private constructor(
             ),
             voteStanding = when (val fact = committed.entry.fact) {
                 is ActionFact.Vote -> state.voteStanding.confirm(fact.nomineeSeat,
-                    fact.voterSeats.size, (state.gameState.players.count { it.alive } + 1) / 2)
+                    fact.voterSeats.size, (state.gameState.players.count { it.publiclyAlive } + 1) / 2)
                 is ActionFact.PhaseAdvance -> if (fact.phase == StorytellerPhase.NIGHT ||
                     (fact.phase == StorytellerPhase.DAY && draft.phase != StorytellerPhase.DAY))
                     ClocktowerVoteStanding() else state.voteStanding

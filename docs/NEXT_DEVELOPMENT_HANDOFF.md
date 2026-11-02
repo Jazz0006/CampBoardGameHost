@@ -14,3 +14,5 @@ BMR 新功能线已完成 [A 批实施细化](BMR_A_IMPLEMENTATION_PLAN_2026-11-
 [当前路线](CURRENT_DEVELOPMENT_ROADMAP.md) · [旧累计交接](archive/legacy-host/PRE_SHARED_GUIDE_NEXT_DEVELOPMENT_HANDOFF.md) · [归档清理清单](DOCS_CLEANUP_2026-10-24.md)。
 
 2026-11-02 用户再次强调：存档只保证异常退出后继续当前局。复用既有活动局保存/加载；未确认步骤可重做，不恢复 UI 细节，不扩展历史档案、回放、初始快照或通用恢复框架。BMR 实施遵守此限制。
+
+最新 BMR 进展：[B 批生死基础与审核项](BMR_B_LIFE_PROGRESS_2026-11-02.md)。已开始实际生死/登记死亡/复活及其消费者接入，完整 B/C/D/E 尚未完成；普卡自毒时序已向用户请求审核，收到答复前暂停相关醉毒和角色流程实现。

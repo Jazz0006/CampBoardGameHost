@@ -2,6 +2,7 @@ package com.codex.campboardgamehost
 
 import com.codex.campboardgamehost.clocktower.domain.ActionFact
 import com.codex.campboardgamehost.clocktower.epistemic.ActionFactTimeline
+import com.codex.campboardgamehost.clocktower.session.spentGhostVoterSeats
 
 /** Read-only table projection of ghost votes already committed by the Session. */
 internal data class ClocktowerGhostVoteAuthority(
@@ -14,8 +15,7 @@ internal data class ClocktowerGhostVoteAuthority(
 
     companion object {
         fun from(timeline: ActionFactTimeline): ClocktowerGhostVoteAuthority =
-            ClocktowerGhostVoteAuthority(timeline.entries
-                .flatMap { (it.fact as? ActionFact.Vote)?.ghostVoterSeats.orEmpty() }
+            ClocktowerGhostVoteAuthority(timeline.spentGhostVoterSeats()
                 .mapTo(mutableSetOf(), ::ClocktowerSeatId))
     }
 }

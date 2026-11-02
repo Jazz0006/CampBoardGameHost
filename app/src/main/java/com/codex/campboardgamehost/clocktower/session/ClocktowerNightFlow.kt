@@ -18,7 +18,8 @@ internal fun ClocktowerSessionState.nightInteractions(ruleset: ValidatedClocktow
     val sameNight = actionTimeline.entries.filter { it.point.phase == phase && it.point.round == round }
     val deadSeats = sameNight.mapNotNull { (it.fact as? ActionFact.Death)?.targetSeat }.toSet()
     val hadExecution = actionTimeline.entries.any {
-        it.point.phase == StorytellerPhase.DAY && it.point.round == round - 1 && it.fact is ActionFact.Execution
+        it.point.phase == StorytellerPhase.DAY && it.point.round == round - 1 &&
+            (it.fact as? ActionFact.Execution)?.causedDeath == true
     }
     fun interaction(id: String, role: RoleId?, kind: ClocktowerHostInteractionKind = ClocktowerHostInteractionKind.ROLE_PHASE_ACTION) =
         ClocktowerHostInteraction(ClocktowerInteractionId(id), flowPhase, role, kind,

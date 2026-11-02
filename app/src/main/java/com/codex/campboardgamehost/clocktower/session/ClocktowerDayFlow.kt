@@ -89,7 +89,7 @@ private fun ClocktowerGameSession.killInDay(seat: Int, execution: Boolean, id: S
     // Executing an already dead nominee is still a real execution; it causes no second death.
     val successor = if (target.alive && target.actualType == CharacterType.DEMON && before.players.count { it.alive } >= 5)
         before.players.singleOrNull { it.alive && !it.poisoned && it.actualRole.value == "Scarlet Woman" } else null
-    val draft = if (execution) ActionFactDraft.Execution(id, state.phase, state.round, nextInputSequence, seat)
+    val draft = if (execution) ActionFactDraft.Execution(id, state.phase, state.round, nextInputSequence, seat, causedDeath = target.alive)
         else ActionFactDraft.Death(id, state.phase, state.round, nextInputSequence, seat)
     if (target.alive) commitConfirmedPlayerDeath(draft, state.gameStateRevision)
     else commitConfirmedGameAction(draft, before, state.gameStateRevision)
@@ -151,7 +151,7 @@ internal fun ClocktowerGameSession.confirmNomination(nominator: Int, nominee: In
     requireOpenDay()
     check(state.round == expectedRound && state.pendingVote() == null) { "Complete the current vote first." }
     val actor = requireNotNull(state.gameState.playerAt(nominator))
-    require(actor.alive && nominator != nominee && state.gameState.playerAt(nominee) != null)
+    require(actor.publiclyAlive && nominator != nominee && state.gameState.playerAt(nominee) != null)
     val today = state.actionTimeline.entries.filter { it.point.phase == state.phase && it.point.round == state.round }
     require(today.none { (it.fact as? ActionFact.Nomination)?.let { it.nominatorSeat == nominator || it.nomineeSeat == nominee } == true })
     val result = state.virginNomination(nominator, nominee, spyChoice)
@@ -177,11 +177,11 @@ internal fun ClocktowerGameSession.confirmVote(nominator: Int, nominee: Int, vot
     requireOpenDay()
     check(state.round == expectedRound && state.pendingVote()?.actionId == nomination.fact.actionId)
     require(voters.distinct().size == voters.size)
-    val spent = state.actionTimeline.entries.flatMap { (it.fact as? ActionFact.Vote)?.ghostVoterSeats.orEmpty() }.toSet()
+    val spent = state.actionTimeline.spentGhostVoterSeats()
     val ghosts = voters.filter { seat ->
         val player = requireNotNull(state.gameState.playerAt(seat))
-        require(player.alive || seat !in spent) { "A spent ghost vote cannot be used twice." }
-        !player.alive
+        require(player.publiclyAlive || seat !in spent) { "A spent ghost vote cannot be used twice." }
+        !player.publiclyAlive
     }
     val butler = state.gameState.players.singleOrNull { it.alive && !it.poisoned && it.actualRole.value == "Butler" }
     if (butler != null && butler.seat in voters) {

@@ -91,13 +91,17 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
             var category = GameRecordCategory.ACTION
             var details = ""
             val summary = when (f) {
+                is ActionFact.Revival -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 复活", "${seat(f.targetSeat)} resurrected") }
+                is ActionFact.DeathRegistration -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 登记为死亡", "${seat(f.targetSeat)} registers as dead") }
                 is ActionFact.PhaseAdvance -> return@mapNotNull null // phase is the section heading
                 is ActionFact.Poison -> f.targetSeat?.let { t("投毒 → ${seat(it)}", "Poison → ${seat(it)}") } ?: t("未选择投毒目标", "No poison target selected")
                 is ActionFact.Protect -> t("保护 → ${seat(f.targetSeat)}", "Protect → ${seat(f.targetSeat)}")
                 is ActionFact.Attack -> t("攻击 → ${seat(f.targetSeat)}", "Attack → ${seat(f.targetSeat)}")
                 is ActionFact.ButlerMasterChoice -> t("${seat(f.butlerSeat)} 选择主人 → ${seat(f.masterSeat)}", "${seat(f.butlerSeat)} chose master → ${seat(f.masterSeat)}")
                 is ActionFact.Death -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 死亡", "${seat(f.targetSeat)} died") }
-                is ActionFact.Execution -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 被处决", "${seat(f.targetSeat)} was executed") }
+                is ActionFact.Execution -> { category = GameRecordCategory.CHANGE
+                    details = if (f.causedDeath) "" else t("本次处决没有造成死亡", "This execution did not cause a death")
+                    t("${seat(f.targetSeat)} 被处决", "${seat(f.targetSeat)} was executed") }
                 is ActionFact.NoExecution -> { category = GameRecordCategory.CHANGE; t("今日无人被处决", "No execution today") }
                 is ActionFact.RoleChange -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 变为 ${role(f.role)} · ${alignment(f.alignment)}", "${seat(f.targetSeat)} became ${role(f.role)} · ${alignment(f.alignment)}") }
                 is ActionFact.Nomination -> { category = GameRecordCategory.VOTE
@@ -141,7 +145,7 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         val deathsByPhase = entries.mapNotNullTo(hashSetOf()) { e ->
             when (val f = e.fact) {
                 is ActionFact.Death -> Triple(e.point.phase, e.point.round, f.targetSeat)
-                is ActionFact.Execution -> Triple(e.point.phase, e.point.round, f.targetSeat)
+                is ActionFact.Execution -> if (f.causedDeath) Triple(e.point.phase, e.point.round, f.targetSeat) else null
                 else -> null
             }
         }

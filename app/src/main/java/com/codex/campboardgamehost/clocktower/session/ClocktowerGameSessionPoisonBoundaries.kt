@@ -37,7 +37,7 @@ internal fun ClocktowerSessionState.expirePoisonAfterConfirmedSourceExit(
     val exit = actionTimeline.entries.lastOrNull { entry ->
         entry.point.globalSequence >= previous.nextTimelineGlobalSequence && when (val fact = entry.fact) {
             is ActionFact.Death -> fact.targetSeat == source.seat
-            is ActionFact.Execution -> fact.targetSeat == source.seat
+            is ActionFact.Execution -> fact.causedDeath && fact.targetSeat == source.seat
             is ActionFact.RoleChange -> fact.targetSeat == source.seat
             else -> false
         }
