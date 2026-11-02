@@ -43,7 +43,7 @@ private val noGreaterJoyExtraRoles = listOf(
     ClocktowerRole(ClocktowerTeam.Outsider, "呆瓜", "Klutz", "当你得知自己死亡时，公开选择一名存活玩家；若对方邪恶，你的阵营失败。", "When you learn that you died, publicly choose one alive player: if they are evil, your team loses."),
 )
 
-private val completeClocktowerRoles = (completeTroubleBrewingRoles + noGreaterJoyExtraRoles).distinctBy { it.enName }
+private val completeClocktowerRoles = (completeTroubleBrewingRoles + noGreaterJoyExtraRoles + badMoonRisingRoles).distinctBy { it.enName }
 
 private val noGreaterJoyRoleNames = setOf(
     "Clockmaker",
@@ -60,6 +60,7 @@ private val noGreaterJoyRoleNames = setOf(
 )
 
 internal fun clocktowerRolesForScript(script: ClocktowerScript): List<ClocktowerRole> = when (script) {
+    ClocktowerScript.BadMoonRising -> badMoonRisingRoles
     ClocktowerScript.TroubleBrewing -> completeTroubleBrewingRoles
     ClocktowerScript.NoGreaterJoy -> completeClocktowerRoles.filter { it.enName in noGreaterJoyRoleNames }
 }
@@ -78,4 +79,5 @@ internal fun ClocktowerRole.descriptionFor(language: String): String = if (langu
 internal fun ClocktowerScript.nameFor(language: String): String = when (this) {
     ClocktowerScript.TroubleBrewing -> if (language == "en") "Trouble Brewing" else "暗流涌动"
     ClocktowerScript.NoGreaterJoy -> "No Greater Joy"
+    ClocktowerScript.BadMoonRising -> if (language == "en") "Bad Moon Rising" else "暗月初升"
 }

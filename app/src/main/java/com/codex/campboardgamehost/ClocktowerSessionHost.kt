@@ -89,6 +89,10 @@ internal fun ClocktowerSessionHost(
     onHostTools: () -> Unit,
 ) {
     val sessionUi = requireNotNull(lifecycle.sessionUi)
+    if (sessionUi.snapshot.gameState.script == BadMoonRisingOpening.script) {
+        ClocktowerBmrOpeningTable(cards, onHostTools)
+        return
+    }
     val storytellerOperationMode = lifecycle.operationMode
     val clocktowerRulesetRef = lifecycle.rulesetRef
     val session = sessionUi.session

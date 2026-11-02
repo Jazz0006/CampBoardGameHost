@@ -96,6 +96,12 @@ internal class ClocktowerGameLifecycle(
             ClocktowerScript.NoGreaterJoy, seed, null), null, null)
     }
 
+    fun startBadMoonRising(initial: GameState): StartResult {
+        BadMoonRisingOpening.requireValid(initial)
+        check(operationMode == StorytellerOperationMode.MANUAL)
+        return installNew(UUID.randomUUID().toString(), initial, null, null)
+    }
+
     private fun metadata(ref: RulesetRef? = rulesetRef, record: TroubleBrewingSetupRotationRecord? = rotation) =
         ClocktowerActiveGameMetadata.encode(operationMode, ref, record, conversation.openingPlanRecommendation,
             conversation.strategicPolicyCursor, conversation.canonicalConversationResponseId, conversation.canonicalConversationModel)

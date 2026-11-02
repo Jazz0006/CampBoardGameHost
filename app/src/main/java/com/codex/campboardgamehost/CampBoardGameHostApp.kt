@@ -42,6 +42,7 @@ internal enum class Screen {
     Setup,
     ClocktowerSettings,
     ClocktowerDrunkSelection,
+    BmrOpening,
     ClocktowerJointPass,
     ClocktowerJointReveal,
     ClocktowerJointReview,
@@ -73,7 +74,12 @@ private fun defaultClocktowerScriptFor(playerCount: Int): ClocktowerScript =
     if (playerCount in 5..6) ClocktowerScript.NoGreaterJoy else ClocktowerScript.TroubleBrewing
 
 internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
-    script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy
+    script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy ||
+        (script == ClocktowerScript.BadMoonRising && BuildConfig.DEBUG)
+
+internal fun clocktowerScriptsFor(playerCount: Int): List<ClocktowerScript> = ClocktowerScript.entries.filter {
+    canStartClocktowerScript(it) && (it != ClocktowerScript.NoGreaterJoy || playerCount in 5..6)
+}
 
 @Composable
 internal fun CampBoardGameHostApp(
@@ -93,6 +99,7 @@ internal fun CampBoardGameHostApp(
     val context = remember(languageMode) { baseContext.localized(languageMode) }
     val language = context.resources.configuration.locales[0].language
     var screen by remember { mutableStateOf(Screen.Landing) }
+    var bmrDraft by remember { mutableStateOf<com.codex.campboardgamehost.clocktower.domain.GameState?>(null) }
     var activeGameRestoreError by remember { mutableStateOf(false) }
     var activeGameSaveError by remember { mutableStateOf(false) }
     var settingsReturnScreen by remember { mutableStateOf(Screen.Setup) }
@@ -164,8 +171,7 @@ internal fun CampBoardGameHostApp(
     fun startClocktowerGame() {
         val names = hostSeatingSetupFlow.playerNamesFor()
         if (names.size < MIN_CLOCKTOWER_PLAYERS) return
-        val script = if (names.size in 5..6) selectedClocktowerScript ?: defaultClocktowerScriptFor(names.size)
-            else ClocktowerScript.TroubleBrewing
+        val script = selectedClocktowerScript?.takeIf { it in clocktowerScriptsFor(names.size) } ?: defaultClocktowerScriptFor(names.size)
         if (!canStartClocktowerScript(script) || !lifecycle.beginNewGame(script)) return
         openingDraft.reset(aiConversation)
         if (script == ClocktowerScript.TroubleBrewing) {
@@ -173,7 +179,11 @@ internal fun CampBoardGameHostApp(
             applyOpeningResult(openingDraft.beginPrepared(UUID.randomUUID().toString(), prepared,
                 names.mapIndexed { index, name -> index + 1 to preferences.openingExperience(name) }.toMap(),
                 language, aiSettings, activeGameClocktowerRulesetCatalog, lifecycle, drunkAiScope))
-        } else if (lifecycle.startNoGreaterJoy(names) == ClocktowerGameLifecycle.StartResult.STARTED) {
+        } else if (script == ClocktowerScript.BadMoonRising) {
+            bmrDraft = bmrDraft?.takeIf { it.players.map { p -> p.name } == names }
+                ?: com.codex.campboardgamehost.clocktower.session.BadMoonRisingOpening.generate(names, newClocktowerSeed())
+            screen = Screen.BmrOpening
+        } else if (script == ClocktowerScript.NoGreaterJoy && lifecycle.startNoGreaterJoy(names) == ClocktowerGameLifecycle.StartResult.STARTED) {
             currentDealIndex = 0; showResults = false; screen = Screen.PassPhone
         }
     }
@@ -300,21 +310,33 @@ internal fun CampBoardGameHostApp(
                         selectedScript = selectedClocktowerScript ?: defaultClocktowerScriptFor(playerCount),
                         preferredOperationMode = aiSettings.preferredMode,
                         aiConfigurationReady = readyForNewClocktowerGame(
-                            if (playerCount in 5..6) selectedClocktowerScript
+                            selectedClocktowerScript?.takeIf { it in clocktowerScriptsFor(playerCount) }
                                 ?: defaultClocktowerScriptFor(playerCount)
-                            else ClocktowerScript.TroubleBrewing
                         ),
                         onOpenAiSettings = {
                             settingsReturnScreen = Screen.ClocktowerSettings
                             screen = Screen.Settings
                         },
-                        onScriptChange = { selectedClocktowerScript = it },
+                        onScriptChange = { if (selectedClocktowerScript != it) bmrDraft = null; selectedClocktowerScript = it },
                         onBack = {
                             reopenSeatingSetup()
                         },
                         onStart = ::startClocktowerGame,
                     )
 
+                    Screen.BmrOpening -> ClocktowerBmrOpeningScreen(
+                        draft = requireNotNull(bmrDraft), onChange = { bmrDraft = it },
+                        onRegenerate = { bmrDraft = com.codex.campboardgamehost.clocktower.session.BadMoonRisingOpening.generate(
+                            requireNotNull(bmrDraft).players.map { it.name }, newClocktowerSeed()) },
+                        onBack = { screen = Screen.ClocktowerSettings },
+                        onConfirm = {
+                            bmrDraft?.let { initial ->
+                                if (lifecycle.startBadMoonRising(initial) == ClocktowerGameLifecycle.StartResult.STARTED) {
+                                    bmrDraft = null; currentDealIndex = 0; showResults = false; screen = Screen.PassPhone
+                                }
+                            }
+                        },
+                    )
                     Screen.ClocktowerJointPass -> {
                         val pending = requireNotNull(pendingJointOpening)
                         val previewCards = pending.shownOnlyCards

@@ -36,10 +36,11 @@ internal object ClocktowerSessionJson {
                 Alignment.valueOf(p.getString("alignment")), CharacterType.valueOf(p.getString("type")),
                 p.stringOrNull("shown")?.let(::RoleId), p.getBoolean("alive"), p.getBoolean("poisoned"))
         }, seed)
-        require(game.script.value in setOf("trouble_brewing", "no_greater_joy"))
+        require(game.script.value in setOf("trouble_brewing", "no_greater_joy", "bad_moon_rising"))
         require(game.players.map { it.seat }.sorted() == (1..game.players.size).toList())
         require(game.players.map { it.name }.distinct().size == game.players.size)
         require(game.players.size in if(game.script.value == "no_greater_joy") 5..6 else 5..15)
+        if (game.script == BadMoonRisingOpening.script) BadMoonRisingOpening.requireValid(game)
         val actions = ActionFactTimeline(j.getJSONArray("actions").objects().map { e ->
             TimelineBoundActionFact(action(e), TimelinePoint(StorytellerPhase.valueOf(e.getString("phase")),
                 e.getInt("round"), e.getInt("local"), e.getLong("global")))

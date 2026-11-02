@@ -47,6 +47,7 @@ internal enum class ClocktowerDisplayKind {
 internal enum class ClocktowerScript {
     TroubleBrewing,
     NoGreaterJoy,
+    BadMoonRising,
 }
 
 internal data class ClocktowerRole(

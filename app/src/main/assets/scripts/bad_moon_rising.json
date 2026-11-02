@@ -1,0 +1,119 @@
+[
+  {
+    "id": "_meta",
+    "name": "Bad Moon Rising",
+    "author": "The Pandemonium Institute",
+    "firstNight": [
+      "dusk",
+      "minioninfo",
+      "lunatic",
+      "demoninfo",
+      "sailor",
+      "courtier",
+      "godfather",
+      "devilsadvocate",
+      "pukka",
+      "grandmother",
+      "chambermaid",
+      "dawn"
+    ],
+    "otherNight": [
+      "dusk",
+      "sailor",
+      "courtier",
+      "innkeeper",
+      "gambler",
+      "devilsadvocate",
+      "lunatic",
+      "exorcist",
+      "zombuul",
+      "pukka",
+      "shabaloth",
+      "po",
+      "assassin",
+      "godfather",
+      "gossip",
+      "professor",
+      "tinker",
+      "moonchild",
+      "grandmother",
+      "chambermaid",
+      "dawn"
+    ]
+  },
+  {
+    "id": "grandmother"
+  },
+  {
+    "id": "sailor"
+  },
+  {
+    "id": "chambermaid"
+  },
+  {
+    "id": "innkeeper"
+  },
+  {
+    "id": "gambler"
+  },
+  {
+    "id": "exorcist"
+  },
+  {
+    "id": "gossip"
+  },
+  {
+    "id": "courtier"
+  },
+  {
+    "id": "professor"
+  },
+  {
+    "id": "minstrel"
+  },
+  {
+    "id": "tealady"
+  },
+  {
+    "id": "fool"
+  },
+  {
+    "id": "pacifist"
+  },
+  {
+    "id": "goon"
+  },
+  {
+    "id": "lunatic"
+  },
+  {
+    "id": "tinker"
+  },
+  {
+    "id": "moonchild"
+  },
+  {
+    "id": "godfather"
+  },
+  {
+    "id": "devilsadvocate"
+  },
+  {
+    "id": "assassin"
+  },
+  {
+    "id": "mastermind"
+  },
+  {
+    "id": "pukka"
+  },
+  {
+    "id": "shabaloth"
+  },
+  {
+    "id": "po"
+  },
+  {
+    "id": "zombuul"
+  }
+]

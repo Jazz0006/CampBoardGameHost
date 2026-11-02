@@ -14,6 +14,7 @@ internal fun ClocktowerScript.toRecommendationScriptId(): ScriptId = ScriptId(
     when (this) {
         ClocktowerScript.TroubleBrewing -> "trouble_brewing"
         ClocktowerScript.NoGreaterJoy -> "no_greater_joy"
+        ClocktowerScript.BadMoonRising -> "bad_moon_rising"
     },
 )
 

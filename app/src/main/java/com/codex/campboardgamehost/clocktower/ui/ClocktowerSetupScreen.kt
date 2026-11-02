@@ -58,8 +58,9 @@ internal fun ClocktowerSettingsScreen(
         ClocktowerTeam.Minion to setupDistribution.minions,
         ClocktowerTeam.Demon to setupDistribution.demons,
     )
-    val showScriptChoice = playerCount in 5..6
-    val effectiveScript = if (showScriptChoice) selectedScript else ClocktowerScript.TroubleBrewing
+    val availableScripts = clocktowerScriptsFor(playerCount)
+    val showScriptChoice = availableScripts.size > 1
+    val effectiveScript = selectedScript.takeIf { it in availableScripts } ?: ClocktowerScript.TroubleBrewing
     val effectiveOperationMode = storytellerModeForNewGame(preferredOperationMode, effectiveScript)
     val canStart = playerCount >= MIN_CLOCKTOWER_PLAYERS &&
         canStartClocktowerScript(effectiveScript) &&
@@ -181,7 +182,7 @@ internal fun ClocktowerSettingsScreen(
                 1 -> item {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (showScriptChoice) {
-                            ClocktowerScript.entries.forEach { script ->
+                            availableScripts.forEach { script ->
                                 Card(
                                     onClick = { onScriptChange(script) },
                                     shape = RoundedCornerShape(20.dp),
@@ -209,6 +210,7 @@ internal fun ClocktowerSettingsScreen(
                                             text = when (script) {
                                                 ClocktowerScript.TroubleBrewing ->
                                                     text("经典入门剧本，角色互动完整，适合标准人数。", "The classic introductory script with the full core interaction set.")
+                                                ClocktowerScript.BadMoonRising -> text("开发预览：合法随机开局、发牌和首夜方桌；完整主持尚未接入。官方推荐7人以上。", "Development preview: random setup, dealing and first-night table only. Recommended for 7+ players.")
                                                 ClocktowerScript.NoGreaterJoy ->
                                                     text("为 5–6 人小局准备的精简角色组合。", "A focused character set designed for 5–6 players.")
                                             },
@@ -268,7 +270,9 @@ internal fun ClocktowerSettingsScreen(
                             ClocktowerSetupSummaryRow(text("剧本", "Script"), effectiveScript.nameFor(language))
                             ClocktowerSetupSummaryRow(
                                 text("阵营", "Teams"),
-                                ClocktowerTeam.entries.joinToString(" · ") { team ->
+                                if (effectiveScript == ClocktowerScript.BadMoonRising)
+                                    text("生成后核对，含教父人数调整", "Review generated counts, including Godfather adjustment")
+                                else ClocktowerTeam.entries.joinToString(" · ") { team ->
                                     "${team.label(context)} ${distribution[team] ?: 0}"
                                 },
                             )
@@ -314,8 +318,8 @@ internal fun ClocktowerSettingsScreen(
                             HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                             Text(
                                 text = text(
-                                    "点击开始后才会随机生成角色并保存本局。返回上一步不会丢失当前选择。",
-                                    "Characters are randomized and saved only after you start. Going back keeps your choices.",
+                                    if (effectiveScript == ClocktowerScript.BadMoonRising) "下一步生成待核对阵容，确认发牌后才保存本局。" else "点击开始后才会随机生成角色并保存本局。返回上一步不会丢失当前选择。",
+                                    if (effectiveScript == ClocktowerScript.BadMoonRising) "Generate a roster to review next. The game is saved only when you confirm dealing." else "Characters are randomized and saved only after you start. Going back keeps your choices.",
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
@@ -332,7 +336,7 @@ internal fun ClocktowerSettingsScreen(
                     nextLabel = if (step < 2) {
                         text("下一步", "Continue")
                     } else if (canStart) {
-                        stringResource(R.string.start_dealing)
+                        if (effectiveScript == ClocktowerScript.BadMoonRising) text("生成并核对阵容", "Generate and review roster") else stringResource(R.string.start_dealing)
                     } else if (effectiveOperationMode != StorytellerOperationMode.MANUAL &&
                         !aiConfigurationReady) {
                         text("请先配置 AI", "Configure AI first")

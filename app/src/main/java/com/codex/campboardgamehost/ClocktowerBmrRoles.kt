@@ -1,0 +1,30 @@
+package com.codex.campboardgamehost
+
+// Publisher metadata: botc-release/resources/data/roles.json; checked 2026-11-02.
+internal val badMoonRisingRoles = listOf(
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "祖母", "Grandmother", "开局得知一名善良玩家及其角色；若恶魔杀死该玩家，你也死亡。", "You start knowing a good player & their character. If the Demon kills them, you die too."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "水手", "Sailor", "每晚选择一名存活玩家，你或他醉酒直到黄昏。你不会死亡。", "Each night, choose an alive player: either you or they are drunk until dusk. You can't die."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "侍女", "Chambermaid", "每晚选择两名除你以外的存活玩家，得知其中有几人因能力醒来。", "Each night, choose 2 alive players (not yourself): you learn how many woke tonight due to their ability."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "旅店老板", "Innkeeper", "每晚（首夜除外）选择两名玩家，他们今晚不会死亡，其中一人醉酒直到黄昏。", "Each night*, choose 2 players: they can't die tonight, but 1 is drunk until dusk."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "赌徒", "Gambler", "每晚（首夜除外）选择一名玩家并猜测其角色，猜错则你死亡。", "Each night*, choose a player & guess their character: if you guess wrong, you die."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "驱魔人", "Exorcist", "每晚（首夜除外）选择一名与昨晚不同的玩家；若是恶魔，他得知你是谁且今晚不醒来。", "Each night*, choose a player (different to last night): the Demon, if chosen, learns who you are then doesn't wake tonight."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "造谣者", "Gossip", "每天可公开发表一句陈述，若为真，今晚一名玩家死亡。", "Each day, you may make a public statement. Tonight, if it was true, a player dies."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "侍臣", "Courtier", "每局限一次，在夜晚选择一个角色；若在场，该角色醉酒三天三夜。", "Once per game, at night, choose a character: they are drunk for 3 nights & 3 days."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "教授", "Professor", "每局限一次，在夜晚（首夜除外）选择一名死亡玩家；若为镇民，他复活。", "Once per game, at night*, choose a dead player: if they are a Townsfolk, they are resurrected."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "吟游诗人", "Minstrel", "若爪牙被处决而死亡，除你和旅行者外的所有玩家醉酒直到明天黄昏。", "When a Minion dies by execution, all other players (except Travellers) are drunk until dusk tomorrow."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "茶艺师", "Tea Lady", "若你两名存活邻居均为善良，他们不会死亡。", "If both your alive neighbors are good, they can't die."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "弄臣", "Fool", "首次将要死亡时，你不会死亡。", "The 1st time you die, you don't."),
+    ClocktowerRole(ClocktowerTeam.Townsfolk, "和平主义者", "Pacifist", "被处决的善良玩家可能不会死亡。", "Executed good players might not die."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "莽夫", "Goon", "每晚首个用能力选择你的玩家醉酒直到黄昏，你转变为他的阵营。", "Each night, the 1st player to choose you with their ability is drunk until dusk. You become their alignment."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "疯子", "Lunatic", "你以为自己是恶魔，但你不是。恶魔知道你是谁及你每晚选择的目标。", "You think you are a Demon, but you are not. The Demon knows who you are & who you choose at night."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "修补匠", "Tinker", "你可能随时死亡。", "You might die at any time."),
+    ClocktowerRole(ClocktowerTeam.Outsider, "月之子", "Moonchild", "得知自己死亡时，公开选择一名存活玩家；若他是善良玩家，他今晚死亡。", "When you learn that you died, publicly choose 1 alive player. Tonight, if it was a good player, they die."),
+    ClocktowerRole(ClocktowerTeam.Minion, "教父", "Godfather", "开局得知在场的外来者；若今天有外来者死亡，今晚选择一名玩家，他死亡。外来者数量减一或加一。", "You start knowing which Outsiders are in play. If 1 died today, choose a player tonight: they die. [-1 or +1 Outsider]"),
+    ClocktowerRole(ClocktowerTeam.Minion, "魔鬼代言人", "Devil's Advocate", "每晚选择一名存活玩家，与昨晚不同；若他明天被处决，他不会死亡。", "Each night, choose a living player (different to last night): if executed tomorrow, they don't die."),
+    ClocktowerRole(ClocktowerTeam.Minion, "刺客", "Assassin", "每局限一次，在夜晚（首夜除外）选择一名玩家，他死亡，即使存在防止死亡的效果。", "Once per game, at night*, choose a player: they die, even if for some reason they could not."),
+    ClocktowerRole(ClocktowerTeam.Minion, "主谋", "Mastermind", "若恶魔因处决而死亡，额外进行一天。若那天有玩家被处决，他的阵营落败。", "If the Demon dies by execution (ending the game), play for 1 more day. If a player is then executed, their team loses."),
+    ClocktowerRole(ClocktowerTeam.Demon, "普卡", "Pukka", "每晚选择一名玩家，他中毒。你上次选择的玩家死亡，然后恢复健康。", "Each night, choose a player: they are poisoned. The previously poisoned player dies then becomes healthy."),
+    ClocktowerRole(ClocktowerTeam.Demon, "沙巴洛斯", "Shabaloth", "每晚（首夜除外）选择两名玩家，他们死亡。你上晚选择的一名死亡玩家可能复活。", "Each night*, choose 2 players: they die. A dead player you chose last night might be regurgitated."),
+    ClocktowerRole(ClocktowerTeam.Demon, "珀", "Po", "每晚（首夜除外）可选择一名玩家，他死亡。若上晚未选择玩家，今晚选择三名玩家，他们死亡。", "Each night*, you may choose a player: they die. If your last choice was no-one, choose 3 players tonight."),
+    ClocktowerRole(ClocktowerTeam.Demon, "僵怖", "Zombuul", "每晚（首夜除外）若今天无人死亡，选择一名玩家，他死亡。你首次死亡时实际仍存活，但登记为死亡。", "Each night*, if no-one died today, choose a player: they die. The 1st time you die, you live but register as dead."),
+)
