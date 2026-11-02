@@ -1,5 +1,7 @@
 # 暗月初升：完整人工主持交付（2026-11-02）
 
+> **交付结果：** PR #372 已合并至 main `d10444b7d2f09a924f06676229c3edab46311605`。PR head `7fe2b345` 的 [完整 CI #4642](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727697) 与 [R2 #4179](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727632) 通过；合并后 [main 完整 CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310189) 及 [现场 APK 发布](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310152) 通过。已核对 Android 日志实际执行 `testFull + assembleDebug` 并 BUILD SUCCESSFUL。[现场安装包](https://github.com/Jazz0006/CampBoardGameHost/releases/download/field-test-latest/CampBoardGameHost-field-test.apk) 的发布元数据来源为该合并提交；此链接后续会随新版替换。UI 职责残留、测试文件超限、修正后真机/物理强杀验收仍未完成。
+
 本次将 A 的开局开发预览替换为可逐夜、逐日运行并确认终局的 MANUAL 流程，统一交付于 [PR #372](https://github.com/Jazz0006/CampBoardGameHost/pull/372)。所有者现已授权合并，最终状态及远端精确 SHA 验证以 PR 为准。这不是全自动规则裁判，也不包含 BMR AI；复杂醉酒来源的暂停/恢复及特殊胜负由说书人明确确认。所有者已开始真机试玩并报告问题，本轮修正后的真机验收尚未完成。
 
 ## 本轮真机反馈修正与职责审查

@@ -1,5 +1,7 @@
 # 2026-11-02 Session / UI authority and source-size audit
 
+Publication update: PR #372 is merged at main `d10444b7d2f09a924f06676229c3edab46311605`. Head `7fe2b345` passed [full CI #4642](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727697) and [R2 #4179](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727632). The merge passed [main full CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310189) and [Field Test APK publication](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310152); both Android acceptance logs were checked for testFull + assembleDebug and BUILD SUCCESSFUL. The review snapshot and local/remote distinction below describe the audit stage. The reported ownership/size follow-ups and device/paid-provider limits remain open.
+
 ## Scope and evidence
 
 Owner request: implement Courtier's role-selection-based use/skip interaction, then check the current code for one game authority, Session-controlled writes, read-only UI and the 50,000-byte source limit.

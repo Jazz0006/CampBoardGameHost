@@ -1,5 +1,7 @@
 # 当前开发路线
 
+> **已合并并同步（2026-11-02）：** [PR #372](https://github.com/Jazz0006/CampBoardGameHost/pull/372) 已合并至 main，合并提交 `d10444b7d2f09a924f06676229c3edab46311605`。PR 精确 head `7fe2b345` 的 [CI #4642](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727697) / [R2 #4179](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41443727632) 通过；合并后 [main 完整 CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310189) 与 [Field Test APK](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310152) 通过，Android 日志已核对实际运行 `testFull + assembleDebug`。后续从 live main 继续；以下职责/尺寸及真机遗留保持未完成。
+
 > **2026-11-02 真机反馈修正与审查：** PR [#372](https://github.com/Jazz0006/CampBoardGameHost/pull/372) 已完成 BMR MANUAL 主流程及本轮页面修正，所有者已授权合并；最终发布状态和精确提交检查以 PR 为准。爪牙、疯子、真实恶魔、教父、侍女、水手、侍臣的唤醒/信息/决策页面已统一，修复全屏行高；水手使用单选裁定，侍臣由是否选择角色决定使用/跳过。最新本地 `testFull + assembleDebug` 通过（661 项，0 失败）。这是自动化证据，修改后的真机视觉、物理强杀及付费 API 未验收。
 >
 > **后续明确遗留：** [Session/UI 审查](SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md) 确认单一 Session 写入及原子活动局保存仍保持，但 BMR 日夜/状态 UI 仍有规则事实组合需要收归 Session；既有 `ClocktowerD2UiTest.kt` 为 57,536 B，超过 50,000 B。生产源码均未超限，Session 最大 47,116 B，BMR 夜间页 36,333 B，后续扩展应控制职责增长。上述两项未在本批修复，也不能将“生产源码未超限”等同于全仓合规。继续真机反馈处理、Session 事实收拢及按职责拆分超限测试；TB/NGJ 的 AI 故障接管仍是独立未完成任务。

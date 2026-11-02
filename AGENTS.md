@@ -1,5 +1,7 @@
 **Owner authorization — 2026-11-02:** 用户已明确授权整个项目的推送和发布（“授权推送和发布，适用于整个项目”）。对现有项目 origin 的后续推送与 PR 发布不重复请求授权；现有合并及付费 API 边界保持原约定。
 
+**2026-11-02 合并完成：** PR #372 已合并至 main `d10444b7d2f09a924f06676229c3edab46311605`，本地 main 已同步。PR head `7fe2b345` 完整 CI #4642/R2 #4179、合并后 main CI run `41444310189` 与 Field Test APK run `41444310152` 均 SUCCESS；Android 日志已核对 `testFull + assembleDebug`。此条优先于下方“授权合并”及历史 Draft 描述；职责/尺寸/设备验收遗留仍按最新路线继续。
+
 **2026-11-02 当前进展：** 所有者已要求同步进度并合并 PR #372（BMR 完整 MANUAL 及本轮爪牙/疯子/恶魔/教父/侍女/水手/侍臣页面修正）。每次开工仍核对 live PR/main 和精确 SHA CI，勿沿用历史 Draft 状态。[最新路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)、[交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)、[职责审查](docs/SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md)已同步。本地完整 testFull 661 项/0 失败及 APK 构建通过；远端以最终提交检查为准。单 Session 写入保持，但 BMR UI 部分规则条件组合仍需收归 Session，既有 `ClocktowerD2UiTest.kt` 57,536 B 超限；生产源码均小于 50,000 B（Session 47,116 B、BMR 夜间 UI 36,333 B）。不要把上述遗留、真机/物理强杀、TB/NGJ AI 故障接管或付费 API 验收标记完成。
 
 # CURRENT OWNER TEST POLICY — 2026-10-25

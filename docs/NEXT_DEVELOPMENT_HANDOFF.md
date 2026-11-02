@@ -1,5 +1,7 @@
 # 当前开发交接
 
+> **合并后基线（2026-11-02）：** PR #372 已合并，main `d10444b7d2f09a924f06676229c3edab46311605`；本地 main 已快进同步。PR head `7fe2b345` 的完整 CI #4642/R2 #4179、合并后 [main 完整 CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310189) 及 [Field Test APK 发布](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310152) 均通过。Android 日志确实运行 `testFull + assembleDebug`，现场安装包来源为该合并提交。下一步继续下述真机反馈和职责/尺寸遗留，不再尝试合并已关闭的 PR #372；开工仍读取 live main，不将本 SHA 作为永久基线。
+
 > **2026-11-02 最新交接：** BMR MANUAL 及首批真机反馈修正统一交付于 [PR #372](https://github.com/Jazz0006/CampBoardGameHost/pull/372)，所有者已授权合并；先核对实时 PR/main 和精确 SHA 检查，不继续按旧 Draft 状态工作。爪牙/疯子/恶魔/教父/侍女页面、水手单选裁定、侍臣“选角色即使用、清除即跳过”和全屏行高修正均已实施；本地完整 testFull（661 项，0 失败）和 APK 构建通过。原子存档、最后展示才确认、Session 独占事实写入未改；Session JSON 格式不变。具体见[交付进展](BMR_MANUAL_GAME_PROGRESS_2026-11-02.md)和[职责审查](SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md)。
 >
 > **保留的下一步：** 真机继续核对页面/交接；将 BMR 日夜及状态控件中的规则条件组合收归 Session 事实接口；按交互职责拆分 57,536 B 的 `ClocktowerD2UiTest.kt`，不增加低价值测试。生产源码未超限（Session 47,116 B，BMR 夜间 UI 36,333 B），但须防止后续集中膨胀。不要把这些审查项标记已修复，也不要误报已完成真机/物理强杀/付费 API 验收。TB/NGJ AI 不可用及恢复后的人工接管完善仍独立未完成。
