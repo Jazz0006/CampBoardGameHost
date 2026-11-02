@@ -22,7 +22,9 @@ internal fun ClocktowerSessionState.pukkaPoisons(): List<TimelineBoundActionFact
 /** Source death/role exit clears its poison; self-poison persists until the source leaves. */
 internal fun ClocktowerSessionState.withPukkaPoisonState(): ClocktowerSessionState {
     if (gameState.script != BadMoonRisingOpening.script || actionTimeline.entries.none { it.fact is ActionFact.PukkaChoice }) return this
-    val poisoned = pukkaPoisons().mapTo(mutableSetOf()) { (it.fact as ActionFact.PukkaChoice).targetSeat }
+    val source = gameState.players.singleOrNull { it.alive && it.actualRole.value == "Pukka" }
+    val poisoned = pukkaPoisons().map { it.fact as ActionFact.PukkaChoice }
+        .filter { source?.drunk != true || it.targetSeat == source.seat }.mapTo(mutableSetOf()) { it.targetSeat }
     return copy(gameState = gameState.copy(players = gameState.players.map { it.copy(poisoned = it.seat in poisoned) }))
 }
 
@@ -38,10 +40,11 @@ internal fun ClocktowerGameSession.confirmPukkaChoice(targetSeat: Int, expectedR
         return@confirmAtomically
     }
     check(state.gameStateRevision == expectedRevision) { "Stale Pukka choice." }
-    require(actor.alive)
+    require(actor.alive && !state.bmrExorcised(actor.seat))
     requireNotNull(state.gameState.playerAt(targetSeat))
-    val applied = !actor.poisoned
     val priorChoices = state.pukkaPoisons()
+    triggerBmrGoon(actor.seat, targetSeat, id)
+    val applied = !requireNotNull(state.gameState.playerAt(actor.seat)).impaired
     commitConfirmedGameAction(ActionFactDraft.PukkaChoice(id, state.phase, state.round, nextInputSequence,
         actor.seat, targetSeat, applied), state.gameState, state.gameStateRevision)
     // Owner ruling: self-poison stops the old victim's death and permanently disables later picks.
@@ -52,11 +55,11 @@ internal fun ClocktowerGameSession.confirmPukkaChoice(targetSeat: Int, expectedR
 
 /** Delayed settlement is independent of whether an Exorcist permitted a new choice tonight. */
 internal fun ClocktowerSessionState.pukkaPoisonsDue(): List<TimelineBoundActionFact> =
-    if (phase != StorytellerPhase.NIGHT || gameState.players.none { it.alive && it.actualRole.value == "Pukka" && !it.poisoned }) emptyList()
+    if (phase != StorytellerPhase.NIGHT || gameState.players.none { it.alive && it.actualRole.value == "Pukka" && !it.impaired }) emptyList()
     else pukkaPoisons().filter { it.point.round < round }
 
 /** The old application ends; a new application to the SAME player remains in force. */
-internal fun ClocktowerGameSession.confirmPukkaPoisonResolution(choiceActionId: String, dies: Boolean, expectedRevision: Long) = confirmAtomically {
+internal fun ClocktowerGameSession.confirmPukkaPoisonResolution(choiceActionId: String, dies: Boolean, expectedRevision: Long, grandmotherDies: Boolean? = null) = confirmAtomically {
     val id = "pukka-resolved:$choiceActionId"
     if (state.actionTimeline.entries.any { it.fact.actionId == id }) {
         check(state.actionTimeline.entries.any { it.fact.actionId == "$id:death" } == dies)
@@ -67,8 +70,7 @@ internal fun ClocktowerGameSession.confirmPukkaPoisonResolution(choiceActionId: 
     val target = requireNotNull(state.gameState.playerAt(choice.targetSeat))
     // The manual Storyteller confirms death/protection. Preserve poison through death, then expire only the old application.
     require(!dies || target.alive) { "A dead target cannot die again." }
-    if (dies) commitConfirmedPlayerDeath(
-        ActionFactDraft.Death("$id:death", state.phase, state.round, nextInputSequence, target.seat), state.gameStateRevision)
+    resolveBmrDeath("$id:death", target.seat, dies, sourceIsDemon = true, grandmotherDies = grandmotherDies)
     endPukkaPoison(id, choiceActionId)
 }
 

@@ -37,6 +37,7 @@ internal data class ClocktowerHostInteraction(
     val kind: ClocktowerHostInteractionKind,
     val completionPolicy: ClocktowerInteractionCompletionPolicy,
     val decisionPointId: String? = null,
+    val actorSeat: Int? = null,
 ) {
     init {
         require(decisionPointId == null || decisionPointId.isNotBlank()) {

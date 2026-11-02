@@ -32,6 +32,64 @@ sealed interface ActionFactDraft {
         }
     }
 
+    data class GossipStatement(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val claimantSeat: Int,
+        val statement: String,
+        val truthful: Boolean,
+    ) : ActionFactDraft
+
+    data class MoonchildChoice(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val actorSeat: Int,
+        val targetSeat: Int,
+        val chosenAlignment: Alignment,
+        val deathActionId: String,
+    ) : ActionFactDraft
+
+    data class BmrAbilityUse(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val actorSeat: Int,
+        val role: RoleId,
+        val targetSeats: List<Int>,
+        val chosenRole: RoleId?,
+        val used: Boolean,
+        val stepId: String,
+        val woke: Boolean,
+        val tookEffect: Boolean,
+    ) : ActionFactDraft
+
+    data class BmrDrunkenness(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val effectId: String,
+        val sourceSeat: Int,
+        val sourceRole: RoleId,
+        val targetSeats: List<Int>,
+        val throughDayRound: Int,
+        val active: Boolean,
+    ) : ActionFactDraft
+
+    data class AlignmentChange(
+        override val actionId: String,
+        override val phase: StorytellerPhase,
+        override val round: Int,
+        override val sequence: Int,
+        val targetSeat: Int,
+        val alignment: Alignment,
+    ) : ActionFactDraft
+
     data class PukkaChoice(
         override val actionId: String,
         override val phase: StorytellerPhase,
@@ -368,6 +426,11 @@ internal fun ActionFactDraft.matches(entry: TimelineBoundActionFact): Boolean =
 
 private fun ActionFactDraft.toActionFact(globalSequence: Long): ActionFact = when (this) {
     is ActionFactDraft.Poison -> ActionFact.Poison(actionId, globalSequence, targetSeat)
+    is ActionFactDraft.GossipStatement -> ActionFact.GossipStatement(actionId, globalSequence, claimantSeat, statement, truthful)
+    is ActionFactDraft.MoonchildChoice -> ActionFact.MoonchildChoice(actionId, globalSequence, actorSeat, targetSeat, chosenAlignment, deathActionId)
+    is ActionFactDraft.BmrAbilityUse -> ActionFact.BmrAbilityUse(actionId, globalSequence, actorSeat, role, targetSeats, chosenRole, used, stepId, woke, tookEffect)
+    is ActionFactDraft.BmrDrunkenness -> ActionFact.BmrDrunkenness(actionId, globalSequence, effectId, sourceSeat, sourceRole, targetSeats, throughDayRound, active)
+    is ActionFactDraft.AlignmentChange -> ActionFact.AlignmentChange(actionId, globalSequence, targetSeat, alignment)
     is ActionFactDraft.PukkaChoice -> ActionFact.PukkaChoice(actionId, globalSequence, actorSeat, targetSeat, poisonApplied)
     is ActionFactDraft.PukkaPoisonEnded -> ActionFact.PukkaPoisonEnded(actionId, globalSequence, choiceActionId)
     is ActionFactDraft.Protect -> ActionFact.Protect(actionId, globalSequence, targetSeat)

@@ -8,6 +8,7 @@ import com.codex.campboardgamehost.clocktower.flow.*
 
 /** Read the next real interaction from the one Session. No UI cursor or saved pending operation. */
 internal fun ClocktowerSessionState.nightInteractions(ruleset: ValidatedClocktowerRuleset): List<ClocktowerHostInteraction> {
+    if (gameState.script == BadMoonRisingOpening.script) return bmrNightInteractions(ruleset)
     if (phase == StorytellerPhase.DAY) return emptyList()
     require(ruleset.script.id == gameState.script)
     check(gameState.players.count { it.alive && it.actualRole.value == "Imp" } <= 1) { "Session has multiple living Imps." }
@@ -80,6 +81,7 @@ internal fun ClocktowerSessionState.nextNightInteraction(ruleset: ValidatedClock
     nightInteractions(ruleset).firstOrNull { !nightInteractionConfirmed(it) }
 
 internal fun ClocktowerSessionState.nightInteractionConfirmed(step: ClocktowerHostInteraction): Boolean {
+    if (gameState.script == BadMoonRisingOpening.script) return bmrNightInteractionConfirmed(step)
     val id = step.id.value
     if (id == "other_night:event:imp:new_demon_identity") return pendingImpNotification() == null
     if (id == "first_night:fortune_teller:red_herring") return redHerringSeat != null
@@ -99,7 +101,7 @@ internal fun ClocktowerSessionState.nightInteractionConfirmed(step: ClocktowerHo
     }
 }
 
-private fun ClocktowerSessionState.nightInformationId(stepId: String) = "night-information:$gameId:${phase.name}:$round:$stepId"
+internal fun ClocktowerSessionState.nightInformationId(stepId: String) = "night-information:$gameId:${phase.name}:$round:$stepId"
 
 /** Spy sees the existing table. Record only the real wake, never a Grimoire mirror. */
 internal fun ClocktowerGameSession.confirmSpyWake(ruleset: ValidatedClocktowerRuleset, stepId: String) {
@@ -129,15 +131,15 @@ internal fun ClocktowerGameSession.confirmEvilInformation(
     val minions = state.gameState.players.filter { it.actualType == CharacterType.MINION }
     val demon = state.gameState.players.single { it.actualType == CharacterType.DEMON }
     val minionInfo = stepId.endsWith("minion_info")
+    if (state.gameState.script == BadMoonRisingOpening.script && !minionInfo) require(
+        com.codex.campboardgamehost.manualDemonBluffSelectionReady(state.demonBluffRoleIds.map { it.value },
+            com.codex.campboardgamehost.clocktowerDemonBluffCandidates(state.gameState)))
     val recipients = if (minionInfo) minions.mapTo(linkedSetOf()) { it.seat } else setOf(demon.seat)
-    val propositions = minions.map { InformationProposition.CharacterTypeAt(it.seat, CharacterType.MINION) } +
-        if (minionInfo) listOf(InformationProposition.CharacterTypeAt(demon.seat, CharacterType.DEMON))
-        else state.demonBluffRoleIds.map { InformationProposition.RoleInPlay(it, false) }
     commitGlobalEpistemicObservation(EpistemicObservationDraft(
         recordId, state.phase, state.round, nextInputSequence,
         if (minionInfo) minions.first().seat else demon.seat,
         null, ObservationVisibility.PRIVATE,
-        recipients, ObservationReliability.NOT_ABILITY_INFORMATION, InformationProposition.AllOf(propositions),
+        recipients, ObservationReliability.NOT_ABILITY_INFORMATION, state.firstNightEvilProposition(minionInfo),
     ))
 }
 
@@ -149,4 +151,12 @@ internal fun ClocktowerGameSession.confirmImpNotification() {
         ObservationVisibility.PRIVATE, setOf(change.targetSeat), ObservationReliability.NOT_ABILITY_INFORMATION,
         InformationProposition.RoleAt(change.targetSeat, RoleId("Imp")),
     ))
+}
+
+internal fun ClocktowerSessionState.firstNightEvilProposition(minionInfo: Boolean): InformationProposition {
+    val minions = gameState.players.filter { it.actualType == CharacterType.MINION }
+        .map { InformationProposition.CharacterTypeAt(it.seat, CharacterType.MINION) }
+    val demon = gameState.players.single { it.actualType == CharacterType.DEMON }
+    return InformationProposition.AllOf(minions + if(minionInfo) listOf(InformationProposition.CharacterTypeAt(demon.seat, CharacterType.DEMON))
+        else demonBluffRoleIds.map { InformationProposition.RoleInPlay(it, false) })
 }

@@ -193,14 +193,14 @@ class ClocktowerCompleteAppUiTest {
             click("Hide role and return to Storyteller")
             click("Next")
         }
-        waitFor("Gameplay pending")
-        ui.onNodeWithText("Gameplay pending").assertIsNotEnabled()
+        waitFor("Confirm Demon bluffs")
+        ui.onNodeWithText("Confirm Demon bluffs").assertIsNotEnabled()
         assertEquals(accepted, state())
         remount()
         waitFor("Show identity")
         assertEquals(accepted, state())
         deal()
-        waitFor("Gameplay pending")
+        waitFor("Confirm Demon bluffs")
         assertEquals(accepted, state())
     }
 

@@ -103,6 +103,11 @@ internal object StorytellerGlobalEventProjectionV1 {
         is ActionFact.Execution -> JSONObject().put("type", "execution").put("seat", fact.targetSeat)
             .also { if (!fact.causedDeath) it.put("died", false) }
         is ActionFact.Death -> JSONObject().put("type", "death").put("seat", fact.targetSeat)
+        is ActionFact.GossipStatement -> JSONObject().put("type", "gossip_statement").put("seat", fact.claimantSeat).put("statement", fact.statement).put("truthful", fact.truthful)
+        is ActionFact.MoonchildChoice -> JSONObject().put("type", "moonchild_choice").put("seat", fact.actorSeat).put("target", fact.targetSeat).put("alignmentAtChoice", fact.chosenAlignment.name)
+        is ActionFact.BmrAbilityUse -> JSONObject().put("type", "bmr_ability").put("actorSeat", fact.actorSeat).put("role", fact.role.value).put("targets", JSONArray(fact.targetSeats)).put("chosenRole", fact.chosenRole?.value).put("used", fact.used)
+        is ActionFact.BmrDrunkenness -> JSONObject().put("type", "drunkenness").put("sourceSeat", fact.sourceSeat).put("role", fact.sourceRole.value).put("targets", JSONArray(fact.targetSeats)).put("throughDay", fact.throughDayRound).put("active", fact.active)
+        is ActionFact.AlignmentChange -> JSONObject().put("type", "alignment_change").put("seat", fact.targetSeat).put("alignment", fact.alignment.name)
         is ActionFact.PukkaChoice -> JSONObject().put("type", "pukka_choice").put("actorSeat", fact.actorSeat).put("seat", fact.targetSeat).put("poisonApplied", fact.poisonApplied)
         is ActionFact.PukkaPoisonEnded -> null
         is ActionFact.Revival -> JSONObject().put("type", "revival").put("seat", fact.targetSeat)

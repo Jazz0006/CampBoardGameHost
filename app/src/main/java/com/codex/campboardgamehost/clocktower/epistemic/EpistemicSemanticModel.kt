@@ -9,6 +9,12 @@ import com.codex.campboardgamehost.clocktower.domain.RoleId
 const val EPISTEMIC_SCHEMA_VERSION: Int = 2
 
 sealed interface InformationProposition {
+    data class PlayerTargets(val actorSeat: Int, val targetSeats: List<Int>) : InformationProposition {
+        init { require(actorSeat > 0); require(targetSeats.all { it > 0 } && targetSeats.distinct().size == targetSeats.size) }
+    }
+    data class CharactersInPlay(val characterType: CharacterType, val roles: List<RoleId>) : InformationProposition {
+        init { require(roles.distinct().size == roles.size) }
+    }
     data class RoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
     data class ShownRoleAt(val seat: Int, val role: RoleId) : InformationProposition { init { require(seat > 0) } }
     data class AlignmentAt(val seat: Int, val alignment: Alignment) : InformationProposition { init { require(seat > 0) } }

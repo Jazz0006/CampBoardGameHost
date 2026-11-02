@@ -140,6 +140,9 @@ internal class ClocktowerGameSession private constructor(
             "Demon bluffs may only be set during the first-night setup."
         }
         require(roles.distinct().size == roles.size) { "Demon bluff roles must be distinct." }
+        if (state.gameState.script == BadMoonRisingOpening.script) require(
+            com.codex.campboardgamehost.manualDemonBluffSelectionReady(roles.map { it.value },
+                com.codex.campboardgamehost.clocktowerDemonBluffCandidates(state.gameState)))
         if (state.demonBluffRoleIds == roles) return state
         check(state.playerInputRevision != Long.MAX_VALUE)
         val committed = commitGlobalActionFact(
@@ -747,7 +750,7 @@ internal class ClocktowerGameSession private constructor(
     }
 
     private fun updateState(nextState: ClocktowerSessionState): ClocktowerSessionState {
-        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state).withPukkaPoisonState()
+        val accepted = nextState.expirePoisonAfterConfirmedSourceExit(state).withBmrDrunkenness().withPukkaPoisonState()
         if (accepted == state) return state
         if (!confirmingBatch) persist?.invoke(accepted)
         state = accepted

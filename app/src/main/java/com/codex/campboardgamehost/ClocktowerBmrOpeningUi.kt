@@ -22,7 +22,7 @@ internal fun ClocktowerBmrOpeningScreen(draft: GameState, onChange: (GameState) 
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             item {
                 Text(t("暗月初升 · 私密开局核对", "Bad Moon Rising · Private setup"), style = MaterialTheme.typography.headlineSmall)
-                Text(t("开发预览：本批仅支持开局与方桌，不支持完整对局。", "Development preview: setup and table only; gameplay is not available."))
+                Text(t("人工主持：先核对阵容与展示身份。", "Manual hosting: review the roster and shown identities first."))
                 if (draft.players.size < 7) Text(t("官方不推荐少于7人使用本剧本。", "The publisher does not recommend this edition below 7 players."))
                 val counts = draft.players.groupingBy { it.actualType }.eachCount()
                 Text(t("镇民 ${counts[CharacterType.TOWNSFOLK] ?: 0} · 外来者 ${counts[CharacterType.OUTSIDER] ?: 0} · 爪牙 ${counts[CharacterType.MINION] ?: 0} · 恶魔 ${counts[CharacterType.DEMON] ?: 0}",
@@ -72,21 +72,6 @@ internal fun ClocktowerBmrOpeningScreen(draft: GameState, onChange: (GameState) 
                     TextButton(onClick = onBack) { Text(t("返回", "Back")) }
                     Button(onClick = onConfirm, enabled = errors.isEmpty()) { Text(t("确认并发牌", "Confirm and deal")) }
                 }
-            }
-        }
-    }
-}
-
-/** Uses the existing private table, with no BMR mechanical callbacks until later batches. */
-@Composable
-internal fun ClocktowerBmrOpeningTable(cards: List<PlayerCard>, onHostTools: () -> Unit) {
-    val language = LocalContext.current.resources.configuration.locales[0].language
-    ClocktowerPhaseTheme(isNight = true) {
-        ClocktowerHostFullScreenScaffold(previousEnabled = false, onPrevious = {}, onHostTools = onHostTools,
-            nextEnabled = false, onNext = {}, previousLabel = "", hostToolsLabel = if(language == "en") "Host Tools" else "主持工具",
-            nextLabel = if(language == "en") "Gameplay pending" else "主持流程待接入", onBack = {}) {
-            HostTableShell(seats = cards.mapIndexed { index, card -> card.toStorytellerHostSeatPresentation(index + 1, language) }, modifier = Modifier.fillMaxSize()) {
-                Text(if(language == "en") "BMR · First night\nSetup preview only" else "暗月初升 · 首夜\n当前仅支持开局预览")
             }
         }
     }

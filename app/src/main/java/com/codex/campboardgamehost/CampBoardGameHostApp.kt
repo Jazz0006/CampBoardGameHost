@@ -75,7 +75,7 @@ private fun defaultClocktowerScriptFor(playerCount: Int): ClocktowerScript =
 
 internal fun canStartClocktowerScript(script: ClocktowerScript): Boolean =
     script == ClocktowerScript.TroubleBrewing || script == ClocktowerScript.NoGreaterJoy ||
-        (script == ClocktowerScript.BadMoonRising && BuildConfig.DEBUG)
+        (script == ClocktowerScript.BadMoonRising)
 
 internal fun clocktowerScriptsFor(playerCount: Int): List<ClocktowerScript> = ClocktowerScript.entries.filter {
     canStartClocktowerScript(it) && (it != ClocktowerScript.NoGreaterJoy || playerCount in 5..6)

@@ -1,6 +1,6 @@
 package com.codex.campboardgamehost.clocktower.domain
 
-enum class GameEndReason { NO_DEMON, TWO_ALIVE, SAINT, MAYOR, KLUTZ }
+enum class GameEndReason { NO_DEMON, TWO_ALIVE, SAINT, MAYOR, KLUTZ, BMR_GOOD, BMR_EVIL }
 
 /**
  * A committed, replayable mechanical fact. These facts intentionally contain no
@@ -34,7 +34,56 @@ sealed interface ActionFact {
         val targetSeat: Int?,
     ) : ActionFact
 
-    /** Actual Pukka choice; impaired selections are still choices, not active poison. */
+    data class GossipStatement(
+        override val actionId: String,
+        override val sequence: Long,
+        val claimantSeat: Int,
+        val statement: String,
+        val truthful: Boolean,
+    ) : ActionFact
+
+    data class MoonchildChoice(
+        override val actionId: String,
+        override val sequence: Long,
+        val actorSeat: Int,
+        val targetSeat: Int,
+        val chosenAlignment: Alignment,
+        val deathActionId: String,
+    ) : ActionFact
+
+    /** Actual BMR selection or declined use. Waking and functioning are independent of death/success. */
+    data class BmrAbilityUse(
+        override val actionId: String,
+        override val sequence: Long,
+        val actorSeat: Int,
+        val role: RoleId,
+        val targetSeats: List<Int>,
+        val chosenRole: RoleId?,
+        val used: Boolean,
+        val stepId: String,
+        val woke: Boolean,
+        val tookEffect: Boolean,
+    ) : ActionFact
+
+    data class BmrDrunkenness(
+        override val actionId: String,
+        override val sequence: Long,
+        val effectId: String,
+        val sourceSeat: Int,
+        val sourceRole: RoleId,
+        val targetSeats: List<Int>,
+        val throughDayRound: Int,
+        val active: Boolean,
+    ) : ActionFact
+
+    data class AlignmentChange(
+        override val actionId: String,
+        override val sequence: Long,
+        val targetSeat: Int,
+        val alignment: Alignment,
+    ) : ActionFact
+
+    /** Actual Pukka choice; impaired selections never apply poison. */
     data class PukkaChoice(
         override val actionId: String,
         override val sequence: Long,

@@ -34,6 +34,8 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         CharacterType.DEMON -> t("恶魔", "Demon")
     }
     fun proposition(p: InformationProposition): String = when (p) {
+        is InformationProposition.PlayerTargets -> t("${seat(p.actorSeat)} 选择：", "${seat(p.actorSeat)} chose: ") + seats(p.targetSeats)
+        is InformationProposition.CharactersInPlay -> p.roles.joinToString("、") { role(it) }.ifEmpty { t("无", "None") }
         is InformationProposition.RoleAt -> "${seat(p.seat)}：${role(p.role)}"
         is InformationProposition.ShownRoleAt -> t("${seat(p.seat)} 展示身份：${role(p.role)}", "${seat(p.seat)} shown role: ${role(p.role)}")
         is InformationProposition.AlignmentAt -> "${seat(p.seat)}：${alignment(p.alignment)}"
@@ -95,6 +97,38 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                 is ActionFact.DeathRegistration -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 登记为死亡", "${seat(f.targetSeat)} registers as dead") }
                 is ActionFact.PhaseAdvance -> return@mapNotNull null // phase is the section heading
                 is ActionFact.Poison -> f.targetSeat?.let { t("投毒 → ${seat(it)}", "Poison → ${seat(it)}") } ?: t("未选择投毒目标", "No poison target selected")
+                is ActionFact.GossipStatement -> { details = f.statement + t("（${if(f.truthful) "真" else "假"}）", if(f.truthful) " (true)" else " (false)"); t("${seat(f.claimantSeat)} 造谣发言", "${seat(f.claimantSeat)} gossiped") }
+                is ActionFact.MoonchildChoice -> { details = t("选择时的阵营：", "Alignment when chosen: ") + alignment(f.chosenAlignment); t("月之子选择：${seat(f.targetSeat)}", "Moonchild chose ${seat(f.targetSeat)}") }
+                is ActionFact.BmrAbilityUse -> {
+                    if (!f.used || f.actionId.startsWith("bmr-info:") || f.stepId.startsWith("bmr:regurgitate:")) return@mapNotNull null
+                    if (f.stepId.startsWith("bmr:grandchild:")) {
+                        val shownRecord = state.epistemicObservationLog.records.firstOrNull { it.recordId ==
+                            "night-information:${state.gameId}:${entry.point.phase.name}:${entry.point.round}:${f.stepId.replace(":grandchild:", ":info:")}" }
+                        val shown = shownRecord?.proposition as? InformationProposition.RoleAt
+                        if (shownRecord?.reliability != ObservationReliability.KNOWN_MALFUNCTIONING && shown != null && shown.seat == f.targetSeats.singleOrNull() && shown.role == state.gameState.playerAt(shown.seat)?.actualRole) return@mapNotNull null
+                    }
+                    val ordered = if(f.stepId.startsWith("bmr:attack:")) entries.filter { other ->
+                        other.point.phase == entry.point.phase && other.point.round == entry.point.round &&
+                            (other.fact as? ActionFact.BmrAbilityUse)?.let { it.actorSeat == f.actorSeat && it.role == f.role && it.stepId.startsWith("bmr:attack:") } == true
+                    } else listOf(entry)
+                    if(ordered.last().fact.actionId != f.actionId) return@mapNotNull null
+                    val targets = ordered.flatMap { (it.fact as ActionFact.BmrAbilityUse).targetSeats }
+                    val actorLabel = if(state.gameState.playerAt(f.actorSeat)?.actualRole?.value == "Lunatic")
+                        t("疯子（${role(f.role)}）", "Lunatic (${role(f.role)})") else role(f.role)
+                    when {
+                        f.stepId.startsWith("bmr:grandchild:") -> t("祖母孙辈：", "Grandchild: ") + targets.joinToString("、") { number(it) }
+                        f.role.value == "Po" && targets.isEmpty() -> t("$actorLabel 不攻击，蓄力", "$actorLabel chose nobody; charged")
+                        f.role.value == "Goon" -> t("莽夫触发：", "Goon triggered: ") + targets.joinToString("、") { number(it) } + t("醉酒", " drunk")
+                        f.role.value == "Fool" -> t("${seat(f.actorSeat)} 弄臣免死", "${seat(f.actorSeat)} saved by Fool")
+                        f.role.value == "Pacifist" -> t("和平主义者保命：", "Pacifist saved: ") + targets.joinToString("、") { number(it) }
+                        f.role.value == "Mastermind" -> t("主谋加时", "Mastermind extra day")
+                        f.role.value == "Minstrel" -> t("吟游诗人触发，其余玩家醉酒", "Minstrel triggered; others drunk")
+                        f.role.value == "Grandmother" && !f.stepId.startsWith("bmr:grandchild:") -> t("祖母能力触发", "Grandmother triggered")
+                        else -> "$actorLabel：" + targets.joinToString(" → ") { number(it) } + (f.chosenRole?.let { " " + role(it) } ?: "")
+                    }
+                }
+                is ActionFact.BmrDrunkenness -> return@mapNotNull null
+                is ActionFact.AlignmentChange -> { category = GameRecordCategory.CHANGE; t("${seat(f.targetSeat)} 变为${alignment(f.alignment)}", "${seat(f.targetSeat)} became ${alignment(f.alignment)}") }
                 is ActionFact.PukkaChoice -> {
                     details = if (f.poisonApplied) "" else t("中毒未生效", "Poison did not take effect")
                     t("普卡选择：${seat(f.targetSeat)}", "Pukka chose ${seat(f.targetSeat)}")
@@ -141,6 +175,8 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
                         GameEndReason.TWO_ALIVE -> t("仅剩两名存活玩家", "Two players alive")
                         GameEndReason.SAINT -> t("圣徒被处决", "Saint executed")
                         GameEndReason.MAYOR -> t("市长胜利", "Mayor victory")
+                        GameEndReason.BMR_GOOD -> t("说书人确认善良方获胜", "Storyteller confirmed a good victory")
+                        GameEndReason.BMR_EVIL -> t("说书人确认邪恶方获胜", "Storyteller confirmed an evil victory")
                         GameEndReason.KLUTZ -> t("呆瓜选择导致结束", "Klutz choice ended game")
                     }
                     t("游戏结束：$reason", "Game ended: $reason") }
@@ -157,7 +193,8 @@ private class GameRecordFormatter(val state: ClocktowerSessionState, val languag
         val observations = state.epistemicObservationLog.records.mapNotNull { r ->
             val point = (r.timelineBinding as? ObservationTimelineBinding.Global)?.point ?: return@mapNotNull null
             if (r.recordId.contains("first_night:system:minion_info") || r.recordId.contains("first_night:system:demon_info") ||
-                r.recordId.startsWith("role-notification:")) return@mapNotNull null
+                r.recordId.startsWith("role-notification:") || listOf("bmr:lunatic-identity:", "bmr:lunatic-targets:", "bmr:goon-notice:", "bmr:exorcist-notice:").any { r.recordId.contains(it) } ||
+                r.sourceAbility?.value == "Godfather" && r.reliability != ObservationReliability.KNOWN_MALFUNCTIONING) return@mapNotNull null
             val alive = r.proposition as? InformationProposition.AliveAt
             if (r.visibility == ObservationVisibility.PUBLIC && alive != null && !alive.alive &&
                 Triple(point.phase, point.round, alive.seat) in deathsByPhase) return@mapNotNull null

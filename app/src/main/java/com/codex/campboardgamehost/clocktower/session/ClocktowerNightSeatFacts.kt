@@ -26,14 +26,14 @@ internal fun ClocktowerSessionState.actualRoleSeats(role: String): List<Int> =
 internal fun ClocktowerSessionState.actualTypeSeats(type: CharacterType): List<Int> =
     gameState.players.filter { it.actualType == type }.map { it.seat }.sorted()
 
-/** The single living Imp, if any. */
+/** The single actually living Demon, including a registered-dead Zombuul. */
 internal fun ClocktowerSessionState.livingDemonSeat(): Int? =
-    gameState.players.singleOrNull { it.alive && it.actualRole.value == "Imp" }?.seat
+    gameState.players.singleOrNull { it.alive && it.actualType == CharacterType.DEMON }?.seat
 
 /** Old dead Imps retain their role after succession; only the living Imp can act.
  * Other roles retain their established wake/death-trigger handling in nightInteractions. */
 internal fun ClocktowerSessionState.wakingPlayerForRole(role: RoleId): PlayerState? =
-    if (role.value == "Imp") livingDemonSeat()?.let(gameState::playerAt)
+    if (role.value == "Imp") livingDemonSeat()?.let(gameState::playerAt)?.takeIf { it.actualRole == role }
     else gameState.players.firstOrNull { it.wakingRole() == role }
 
 internal fun ClocktowerSessionState.livingDemonPoisoned(): Boolean =

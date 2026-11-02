@@ -36,7 +36,9 @@ data class PlayerState(
     val alive: Boolean = true,
     val poisoned: Boolean = false,
     val registersAsDead: Boolean = false,
+    val drunk: Boolean = false,
 ) {
+    val impaired: Boolean get() = poisoned || drunk
     val publiclyAlive: Boolean get() = alive && !registersAsDead
 
     init {

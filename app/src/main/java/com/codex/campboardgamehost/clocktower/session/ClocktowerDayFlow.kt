@@ -62,7 +62,7 @@ internal fun ClocktowerSessionState.virginNomination(nominatorSeat: Int, nominee
 }
 
 internal fun ClocktowerGameSession.finishIfDecided() {
-    if (state.outcome != null || state.pendingKlutzDeath() != null) return
+    if (state.gameState.script == BadMoonRisingOpening.script || state.outcome != null || state.pendingKlutzDeath() != null) return
     val alive = state.gameState.players.filter { it.alive }
     val reason = when {
         alive.none { it.actualType == CharacterType.DEMON } -> GameEndReason.NO_DEMON
@@ -103,6 +103,7 @@ internal fun ClocktowerGameSession.confirmEndDay(expectedRound: Int) = confirmAt
     if (state.actionTimeline.entries.any { it.fact.actionId == "end-day-${state.gameId}-$expectedRound" } ||
         state.actionTimeline.entries.any { it.fact.actionId == "day-execution-${state.gameId}-$expectedRound" }) return@confirmAtomically
     requireOpenDay()
+    check(state.gameState.script != BadMoonRisingOpening.script) { "BMR execution needs its explicit actual result." }
     check(state.round == expectedRound && state.pendingVote() == null) { "Complete the current vote before ending Day." }
     val target = state.voteStanding.nomineeSeat
     if (target != null) killInDay(target, true, "day-execution-${state.gameId}-$expectedRound")

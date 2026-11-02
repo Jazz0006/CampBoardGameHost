@@ -151,7 +151,7 @@ private fun HostTableSeatFrame.toSquareTableSeatUiModel(
         contextMarker = if (isHighlighted && !isSelected) "•" else null,
         isAlive = seat.isAlive,
         hasUnspentGhostVote = hasUnspentGhostVote,
-        isDrunk = seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
+        isDrunk = seat.isDrunk || seat.actualRole?.roleId.equals("drunk", ignoreCase = true),
         isPoisoned = seat.isPoisoned,
         isInteractionEnabled = isSelectable && !isLocked,
         motionKey = motionKey,

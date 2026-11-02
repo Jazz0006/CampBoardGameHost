@@ -28,6 +28,7 @@ internal fun GameState.toHostSeatPresentations(
             playerName = player.name,
             isAlive = player.publiclyAlive,
             isPoisoned = player.poisoned,
+            isDrunk = player.drunk,
             actualAlignment = player.actualAlignment,
             actualRole = HostRolePresentation(
                 roleId = player.actualRole.value,

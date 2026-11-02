@@ -48,6 +48,11 @@ class ClocktowerLifeChangesTest {
         s.confirmDeathRegistration("apparent-death", zombie)
         assertTrue(s.state.gameState.playerAt(zombie)!!.alive)
         assertFalse(s.state.gameState.playerAt(zombie)!!.publiclyAlive)
+        assertEquals(listOf(ClocktowerPublicLifeChange(zombie, false)), s.state.publicLifeChangesAtNight(1))
+        val realDeath = ClocktowerGameSession.restore(s.state)
+        realDeath.commitConfirmedPlayerDeath(ActionFactDraft.Death("zombuul-real-death", realDeath.state.phase,
+            realDeath.state.round, realDeath.nextInputSequence, zombie), realDeath.state.gameStateRevision)
+        assertEquals(listOf(ClocktowerPublicLifeChange(zombie, false)), realDeath.state.publicLifeChangesAtNight(1))
         assertFalse(com.codex.campboardgamehost.clocktowerDayOverviewTableState(s.state.gameState).seats.single {
             it.seatId.number == zombie }.isAlive)
         assertThrows(IllegalArgumentException::class.java) { s.confirmRevival("not-a-revival", zombie) }

@@ -210,7 +210,7 @@ internal fun ClocktowerSettingsScreen(
                                             text = when (script) {
                                                 ClocktowerScript.TroubleBrewing ->
                                                     text("经典入门剧本，角色互动完整，适合标准人数。", "The classic introductory script with the full core interaction set.")
-                                                ClocktowerScript.BadMoonRising -> text("开发预览：合法随机开局、发牌和首夜方桌；完整主持尚未接入。官方推荐7人以上。", "Development preview: random setup, dealing and first-night table only. Recommended for 7+ players.")
+                                                ClocktowerScript.BadMoonRising -> text("人工主持完整对局；复杂效果与胜负由说书人确认。官方推荐7人以上。", "Manual hosting; the Storyteller confirms complex effects and victory. Recommended for 7+ players.")
                                                 ClocktowerScript.NoGreaterJoy ->
                                                     text("为 5–6 人小局准备的精简角色组合。", "A focused character set designed for 5–6 players.")
                                             },
