@@ -123,3 +123,139 @@
 ### 7.4 待讨论的下一问题
 
 - **把“返回三套”落实到产品协议，并确定三套必须如何不同，以及整套方案如何进行风险筛选。** 此项确认之后再形成生产 Prompt、Schema/DTO/UI 的最小实施包；继续使用独立对照样本验证“坏组合”是否被识别，而不是仅靠 Prompt 的自我说明。
+
+
+---
+
+## 8. 2026-11-03 第一轮深度审计：生产 Prompt、联合信息压力案例与三候选合同（建议稿，未批准生产）
+
+> 本节为本轮讨论结论和可供评审的设计草案；**除用户明确要求三套可选、少于三套时不可硬凑、Risk-First 原则外，Prompt 正文、具体审查流程、Schema/UI/自动模式政策均为待审议建议。** 不代表已进行模型 A/B 实验，也未执行付费调用或修改生产实现。
+
+### 8.1 仓库与实际生产入口核查
+
+- PR #373 在核查时为开放 Draft，分支 \`docs/storyteller-risk-first-prompt-20261103\`，修改范围仅本文；审计起点 head \`dd7ca03d7b11578c2fc124b6d025dd7dd8b96cea\`，base main \`bc11573236866be8f649d6b26d660603fd328c79\`。
+- Mini MCP 仓库 \`clocktower\` 的本地 main 为 \`27cf84fc463e1854f7c68a43d9e2e2490faa3b7a\`、clean；远端 main 为 \`bc115732...\`，本地尚未 fetch/ff 至远端。**本轮未操作本地工作树。** 本节生产分析按 GitHub 当前 main 文件进行。
+- \`InitialJointOpeningDirectV2.kt\` 的 INSTRUCTIONS **已有**善恶双方视角、跨信息交叉验证、新手辩护空间、Spy/Recluse 登记、未来事件未决等要求；不能误称现有 Prompt 完全忽略组合风险。核心不足是最终要求“唯一最合适”，没有让模型对**多个候选**执行明确的反证检查，风险审查过程无独立输出、不可比较验证。
+- 同文件 \`responseSchema\` 仅有单 \`openingPlan\`、顶层 \`strategyMemory\`、\`tradeoffSummary\`；\`decode\` 严格匹配顶层字段，\`HostOpeningSemanticAcceptanceV2\` 和 \`OpeningSelectionV2\` 是单方案合同。解析做请求身份/修订、引用、结构、清单完整性等核验，**并不证明 AI 已完成组合策略风险审查**。
+- \`InitialOpeningRequestV2.kt\` 发送展示/实际角色、\`hasDrunk\`、玩家经验、首夜 \`decisionInventory\`，不发送枚举合法候选；需保留这个简洁边界。首夜 \`deferredActions\` 是“等待真实玩家行动”的事件引用，不应假造具体未来选择。
+- \`StorytellerStrategicContinuationV2.kt\` 严格要求当前 \`openDecisions.size == 1\`、\`currentResult\` 只有一个语义结果，并返回单 \`updatedStrategyMemory\`。**保留“每次只处理一个当下真实待决问题”**，但为该问题给最多三个语义备选，不生成三套未经发生的未来事件包。
+- \`PersonalDirectOpenAiV1.kt\` 每次向 \`/v1/responses\` 传 \`instructions\` 与 \`strict: true\` JSON Schema；如保留前次 \`response_id\`，本次 instructions 仍重新传入。代码中 HTTP \`readTimeout=90000\` 毫秒；未看到显式输出 token 上限。三候选将增加输出规模与推理负担，必须验证限时、截断和实际收费。
+- \`ClocktowerJointOpeningReviewScreen.kt\` 与 \`ClocktowerOpeningDraft.kt\` 当前仅处理单一首夜选择；\`ClocktowerSingleRecommendationChoiceUi.kt\` 对建议 \`.take(1)\`；\`ClocktowerAiConversation.kt\` 的 \`PendingCurrentStepAdvice\`、\`strategicPolicyCursor\`、\`canonicalConversationResponseId\` 亦只绑定一条待采纳结果。不能只改 Prompt/Schema。
+- 保留现有首夜酒鬼真正提交、后夜实际信息展示才确认、请求版本/ID/Session 前缀校验、过期回复丢弃的机制；未选中方案没有 Session 事实效力。红鲱鱼的 Host 侧实际善良且非隐士检查继续保留。实施时需进一步确认 Demon bluff 的“未在场善良身份”约束在最终确认链中的规则覆盖，不能只信 Prompt。
+- BMR 的 AI 仍不在这轮范围内；已实现的 BMR MANUAL 不应被改动。
+
+### 8.2 最重要的新思想：候选的「反例 / 替代世界证人」检查
+
+把“避免信息太强”改成有明确问题的短流程，仍由 LLM 在**内部**完成，不需要输出冗长 chain-of-thought：
+
+1. **冻结事实/边界**：列明真实阵容、展示角色、已确认并实际发出的信息、各项尚未决定的内容。区分规则强制结果与真实裁量；酒鬼/中毒、登记仅按真实有效条件允许，绝不人为更改不可变信息。
+2. **生成少量不同整体候选**：优先从可裁量的 Drunk、pair 信息、Red Herring、Demon bluffs、合法登记及条件意图中形成具有不同信息分布/掩饰路径的完整候选。不要通过改写 Chef/Empath 等必然数值伪造差异。
+3. **联合信息图审查**：按线索列出其涉及的座位/身份/邻接限制，查找多个彼此独立的来源共同指向某些座位的链条；检查对某条线索暂时不公开时，推理闭环是否仍成立。不是把各线索的强弱分数相加。
+4. **两种公开情境压力测试**：情境 S1 假设健康善良玩家较积极、真实地公开身份与信息，是有意苛刻的压力测试；情境 S2 允许邪恶玩家真实地进行假身份/假线索声明、善良玩家沉默或质疑，并考虑新手能否完成。这两种是假设，**玩家声明不等于 Host 认证事实**。
+5. **反证尝试**：从善良玩家在 S1/S2 下所见的声明集合出发，尝试构造至少一至两个规则允许、沟通上能理解的“不同恶魔或爪牙位置的替代世界”，并说明普通邪恶玩家是否能用合法 bluffs 维持它们。找不到不等于数学证明不存在；必须指出原因和依赖条件，不能编造强行成立的世界。
+6. **概念性 leave-one-out**：如果疑似锁死，分别暂时移走一条尚未实际公开的信息，判断是否出现合理替代解释。若单独各条线索均合理、叠加后出现强收缩，就是重点组合风险。此处是 LLM 的定性反事实检查，**不能假装做了穷举精确计数**。
+7. **宽容判断与选择**：只有当强风险基于稳健、合理的玩家行为假设成立，并且没有足够可理解的对抗解释时，才排除候选。不能把错误信息、短暂优势、混乱、创造性玩法本身认作有害；不确定时保留或标为需要主持人评估。返回最多三套真正有差异的方案，允许 0/1/2 套，不排名。
+
+**保留的认识论边界**：旧研究首次把 \`"I am Empath and got 0"\` 错当 \`ShownRoleAt AND NumericResult\` 的 Host 事实，导致错误锁死；后来纠正为 \`speaker evil OR (真实该展示身份 AND 信息为真)\` 的健康公开阶段假设。新 Prompt 不能重复此错误；上述声明逻辑只是分析指导，不是新生产规则引擎或精确推断公式。
+
+### 8.3 八人 E03_R1：先验证有没有真实锁死，而非预设失败
+
+真实 1 Investigator、2 Chef、3 Fortune Teller、4 Recluse、5 Empath、6 Spy、7 Washerwoman、8 Imp，无 Drunk。现有推荐：WW 2/4 厨师、Chef 0、Empath 1（邻居 4/6）、Investigator 4/6 间谍；FT 查询未发生所以 DEFERRED；原 Red Herring 2。
+
+- 组合可疑处：Empath 1 与 Investigator 对 4/6 的配对形成重合关注；WW 的 2/4 又将 4 牵入身份认证，Chef 0 从全桌角度给附加约束。
+- 不能直接认定 6/8 已锁定：4 Recluse 可按相应检测登记成邪恶/爪牙，6 Spy 可按能力登记为善良；各次登记依实际规则与说书人裁量而不是统一全局身份。恶人可伪报角色/数字，善人可能不公开；对 4/6 的重复指向也未必比换配对更坏。
+- 样例比较时固定 roster/noDrunk/待决 FT，分别让候选改变 WW/Investigator 的合法 pair、合法登记选择及 bluffs，再审查“真实健康公开压力测试”和“混合/诈称”两个情景是否存在可理解的邪恶反解释。**必须报告替代世界的解释或无法构造的具体前提**，而非只输出“信息过强”。
+- 结论：此例标记 **组合风险待确认 / possible false-positive trap**；不是已经验证的 BAD_TOO_STRONG 金标准。模型若未经分析一票否决此真实方案，属于可能误拒。
+
+### 8.4 七人 pair-rich：示范真实坏组合的审查路径
+
+1 Washerwoman、2 Chef、3 Empath、4 Fortune Teller、5 Investigator、6 Scarlet Woman、7 Imp。健康首夜且无特殊登记干扰时，6 与 7 相邻使 **Chef=1**；3 的邻座 2/4 为好人，使 **Empath=0**。在此阵容与状态下这些数值本身不是可供 AI 随意修改的平衡旋钮。
+
+历史 \`cal-pair-rich-adjacent-evil\` 的特定公开假设和选定信息签名曾出现邪恶阵容拓扑由约 30 种缩至 4 种；去掉某条交叉佐证后可回到约 10 种。这些是**旧条件模型下的结构候选数，而非当前现场复算、不是概率，更不是无条件准确的最终标签**。原健康公开语义修正前的过度塌缩报告不能作为基线；正式训练/校准标签仍需人工确认。
+
+该样例要求模型对 WW/Investigator 的合法二人配对进行组合审查，找出哪些 pair 让 Chef 1、Empath 0 的事实与身份声称形成连锁确定性；用留一条信息的定性反事实验证，而不是把某条“好人的真信息”本身判坏。若所有合法结果都强，则允许候选不足三套并交给主持人，而不是产生错误 Chef/Empath 数字。
+
+### 8.5 首夜 INSTRUCTIONS 改写核心段落（不是完整生产替换稿）
+
+> 你的目标不是寻找唯一最佳方案，也不是尽量平衡双方胜率。先构造少量合法、完整、具有实质不同信息路线的联合首夜方案。对每套方案，模拟健康善良玩家积极公开的压力情境，以及存在邪恶假声明、质疑和信息不公开的实际情境。将公开声明与 Host 已确定事实严格区分。
+>
+> 找出来自不同玩家的信息是否相互确认，尤其是某个座位反复出现在身份、邻座、阵营和相邻邪恶计数的证据链中。尝试从这些声明出发，提出普通邪恶玩家能够理解、规则上允许的不同邪恶阵容解释。若候选看似使邪恶失去合理辩护空间，逐条考虑不公开某一尚未发出的线索后这种结论是否仍成立；检查 Spy/Recluse 登记和 Drunk/中毒等实际有效例外，而非假定它们总能救场。
+>
+> 只有在有充分具体依据时排除明显有害的联合方案。没有找到反解释不是数学证明；不确定的局面不可简单当成坏方案。错误信息、冲突、局部优势、离奇但可玩方案不自动构成风险。不可更改规则强制的真实结果，不可预言未来玩家目标。至多返回三套互不依赖的完整方案；若只有两套、一套或没有足够合理的方案，如实返回，不要补齐数量、不强制排名。每套独立包含自身 strategyMemory。只输出符合严格合同的简洁结构化结果，不输出内部逐步推理。
+
+**建议保留旧 Prompt** 的实际/展示身份、信息/行动清单完整覆盖、FT DEFERRED、Drunk/Red Herring/bluffs 约束、严格 identity 与响应格式等条款。不要把该段孤立拼到旧的“唯一最合适/只返回一套”指令后面，必须整体消除矛盾。
+
+### 8.6 输出合同 v3 草图（字段名、状态语义均待讨论）
+
+以下是语义示例，不是可直接贴入 Responses 的完整严格 JSON Schema：
+
+\`\`\`json
+{
+  "schemaVersion": 3,
+  "asOfRevision": 0,
+  "requestIdentity": {
+    "gameId": "...",
+    "gameStateRevision": 0,
+    "playerInputRevision": 0,
+    "rosterFingerprint": "..."
+  },
+  "status": "OPTIONS_AVAILABLE",
+  "openingPlans": [
+    {
+      "optionId": "A",
+      "openingPlan": {
+        "drunkSeat": null,
+        "redHerringSeat": 2,
+        "demonBluffRoleIds": ["...", "...", "..."],
+        "information": [],
+        "deferredActions": []
+      },
+      "strategyMemory": {
+        "tensions": [],
+        "intentions": [],
+        "uncertainties": []
+      },
+      "riskReview": {
+        "verdict": "ACCEPTABLE",
+        "interaction": "对哪些信息组合进行过审查",
+        "counterworld": "至少一种可理解反解释或找不到的条件",
+        "assumptionsAndUncertainty": "关键公开假设与不确定处"
+      },
+      "tradeoffSummary": "说明此候选的风格和主要取舍"
+    }
+  ],
+  "shortageReason": ""
+}
+\`\`\`
+
+- \`openingPlans\` 长度 **0..3**；示意数组只展示一项，实际每套 \`information\` 与 \`deferredActions\` **必须独立完整覆盖** 请求库存，不能把一套的某角色线索补到另一套。
+- 同一套内部 strategyMemory 绑定自身，不能在首夜未确认前把任何候选提升为事实；对真正规则强制一致的结果允许各方案相同。
+- \`riskReview\` 用 **短而可检查的交叉信息说明、反例说明、假设限制**，不是要求模型展示全部内部推理，也不是 Host 可以信任的“安全证明”；文字应严格限长。
+- \`verdict\` 可以考虑 \`ACCEPTABLE / REVIEW_ADVISED\`；是否允许后者在辅助模式展示、自动模式是否拒绝，尚待确认。\`status\` 可包含 \`OPTIONS_AVAILABLE / NO_ACCEPTABLE_OPTIONS\`；\`shortageReason\` 说明为何不足三套。这些状态需有真实处理逻辑，不能只靠 Prompt 声称。
+- 新 DTO 应以 \`List<CompleteOpeningOption>\` 表示。建议顶层身份不匹配整体拒绝；若仅某个选项语义非法，讨论是否**丢弃该选项并保留其他通过验证的选项**（不得静默修复非法内容）；所有选项都无效则只提供手动接管。该策略需专项合同测试。
+- 实质差异指 Drunk 或实际可选择的线索结构/登记处理/有意义的 bluffs 配合发生区别；仅更改摘要、记忆措辞、数组顺序、无影响的 Red Herring 装饰或同义表达不算新方案。若实际裁量只有一个结果，就只返回一个。
+
+### 8.7 后续决策与完整采纳：不同于首夜的三包预测
+
+\`StorytellerStrategicContinuationV2\` 每次收到 **一个当前真实 Host 决策**，产生 \`choices[0..3]\`；每个 choice 含 \`decisionId\`、完整当前语义结果、**自身** \`updatedStrategyMemory\` 和简短风险理由。顶层仍绑定同一 Host revision、game log prefix 和原先策略版本，三个候选不共享未来意图。
+
+- AI_ASSISTED 先选择当前备选之一，再逐步预览/确认实际发布的信息；只有实际采纳且与已确认 Observation 一致时，推进该选项记忆与响应 anchor。
+- AI_AUTOMATIC 若多个可接受且无须排序的选项，待讨论**中立稳定选择**（例如结合游戏标识/当前决策 ID 的确定性选择）而非默认为数组第一项代表“最好”。若 0 个可用候选，停在人工可处理入口；**不强行创造数据**。
+- \`previous_response_id\` 的链上对话可能包含所有未选中首夜候选；续局必须明确传 **selectedOptionId + 被采纳的策略记忆 + Host 已确认事实**，不得因为模型看过其他方案就把它们当成历史承诺。是否保留相同链 anchor 需要专门验证。
+- 辅助/自动模式、UI 和恢复只能引用**选中的、通过当前版本与显示域验证**的建议。无持久第二游戏对象或额外 Host 候选缓存。
+
+### 8.8 单次 API 三方案的成本、延迟和验证建议
+
+- 可行性：Responses + strict JSON Schema 完全可以在一次请求的输出中容纳一个小数组；**一次调用不等于三个方案只付一套的 token 费用**。输入 roster/历史只发送一次；输出完整 \`information\`、\`strategyMemory\` 等会随有效候选数大致增长，且内部审查推理成本可能显著增加。
+- 建议**不要求先显式输出全部内部候选/详细淘汰记录**。Prompt 内要求有限候选、正反解释、leave-one-out 的简洁思考；最终每套仅输出短的风险摘要和必要合同字段。否则会显著增加输出、截断风险和说书人 UI 噪声。
+- 生产运输当前 read timeout 为 **90 秒**，但尚无新方案实际 latency 证据；不得推断三套一定小于此限或声称具体新价格。付费实验仍须单独授权。测量输入/输出/推理 token、响应延迟 p50/p95、HTTP/incomplete/JSON/Host validation 比例、每次有效选项数、三选一实际质量。
+- 对照基准：同一阵容、同样模型/参数，比较现有单套旧 Prompt、只改 Risk-First 的单套候选、Risk-First 三套候选。至少包含 E03_R1（防误杀）、七人 pair-rich（识别坏组合）、低信息两来源局（防过度谨慎）、Drunk、Spy/Recluse、FT DEFERRED、候选不足 3、策略记忆后续一致性。**旧实验的 30→4 不作为必须重现的硬阈值**。
+- 产品评价指标：模型能否**明确指出发生交叉确认的两三条信息**，能否给出规则有效的替代世界或说明失败假设，是否把邪恶假声明误当不可能，是否更改无裁量的真实数值，是否误拒合理创造性方案，以及每套最终是否能经过 Host 的完整采纳流程。
+
+### 8.9 待所有者后续确认的设计点
+
+1. 风险摘要保留多长，是否展示主持人可选风险标记；\`REVIEW_ADVISED\` 是否保留为候选。
+2. AI_AUTOMATIC 的中立选取办法，以及有效候选为零时的人工接管行为。
+3. 新 v3 合同处理“其中一个候选格式合法但语义非法”时，是逐项丢弃还是整包失败。
+4. 什么算实质差异：是否要求至少一个**玩家接收的信息或关键 Drunk/登记**不同，bluffs 单独变化是否足够。
+5. 什么时候进行真实 API 试验、预算与具体模型参数。**本轮不进行付费调用、生产 Prompt/Schema/解析/UI 改动。**
