@@ -304,3 +304,58 @@
 | 低信息两来源局 | 待人工确认 | 防止过度维护邪恶而剥夺善良有效推理 |
 
 **当前明确的不实施项**：不修改生产 Prompt/DTO/Schema/UI，不重建旧评分/可能世界引擎，不进行付费 API 调用；PR 保持 Draft。下一次先比较单套/三套两个产品方案的实际收益，再冻结合同和 Prompt。
+
+
+---
+
+## 10. 2026-11-03 七人当前模板池只读审计（新增证据；不改生产）
+
+**审计源**：GitHub \`main\` 的 \`app/src/main/assets/setup/trouble_brewing_setup_presets_v2_final.json\`（内部 \`schema_version=3\`，\`pools["7"]\` 共 50 套）；确认 \`TroubleBrewingProductionSetupPreparer.prepare()\` 确实从此数组形成候选，经 \`SetupDiversitySelector\` 根据最近对局的阵容重合度/随机种子选择，再由 \`TroubleBrewingSetupDealPlanner.planVisibleRoster()\` 安排具体座位（取决于种子、玩家身份轮换）。模板只固定角色集合，不固定座位及 Chef/Empath 数字结果；此结果不是对某局实际座位或模型的运行测试。
+
+### 10.1 历史七人案例是否存在？
+
+历史 pair-rich 的 5 镇民 \`washerwoman, chef, empath, fortuneteller, investigator\` + 1 爪牙 \`scarletwoman\` + 1 \`imp\`：**50 套中 0 套精确命中**。该数据集中首夜即有信息能力的六角色（WW/Librarian/Investigator/Chef/Empath/FT）在每个七人模板中的数量分布为：**1 个×8、2 个×36、3 个×6、4 个×0、5 个×0**。因此没有五重首夜身份/数字线索的原样配置。
+
+6 套三个首夜信息位的模板：
+- \`TB2_7_001\` Librarian/Empath/FT + Monk/Soldier；Poisoner/Imp；无 Drunk；
+- \`TB2_7_002\` Chef/Empath/FT + Monk/Mayor；Poisoner/Imp；无 Drunk；
+- \`TB2_7_010\` Investigator/Empath/Chef + Slayer、Recluse；Baron/Imp；**有 Drunk**；
+- \`TB2_7_028\` Librarian/Empath/FT + Monk/Mayor；Poisoner/Imp；无 Drunk；
+- \`TB2_7_035\` Washerwoman/Empath/FT + Monk/Soldier；Poisoner/Imp；无 Drunk；
+- \`TB2_7_038\` Investigator/Empath/FT + Virgin、Recluse；Baron/Imp；**有 Drunk**。
+
+三信息位都有 Poisoner 或 Drunk；\`010\`/\`038\` 还含 Recluse。具有多个信息角色 **并不自动构成坏配置**，这体现模板在可变信息路径上的保护，但也不保证任何座位/玩家水平下都绝对均衡。
+
+### 10.2 更值得观察的 9 套 Scarlet Woman 七人模板
+
+七人爪牙分布：Poisoner 13、Scarlet Woman 9、Spy 13、Baron 15；\`drunk=true\` 总计 9 套。Scarlet Woman 9 套均为 5 镇民 + Scarlet Woman + Imp、0 Outsider、**no Drunk/no Poisoner/no Spy**；Scarlet Woman 的继承恶魔是邪恶容错，不会主动造成信息真假混杂。因此这些模板在“多个真实信息来源互相验证”时值得优先做压力审查，但不能据此宣称它们必然不可玩。
+
+最值得人工复核的具体模板：
+
+| ID | 五镇民 | 潜在压力 |
+| --- | --- | --- |
+| \`TB2_7_003\` | Librarian、Fortune Teller、Undertaker、Virgin、Slayer | 图书管理员在此零外来者局得到确定的“无外来者”；另有占卜师跨夜信息、送葬者死亡身份、圣女和杀手的条件性公开验证。首夜只有两个信息角色，但后续可能连成强可信度链。 |
+| \`TB2_7_029\` | Chef、Empath、Undertaker、Slayer、Mayor | 厨师/共情者在正常运作下数字由座位决定，缺乏 Drunk/Poisoner 调整；后夜送葬者信息与杀手行为可形成确认，须按实际座位评估。 |
+| \`TB2_7_032\` | Chef、Empath、Ravenkeeper、Virgin、Slayer | 同样存在两条正常情况下不可任意改写的数字信息；圣女、杀手、乌鸦守护者的条件性验证能力可能进一步增强可信度。 |
+
+其他 Scarlet Woman 模板：
+- \`TB2_7_013\` Chef、FT、Ravenkeeper、Slayer、Soldier；
+- \`TB2_7_015\` WW、FT、Undertaker、Slayer、Soldier；
+- \`TB2_7_012\` Chef、Undertaker、Ravenkeeper、Slayer、Mayor；
+- \`TB2_7_018\` WW、Undertaker、Ravenkeeper、Slayer、Mayor；
+- \`TB2_7_027\` WW、Undertaker、Ravenkeeper、Slayer、Soldier；
+- \`TB2_7_042\` Chef、Undertaker、Ravenkeeper、Slayer、Soldier。
+
+后面这些仍有较少初夜交叉来源，且不能仅以“无酒鬼/投毒者”判断不可玩。尤其 \`FT\` 的 Red Herring 与 \`WW\` 的合法配对提供一定可裁量空间，后夜触发/玩家行为均不可先验当作已发生。
+
+### 10.3 无论怎样提供线索都难以隐藏：当前证据与下一步
+
+**本次不能证明 50 套中存在任何“所有合法线索都不合理”的模板，也不能证明不存在。** 当前是**角色池静态审计**，而不是对所有座位、所有合法信息配对、玩家行为、登记、酒鬼、红鲱鱼和善恶伪装的穷举。不能把模板角色集合等同于固定数字：Chef/Empath 数值依赖具体座位；Virgin/Slayer/Undertaker/Ravenkeeper 的确认效果还依赖未来真实行动。即使所有健康好人公开，邪恶玩家仍能提出假声明并使用三项合法 Demon bluffs。
+
+推荐将 \`003\`、\`029\`、\`032\` 标记为**优先研究（不是坏模板）**：
+1. 针对每一套，先选出能导致 Chef/Empath 真数字强约束、或多阶段角色确认高度相关的 **具体座位排列与真实行动情境**；
+2. 区分必然真实结果、可裁量信息和不可预言的后夜触发；对合法可调选项尝试不同策略；
+3. 问“是否至少存在一条对普通新手邪恶玩家可信、可沟通、合法的辩护路径”，并说明其所需 bluffs 和公开假设；
+4. 只有对明确的局面/行为假设反复无解，才考虑调整对应模板；不因静态高信息密度自动删除或建立新的全仓评分引擎。
+
+**结论**：历史 BAD_TOO_STRONG 的五首夜信息角色极端阵容已被当前模板池排除；目前应重点研究 **少量首夜线索 + 后夜/公开角色验证导致的可信度级联**，而不是只检查首夜信息角色数量。现有 \`SetupDiversitySelector\` 只负责多局阵容多样性，不是局面风险筛选器；这项任务独立于 Risk-First 当前首夜 Prompt 迭代。
