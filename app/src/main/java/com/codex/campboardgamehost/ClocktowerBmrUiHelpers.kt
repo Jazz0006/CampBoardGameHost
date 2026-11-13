@@ -78,15 +78,15 @@ internal fun ClocktowerBmrStatusControls(state: ClocktowerSessionState, onAction
     if(status) AlertDialog(onDismissRequest = { status = false }, title = { Text(t("说书人结算", "Storyteller resolution")) }, text = {
         Column(Modifier.heightIn(max = 430.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             state.bmrMastermindExtraDay()?.let { Text(t("主谋加时：第 $it 天结束后确认胜负。", "Mastermind extra day: review victory after day $it.")) }
-            if(state.gameState.players.none { it.alive && it.actualType == CharacterType.DEMON }) Text(t("没有实际存活的恶魔，请核对主谋与终局。", "No living Demon: review Mastermind and victory."))
+            if(state.bmrNoLivingDemon()) Text(t("没有实际存活的恶魔，请核对主谋与终局。", "No living Demon: review Mastermind and victory."))
             state.bmrDrunkennessEffects().forEach { effect ->
                 if(effect in review) Text(if(effect.active) t("来源现已失效，请核对效果是否暂停。", "The source is impaired; review whether to suspend its effect.") else t("来源已经恢复，请核对是否恢复效果。", "The source is healthy again; review whether to resume its effect."))
                 Text("${effect.sourceSeat} · ${clocktowerRoleLabel(effect.sourceRole, language)} → ${effect.targetSeats.joinToString(" ")}")
                 Text(t("至第 ${effect.throughDayRound} 天黄昏；核对来源失效时的暂停与恢复。", "Until dusk of day ${effect.throughDayRound}; confirm suspension/resumption when the source malfunctions."))
                 Row { Text(if(effect.active) t("生效", "Active") else t("暂停", "Suspended")); Switch(effect.active, onCheckedChange = { onAction(BmrHostAction.DrunkActivity(effect.effectId, it)) }) }
             }
-            val tinker = state.gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Tinker" }
-            if(tinker != null) OutlinedButton(enabled = !state.bmrCertainlyProtected(tinker.seat), onClick = { onAction(BmrHostAction.Tinker); status = false }) { Text(t("修补匠死亡", "Tinker dies")) }
+            val tinker = state.bmrTinkerStatus()
+            if(tinker != null) OutlinedButton(enabled = tinker.canDie, onClick = { onAction(BmrHostAction.Tinker); status = false }) { Text(t("修补匠死亡", "Tinker dies")) }
             OutlinedButton(onClick = { status = false; ending = true }) { Text(t("确认游戏结束", "Confirm game end")) }
         }
     }, confirmButton = { TextButton(onClick = { status = false }) { Text(t("返回", "Back")) } })

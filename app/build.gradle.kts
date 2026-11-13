@@ -83,6 +83,6 @@ afterEvaluate {
         val sourceTask = debugUnitTest.get()
         testClassesDirs = sourceTask.testClassesDirs
         classpath = sourceTask.classpath
-        exclude("**/ClocktowerD2UiTest*")
+        exclude("**/ClocktowerD2InformationUiTest*", "**/ClocktowerD2NightDayFlowUiTest*")
     }
 }

@@ -34,17 +34,13 @@ internal fun ClocktowerGameSession.confirmBmrNightEvent(stepId: String, targetSe
     val works = when(role) {
         "Gossip" -> {
             require(actor.alive)
-            val statement = state.actionTimeline.entries.firstOrNull { it.point.phase == StorytellerPhase.DAY && it.point.round == state.round - 1 &&
-                (it.fact as? ActionFact.GossipStatement)?.claimantSeat == actor.seat }?.fact as? ActionFact.GossipStatement
-            requireNotNull(statement)
+            val statement = requireNotNull(state.bmrPreviousDayGossipStatement(actor.seat))
             if (!actor.impaired && statement.truthful) require(targetSeat != null && state.gameState.playerAt(targetSeat)?.publiclyAlive == true)
             else require(targetSeat == null)
             statement.truthful && !actor.impaired
         }
         "Moonchild" -> {
-            val choice = state.actionTimeline.entries.lastOrNull { it.point.phase == StorytellerPhase.DAY && it.point.round == state.round - 1 &&
-                (it.fact as? ActionFact.MoonchildChoice)?.actorSeat == actor.seat }?.fact as? ActionFact.MoonchildChoice
-            requireNotNull(choice)
+            val choice = requireNotNull(state.bmrPreviousDayMoonchildChoice(actor.seat))
             require(choice.targetSeat == targetSeat)
             choice.chosenAlignment == Alignment.GOOD && !actor.impaired
         }

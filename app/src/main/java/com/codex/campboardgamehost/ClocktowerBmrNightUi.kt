@@ -30,7 +30,7 @@ internal fun ClocktowerBmrNightControls(state: ClocktowerSessionState, ruleset: 
     fun roleName(role: RoleId) = clocktowerRoleLabel(role, language)
     fun seat(n: Int) = "$n · ${state.gameState.playerAt(n)?.name.orEmpty()}"
     val night = ClocktowerNightFacts(state, ruleset)
-    val step = night.interactions.firstOrNull { !state.nightInteractionConfirmed(it) }
+    val step = state.nextBmrNightInteraction(ruleset)
     key(state.gameId, state.phase, state.round, state.gameStateRevision, state.playerInputRevision, step?.id) {
         var targets by remember { mutableStateOf(emptyList<Int>()) }
         var chosenRole by remember { mutableStateOf<RoleId?>(null) }
@@ -63,21 +63,18 @@ internal fun ClocktowerBmrNightControls(state: ClocktowerSessionState, ruleset: 
         val sailor = role == "Sailor"
         val courtier = role == "Courtier"
         val effectiveUse = if (courtier) chosenRole != null else use
-        val exorcised = actor?.actualType == CharacterType.DEMON && state.bmrExorcised(actor.seat) && step?.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION
-        val grandchildSetup = id.startsWith("bmr:grandchild:")
-        val info = step != null && (step.roleId == null || listOf("bmr:info:", "bmr:lunatic-info:", "bmr:lunatic-identity:", "bmr:lunatic-targets:", "bmr:exorcist-notice:", "bmr:goon-notice:").any { id.startsWith(it) } || role == "Chambermaid")
-        val regurgitate = id.startsWith("bmr:regurgitate:")
-        val pukkaSettlement = id.startsWith("bmr:pukka-settlement:")
-        val passive = id.startsWith("bmr:gossip:") || id.startsWith("bmr:moonchild:")
-        val oldPoison = if(pukkaSettlement) state.pukkaPoisonsDue().single { it.fact.actionId == id.removePrefix("bmr:pukka-settlement:") }.fact as ActionFact.PukkaChoice else null
-        val moonchildChoice = if(id.startsWith("bmr:moonchild:")) state.actionTimeline.entries.lastOrNull { it.point.phase == StorytellerPhase.DAY && it.point.round == state.round - 1 && it.fact is ActionFact.MoonchildChoice }?.fact as? ActionFact.MoonchildChoice else null
-        val fixedTarget = oldPoison?.targetSeat ?: moonchildChoice?.targetSeat
         val selection = step?.let { state.bmrNightSelection(it, targets, effectiveUse, charge, chosenRole) }
+        val exorcised = selection?.exorcised == true
+        val grandchildSetup = id.startsWith("bmr:grandchild:")
+        val info = selection?.information == true
+        val regurgitate = id.startsWith("bmr:regurgitate:")
+        val pukkaChoiceId = selection?.pukkaChoiceId
+        val pukkaSettlement = pukkaChoiceId != null
+        val passive = id.startsWith("bmr:gossip:") || id.startsWith("bmr:moonchild:")
         val optional = selection?.optionalUse == true
         val maximum = selection?.maximumTargets ?: 0
         val selectable = selection?.selectableSeats.orEmpty()
         val prop = if(step != null && selection != null) state.bmrInformationPreview(step, selection, targets, bluffs, number, shownSeat, shownRole) else null
-        val attackRole = role in setOf("Shabaloth", "Po", "Zombuul", "Assassin", "Godfather") && !fake && !exorcised
         val dyingSeats = selection?.deathSeats.orEmpty()
         fun deathResult(seat: Int): Boolean? = if(seat in selection?.forcedNoDeathSeats.orEmpty()) false else deaths[seat]
         val selectedReady = when {
@@ -89,21 +86,21 @@ internal fun ClocktowerBmrNightControls(state: ClocktowerSessionState, ruleset: 
         }
         val needsDrunk = selection?.drunkSeats?.isNotEmpty() == true
         val resolvedDrunkSeat = if (sailor) selection?.drunkSeats?.singleOrNull() ?: drunkSeat else drunkSeat
-        val gm = if(attackRole && role !in setOf("Assassin", "Godfather") || pukkaSettlement)
-            dyingSeats.firstOrNull { deathResult(it) == true }?.let(state::bmrGrandmotherAtRisk)?.let(state.gameState::playerAt) else null
+        val gm = dyingSeats.firstOrNull { deathResult(it) == true }?.let { selection?.grandmothers?.get(it) }
+        val gmResult = gm?.let { if(it.forcedNoDeath) false else grandmotherDies }
         val ready = if(info) preview != null else selectedReady && dyingSeats.all { deathResult(it) != null } &&
-            (!needsDrunk || resolvedDrunkSeat != null) && (selection?.roleRequired != true || chosenRole != null) && (gm == null || grandmotherDies != null)
+            (!needsDrunk || resolvedDrunkSeat != null) && (selection?.roleRequired != true || chosenRole != null) && (gm == null || gmResult != null)
         fun nextAction(): BmrHostAction? = when {
             step == null -> BmrHostAction.Dawn
             info -> preview?.action
             exorcised -> BmrHostAction.Exorcised(id)
             grandchildSetup -> BmrHostAction.Grandchild(id, targets.single())
             regurgitate -> BmrHostAction.Regurgitate(id, targets.singleOrNull())
-            pukkaSettlement -> BmrHostAction.PukkaSettlement(requireNotNull(oldPoison).actionId, requireNotNull(deathResult(oldPoison.targetSeat)), grandmotherDies)
-            passive -> BmrHostAction.Passive(id, fixedTarget ?: targets.singleOrNull(), dyingSeats.singleOrNull()?.let { requireNotNull(deathResult(it)) } ?: false)
+            pukkaChoiceId != null -> BmrHostAction.PukkaSettlement(pukkaChoiceId, requireNotNull(deathResult(dyingSeats.single())), gmResult)
+            passive -> BmrHostAction.Passive(id, selection?.fixedTarget ?: targets.singleOrNull(), dyingSeats.singleOrNull()?.let { requireNotNull(deathResult(it)) } ?: false)
             role == "Pukka" && !fake -> BmrHostAction.PukkaChoice(targets.single())
             else -> BmrHostAction.Choice(BmrNightChoice(id, targets, if(optional && effectiveUse == false) null else chosenRole,
-                if(optional) effectiveUse == true else true, resolvedDrunkSeat, dyingSeats.map { requireNotNull(deathResult(it)) }, grandmotherDies))
+                if(optional) effectiveUse == true else true, resolvedDrunkSeat, dyingSeats.map { requireNotNull(deathResult(it)) }, gmResult))
         }
         if(showing && preview != null) {
             val shown = requireNotNull(preview).proposition
@@ -409,7 +406,7 @@ internal fun ClocktowerBmrNightControls(state: ClocktowerSessionState, ruleset: 
                             }
                         }
                         dyingSeats.forEach { n -> BmrYesNo(t("${seat(n)} 死亡？", "${seat(n)} dies?"), deathResult(n), { deaths = deaths + (n to it) }, language) }
-                        if(gm != null) BmrYesNo(t("祖母 ${seat(gm.seat)} 死亡？", "Grandmother ${seat(gm.seat)} dies?"), grandmotherDies, { grandmotherDies = it }, language)
+                        if(gm != null) BmrYesNo(t("祖母 ${seat(gm.seat)} 死亡？", "Grandmother ${seat(gm.seat)} dies?"), gmResult, { grandmotherDies = it }, language)
                         if(info && id.startsWith("bmr:info:Grandmother:") && actor?.impaired == true) {
                             BmrSeatPicker(t("展示玩家", "Shown player"), shownSeat ?: actor?.seat?.let(state::bmrGrandchild), state.gameState.players.map { it.seat }, state, language) { shownSeat = it }
                             BmrRolePicker(t("展示角色", "Shown character"), shownRole, badMoonRisingRoles.filter { RoleId(it.enName) in selection?.displayRoles.orEmpty() }, language) { shownRole = it }

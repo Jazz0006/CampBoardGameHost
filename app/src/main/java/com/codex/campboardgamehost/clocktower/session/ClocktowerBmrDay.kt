@@ -41,6 +41,29 @@ internal fun ClocktowerGameSession.confirmBmrGossip(claimant: Int, statement: St
         claimant, statement.trim(), truthful), state.gameState, state.gameStateRevision)
 }
 
+/**
+ * What the Storyteller may confirm for today's execution; shared by the Day dialog and [confirmBmrEndDay].
+ * [pacifistSeat] is offered only where the target could otherwise die; [registrationOnly] is a healthy Zombuul's first death.
+ */
+internal data class BmrExecutionOptions(val targetSeat: Int, val noDeathForced: Boolean, val pacifistSeat: Int?, val registrationOnly: Boolean)
+
+internal fun ClocktowerSessionState.bmrExecutionOptions(): BmrExecutionOptions? {
+    val seat = voteStanding.nomineeSeat ?: return null
+    val target = gameState.playerAt(seat) ?: return null
+    val pacifist = gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Pacifist" }
+    return BmrExecutionOptions(seat, bmrDeathImpossible(seat, execution = true),
+        pacifist?.seat?.takeIf { target.alive && target.actualAlignment == Alignment.GOOD && !bmrCertainlyProtected(seat, execution = true) },
+        target.actualRole.value == "Zombuul" && target.alive && !target.impaired && !target.registersAsDead)
+}
+
+internal fun ClocktowerSessionState.bmrNoLivingDemon(): Boolean = livingDemonSeat() == null
+
+/** A healthy Tinker the Storyteller may kill at any time; [canDie] is false while a certain protection applies. */
+internal data class BmrTinkerStatus(val seat: Int, val canDie: Boolean)
+
+internal fun ClocktowerSessionState.bmrTinkerStatus(): BmrTinkerStatus? =
+    gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Tinker" }?.let { BmrTinkerStatus(it.seat, !bmrDeathImpossible(it.seat)) }
+
 /** Explicit execution outcome; the resolved Day remains visible for Moonchild and end-game review. */
 internal fun ClocktowerGameSession.confirmBmrEndDay(dies: Boolean, expectedRevision: Long, pacifistSaves: Boolean = false) = confirmAtomically {
     check(state.gameState.script == BadMoonRisingOpening.script && state.phase == StorytellerPhase.DAY && state.outcome == null)
@@ -55,19 +78,13 @@ internal fun ClocktowerGameSession.confirmBmrEndDay(dies: Boolean, expectedRevis
     }
     val target = requireNotNull(state.gameState.playerAt(targetSeat))
     val id = "day-execution-${state.gameId}-${state.round}"
-    val pacifist = state.gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Pacifist" }
-    if (pacifistSaves) require(!dies && target.actualAlignment == Alignment.GOOD && pacifist != null)
-    var actualDeath = dies && target.alive
-    var registersDead = false
-    var foolSaves = false
-    if (!target.alive) require(!dies)
-    if (state.bmrCertainlyProtected(targetSeat, execution = true)) { require(!dies); actualDeath = false }
-    if (state.bmrFoolCanSave(targetSeat) && !state.bmrCertainlyProtected(targetSeat, execution = true) && !pacifistSaves) {
-        require(!dies); foolSaves = true; actualDeath = false
-    }
-    if (dies && !target.impaired && target.actualRole.value == "Zombuul" && !target.registersAsDead) {
-        registersDead = true; actualDeath = false
-    }
+    val options = requireNotNull(state.bmrExecutionOptions())
+    val pacifist = options.pacifistSeat?.let(state.gameState::playerAt)
+    if (pacifistSaves) require(!dies && pacifist != null) { "The Pacifist cannot save this execution." }
+    if (options.noDeathForced) require(!dies) { "This execution cannot cause a death." }
+    val foolSaves = state.bmrFoolCanSave(targetSeat) && !state.bmrCertainlyProtected(targetSeat, execution = true) && !pacifistSaves
+    val registersDead = dies && options.registrationOnly
+    val actualDeath = dies && !registersDead
     val minstrel = state.gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Minstrel" }
     val mastermind = state.gameState.players.singleOrNull { it.alive && !it.impaired && it.actualRole.value == "Mastermind" }
     val execution = ActionFactDraft.Execution(id, state.phase, state.round, nextInputSequence, targetSeat, causedDeath = actualDeath)
@@ -111,6 +128,6 @@ internal fun ClocktowerGameSession.confirmBmrGameEnd(goodWins: Boolean, expected
 
 internal fun ClocktowerGameSession.confirmBmrTinkerDeath(expectedRevision: Long) = confirmAtomically {
     check(state.gameState.script == BadMoonRisingOpening.script && state.gameStateRevision == expectedRevision && state.outcome == null)
-    val tinker = state.gameState.players.single { it.alive && !it.impaired && it.actualRole.value == "Tinker" }
+    val tinker = requireNotNull(state.bmrTinkerStatus()).also { require(it.canDie) }
     resolveBmrDeath("tinker:${state.gameId}:${state.round}:${state.phase}:${state.bmrLifeStart(tinker.seat)}", tinker.seat, true)
 }

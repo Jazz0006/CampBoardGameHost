@@ -1,5 +1,7 @@
 **Owner authorization — 2026-11-02:** 用户已明确授权整个项目的推送和发布（“授权推送和发布，适用于整个项目”）。对现有项目 origin 的后续推送与 PR 发布不重复请求授权；现有合并及付费 API 边界保持原约定。
 
+**2026-11-13 当前进展（优先于下方 2026-11-02 条目中的对应遗留）：** Draft PR #374（分支 `claude/modest-einstein-os4fez`）已处理两项遗留，**尚未合并**：(1) BMR 日夜及状态控件的规则条件已收归 Session 事实（`BmrNightSelection` 步骤类型/固定目标/祖母风险、`bmrExecutionOptions()`、`bmrTinkerStatus()`/`bmrNoLivingDemon()`，前一日月之子/造谣/死亡单一查询）；(2) 超限的 `ClocktowerD2UiTest.kt` 已按职责拆为 `ClocktowerD2InformationUiTest.kt`、`ClocktowerD2NightDayFlowUiTest.kt` 与共享夹具 `ClocktowerD2UiHarness.kt`（44 项不变，均 <50,000 B；`testFast` 仍排除两组 D2）。**所有者规则裁定 2026-11-13：** 醉酒能力不产生实际效果（醉酒者获得的信息仍可为真）；选中当夜未被选过的莽夫即醉酒，任何攻击者（含刺客）击杀失败，不由说书人决定。合并前核对 #374 最新 head 的完整 CI/R2。仍待：真机检查、TB/NGJ AI 不可用及恢复后的人工接管；不要把真机/物理强杀/付费 API 标记完成。
+
 **2026-11-02 合并完成：** PR #372 已合并至 main `d10444b7d2f09a924f06676229c3edab46311605`，本地 main 已同步。PR head `7fe2b345` 完整 CI #4642/R2 #4179、合并后 main CI run `41444310189` 与 Field Test APK run `41444310152` 均 SUCCESS；Android 日志已核对 `testFull + assembleDebug`。此条优先于下方“授权合并”及历史 Draft 描述；职责/尺寸/设备验收遗留仍按最新路线继续。
 
 **2026-11-02 当前进展：** 所有者已要求同步进度并合并 PR #372（BMR 完整 MANUAL 及本轮爪牙/疯子/恶魔/教父/侍女/水手/侍臣页面修正）。每次开工仍核对 live PR/main 和精确 SHA CI，勿沿用历史 Draft 状态。[最新路线](docs/CURRENT_DEVELOPMENT_ROADMAP.md)、[交接](docs/NEXT_DEVELOPMENT_HANDOFF.md)、[职责审查](docs/SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md)已同步。本地完整 testFull 661 项/0 失败及 APK 构建通过；远端以最终提交检查为准。单 Session 写入保持，但 BMR UI 部分规则条件组合仍需收归 Session，既有 `ClocktowerD2UiTest.kt` 57,536 B 超限；生产源码均小于 50,000 B（Session 47,116 B、BMR 夜间 UI 36,333 B）。不要把上述遗留、真机/物理强杀、TB/NGJ AI 故障接管或付费 API 验收标记完成。
