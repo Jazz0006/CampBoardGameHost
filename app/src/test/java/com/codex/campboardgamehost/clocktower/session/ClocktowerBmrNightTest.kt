@@ -75,8 +75,13 @@ class ClocktowerBmrNightTest {
         val s = session(courtier = true)
         val rules = ruleset()
         s.night(2)
-        while (s.state.nextBmrNightInteraction(rules)!!.roleId!!.value != "Assassin")
-            s.confirmBmrNightChoice(BmrNightChoice(s.state.nextBmrNightInteraction(rules)!!.id.value, useAbility = false), s.state.gameStateRevision, rules)
+        var spareTarget = 3
+        while (s.state.nextBmrNightInteraction(rules)!!.roleId!!.value != "Assassin") {
+            val earlier = s.state.nextBmrNightInteraction(rules)!!
+            val input = if (earlier.roleId!!.value == "Shabaloth") BmrNightChoice(earlier.id.value, listOf(spareTarget++), deaths = listOf(false))
+                else BmrNightChoice(earlier.id.value, useAbility = false)
+            s.confirmBmrNightChoice(input, s.state.gameStateRevision, rules)
+        }
         val step = s.state.nextBmrNightInteraction(rules)!!
         assertTrue(6 in s.state.bmrNightSelection(step, listOf(6), true, false, null).forcedNoDeathSeats)
         val revision = s.state.gameStateRevision
