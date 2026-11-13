@@ -36,6 +36,8 @@ Recommended next change (historical): extend existing Session fact projections /
 
 `app/src/test/java/com/codex/campboardgamehost/ClocktowerD2UiTest.kt` is **57,536 bytes**, 7,536 bytes over the strict 50,000-byte limit. It was already oversized before this chat's changes and was not changed here.
 
+**2026-11-13: resolved.** Split by interaction responsibility, with no tests added or removed (44 tests): `ClocktowerD2InformationUiTest.kt` (28 information-role preview/Next cases, 23,605 B), `ClocktowerD2NightDayFlowUiTest.kt` (16 action, succession, day-table, recovery and complete-game cases, 19,625 B) and the shared harness `ClocktowerD2UiHarness.kt` (17377 B; `D2TestRoleCard`, `D2TestHost`). `testFast` still excludes both D2 classes, as before.
+
 All production Kotlin files are below the limit. Do not hide this test exception by reporting only production sizes. Recommended follow-up: split the existing D2 scenarios by coherent interaction responsibility while retaining their actual privacy, final-preview and confirmation behavior; do not add tests just to reorganize them or split out arbitrary single-function files.
 
 ### Growth warning: BMR night UI remains under the limit but is accumulating responsibilities

@@ -1,6 +1,6 @@
 # 当前开发交接
 
-> **2026-11-13：** BMR UI 规则条件已收归 Session（分支 `claude/modest-einstein-os4fez`，详见[职责审查](SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md) 的 2026-11-13 跟进）。所有者裁定：醉酒能力不产生实际效果，刺客选中莽夫同样击杀失败。本地 testFull 662 项/0 失败、APK 通过；以推送提交的远端 CI 为准，尚未合并。仍待：拆分超限的 `ClocktowerD2UiTest.kt`、真机检查、TB/NGJ AI 不可用接管。
+> **2026-11-13：** BMR UI 规则条件已收归 Session（分支 `claude/modest-einstein-os4fez`，详见[职责审查](SESSION_UI_AUTHORITY_AUDIT_2026-11-02.md) 的 2026-11-13 跟进）。所有者裁定：醉酒能力不产生实际效果，刺客选中莽夫同样击杀失败。本地 testFull 662 项/0 失败、APK 通过；以推送提交的远端 CI 为准，尚未合并。`ClocktowerD2UiTest.kt` 已按职责拆为信息角色、夜/日流程两组及共享测试夹具（44 项不变，均 <50,000 B；`testFast` 仍排除 D2）。仍待：真机检查、TB/NGJ AI 不可用接管。
 
 > **合并后基线（2026-11-02）：** PR #372 已合并，main `d10444b7d2f09a924f06676229c3edab46311605`；本地 main 已快进同步。PR head `7fe2b345` 的完整 CI #4642/R2 #4179、合并后 [main 完整 CI](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310189) 及 [Field Test APK 发布](https://github.com/Jazz0006/CampBoardGameHost/actions/runs/41444310152) 均通过。Android 日志确实运行 `testFull + assembleDebug`，现场安装包来源为该合并提交。下一步继续下述真机反馈和职责/尺寸遗留，不再尝试合并已关闭的 PR #372；开工仍读取 live main，不将本 SHA 作为永久基线。
 
