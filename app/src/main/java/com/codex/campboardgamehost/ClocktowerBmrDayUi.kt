@@ -62,18 +62,17 @@ internal fun ClocktowerBmrDayControls(state: ClocktowerSessionState, cards: List
             ClocktowerBmrStatusControls(state, ::accept)
             if(error) Text(t("请核对结算结果后重试。", "Review the result and retry."), color = MaterialTheme.colorScheme.error)
         })
-    if(execution) {
-        val seat = requireNotNull(state.voteStanding.nomineeSeat)
-        val player = requireNotNull(state.gameState.playerAt(seat))
-        val protected = !player.alive || state.bmrCertainlyProtected(seat, execution = true) || state.bmrFoolCanSave(seat)
-        val actual = if(protected || pacifist) false else dies
+    val options = if(execution) state.bmrExecutionOptions() else null
+    if(options != null) {
+        val seat = options.targetSeat
+        val actual = if(options.noDeathForced || pacifist) false else dies
         AlertDialog(onDismissRequest = { execution = false }, title = { Text(t("$seat 号被处决", "#$seat is executed")) }, text = {
             Column {
-                if(protected) Text(t("此次处决不造成死亡。", "This execution causes no death."))
+                if(options.noDeathForced) Text(t("此次处决不造成死亡。", "This execution causes no death."))
                 else BmrYesNo(t("死亡结果生效？", "Does the death take effect?"), dies, { dies = it }, language)
                 if(error) Text(t("请核对目标、状态和是否已记录。", "Check the target, status and whether this was already recorded."), color = MaterialTheme.colorScheme.error)
-                if(player.actualRole.value == "Zombuul" && !player.impaired && !player.registersAsDead) Text(t("僵怖首次为登记死亡，实际仍存活。", "The Zombuul's first death is registration only."))
-                if(player.actualAlignment == Alignment.GOOD && state.gameState.players.any { it.alive && !it.impaired && it.actualRole.value == "Pacifist" }) Row {
+                if(options.registrationOnly && !options.noDeathForced) Text(t("僵怖首次为登记死亡，实际仍存活。", "The Zombuul's first death is registration only."))
+                if(options.pacifistSeat != null) Row {
                     Checkbox(pacifist, onCheckedChange = { pacifist = it }); Text(t("和平主义者保命", "Pacifist saves them"))
                 }
             }

@@ -29,6 +29,9 @@ internal fun ClocktowerSessionState.bmrAttackUnfinished(actorSeat: Int): Boolean
     return choices.isNotEmpty() && choices.none { it.targetSeats.isEmpty() } && choices.size < bmrAttackQuota(actorSeat, actor.actualRole.value)
 }
 
+/** The grandchild's Demon death also takes this Grandmother; [forcedNoDeath] when she is certainly saved. */
+internal data class BmrGrandmotherRisk(val seat: Int, val forcedNoDeath: Boolean)
+
 internal data class BmrNightSelection(
     val minimumTargets: Int,
     val maximumTargets: Int,
@@ -45,6 +48,15 @@ internal data class BmrNightSelection(
     val displayRolesMaximum: Int,
     val attackNumber: Int?,
     val attackTotal: Int?,
+    /** Step type, read by the table so it never re-derives it from IDs or roles. */
+    val information: Boolean,
+    val exorcised: Boolean,
+    val attacks: Boolean,
+    /** The already-chosen target of a Storyteller resolution (old Pukka poison, Moonchild). */
+    val fixedTarget: Int?,
+    val pukkaChoiceId: String?,
+    /** Keyed by a death seat whose confirmed death also needs the Grandmother's result. */
+    val grandmothers: Map<Int, BmrGrandmotherRisk>,
 ) {
     fun targetsValid(seats: List<Int>) = seats.size in minimumTargets..maximumTargets &&
         seats.distinct().size == seats.size && seats.all { it in selectableSeats }
@@ -62,10 +74,10 @@ internal fun ClocktowerSessionState.bmrNightSelection(step: ClocktowerHostIntera
     val segmented = !fake && role in setOf("Po", "Shabaloth") && step.kind == ClocktowerHostInteractionKind.ROLE_PHASE_ACTION && !exorcised
     val completed = if(segmented) bmrAttackChoices(actor.seat) else emptyList()
     val quota = if(role in setOf("Po", "Shabaloth")) bmrAttackQuota(actor.seat, requireNotNull(role)) else 1
-    val optional = role in setOf("Courtier", "Professor", "Assassin") && !information && !exorcised
+    val optional = role in BMR_ONCE_PER_GAME_ROLES && !information && !exorcised
     val chargeAllowed = role == "Po" && quota == 1 && (!segmented || completed.isEmpty()) && !exorcised
     val oldPoison = if(id.startsWith("bmr:pukka-settlement:")) pukkaPoisonsDue().single { it.fact.actionId == id.removePrefix("bmr:pukka-settlement:") }.fact as ActionFact.PukkaChoice else null
-    val moonchild = if(id.startsWith("bmr:moonchild:")) actionTimeline.entries.lastOrNull { e -> e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 && (e.fact as? ActionFact.MoonchildChoice)?.actorSeat == actor.seat }?.fact as? ActionFact.MoonchildChoice else null
+    val moonchild = if(id.startsWith("bmr:moonchild:")) bmrPreviousDayMoonchildChoice(actor.seat) else null
     val gossipInactive = role == "Gossip" && actor.impaired
     val maximum = when {
         exorcised || oldPoison != null || moonchild != null || gossipInactive -> 0
@@ -95,7 +107,7 @@ internal fun ClocktowerSessionState.bmrNightSelection(step: ClocktowerHostIntera
         val excluded = if(role in setOf("Exorcist", "Devil's Advocate")) previous?.targetSeats.orEmpty().toSet() else emptySet()
         seats - excluded - completed.flatMap { it.targetSeats }.toSet()
     }
-    val attacks = !fake && role in setOf("Po", "Shabaloth", "Assassin", "Godfather", "Zombuul") && !exorcised
+    val attacks = !fake && role in BMR_ATTACK_ROLES && !exorcised
     val deaths = when {
         oldPoison != null -> listOf(oldPoison.targetSeat)
         moonchild != null -> listOf(moonchild.targetSeat)
@@ -105,12 +117,15 @@ internal fun ClocktowerSessionState.bmrNightSelection(step: ClocktowerHostIntera
         else -> emptyList()
     }
     val forced = deaths.filterTo(mutableSetOf()) { seat ->
-        gameState.playerAt(seat)?.alive == false ||
-            attacks && actor.impaired ||
+        attacks && !bmrAttackCanKill(actor.seat, seat) ||
             role == "Gambler" && targets.size == 1 && chosenRole != null && !bmrGamblerCanDie(actor.seat, targets.single(), chosenRole) ||
             moonchild != null && (moonchild.chosenAlignment != Alignment.GOOD || actor.impaired) ||
-            role != "Assassin" && (bmrCertainlyProtected(seat) || bmrFoolCanSave(seat))
+            bmrDeathImpossible(seat, bypassProtection = role == "Assassin")
     }
+    val demonDeath = attacks && role in BMR_DEMON_ATTACK_ROLES || oldPoison != null
+    val grandmothers = if(!demonDeath) emptyMap() else deaths.filter { it !in forced }.mapNotNull { seat ->
+        bmrGrandmotherAtRisk(seat)?.let { gm -> seat to BmrGrandmotherRisk(gm, bmrDeathImpossible(gm)) }
+    }.toMap()
     val drunk = if(!fake && role in setOf("Sailor", "Innkeeper") && targets.size == maximum && bmrChoiceFunctioning(actor.seat, targets))
         (targets + if(role == "Sailor") listOf(actor.seat) else emptyList()).toSet() else emptySet()
     val roleRequired = role == "Gambler" || role == "Courtier" && use == true
@@ -125,5 +140,6 @@ internal fun ClocktowerSessionState.bmrNightSelection(step: ClocktowerHostIntera
             else -> false
         } }.mapTo(mutableSetOf()) { RoleId(it.enName) },
         when { id.startsWith("bmr:lunatic-info:") -> 3; role == "Godfather" -> 4; else -> 1 },
-        if(segmented) completed.size + 1 else null, if(segmented) quota else null)
+        if(segmented) completed.size + 1 else null, if(segmented) quota else null,
+        information, exorcised, attacks, oldPoison?.targetSeat ?: moonchild?.targetSeat, oldPoison?.actionId, grandmothers)
 }

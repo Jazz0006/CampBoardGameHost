@@ -5,6 +5,24 @@ import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.*
 import com.codex.campboardgamehost.clocktower.flow.*
 
+/** The Moonchild's public choice made during the previous day; one lookup for flow, selection and resolution. */
+internal fun ClocktowerSessionState.bmrPreviousDayMoonchildChoice(actorSeat: Int): ActionFact.MoonchildChoice? =
+    actionTimeline.entries.lastOrNull { e -> e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 &&
+        (e.fact as? ActionFact.MoonchildChoice)?.actorSeat == actorSeat }?.fact as? ActionFact.MoonchildChoice
+
+internal fun ClocktowerSessionState.bmrPreviousDayGossipStatement(actorSeat: Int): ActionFact.GossipStatement? =
+    actionTimeline.entries.firstOrNull { e -> e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 &&
+        (e.fact as? ActionFact.GossipStatement)?.claimantSeat == actorSeat }?.fact as? ActionFact.GossipStatement
+
+/** Seats that actually died during the previous day; a Zombuul's registered death counts only when asked. */
+internal fun ClocktowerSessionState.bmrPreviousDayDeathSeats(includeRegistration: Boolean): List<Int> =
+    actionTimeline.entries.filter { it.point.phase == StorytellerPhase.DAY && it.point.round == round - 1 }.mapNotNull { when(val fact = it.fact) {
+        is ActionFact.Death -> fact.targetSeat
+        is ActionFact.DeathRegistration -> fact.targetSeat.takeIf { includeRegistration }
+        is ActionFact.Execution -> fact.targetSeat.takeIf { fact.causedDeath }
+        else -> null
+    } }
+
 /** Script order and actual conditions, read from confirmed facts. No persistent step cursor. */
 internal fun ClocktowerSessionState.bmrNightInteractions(ruleset: ValidatedClocktowerRuleset): List<ClocktowerHostInteraction> {
     require(gameState.script == BadMoonRisingOpening.script && ruleset.script.id == gameState.script)
@@ -17,12 +35,7 @@ internal fun ClocktowerSessionState.bmrNightInteractions(ruleset: ValidatedClock
             ClocktowerInteractionCompletionPolicy.ROLE_RESOLUTION, actorSeat = seat)
     fun id(kind: String, seat: Int, role: String) = "bmr:$kind:$role:$seat:${bmrLifeStart(seat)}"
     val today = actionTimeline.entries.filter { it.point.phase == phase && it.point.round == round }
-    fun diedToday(): Boolean = actionTimeline.entries.any { it.point.phase == StorytellerPhase.DAY && it.point.round == round - 1 && when(val fact = it.fact) {
-        is ActionFact.Death -> true
-        is ActionFact.DeathRegistration -> true
-        is ActionFact.Execution -> fact.causedDeath
-        else -> false
-    } }
+    fun diedToday(): Boolean = bmrPreviousDayDeathSeats(includeRegistration = true).isNotEmpty()
     val roles = order.filterIsInstance<NightOrderToken.Character>().map { it.roleId.value }
     // A resurrected ordinary role acts only if its position has not already passed.
     fun passedSinceRevival(seat: Int, role: String): Boolean {
@@ -69,16 +82,12 @@ internal fun ClocktowerSessionState.bmrNightInteractions(ruleset: ValidatedClock
                 }
                 val actor = gameState.players.singleOrNull { it.actualRole.value == role } ?: return@forEach
                 if (role == "Moonchild") {
-                    val choice = actionTimeline.entries.lastOrNull { e -> e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 &&
-                        (e.fact as? ActionFact.MoonchildChoice)?.actorSeat == actor.seat }
-                    if (choice != null) add(step(id("moonchild", actor.seat, role), actor.seat, role, ClocktowerHostInteractionKind.EVENT_RESOLUTION))
+                    if (bmrPreviousDayMoonchildChoice(actor.seat) != null) add(step(id("moonchild", actor.seat, role), actor.seat, role, ClocktowerHostInteractionKind.EVENT_RESOLUTION))
                     return@forEach
                 }
                 if (!actor.alive) return@forEach
                 if (role == "Gossip") {
-                    val statement = actionTimeline.entries.firstOrNull { e -> e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 &&
-                        (e.fact as? ActionFact.GossipStatement)?.claimantSeat == actor.seat }?.fact as? ActionFact.GossipStatement
-                    if (statement?.truthful == true && !passedSinceRevival(actor.seat, role))
+                    if (bmrPreviousDayGossipStatement(actor.seat)?.truthful == true && !passedSinceRevival(actor.seat, role))
                         add(step(id("gossip", actor.seat, role), actor.seat, role, ClocktowerHostInteractionKind.EVENT_RESOLUTION))
                     return@forEach
                 }
@@ -88,15 +97,10 @@ internal fun ClocktowerSessionState.bmrNightInteractions(ruleset: ValidatedClock
                     return@forEach
                 }
                 if (passedSinceRevival(actor.seat, role)) return@forEach
-                if (role in setOf("Courtier", "Professor", "Assassin") && bmrUses(actor.seat, role).any { it.used }) return@forEach
+                if (role in BMR_ONCE_PER_GAME_ROLES && bmrUses(actor.seat, role).any { it.used }) return@forEach
                 if (role == "Zombuul" && diedToday()) return@forEach
-                if (role == "Godfather" && actionTimeline.entries.none { e ->
-                    e.point.phase == StorytellerPhase.DAY && e.point.round == round - 1 && when(val f = e.fact) {
-                        is ActionFact.Death -> gameState.playerAt(f.targetSeat)?.actualType == CharacterType.OUTSIDER
-                        is ActionFact.Execution -> f.causedDeath && gameState.playerAt(f.targetSeat)?.actualType == CharacterType.OUTSIDER
-                        else -> false
-                    }
-                }) return@forEach
+                if (role == "Godfather" && bmrPreviousDayDeathSeats(includeRegistration = false).none {
+                    gameState.playerAt(it)?.actualType == CharacterType.OUTSIDER }) return@forEach
                 if (role == "Shabaloth" && !first && bmrRegurgitationCandidates(actor.seat).isNotEmpty()) add(step(id("regurgitate", actor.seat, role), actor.seat, role, ClocktowerHostInteractionKind.EVENT_RESOLUTION))
                 if(role in setOf("Po", "Shabaloth")) {
                     val confirmed = bmrAttackChoices(actor.seat)

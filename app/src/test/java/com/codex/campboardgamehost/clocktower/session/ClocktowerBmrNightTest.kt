@@ -40,7 +40,10 @@ class ClocktowerBmrNightTest {
         val revision = s.state.gameStateRevision
         s.confirmBmrNightChoice(choice, revision, rules)
         s.confirmBmrNightChoice(choice, revision, rules)
-        s.confirmBmrNightChoice(BmrNightChoice(s.state.nextBmrNightInteraction(rules)!!.id.value, listOf(6), deaths = listOf(false)), s.state.gameStateRevision, rules)
+        val goonAttack = s.state.nextBmrNightInteraction(rules)!!
+        // The table must lock the Goon's death to "no", matching the confirmation below.
+        assertTrue(6 in s.state.bmrNightSelection(goonAttack, listOf(6), true, false, null).forcedNoDeathSeats)
+        s.confirmBmrNightChoice(BmrNightChoice(goonAttack.id.value, listOf(6), deaths = listOf(false)), s.state.gameStateRevision, rules)
         assertFalse(s.state.gameState.playerAt(1)!!.alive)
         assertFalse(s.state.gameState.playerAt(5)!!.drunk) // Source death ends its ongoing intoxication.
         assertTrue(s.state.gameState.playerAt(6)!!.alive)
@@ -66,6 +69,24 @@ class ClocktowerBmrNightTest {
         assertEquals("Courtier", regained.roleId!!.value)
         s.confirmBmrNightChoice(BmrNightChoice(regained.id.value, chosenRole = RoleId("Mastermind")), s.state.gameStateRevision, rules)
         assertTrue(s.state.gameState.playerAt(7)!!.drunk) // A consumed once-per-game ability is available in the new life.
+    }
+
+    @Test fun assassinChoosingTheGoonIsDrunkAndCannotKill() {
+        val s = session(courtier = true)
+        val rules = ruleset()
+        s.night(2)
+        while (s.state.nextBmrNightInteraction(rules)!!.roleId!!.value != "Assassin")
+            s.confirmBmrNightChoice(BmrNightChoice(s.state.nextBmrNightInteraction(rules)!!.id.value, useAbility = false), s.state.gameStateRevision, rules)
+        val step = s.state.nextBmrNightInteraction(rules)!!
+        assertTrue(6 in s.state.bmrNightSelection(step, listOf(6), true, false, null).forcedNoDeathSeats)
+        val revision = s.state.gameStateRevision
+        assertThrows(IllegalArgumentException::class.java) {
+            s.confirmBmrNightChoice(BmrNightChoice(step.id.value, listOf(6), deaths = listOf(true)), revision, rules)
+        }
+        s.confirmBmrNightChoice(BmrNightChoice(step.id.value, listOf(6), deaths = listOf(false)), revision, rules)
+        assertTrue(s.state.gameState.playerAt(6)!!.alive)
+        assertTrue(s.state.gameState.playerAt(7)!!.drunk)
+        assertEquals(1, s.state.bmrUses(7, "Assassin").count { it.used }) // The once-per-game ability is spent.
     }
 
     @Test fun courtierDrunkennessSuspendsPukkaPoisonAcrossThreeNightsAndReload() {

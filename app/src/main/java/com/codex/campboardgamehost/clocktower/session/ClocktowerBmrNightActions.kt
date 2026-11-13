@@ -14,6 +14,11 @@ internal data class BmrNightChoice(
     val grandmotherDies: Boolean? = null,
 )
 
+/** Roles whose own night choice is a kill; only the true Demons' kills can also take the Grandmother. */
+internal val BMR_ATTACK_ROLES = setOf("Shabaloth", "Po", "Zombuul", "Assassin", "Godfather")
+internal val BMR_DEMON_ATTACK_ROLES = setOf("Shabaloth", "Po", "Zombuul")
+internal val BMR_ONCE_PER_GAME_ROLES = setOf("Courtier", "Professor", "Assassin")
+
 internal fun ClocktowerSessionState.bmrLifeStart(seat: Int): Long = actionTimeline.entries.lastOrNull {
     (it.fact as? ActionFact.Revival)?.targetSeat == seat
 }?.point?.globalSequence ?: -1L
@@ -36,6 +41,17 @@ internal fun ClocktowerSessionState.bmrGoonWouldTrigger(targetSeat: Int): Boolea
 
 internal fun ClocktowerSessionState.bmrChoiceFunctioning(actorSeat: Int, targets: List<Int>): Boolean =
     gameState.playerAt(actorSeat)?.let { it.alive && !it.impaired } == true && targets.none(::bmrGoonWouldTrigger)
+
+/**
+ * A drunk ability never takes real effect. Choosing a not-yet-chosen Goon makes the attacker drunk at once,
+ * so that kill fails for every attacker, the Assassin included.
+ */
+internal fun ClocktowerSessionState.bmrAttackCanKill(actorSeat: Int, targetSeat: Int): Boolean =
+    bmrChoiceFunctioning(actorSeat, listOf(targetSeat))
+
+/** The confirmed result must be "no death": already dead, or a certain protection / unused Fool applies. */
+internal fun ClocktowerSessionState.bmrDeathImpossible(seat: Int, bypassProtection: Boolean = false, execution: Boolean = false): Boolean =
+    gameState.playerAt(seat)?.alive != true || !bypassProtection && (bmrCertainlyProtected(seat, execution) || bmrFoolCanSave(seat))
 
 internal fun ClocktowerSessionState.bmrGamblerCanDie(actorSeat: Int, targetSeat: Int, guessedRole: RoleId): Boolean =
     bmrChoiceFunctioning(actorSeat, listOf(targetSeat)) && gameState.playerAt(targetSeat)?.actualRole != guessedRole
@@ -87,7 +103,7 @@ internal fun ClocktowerGameSession.confirmBmrNightChoice(input: BmrNightChoice, 
     if (selection.optionalUse) require(state.bmrUses(actor.seat, role).none { it.used })
     val id = "bmr:${state.gameId}:${state.round}:${input.stepId}"
     val available = !actor.impaired
-    if (fake || role !in setOf("Shabaloth", "Po", "Zombuul", "Assassin", "Godfather")) {
+    if (fake || role !in BMR_ATTACK_ROLES) {
         val selected = if (role == "Courtier") state.gameState.players.filter { it.actualRole == input.chosenRole }.map { it.seat } else input.targets
         selected.forEach { triggerBmrGoon(actor.seat, it, id) }
     }
@@ -115,15 +131,12 @@ internal fun ClocktowerGameSession.confirmBmrNightChoice(input: BmrNightChoice, 
                 resolveBmrDeath("$id:gamble", actor.seat, input.deaths.single())
             else require(!input.deaths.single())
         }
-        "Shabaloth", "Po", "Zombuul", "Assassin", "Godfather" -> {
+        in BMR_ATTACK_ROLES -> {
             require(input.deaths.size == input.targets.size)
             input.targets.forEachIndexed { index, seat ->
-                val before = requireNotNull(state.gameState.playerAt(actor.seat))
-                val functionedBeforeGoon = before.alive && !before.impaired
+                val canKill = state.bmrAttackCanKill(actor.seat, seat)
                 triggerBmrGoon(actor.seat, seat, "$id:$index")
-                val after = requireNotNull(state.gameState.playerAt(actor.seat))
-                val canKill = functionedBeforeGoon && (role == "Assassin" || !after.impaired)
-                if (canKill) resolveBmrDeath("$id:death:$index", seat, input.deaths[index], bypassProtection = role == "Assassin", sourceIsDemon = role in setOf("Shabaloth", "Po", "Zombuul"), grandmotherDies = input.grandmotherDies)
+                if (canKill) resolveBmrDeath("$id:death:$index", seat, input.deaths[index], bypassProtection = role == "Assassin", sourceIsDemon = role in BMR_DEMON_ATTACK_ROLES, grandmotherDies = input.grandmotherDies)
                 else require(!input.deaths[index]) { "An impaired attacker cannot cause a death." }
             }
         }
