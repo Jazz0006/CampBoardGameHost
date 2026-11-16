@@ -101,23 +101,18 @@ internal class InitialOpeningDomainV3(
                 }, metric, truthful, ifDrunk)
             }
             "Washerwoman", "Librarian", "Investigator" -> {
-                val resolved = PairInformationResolver.resolve(unbound, ruleset, role, seat, null, null)
+                val choices = PairInformationResolver.choices(unbound, ruleset, role, seat)
                     ?: return@mapNotNull null
-                val truthful = (resolved.ordinaryCandidateSeats - seat).sorted().map {
-                    Truthful(external(requireNotNull(unbound.gameState.playerAt(it)).actualRole), it)
-                } + if (role.value == "Librarian" && request.hasDrunk) listOf(Truthful("drunk", null)) else emptyList()
-                val mayRegister = (resolved.specialCandidateSeats - seat).sorted().mapNotNull { special ->
-                    val other = request.shownRoles.keys.firstOrNull { it != seat && it != special }
-                        ?: return@mapNotNull null
-                    PairInformationResolver.resolve(unbound, ruleset, role, seat, special, other)
-                        ?.options?.map { external(it.role) }?.takeIf { it.isNotEmpty() }
-                        ?.let { Registration(special, it) }
+                val truthful = choices.truthful.map { (held, at) -> Truthful(external(held), at) } +
+                    if (role.value == "Librarian" && request.hasDrunk) listOf(Truthful("drunk", null)) else emptyList()
+                val mayRegister = choices.registrations.map { (special, roles) ->
+                    Registration(special, roles.map(::external))
                 }
                 Pair(seat, shownId, when {
                     truthful.isNotEmpty() || mayRegister.isNotEmpty() -> Answer.ALWAYS
                     candidate -> Answer.IF_DRUNK
                     else -> Answer.NEVER
-                }, truthful, mayRegister, resolved.canShowNoOutsiders && !request.hasDrunk)
+                }, truthful, mayRegister, choices.canShowNoOutsiders && !request.hasDrunk)
             }
             else -> null
         }
