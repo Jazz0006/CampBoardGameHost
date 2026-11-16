@@ -80,7 +80,6 @@ class StorytellerStrategicContinuationV2Test {
             drunkSeat = null, redHerringSeat = null, information = emptyMap(),
             demonBluffs = null,
         ),
-        conditional = emptyList(),
         strategyMemory = memory,
     )
 
@@ -142,8 +141,9 @@ class StorytellerStrategicContinuationV2Test {
         }
         assertEquals("strategyMemory.tensions has 4 entries; maximum is 3.", error.safeDetail)
         assertEquals(before, game.state)
-        listOf(InitialJointOpeningDirectV2.responseSchema to "strategyMemory",
-            StorytellerStrategicContinuationV2.responseSchema to "updatedStrategyMemory").forEach { (schema, key) ->
+        assertEquals(HostOpeningStrategyMemoryV2.MAX_ENTRIES, InitialJointOpeningDirectV2.responseSchema
+            .getJSONObject("properties").getJSONObject("intentions").getInt("maxItems"))
+        listOf(StorytellerStrategicContinuationV2.responseSchema to "updatedStrategyMemory").forEach { (schema, key) ->
             val fields = schema.getJSONObject("properties").getJSONObject(key).getJSONObject("properties")
             listOf("tensions", "intentions", "uncertainties").forEach { field ->
                 assertEquals(HostOpeningStrategyMemoryV2.MAX_ENTRIES, fields.getJSONObject(field).getInt("maxItems"))
@@ -375,8 +375,9 @@ class StorytellerStrategicContinuationV2Test {
         rejects { it.getJSONArray("affectedOpenDecisionIds").put("published-seat") }
         rejects { it.getJSONArray("revisions").remove(1) }
         rejects { it.put("remainingChoices", JSONArray()) }
+        // An intention's risk is optional since the slot-based opening states none.
         rejects { it.getJSONObject("updatedStrategyMemory").getJSONArray("intentions")
-            .getJSONObject(0).put("risk", "") }
+            .getJSONObject(0).put("approach", "") }
         assertTrue(runCatching { StorytellerStrategicContinuationV2.encode(
             session().state, prior(), open + open.first())
         }.isFailure)

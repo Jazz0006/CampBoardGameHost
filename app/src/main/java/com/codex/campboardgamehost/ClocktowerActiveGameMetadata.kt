@@ -72,8 +72,6 @@ internal object ClocktowerActiveGameMetadata {
             put("gameId", s.gameId); put("revision", s.gameStateRevision); put("input", s.playerInputRevision); put("roster", s.rosterFingerprint)
             put("drunk", s.drunkSeat); put("redHerring", s.redHerringSeat); s.demonBluffs?.let { put("bluffs", JSONArray(it)) }
             put("information", JSONArray(s.information.values.map(::semantic)))
-            put("conditional", JSONArray(v.conditional.map { JSONObject().put("id", it.decisionId)
-                .put("proposed", it.proposed?.let(::semantic)).put("waiting", JSONArray(it.waitingForEvents)) }))
             v.strategyMemory?.let { put("memory", memory(it)) }
             v.tradeoffSummary?.let { put("tradeoffSummary", it) }
         }) }
@@ -93,8 +91,8 @@ internal object ClocktowerActiveGameMetadata {
         HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(v.getString("gameId"), v.getLong("revision"), v.getLong("input"),
             v.getString("roster"), v.nullInt("drunk"), v.nullInt("redHerring"), v.optJSONArray("bluffs")?.strings(),
             v.getJSONArray("information").objects().map(::semantic).associateBy { it.sourceSeat }),
-            v.getJSONArray("conditional").objects().map { HostOpeningConditionalIntentV2(it.getString("id"), it.optJSONObject("proposed")?.let(::semantic),
-                it.getJSONArray("waiting").strings()) }, v.optJSONObject("memory")?.let(::memory),
+            // Saves written before the slot-based opening also carry "conditional"; it is no longer read.
+            v.optJSONObject("memory")?.let(::memory),
             v.optString("tradeoffSummary").takeIf(String::isNotBlank)) }
     fun cursor(j: JSONObject): StorytellerStrategicContinuationV2.MemoryCursor? = j.optJSONObject("cursor")?.let { v ->
         StorytellerStrategicContinuationV2.MemoryCursor(v.getString("gameId"), v.getLong("revision"), v.getLong("input"),

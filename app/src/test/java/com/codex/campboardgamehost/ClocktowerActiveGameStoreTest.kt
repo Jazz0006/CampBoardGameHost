@@ -138,7 +138,7 @@ class ClocktowerActiveGameStoreTest {
     @Test fun `AI accepted advisory memory is restored without a second game authority or any pending request`() {
         val s = session("Imp", "Chef", "Empath", "Soldier", "Saint")
         val memory = HostOpeningStrategyMemoryV2(listOf("tension"), listOf(HostOpeningStrategicIntentionV2("trigger", "approach", "risk")), listOf("unknown"))
-        val opening = HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(s.state.gameId, 0, 0, "roster", null, null, null, emptyMap()), emptyList(), memory)
+        val opening = HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(s.state.gameId, 0, 0, "roster", null, null, null, emptyMap()), memory)
         val cursor = StorytellerStrategicContinuationV2.MemoryCursor.initial(opening)
         val meta = ClocktowerActiveGameMetadata.encode(StorytellerOperationMode.AI_AUTOMATIC, null, null, opening, cursor, "response-accepted", "model")
         val f = file("advice.json")

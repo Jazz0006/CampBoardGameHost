@@ -22,19 +22,18 @@ class PersonalDirectOpenAiV1Test {
         val h = host(InitialJointOpeningDirectV2.REQUEST_SCHEMA)
         val req = JSONObject(PersonalDirectOpenAiV1.buildRequest(h.toString(), "gpt-6-luna"))
         val format = req.getJSONObject("text").getJSONObject("format")
-        assertEquals("botc_initial_joint_opening_v2", format.getString("name"))
+        assertEquals("botc_initial_joint_opening_v3", format.getString("name"))
         assertEquals("json_schema", format.getString("type"))
         assertTrue(format.getBoolean("strict"))
         assertEquals(6, format.getJSONObject("schema").getJSONArray("required").length())
-        assertTrue(format.getJSONObject("schema").getJSONObject("properties")
-            .getJSONObject("openingPlan").getJSONObject("properties").has("drunkSeat"))
+        assertTrue(format.getJSONObject("schema").getJSONObject("properties").has("drunkSeat"))
         assertFalse(format.getJSONObject("schema").getJSONObject("properties").has("primaryCandidateId"))
         assertFalse(req.getBoolean("store"))
         assertEquals(h.toString(), req.getString("input"))
-        val model = JSONObject().put("schemaVersion", 2).put("openingPlan", JSONObject())
+        val model = JSONObject().put("drunkSeat", JSONObject.NULL).put("information", JSONArray())
         val result = JSONObject(PersonalDirectOpenAiV1.adaptResponse(
             h.toString(), upstream("completed", model)))
-        assertTrue(result.has("openingPlan"))
+        assertTrue(result.has("information"))
         assertFalse(result.has("primaryCandidateId"))
     }
 

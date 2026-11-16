@@ -45,12 +45,6 @@ internal data class HostOpeningSemanticValueV2(
     }
 }
 
-internal data class HostOpeningConditionalIntentV2(
-    val decisionId: String,
-    val proposed: HostOpeningSemanticValueV2?,
-    val waitingForEvents: List<String>,
-)
-
 /**
  * Bounded editable multi-night *strategic intent*, not a causal fact.
  * Its conditions apply to ANY role, observed action, intervention or game phase;
@@ -59,10 +53,12 @@ internal data class HostOpeningConditionalIntentV2(
 internal data class HostOpeningStrategicIntentionV2(
     val trigger: String,
     val approach: String,
-    val risk: String,
+    /** The opening states no risk; a later whole-game review may add one. */
+    val risk: String = "",
 ) {
     init {
-        require(listOf(trigger, approach, risk).all { it.isNotBlank() && it.length <= HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH }) {
+        require(trigger.isNotBlank() && approach.isNotBlank() &&
+            listOf(trigger, approach, risk).all { it.length <= HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH }) {
             "Opening strategic intention exceeded its bounded text contract."
         }
     }
@@ -93,7 +89,6 @@ internal data class HostOpeningStrategyMemoryV2(
 /** Private AI advice; only the existing Session confirmation path can record facts. */
 internal data class HostOpeningSemanticAcceptanceV2(
     val selection: OpeningSelectionV2,
-    val conditional: List<HostOpeningConditionalIntentV2>,
     val strategyMemory: HostOpeningStrategyMemoryV2? = null,
     val tradeoffSummary: String? = null,
 )
