@@ -160,9 +160,6 @@ internal object StorytellerStrategicChangeCheckpointV2 {
             now.gameStateRevision == reviewed.gameStateRevision &&
             now.playerInputRevision == reviewed.playerInputRevision &&
             now.nextTimelineGlobalSequence == reviewed.exclusiveGlobalSequence)
-        require(response.affectedOpenDecisionIds.all { id ->
-            reviewed.openDecisions.any { it.decisionId == id }
-        })
         require(response.remainingChoices.keys == reviewed.openDecisions.map { it.decisionId }.toSet()) {
             "Strategy memory cannot advance with an incomplete current response."
         }

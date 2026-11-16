@@ -98,7 +98,7 @@ internal object TroubleBrewingSetupCommitter {
         )
     }
 
-    private fun ClocktowerCatalogTeam.toDomainAlignment(): Alignment = when (this) {
+    internal fun ClocktowerCatalogTeam.toDomainAlignment(): Alignment = when (this) {
         ClocktowerCatalogTeam.TOWNSFOLK,
         ClocktowerCatalogTeam.OUTSIDER -> Alignment.GOOD
 
@@ -110,7 +110,7 @@ internal object TroubleBrewingSetupCommitter {
         )
     }
 
-    private fun ClocktowerCatalogTeam.toDomainCharacterType(): CharacterType = when (this) {
+    internal fun ClocktowerCatalogTeam.toDomainCharacterType(): CharacterType = when (this) {
         ClocktowerCatalogTeam.TOWNSFOLK -> CharacterType.TOWNSFOLK
         ClocktowerCatalogTeam.OUTSIDER -> CharacterType.OUTSIDER
         ClocktowerCatalogTeam.MINION -> CharacterType.MINION

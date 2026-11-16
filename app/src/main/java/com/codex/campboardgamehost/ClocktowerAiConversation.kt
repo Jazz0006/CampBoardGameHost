@@ -319,7 +319,7 @@ internal class ClocktowerAiConversation {
                     runCatching {
                         StorytellerStrategicContinuationV2.recommendWithReceipt(
                             PersonalDirectOpenAiV1.ENDPOINT, requestedToken, requestedModel,
-                            session, wholeOpening, legalOpen, wholeCursor, previousResponseId,
+                            session, wholeOpening, legalOpen, requestedNightRuleset, wholeCursor, previousResponseId,
                         )
                     }
                 } finally {
@@ -372,16 +372,7 @@ internal class ClocktowerAiConversation {
                         )
                         BotcAiWireTrace.residualGate("PROPOSAL_ONLY", verified.choices.size,
                             wholeCursor.version, phasePosition.phase.name, phasePosition.round)
-                        liveAiAdviceText = buildString {
-                            append(proposal.strategicDirection)
-                            if (proposal.revisions.isNotEmpty()) {
-                                append("\n\n策略调整：")
-                                proposal.revisions.forEach { revision ->
-                                    append("\n")
-                                    append(revision.reason)
-                                }
-                            }
-                        }
+                        liveAiAdviceText = proposal.strategicDirection
                         liveAiAdviceError = null
                         DebugFlightRecorder.record("RESIDUAL_CURRENT_RECOMMENDED", mapOf(
                             "choiceCount" to verified.choices.size.toString(),

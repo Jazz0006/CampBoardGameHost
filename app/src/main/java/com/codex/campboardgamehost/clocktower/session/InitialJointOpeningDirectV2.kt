@@ -1,7 +1,6 @@
 package com.codex.campboardgamehost.clocktower.session
 
-import com.codex.campboardgamehost.clocktower.catalog.ClocktowerCharacterRegistry
-import com.codex.campboardgamehost.clocktower.domain.SnapshotField
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.TroubleBrewingSnapshotStage
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,15 +8,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * 3C/3D — ONE expert precommit planning request, before any actual Drunk is bound.
+ * ONE joint precommit planning request, before any actual Drunk is bound.
  *
- * The provider sees actual/shown roster facts and decision needs, NOT exhaustive Host
- * candidate domains, witness registrations or hypothetical cartesian products.
- * Returned advice is checked for structure and request identity; only later Host
- * confirmation records actual facts. No gameplay legal domain is generated.
+ * The request lists only the choices that are open now, each with the candidates the Session
+ * rules allow ([InitialOpeningDomainV3]); results with a single legal value are filled by the
+ * Host and never asked. The response is checked against the same candidates. Accepted advice
+ * is still only advice: later Host confirmation records the actual facts.
  */
 internal object InitialJointOpeningDirectV2 {
-    const val REQUEST_SCHEMA = "botc.initial-joint-opening-request-v2"
+    const val REQUEST_SCHEMA = "botc.initial-joint-opening-request-v3"
+    private const val MAX_RATIONALE_LENGTH = 600
 
     private fun objectSchema(vararg entries: Pair<String, JSONObject>): JSONObject =
         JSONObject()
@@ -31,189 +31,126 @@ internal object InitialJointOpeningDirectV2 {
     private fun field(type: String): JSONObject = JSONObject().put("type", type)
     private fun nullable(type: String): JSONObject = JSONObject()
         .put("type", JSONArray(listOf(type, "null")))
-    private fun enum(vararg values: String): JSONObject = field("string")
-        .put("enum", JSONArray(values.toList()))
     private fun array(items: JSONObject): JSONObject = field("array").put("items", items)
-    private fun memoryText(): JSONObject = field("string")
-        .put("pattern", "^[\\s\\S]{1,${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH}}$")
 
+    /** One fixed schema for every roster; the open choices vary in the request, not here. */
     val responseSchema: JSONObject by lazy {
-        val subject = objectSchema(
-            "mode" to enum("NONE", "EVIDENCE_PAIR", "FIXED_NEIGHBORS",
-                "PLAYER_SELECTED_TARGETS", "PLAYER_QUERY_PENDING"),
-            "seats" to array(field("integer")),
-        )
-        val observation = objectSchema(
-            "kind" to enum("NONE", "NUMBER", "ROLE", "BOOLEAN", "ZERO_OUTSIDERS"),
-            "number" to nullable("integer"),
-            "roleId" to nullable("string"),
-            "boolean" to nullable("boolean"),
-        )
-        val info = objectSchema(
-            "decisionId" to field("string"),
-            "sourceSeat" to field("integer"),
-            "abilityRoleId" to field("string"),
-            "effectiveAbilityRoleId" to nullable("string"),
-            "resolution" to enum("DECISION", "HOST_DETERMINED", "CONDITIONAL_INTENT", "DEFERRED"),
-            "basis" to enum("FUNCTIONING", "DRUNK_MISINFORMATION",
-                "STATUS_DEPENDENT", "RULE_DETERMINED"),
-            "subject" to subject,
-            "observation" to observation,
-            "waitingForEvents" to array(field("string")),
-        )
-        val event = objectSchema(
-            "decisionId" to field("string"),
-            "event" to field("string"),
-            "actorSeat" to nullable("integer"),
-        )
         objectSchema(
-            "schemaVersion" to field("integer"),
-            "asOfRevision" to field("integer"),
-            "requestIdentity" to objectSchema(
-                "gameId" to field("string"),
-                "gameStateRevision" to field("integer"),
-                "playerInputRevision" to field("integer"),
-                "rosterFingerprint" to field("string"),
-            ),
-            "openingPlan" to objectSchema(
-                "drunkSeat" to nullable("integer"),
-                "redHerringSeat" to nullable("integer"),
-                "demonBluffRoleIds" to JSONObject()
-                    .put("type", JSONArray(listOf("array", "null")))
-                    .put("items", field("string")),
-                "information" to array(info),
-                "deferredActions" to array(event),
-            ),
-            "strategyMemory" to objectSchema(
-                "tensions" to array(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-                "intentions" to array(objectSchema(
-                    "trigger" to memoryText(),
-                    "approach" to memoryText(),
-                    "risk" to memoryText(),
-                )).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-                "uncertainties" to array(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-            ),
-            "tradeoffSummary" to field("string"),
+            "drunkSeat" to nullable("integer"),
+            "redHerringSeat" to nullable("integer"),
+            "demonBluffRoleIds" to JSONObject()
+                .put("type", JSONArray(listOf("array", "null")))
+                .put("items", field("string")),
+            "information" to array(objectSchema(
+                "seat" to field("integer"),
+                "roleId" to nullable("string"),
+                "seats" to array(field("integer")),
+                "number" to nullable("integer"),
+            )),
+            "intentions" to array(objectSchema(
+                "trigger" to field("string"),
+                "approach" to field("string"),
+            )).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
+            "rationale" to field("string"),
         )
     }
 
     const val INSTRUCTIONS = """
-你是一位资深的 Blood on the Clocktower（Trouble Brewing）真人说书人，将协助主持 Host 提供的这局游戏。
-目标是让双方在符合其经验水平的公平、可推理的局面中，通过交流、判断与欺骗影响胜负。
-请在内部完成以下整局分析，不必逐步展示：
-1. 梳理全部信息位：区分说书人掌握的真实事实、玩家已经知道的事实、目前合法可决定的信息，
-   以及取决于未来玩家行动的信息；辨认各信息位可能提供的合法结果和彼此关系。
-2. 从善良玩家视角推演：结合每人的经验，估计可能的身份公开、信息交换与交叉验证，
-   判断哪些组合会过早锁定邪恶玩家，尤其令新手邪恶玩家失去实际辩护空间。
-3. 评估合法的平衡手段：联合考量本局可选择的 Drunk 及其信息、实际存在的 Recluse/Spy
-   登记歧义、Red Herring 和其他合法信息选择。登记歧义只是可能性，具体登记由 Host 决定；
-   保留善良玩家能够追踪、质疑并最终破解的推理路径。
-4. 从邪恶玩家视角推演：结合其经验，设想他们能否实际使用三个 Demon bluffs，
-   如何与场上角色和线索配合，怎样建立并维持可信的虚假世界；优先照顾不善编造故事的新手，
-   避免仅在理论上精巧、实际难以扮演的方案。
-5. 在双方视角下联合选择唯一最合适的首夜整体配置，包括酒鬼人选及相应信息、
-   其他首夜线索、Red Herring 和 Demon bluffs；既不让信息过早交叉锁死，
-   也不因掩护邪恶而剥夺善良玩家的有效信息。state.hasDrunk 为 true 时选择合法镇民作酒鬼，
-   为 false 时 drunkSeat=null；真实阵容保持不变。
-6. 预想多夜信息轨迹、身份声明与局势变化，形成可延续的整局战略；
-   后续用 Host 新确认的事实与已有 strategyMemory 重新评估尚未执行的决定，
-   已公布的信息保留其历史一致性。未来行动和公开声明属于假设，不视为已发生。
-只输出一套完整可执行的推荐。strategyMemory 保留最关键的交互张力、条件性跨夜意图及未知因素；
-tradeoffSummary 简要交代主要取舍，不复述角色规则或详细分析过程。
+你是资深的 Blood on the Clocktower（Trouble Brewing）说书人，为 Host 提供开局推荐。
+Host 负责规则与合法性：输入中的候选都已合法，你只需在候选内选出对这局最好的组合。
 
-输出接口（严格遵守 Host 提供的合同；这不是逐角色规划任务）：
-原样复制 requestIdentity、asOfRevision；schemaVersion=2。根据 state.seats 的展示阵容、
-有无 Drunk 和 decisionInventory 中本轮实际的首夜信息项/待确认事件，自行联合选择酒鬼与首夜方案。
-information 必须完整覆盖 decisionInventory.information，逐项使用相同的 decisionId、
-sourceSeat、abilityRoleId。选定的酒鬼 effectiveAbilityRoleId=null，其他角色按展示身份；
-resolution、basis、waitingForEvents 必须符合已知状态与尚未确认的真实玩家行动。
-当前能够推荐的信息用 DECISION 与具体观察值，即使按规则只有一个答案也应给出具体值；
-Host 不会替模型计算或补齐信息。依赖未发生行动的信息用 DEFERRED / STATUS_DEPENDENT、
-NONE 观察及真实 waitingForEvents，不猜测未来目标或结果。
-deferredActions 必须只对应 decisionInventory.events 中本局已知待确认事件，
-decisionId、event、actorSeat 与实际身份一致；不得编造事件。
-Host 只检查响应结构、座位/角色引用、请求身份和版本；推荐不会自动成为已确认事实。
-需要 Red Herring 时，选择实际善良阵营且真实身份不是 Recluse 的玩家；排除 Recluse 是当前 Host 的开局偏好。
-不要用 Spy/Recluse 的登记可能性替代实际阵营，也不要输出或推断未确认的登记事实。
-demonBluffRoleIds 根据剧本角色目录选三个不同且未在场的善良身份，
-否则为 null。FIXED_NEIGHBORS 的 subject.seats 为空；EVIDENCE_PAIR 只填两个座位，
-配合 observation.kind=ROLE 与 roleId 表示该身份在二人之一；不另输出固定规则文案。
-NONE / PLAYER_QUERY_PENDING 不填目标；没有用到的 number、roleId、boolean 填 null。
-Librarian 观察到没有外来者时使用 ZERO_OUTSIDERS。
-strategyMemory 的 tensions、intentions、uncertainties 各最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 项；各字符串非空且不超过
-${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字，tradeoffSummary 不超过 1200 字。只返回符合 JSON Schema 的结构化结果。
+目标：让双方在符合各自经验的局面中靠交流、推理和欺骗决定胜负。
+- 善良方应拿到能用来推理的信息，不要为了保护邪恶而让信息失去价值。
+- 邪恶方需要讲得出来的故事：掩护身份要适合该玩家的经验，且不会被在场角色当场证伪。
+- 首夜信息交叉后不应直接锁定邪恶玩家，也不应让善良方无从下手。
+- 酒鬼人选与给酒鬼的假信息一起考虑：假信息应当可信，并最终可以被破解。
+- 玩家经验越低，方案越要简单直接。
+
+输入：
+- seats：座位按顺时针排列，首尾相邻；role 是玩家看到的身份。
+- slots：本次要决定的开局项及其候选。drunk 是酒鬼座位，redHerring 是占卜师的红鲱鱼，
+  demonBluffs 是给恶魔的三个掩护身份。
+- firstNightInfo：首夜信息位。truthful 是该角色正常运作且未中毒时的合法结果。
+  answer 说明是否需要你回答：ALWAYS 必须回答，IF_DRUNK 仅当你把该座位选为酒鬼时回答，NEVER 不回答。
+  NUMBER 是一个数字；PAIR 是“某身份在两名玩家之一”；AFTER_PLAYER_CHOICE 要等玩家选人。
+- 中毒由 Host 在夜间另行询问，本次按未中毒规划。
+
+回答：
+- slots 中出现的项都要回答，没有出现的项填 null。若你把占卜师选为酒鬼，redHerringSeat 填 null。
+- information 只包含按 answer 需要回答的信息位，seat 是信息位本人的座位；用不到的字段填 null 或 []。
+- NUMBER：number 从 truthful 取值。
+- PAIR：roleId 取 truthful 中的一个身份，seats 填两个座位：该身份所在的座位，加上除信息位本人外的任意一个座位。
+  mayRegister 列出的座位可以被当作其所列的任一身份。
+  noneTruthful 为 true 时，“没有外来者”是合法结果，用 roleId=null、seats=[] 表示。
+- 酒鬼实际不是镇民：洗衣妇的 truthful 中，位于你所选酒鬼座位的那一项不能使用。
+  truthful 里座位为 DRUNK_SEAT 的一项指你选定的酒鬼座位。
+- 被你选为酒鬼的信息位不受 truthful 限制：NUMBER 从 ifDrunk 取值；
+  洗衣妇可用任一在场镇民身份，或你选的掩护身份中的镇民身份；
+  图书管理员、调查员可用剧本中任一外来者、爪牙身份；seats 为除本人外的任意两个座位。
+- intentions：最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 条跨夜意向，供夜间后续决定参考，例如某角色中毒时打算给什么；
+  trigger 与 approach 各不超过 100 字。
+- rationale：用一两句话说明主要取舍，不超过 200 字，不复述规则。
 """
 
-    fun encode(
-        request: InitialOpeningRequestV2,
-        registry: ClocktowerCharacterRegistry,
-        recentGames: List<String> = emptyList(),
-    ): String {
-        val snapshot = request.snapshot
-        require(snapshot.position.stage == TroubleBrewingSnapshotStage.SETUP_PRECOMMIT)
-        require(recentGames.size <= 4 && recentGames.all { it.length <= 250 })
-        // Script role knowledge is part of the expert's task, not a menu of
-        // model-facing legal candidate roles. Only known role references are checked.
-        require(snapshot.grimoireSeats.all { seat ->
-            registry.findByExternalId(
-                (seat.shownRoleId as SnapshotField.Known<String>).value) != null
-        }) { "Host opening roster contains an unknown script role." }
-        val info = JSONArray()
-        request.information.forEach { (id, seat) ->
-            info.put(JSONObject().put("decisionId", id).put("sourceSeat", seat)
-                .put("shownRoleId", request.shownRoles.getValue(seat)))
-        }
-        val eventMap = request.events.mapValues { it.value.first }
-        val pendingEvents = eventMap.values.toSet().sorted()
+    fun encode(request: InitialOpeningRequestV2, ruleset: ValidatedClocktowerRuleset): String {
+        require(request.snapshot.position.stage == TroubleBrewingSnapshotStage.SETUP_PRECOMMIT)
+        val domain = InitialOpeningDomainV3(request, ruleset)
+        val slots = JSONArray()
+        if (domain.drunkSeats.isNotEmpty()) slots.put(JSONObject()
+            .put("slot", "drunk").put("seats", JSONArray(domain.drunkSeats)))
+        if (domain.redHerringSeats.isNotEmpty()) slots.put(JSONObject()
+            .put("slot", "redHerring").put("seats", JSONArray(domain.redHerringSeats)))
+        if (domain.bluffRoleIds.isNotEmpty()) slots.put(JSONObject()
+            .put("slot", "demonBluffs").put("roles", JSONArray(domain.bluffRoleIds)))
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
-            .put("schemaVersion", 2)
-            .put("scriptId", snapshot.script.value)
-            .put("requestIdentity", JSONObject()
-                .put("gameId", snapshot.gameId)
-                .put("gameStateRevision", request.gameStateRevision)
-                .put("playerInputRevision", request.playerInputRevision)
-                .put("rosterFingerprint", request.rosterFingerprint))
-            .put("decisionInventory", JSONObject()
-                .put("information", info)
-                .put("events", JSONArray().also { arr ->
-                    eventMap.forEach { (id, event) ->
-                        arr.put(JSONObject().put("decisionId", id).put("event", event))
-                    }
-                }))
-            .put("state", JSONObject()
-                .put("asOfRevision", request.gameStateRevision)
-                .put("phase", "SETUP_PRECOMMIT")
-                .put("hasDrunk", request.hasDrunk)
-                .put("drunkAssignment", if (request.hasDrunk) "UNCOMMITTED" else "NOT_APPLICABLE")
-                .put("seats", JSONArray().also { arr ->
-                    snapshot.grimoireSeats.sortedBy { it.seat }.forEach { seat ->
-                        val role = (seat.shownRoleId as SnapshotField.Known<String>).value
-                        val actual = when (val field = seat.actualRoleId) {
-                            is SnapshotField.Known<*> -> field.value
-                            SnapshotField.Uncommitted -> "UNCOMMITTED_IF_DRUNK_SELECTED"
-                            else -> error("Unexpected unknown actual role.")
-                        }
-                        arr.put(JSONObject()
-                            .put("seat", seat.seat)
-                            .put("shownRoleId", role)
-                            .put("actualRoleId", actual)
-                            .put("experience", request.playerExperience.getValue(seat.seat).name))
-                    }
-                })
-                .put("confirmedEvents", JSONArray())
-                .put("unknownEvents", JSONArray(pendingEvents))
-                .put("recentGames", JSONArray(recentGames)))
-            .put("unknownFutureActionsAreNotFacts", true)
+            .put("script", request.snapshot.script.value)
+            .put("seats", JSONArray().also { seats ->
+                request.shownRoles.toSortedMap().forEach { (seat, role) ->
+                    seats.put(JSONObject().put("seat", seat).put("role", role)
+                        .put("experience", request.playerExperience.getValue(seat).name))
+                }
+            })
+            .put("slots", slots)
+            .put("firstNightInfo", JSONArray().also { info ->
+                domain.information.forEach { info.put(it.toJson()) }
+            })
             .toString()
+    }
+
+    private fun InitialOpeningDomainV3.Info.toJson(): JSONObject {
+        val json = JSONObject().put("seat", seat).put("role", roleId)
+        when (this) {
+            is InitialOpeningDomainV3.Number -> {
+                json.put("type", "NUMBER").put("answer", answer.name).put("truthful", JSONArray(truthful))
+                if (ifDrunk.isNotEmpty()) json.put("ifDrunk", JSONArray(ifDrunk))
+            }
+            is InitialOpeningDomainV3.Pair -> {
+                json.put("type", "PAIR").put("answer", answer.name)
+                    .put("truthful", JSONArray().also { items ->
+                        truthful.forEach { items.put(JSONObject().put("role", it.roleId)
+                            .put("seat", it.seat ?: "DRUNK_SEAT")) }
+                    })
+                if (mayRegister.isNotEmpty()) json.put("mayRegister", JSONArray().also { items ->
+                    mayRegister.forEach { items.put(JSONObject().put("seat", it.seat)
+                        .put("roles", JSONArray(it.roleIds))) }
+                })
+                if (noneTruthful) json.put("noneTruthful", true)
+            }
+            is InitialOpeningDomainV3.AfterPlayerChoice ->
+                json.put("type", "AFTER_PLAYER_CHOICE").put("answer", answer.name)
+        }
+        return json
     }
 
     fun decode(
         response: String,
         request: InitialOpeningRequestV2,
+        ruleset: ValidatedClocktowerRuleset,
     ): HostOpeningSemanticAcceptanceV2 {
+        val domain = InitialOpeningDomainV3(request, ruleset)
         return try {
-            parseRecommendation(JSONObject(response), request)
+            parseRecommendation(JSONObject(response), request, domain)
         } catch (error: Exception) {
             throw error as? StorytellerResponseValidationException
                 ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
@@ -224,134 +161,70 @@ ${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字，tradeoffSummary 不超过 1
         require(this.keys().asSequence().toSet() == keys.toSet()) { "Unexpected or missing opening fields." }
     }
 
-    private fun JSONObject.integer(key: String): Long {
+    private fun JSONObject.integer(key: String): Int {
         val value = get(key)
-        require(value is Int || value is Long) { "Opening $key must be an integer." }
-        return (value as Number).toLong()
+        require(value is Int) { "Opening $key must be an integer." }
+        return value
     }
 
-    private fun JSONObject.seat(key: String): Int? {
-        if (isNull(key)) return null
-        val value = integer(key)
-        require(value in 1..Int.MAX_VALUE.toLong())
-        return value.toInt()
-    }
+    private fun JSONObject.nullableInteger(key: String): Int? = if (isNull(key)) null else integer(key)
 
     private fun JSONArray.strings(): List<String> = (0 until length()).map {
         require(get(it) is String)
         getString(it)
     }
 
-    private fun parseRecommendation(raw: JSONObject, request: InitialOpeningRequestV2): HostOpeningSemanticAcceptanceV2 {
-        raw.exact("schemaVersion", "asOfRevision", "requestIdentity", "openingPlan", "strategyMemory", "tradeoffSummary")
-        require(raw.integer("schemaVersion") == 2L)
-        val identity = raw.getJSONObject("requestIdentity")
-        identity.exact("gameId", "gameStateRevision", "playerInputRevision", "rosterFingerprint")
-        require(identity.getString("gameId") == request.snapshot.gameId &&
-            identity.integer("gameStateRevision") == request.gameStateRevision &&
-            identity.integer("playerInputRevision") == request.playerInputRevision &&
-            identity.getString("rosterFingerprint") == request.rosterFingerprint &&
-            raw.integer("asOfRevision") == request.gameStateRevision) { "Stale opening response." }
-        val plan = raw.getJSONObject("openingPlan")
-        plan.exact("drunkSeat", "redHerringSeat", "demonBluffRoleIds", "information", "deferredActions")
-        val drunk = plan.seat("drunkSeat")
-        val red = plan.seat("redHerringSeat")
-        require(request.hasDrunk == (drunk != null))
-        require(drunk == null || drunk in request.shownRoles)
-        require(red == null || red in request.redHerringEligibleSeats) {
-            "redHerringSeat must be an actually good player who is not the Recluse."
+    private fun parseRecommendation(
+        raw: JSONObject,
+        request: InitialOpeningRequestV2,
+        domain: InitialOpeningDomainV3,
+    ): HostOpeningSemanticAcceptanceV2 {
+        raw.exact("drunkSeat", "redHerringSeat", "demonBluffRoleIds", "information", "intentions", "rationale")
+        // Every other choice depends on the Drunk, so a wrong Drunk rejects the whole plan.
+        val drunk = raw.nullableInteger("drunkSeat")
+        require(if (request.hasDrunk) drunk in domain.drunkSeats else drunk == null) {
+            "drunkSeat must be one of the offered seats."
         }
-        val bluffs = if (plan.isNull("demonBluffRoleIds")) null else plan.getJSONArray("demonBluffRoleIds").strings()
-        bluffs?.let {
-            require(it.size == 3 && it.distinct().size == 3 && it.all(request.knownRoleIds::contains))
+        val bluffs = if (domain.bluffRoleIds.isEmpty()) null
+            else raw.getJSONArray("demonBluffRoleIds").strings().also {
+                require(it.size == 3 && it.distinct().size == 3 && it.all(domain.bluffRoleIds::contains)) {
+                    "demonBluffRoleIds must be three different offered roles."
+                }
+            }
+        val redHerringSeats = domain.redHerringSeatsFor(drunk)
+        val red = if (redHerringSeats.isEmpty()) null else raw.nullableInteger("redHerringSeat").also {
+            require(it in redHerringSeats) { "redHerringSeat must be one of the offered seats." }
         }
+        // An information item the rules do not allow is dropped on its own; that seat's
+        // current night step then asks again instead of losing the whole opening.
         val information = linkedMapOf<Int, HostOpeningSemanticValueV2>()
-        val conditional = mutableListOf<HostOpeningConditionalIntentV2>()
-        val ids = mutableSetOf<String>()
-        val items = plan.getJSONArray("information")
+        val items = raw.getJSONArray("information")
         require(items.length() <= 64)
         repeat(items.length()) { index ->
             val item = items.getJSONObject(index)
-            item.exact("decisionId", "sourceSeat", "abilityRoleId", "effectiveAbilityRoleId", "resolution", "basis",
-                "subject", "observation", "waitingForEvents")
-            val id = item.getString("decisionId")
-            require(ids.add(id)) { "Duplicate opening decision." }
-            val source = requireNotNull(item.seat("sourceSeat"))
-            require(request.information[id] == source)
-            val subject = item.getJSONObject("subject")
-            subject.exact("mode", "seats")
-            val subjects = subject.getJSONArray("seats")
-            val seats = (0 until subjects.length()).map {
-                val seat = subjects.get(it)
-                require(seat is Int && seat in request.shownRoles)
-                seat as Int
-            }.sorted()
-            val observation = item.getJSONObject("observation")
-            observation.exact("kind", "number", "roleId", "boolean")
-            val number = if (observation.isNull("number")) null else observation.integer("number").let {
-                require(it in 0..Int.MAX_VALUE.toLong())
-                it.toInt()
-            }
-            val value = HostOpeningSemanticValueV2(source, item.getString("abilityRoleId"),
-                if (item.isNull("effectiveAbilityRoleId")) null else item.getString("effectiveAbilityRoleId"),
-                item.getString("basis"), subject.getString("mode"), seats, observation.getString("kind"), number,
-                if (observation.isNull("roleId")) null else observation.getString("roleId"),
-                if (observation.isNull("boolean")) null else observation.get("boolean").let {
-                    require(it is Boolean)
-                    it as Boolean
-                })
-            require(value.abilityRoleId == request.shownRoles[source]) { "Opening source identity changed." }
-            require(value.effectiveAbilityRoleId == null || value.effectiveAbilityRoleId in request.knownRoleIds)
-            require(value.roleId == null || value.roleId in request.knownRoleIds)
-            val waiting = item.getJSONArray("waitingForEvents").strings()
-            require(waiting.distinct().size == waiting.size && waiting.all { event ->
-                request.events.values.any { it.first == event }
-            }) { "Opening refers to an unknown pending event." }
-            when (item.getString("resolution")) {
-                "DECISION" -> {
-                    require(waiting.isEmpty() && value.observationKind != "NONE")
-                    information[source] = value
-                }
-                "HOST_DETERMINED" -> {
-                    // Older responses can abstain; Host never calculates a replacement value.
-                    require(waiting.isEmpty() && value.observationKind == "NONE")
-                }
-                "DEFERRED", "CONDITIONAL_INTENT" -> {
-                    require(waiting.isNotEmpty())
-                    require((item.getString("resolution") == "DEFERRED") == (value.observationKind == "NONE"))
-                    conditional += HostOpeningConditionalIntentV2(id,
-                        value.takeIf { it.observationKind != "NONE" }, waiting)
-                }
-                else -> error("Unknown opening resolution.")
-            }
+            item.exact("seat", "roleId", "seats", "number")
+            val seat = item.integer("seat")
+            val subjects = item.getJSONArray("seats")
+            val seats = (0 until subjects.length()).map { subjects.get(it) as? Int ?: 0 }
+            if (seat !in information) domain.accepted(
+                seat, if (item.isNull("roleId")) null else item.getString("roleId"), seats,
+                item.nullableInteger("number"), drunk, bluffs.orEmpty(),
+            )?.let { information[seat] = it }
         }
-        require(ids == request.information.keys) { "Incomplete opening information inventory." }
-        val actions = plan.getJSONArray("deferredActions")
-        require(actions.length() == request.events.size)
-        repeat(actions.length()) { index ->
-            val action = actions.getJSONObject(index)
-            action.exact("decisionId", "event", "actorSeat")
-            val id = action.getString("decisionId")
-            val event = action.getString("event")
-            require(ids.add(id) && request.events[id] == (event to action.seat("actorSeat"))) {
-                "Unknown or duplicate pending player action."
-            }
-            conditional += HostOpeningConditionalIntentV2(id, null, listOf(event))
-        }
-        val strategy = raw.getJSONObject("strategyMemory")
-        strategy.exact("tensions", "intentions", "uncertainties")
-        val intentions = strategy.getJSONArray("intentions")
-        val memory = HostOpeningStrategyMemoryV2(strategy.getJSONArray("tensions").strings(),
-            (0 until intentions.length()).map { index ->
-                val entry = intentions.getJSONObject(index)
-                entry.exact("trigger", "approach", "risk")
-                HostOpeningStrategicIntentionV2(entry.getString("trigger"), entry.getString("approach"), entry.getString("risk"))
-            }, strategy.getJSONArray("uncertainties").strings())
-        require(raw.getString("tradeoffSummary").length <= 1200)
+        domain.ruleDetermined(drunk).forEach { information.putIfAbsent(it.sourceSeat, it) }
+        val entries = raw.getJSONArray("intentions")
+        val intentions = (0 until entries.length()).mapNotNull { index ->
+            val entry = entries.getJSONObject(index)
+            entry.exact("trigger", "approach")
+            runCatching {
+                HostOpeningStrategicIntentionV2(entry.getString("trigger"), entry.getString("approach"))
+            }.getOrNull()
+        }.take(HostOpeningStrategyMemoryV2.MAX_ENTRIES)
         return HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(request.snapshot.gameId,
             request.gameStateRevision, request.playerInputRevision, request.rosterFingerprint,
-            drunk, red, bluffs, information.toMap()), conditional.toList(), memory,
-            raw.getString("tradeoffSummary").takeIf(String::isNotBlank))
+            drunk, red, bluffs, information.toSortedMap()),
+            HostOpeningStrategyMemoryV2(emptyList(), intentions, emptyList()),
+            raw.getString("rationale").take(MAX_RATIONALE_LENGTH).takeIf(String::isNotBlank))
     }
 
     /** Provider ID is provisional: only the caller's actual Host adoption may promote it. */
@@ -364,23 +237,22 @@ ${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字，tradeoffSummary 不超过 1
         endpoint: String,
         accessToken: String,
         request: InitialOpeningRequestV2,
-        registry: ClocktowerCharacterRegistry,
+        ruleset: ValidatedClocktowerRuleset,
         model: String,
-        recentGames: List<String> = emptyList(),
         onStage: (String) -> Unit = {},
     ): AcceptedResponse {
         require(endpoint == PersonalDirectOpenAiV1.ENDPOINT) {
             "Unified opening requires personal-direct Responses support."
         }
         onStage("BUILDING_JOINT_OPENING_CONTEXT")
-        val payload = encode(request, registry, recentGames)
+        val payload = encode(request, ruleset)
         val receipt = withContext(Dispatchers.IO) {
             PersonalDirectOpenAiV1.postRetained(accessToken, payload, model,
                 onStage = onStage)
         }
         onStage("VALIDATING_COMPLETE_HOST_OPENING")
         return try {
-            val accepted = decode(receipt.text, request)
+            val accepted = decode(receipt.text, request, ruleset)
             BotcAiWireTrace.hostValidation(
                 "JOINT_OPENING", true, accepted.selection.information.size)
             AcceptedResponse(accepted, receipt.responseId)

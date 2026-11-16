@@ -35,8 +35,8 @@ internal object PersonalDirectOpenAiV1 {
             else StorytellerStrategicContinuationV2.responseSchema
         val instructions = if (opening) InitialJointOpeningDirectV2.INSTRUCTIONS
             else StorytellerStrategicContinuationV2.INSTRUCTIONS
-        val name = if (opening) "botc_initial_joint_opening_v2"
-            else "botc_whole_game_strategic_continuation_v3"
+        val name = if (opening) "botc_initial_joint_opening_v3"
+            else "botc_whole_game_strategic_continuation_v4"
         return JSONObject()
             .put("model", model)
             // Top-level instructions and strict schema MUST be sent on every

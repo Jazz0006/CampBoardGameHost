@@ -104,8 +104,6 @@ class StorytellerStrategicChangeCheckpointV2Test {
             playerInputRevision = review.playerInputRevision,
             exclusiveGlobalSequence = review.exclusiveGlobalSequence,
             memoryVersion = 0,
-            revisions = emptyList(),
-            affectedOpenDecisionIds = emptySet(),
             remainingChoices = mapOf("host-current-open-2" to SemanticResult("SCALAR_RESULT", scalarValue = "99")),
             updatedMemory = memory,
             strategicDirection = "Reevaluate against actual confirmed setup.",
@@ -239,9 +237,6 @@ class StorytellerStrategicChangeCheckpointV2Test {
             playerInputRevision = gate.playerInputRevision,
             exclusiveGlobalSequence = gate.exclusiveGlobalSequence,
             memoryVersion = 0,
-            revisions = listOf(StorytellerStrategicContinuationV2.Revision(
-                0, "REVISE", "New confirmed actual game event")),
-            affectedOpenDecisionIds = setOf("host-current-open-2"),
             remainingChoices = mapOf("host-current-open-2" to SemanticResult("SCALAR_RESULT", scalarValue = "99")),
             updatedMemory = memory,
             strategicDirection = "Reevaluate coupled unexecuted information.",
@@ -312,8 +307,7 @@ class StorytellerStrategicChangeCheckpointV2Test {
         val prior = cursor()
         val proposal = StorytellerStrategicContinuationV2.Result(
             before.gameId, before.gameStateRevision, before.playerInputRevision,
-            before.nextTimelineGlobalSequence, prior.version, emptyList(),
-            setOf(request.identity.decisionId),
+            before.nextTimelineGlobalSequence, prior.version,
             mapOf(request.identity.decisionId to SemanticResult("SCALAR_RESULT", scalarValue = "0")),
             memory, "Current information based on confirmed Host facts",
         )
@@ -387,7 +381,6 @@ class StorytellerStrategicChangeCheckpointV2Test {
             playerInputRevision = host.state.playerInputRevision,
             exclusiveGlobalSequence = host.state.nextTimelineGlobalSequence,
             memoryVersion = 0,
-            revisions = emptyList(), affectedOpenDecisionIds = original.map { it.decisionId }.toSet(),
             remainingChoices = mapOf("current-chef-info" to SemanticResult("SCALAR_RESULT", scalarValue = "0"), "second-current-choice" to SemanticResult("SCALAR_RESULT", scalarValue = "1")),
             updatedMemory = memory, strategicDirection = "Linked current decisions",
         )

@@ -93,8 +93,7 @@ internal class ClocktowerOpeningDraft {
         jointOpeningBusy = true
         jointOpeningResult = null
         jointOpeningError = null
-        val registry = activeGameClocktowerRulesetCatalog
-            .ruleset(ClocktowerScript.TroubleBrewing).characterRegistry
+        val ruleset = activeGameClocktowerRulesetCatalog.ruleset(ClocktowerScript.TroubleBrewing)
         BotcAiTrace.firstNightEvent(serial, "JOINT_PRECOMMIT_START")
         drunkAiScope.launch {
             val result = runCatching {
@@ -102,7 +101,7 @@ internal class ClocktowerOpeningDraft {
                     endpoint = PersonalDirectOpenAiV1.ENDPOINT,
                     accessToken = requestedKey,
                     request = pending.request,
-                    registry = registry,
+                    ruleset = ruleset,
                     model = requestedModel,
                     onStage = { stage -> BotcAiTrace.firstNightStage(serial, stage) },
                 )

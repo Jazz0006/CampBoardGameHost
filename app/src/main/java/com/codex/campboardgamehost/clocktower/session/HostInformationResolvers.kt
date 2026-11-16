@@ -244,6 +244,17 @@ internal data class HostPairResolution(
     val productShortlist: Boolean,
 )
 
+/** A pair source's choices by seat, without enumerating pairs. */
+internal data class HostPairChoices(
+    /** An in-play role of the asked type and the seat that actually holds it. */
+    val truthful: List<Pair<RoleId, Int>>,
+    /** A functioning Spy/Recluse seat and the roles it may be shown as. */
+    val registrations: Map<Int, List<RoleId>>,
+    /** Non-null when the source is not functioning: any of these roles with any two other seats. */
+    val anyPairRoles: List<RoleId>?,
+    val canShowNoOutsiders: Boolean,
+)
+
 /** Query exactly one chosen physical pair, not all N×N pairs. */
 internal object PairInformationResolver {
     private fun informationType(role: RoleId): CharacterType? = when (role.value) {
@@ -314,6 +325,31 @@ internal object PairInformationResolver {
             (source != AbilityFunctioningState.FUNCTIONING ||
                 players.none { it.actualType == CharacterType.OUTSIDER })
         return HostPairResolution(options, ordinary, special, canShowZero, source, discretionary)
+    }
+
+    /**
+     * What this source may be shown, described once for an AI request. It only repeats
+     * [resolve] over the seats; the answer is still checked by [acceptsCurrentRoleAdvice].
+     */
+    fun choices(
+        session: ClocktowerSessionState,
+        ruleset: ValidatedClocktowerRuleset,
+        role: RoleId,
+        sourceSeat: Int,
+    ): HostPairChoices? {
+        val open = resolve(session, ruleset, role, sourceSeat, null, null) ?: return null
+        if (open.sourceAbility != AbilityFunctioningState.FUNCTIONING) return HostPairChoices(
+            emptyList(), emptyMap(), open.options.map { it.role }, open.canShowNoOutsiders)
+        val seats = session.gameState.players.map(PlayerState::seat)
+        val truthful = (open.ordinaryCandidateSeats - sourceSeat).sorted().mapNotNull { seat ->
+            session.gameState.playerAt(seat)?.let { it.actualRole to seat }
+        }
+        val registrations = (open.specialCandidateSeats - sourceSeat).sorted().mapNotNull { special ->
+            val other = seats.firstOrNull { it != sourceSeat && it != special } ?: return@mapNotNull null
+            resolve(session, ruleset, role, sourceSeat, special, other)?.options?.map { it.role }
+                ?.takeIf { it.isNotEmpty() }?.let { special to it }
+        }.toMap()
+        return HostPairChoices(truthful, registrations, null, open.canShowNoOutsiders)
     }
 
     /** Applies the *current* pair query to an AI suggestion. It does not govern manual recording. */

@@ -147,7 +147,7 @@ class ClocktowerGameLifecycleTest {
             val pending = PendingTroubleBrewingJointOpening(request.snapshot.gameId, prepared, request, emptyList())
             val recommendation = HostOpeningSemanticAcceptanceV2(OpeningSelectionV2(request.snapshot.gameId,
                 request.gameStateRevision, request.playerInputRevision, request.rosterFingerprint,
-                legal.candidates.first().seat, null, null, emptyMap()), emptyList(), null,
+                legal.candidates.first().seat, null, null, emptyMap()), null,
                 tradeoffSummary = "Opening plan rationale")
             val draft = ClocktowerOpeningDraft().apply {
                 pendingJointOpening = pending

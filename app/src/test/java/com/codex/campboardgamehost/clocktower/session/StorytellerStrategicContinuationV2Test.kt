@@ -30,6 +30,12 @@ import org.junit.Test
 
 /** Mechanical contract tests; not a model strategy-quality benchmark. */
 class StorytellerStrategicContinuationV2Test {
+    private val ruleset by lazy {
+        com.codex.campboardgamehost.clocktower.catalog.BuiltInClocktowerRulesetCatalog { path ->
+            java.io.File(java.io.File("src/main/assets"), path).readText(Charsets.UTF_8)
+        }.ruleset(com.codex.campboardgamehost.ClocktowerScript.TroubleBrewing)
+    }
+
     private val memory = HostOpeningStrategyMemoryV2(
         tensions = listOf("Good information links three seats."),
         intentions = listOf(
@@ -80,7 +86,6 @@ class StorytellerStrategicContinuationV2Test {
             drunkSeat = null, redHerringSeat = null, information = emptyMap(),
             demonBluffs = null,
         ),
-        conditional = emptyList(),
         strategyMemory = memory,
     )
 
@@ -95,60 +100,42 @@ class StorytellerStrategicContinuationV2Test {
     ))
 
     private fun semantic(
-        kind: String = "SCALAR_RESULT",
         scalar: String? = "1",
         role: String? = null,
         pair: List<Int> = emptyList(),
         seat: Int? = null,
-        status: String? = null,
-        registrationRole: String? = null,
     ) = JSONObject()
-        .put("kind", kind)
-        .put("scalarValue", scalar ?: JSONObject.NULL)
-        .put("pairRoleId", role ?: JSONObject.NULL)
-        .put("pairSeats", JSONArray(pair))
+        .put("value", scalar ?: JSONObject.NULL)
+        .put("roleId", role ?: JSONObject.NULL)
+        .put("seats", JSONArray(pair))
         .put("seat", seat ?: JSONObject.NULL)
-        .put("registrationStatus", status ?: JSONObject.NULL)
-        .put("registrationRoleId", registrationRole ?: JSONObject.NULL)
 
-    private fun response(host: JSONObject, value: JSONObject = semantic()) =
-        JSONObject()
-            .put("schemaVersion", 3)
-            .put("source", JSONObject(host.getJSONObject("source").toString()))
-            .put("revisions", JSONArray().also {
-                it.put(JSONObject().put("priorIndex", 0).put("verdict", "REVISE")
-                    .put("reason", "Updated from confirmed Host facts"))
-                it.put(JSONObject().put("priorIndex", 1).put("verdict", "KEEP")
-                    .put("reason", "Earlier conditional strategy remains available"))
-            })
-            .put("affectedOpenDecisionIds", JSONArray(listOf(
-                host.getJSONObject("currentDecision").getString("decisionId"))))
-            .put("currentResult", JSONObject()
-                .put("decisionId", host.getJSONObject("currentDecision").getString("decisionId"))
-                .put("semantic", value))
-            .put("updatedStrategyMemory", host.getJSONObject("priorStrategyMemory"))
-            .put("strategicDirection", "Reconsider the current decision in whole-game context.")
+    private fun intention(approach: String = "Keep the story explainable") =
+        JSONObject().put("trigger", "A new confirmed Host fact").put("approach", approach)
+
+    private fun response(value: JSONObject = semantic()) = JSONObject()
+        .put("answer", value)
+        .put("reason", "Reconsider the current decision in whole-game context.")
+        .put("intentions", JSONObject.NULL)
 
     @Test fun oversizedMemoryIsAResponseRejectionAndTheWireContractHasTheSameBounds() {
         val game = session()
         val before = game.state
-        val host = JSONObject(StorytellerStrategicContinuationV2.encode(before, prior(), open))
-        val result = response(host)
-        result.getJSONObject("updatedStrategyMemory").put("tensions", JSONArray(listOf("one", "two", "three")))
-        assertEquals(3, StorytellerStrategicContinuationV2.decode(host.toString(), result.toString(), open).updatedMemory.tensions.size)
-        result.getJSONObject("updatedStrategyMemory").getJSONArray("tensions").put("four")
+        val host = JSONObject(StorytellerStrategicContinuationV2.encode(before, prior(), open, ruleset))
+        val result = response().put("intentions", JSONArray(List(3) { intention() }))
+        val accepted = StorytellerStrategicContinuationV2.decode(host.toString(), result.toString(), open)
+        assertEquals(3, accepted.updatedMemory.intentions.size)
+        // Only the intentions are replaced; the rest of the earlier memory is kept.
+        assertEquals(memory.tensions, accepted.updatedMemory.tensions)
+        result.getJSONArray("intentions").put(intention())
         val error = assertThrows(StorytellerResponseValidationException::class.java) {
             StorytellerStrategicContinuationV2.decode(host.toString(), result.toString(), open)
         }
-        assertEquals("strategyMemory.tensions has 4 entries; maximum is 3.", error.safeDetail)
+        assertEquals("strategyMemory.intentions has 4 entries; maximum is 3.", error.safeDetail)
         assertEquals(before, game.state)
-        listOf(InitialJointOpeningDirectV2.responseSchema to "strategyMemory",
-            StorytellerStrategicContinuationV2.responseSchema to "updatedStrategyMemory").forEach { (schema, key) ->
-            val fields = schema.getJSONObject("properties").getJSONObject(key).getJSONObject("properties")
-            listOf("tensions", "intentions", "uncertainties").forEach { field ->
-                assertEquals(HostOpeningStrategyMemoryV2.MAX_ENTRIES, fields.getJSONObject(field).getInt("maxItems"))
-            }
-            assertEquals("^[\\s\\S]{1,300}$", fields.getJSONObject("tensions").getJSONObject("items").getString("pattern"))
+        listOf(InitialJointOpeningDirectV2.responseSchema, StorytellerStrategicContinuationV2.responseSchema).forEach {
+            assertEquals(HostOpeningStrategyMemoryV2.MAX_ENTRIES,
+                it.getJSONObject("properties").getJSONObject("intentions").getInt("maxItems"))
         }
     }
 
@@ -169,7 +156,7 @@ class StorytellerStrategicContinuationV2Test {
                 NumericMetric.ADJACENT_EVIL_PAIRS, 1, value = 1),
         ))
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
+            game.state, prior(), open, ruleset))
         val history = host.getJSONArray("gameLogDelta")
         assertEquals(2, history.length())
         assertEquals("poison", history.getJSONObject(0).getString("type"))
@@ -188,17 +175,18 @@ class StorytellerStrategicContinuationV2Test {
             host.getJSONObject("currentDecision").getJSONObject("decisionContext")
                 .getString("metric"))
         assertFalse(host.has("openDecisions"))
+        assertTrue(host.getJSONObject("currentDecision").getJSONObject("candidates")
+            .getJSONArray("values").length() > 0)
         assertFalse(host.toString().contains("legalCandidates"))
         assertFalse(host.toString().contains("candidateId"))
         assertFalse(host.toString().contains("remainingChoices"))
-        assertTrue(host.getBoolean("noUnobservedFutureFactMayBeAssumed"))
         val wire = JSONObject(PersonalDirectOpenAiV1.buildRequest(
             host.toString(), PersonalDirectOpenAiV1.DEFAULT_MODEL))
         assertEquals(host.toString(), wire.getString("input"))
         assertFalse(wire.getBoolean("store"))
-        assertTrue(wire.getString("instructions").contains("currentResult"))
+        assertTrue(wire.getString("instructions").contains("currentDecision.candidates"))
         val accepted = StorytellerStrategicContinuationV2.decode(
-            host.toString(), response(host).toString(), open)
+            host.toString(), response().toString(), open)
         assertEquals(mapOf("current:seat-2" to StorytellerStrategicContinuationV2.SemanticResult("SCALAR_RESULT", scalarValue = "1")), accepted.remainingChoices)
         assertEquals(memory, accepted.updatedMemory)
         assertEquals(game.state.nextTimelineGlobalSequence, accepted.exclusiveGlobalSequence)
@@ -233,7 +221,7 @@ class StorytellerStrategicContinuationV2Test {
             proposition = InformationProposition.AliveAt(7, false)))
 
         val request = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open, cursor))
+            game.state, prior(), open, ruleset, cursor))
         val delta = request.getJSONArray("gameLogDelta")
         assertEquals(2, delta.length())
         assertEquals("nomination", delta.getJSONObject(0).getString("type"))
@@ -260,7 +248,7 @@ class StorytellerStrategicContinuationV2Test {
         // The model's prior opening did NOT select seat 2 as Drunk;
         // only the Host-confirmed Session determines the actual log entry.
         val request = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
+            game.state, prior(), open, ruleset))
         val log = request.getJSONArray("gameLogDelta")
         assertEquals(1, log.length())
         assertEquals("drunk_selected", log.getJSONObject(0).getString("type"))
@@ -275,9 +263,9 @@ class StorytellerStrategicContinuationV2Test {
         val initial = StorytellerStrategicContinuationV2.MemoryCursor.initial(prior())
         val before = game.state
         val request = JSONObject(StorytellerStrategicContinuationV2.encode(
-            before, prior(), open, initial))
+            before, prior(), open, ruleset, initial))
         val proposed = StorytellerStrategicContinuationV2.decode(
-            request.toString(), response(request).toString(), open)
+            request.toString(), response().toString(), open)
         assertTrue(runCatching {
             initial.afterConfirmedPublication(proposed, before, before)
         }.isFailure)
@@ -294,7 +282,7 @@ class StorytellerStrategicContinuationV2Test {
         assertEquals(before.nextTimelineGlobalSequence, promoted.exclusiveGlobalSequence)
         assertEquals(before.playerInputRevision, promoted.playerInputRevision)
         val after = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open, promoted))
+            game.state, prior(), open, ruleset, promoted))
         val delta = after.getJSONArray("gameLogDelta")
         assertEquals(1, delta.length())
         assertEquals("information", delta.getJSONObject(0).getString("type"))
@@ -309,26 +297,22 @@ class StorytellerStrategicContinuationV2Test {
         game.advanceGameStateRevision()
         val initial = StorytellerStrategicContinuationV2.MemoryCursor.initial(prior())
         val host1 = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open, initial))
-        val firstModel = response(host1)
-        firstModel.getJSONObject("updatedStrategyMemory").getJSONArray("intentions")
-            .getJSONObject(0).put("approach", "Revision informed by Host facts")
+            game.state, prior(), open, ruleset, initial))
+        val firstModel = response()
+        firstModel.put("intentions", JSONArray().put(intention("Revision informed by Host facts")))
         val first = StorytellerStrategicContinuationV2.decode(
             host1.toString(), firstModel.toString(), open)
         val next = initial.advance(first)
         assertEquals(1, next.version)
+        assertEquals("Revision informed by Host facts", next.memory.intentions.single().approach)
         game.recordPlayerInput()
         val host2 = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open, next))
+            game.state, prior(), open, ruleset, next))
         assertEquals(1, host2.getJSONObject("source").getInt("memoryVersion"))
         val second = StorytellerStrategicContinuationV2.decode(
-            host2.toString(), response(host2).toString(), open)
+            host2.toString(), response().toString(), open)
         assertEquals(2, next.advance(second).version)
         assertTrue(runCatching { next.advance(first) }.isFailure)
-        assertTrue(runCatching {
-            StorytellerStrategicContinuationV2.decode(
-                host2.toString(), firstModel.toString(), open)
-        }.isFailure)
     }
 
     @Test fun mayorNoBounceIsNotARealRedirectInGameLog() {
@@ -336,13 +320,13 @@ class StorytellerStrategicContinuationV2Test {
         game.commitAcceptedTestAction(ActionFactDraft.MayorRedirectChoice(
             "mayor-no-bounce", StorytellerPhase.NIGHT, 2, 1, 4, 4))
         val noBounce = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
+            game.state, prior(), open, ruleset))
         assertEquals(0, noBounce.getJSONArray("gameLogDelta").length())
 
         game.commitAcceptedTestAction(ActionFactDraft.MayorRedirectChoice(
             "mayor-real-redirect", StorytellerPhase.NIGHT, 2, 2, 4, 3))
         val afterRedirect = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
+            game.state, prior(), open, ruleset))
         val log = afterRedirect.getJSONArray("gameLogDelta")
         assertEquals(1, log.length())
         assertEquals("mayor_redirect", log.getJSONObject(0).getString("type"))
@@ -351,34 +335,30 @@ class StorytellerStrategicContinuationV2Test {
 
     @Test fun directSemanticResultAcceptsRepresentableAnswersAndRejectsStaleOrMalformedReplies() {
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
-            session().state, prior(), open))
+            session().state, prior(), open, ruleset))
+        // A functioning Empath between two good neighbours has one legal number.
+        assertEquals("[\"0\"]", host.getJSONObject("currentDecision").getJSONObject("candidates")
+            .getJSONArray("values").toString())
         assertEquals(mapOf("current:seat-2" to StorytellerStrategicContinuationV2.SemanticResult("SCALAR_RESULT", scalarValue = "0")),
             StorytellerStrategicContinuationV2.decode(
-                host.toString(), response(host, semantic(scalar = "0")).toString(), open)
+                host.toString(), response(semantic(scalar = "0")).toString(), open)
                 .remainingChoices)
         fun rejects(edit: (JSONObject) -> Unit) {
-            val raw = JSONObject(response(host).toString())
+            val raw = JSONObject(response().toString())
             edit(raw)
             assertTrue(runCatching {
                 StorytellerStrategicContinuationV2.decode(host.toString(), raw.toString(), open)
             }.isFailure)
         }
         assertEquals("99", StorytellerStrategicContinuationV2.decode(host.toString(),
-            response(host, semantic(scalar = "99")).toString(), open).remainingChoices.values.single().scalarValue)
-        rejects { it.getJSONObject("currentResult").getJSONObject("semantic")
-            .put("scalarValue", "-1") }
-        rejects { it.getJSONObject("currentResult").put("decisionId", "invented") }
-        rejects { it.getJSONObject("currentResult").getJSONObject("semantic")
-            .put("scalarValue", "0").put("candidateId", "private-id") }
-        rejects { it.getJSONObject("source").put("gameId", "another-game") }
-        rejects { it.getJSONObject("source").put("exclusiveGlobalSequence", 999) }
-        rejects { it.getJSONArray("affectedOpenDecisionIds").put("published-seat") }
-        rejects { it.getJSONArray("revisions").remove(1) }
+            response(semantic(scalar = "99")).toString(), open).remainingChoices.values.single().scalarValue)
+        rejects { it.getJSONObject("answer").put("value", "-1") }
+        rejects { it.getJSONObject("answer").put("value", "0").put("candidateId", "private-id") }
         rejects { it.put("remainingChoices", JSONArray()) }
-        rejects { it.getJSONObject("updatedStrategyMemory").getJSONArray("intentions")
-            .getJSONObject(0).put("risk", "") }
+        rejects { it.put("reason", " ") }
+        rejects { it.put("intentions", JSONArray().put(intention(""))) }
         assertTrue(runCatching { StorytellerStrategicContinuationV2.encode(
-            session().state, prior(), open + open.first())
+            session().state, prior(), open + open.first(), ruleset)
         }.isFailure)
     }
 
@@ -388,12 +368,16 @@ class StorytellerStrategicContinuationV2Test {
             StorytellerProviderDecisionContextV1.FirstNightPairInformation(
                 5, RoleId("Investigator"), ReliabilityState.RELIABLE)))
         val host = JSONObject(StorytellerStrategicContinuationV2.encode(
-            session().state, prior(), current))
-        val proposal = response(host, semantic(kind = "PAIR_RESULT", scalar = null,
+            session().state, prior(), current, ruleset))
+        val proposal = response(semantic(scalar = null,
             role = "Baron", pair = listOf(7, 6)))
         val accepted = StorytellerStrategicContinuationV2.decode(
             host.toString(), proposal.toString(), current)
         assertEquals(mapOf("current:pair" to StorytellerStrategicContinuationV2.SemanticResult("PAIR_RESULT", pairRoleId = "Baron", pairSeats = listOf(6, 7))), accepted.remainingChoices)
+        val candidates = host.getJSONObject("currentDecision").getJSONObject("candidates")
+        assertEquals("Poisoner", candidates.getJSONArray("truthful").getJSONObject(0).getString("role"))
+        assertEquals(7, candidates.getJSONArray("truthful").getJSONObject(0).getInt("seat"))
+        assertEquals(6, candidates.getJSONArray("mayRegister").getJSONObject(0).getInt("seat"))
         assertFalse(host.toString().contains("witness-a"))
         assertFalse(host.toString().contains("witness-b"))
     }
@@ -402,42 +386,35 @@ class StorytellerStrategicContinuationV2Test {
         val current = listOf(StorytellerStrategicContinuationV2.OpenDecision(
             "current:pair", 5, "NIGHT_INFORMATION", "Investigator",
             StorytellerProviderDecisionContextV1.FirstNightPairInformation(5, RoleId("Investigator"), ReliabilityState.RELIABLE)))
-        val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), current))
-        val valid = semantic(kind = "PAIR_RESULT", scalar = null, role = "Baron", pair = listOf(5, 7))
-        assertEquals(listOf(5, 7), StorytellerStrategicContinuationV2.decode(host.toString(), response(host, valid).toString(), current)
+        val host = JSONObject(StorytellerStrategicContinuationV2.encode(session().state, prior(), current, ruleset))
+        val valid = semantic(scalar = null, role = "Baron", pair = listOf(5, 7))
+        assertEquals(listOf(5, 7), StorytellerStrategicContinuationV2.decode(host.toString(), response(valid).toString(), current)
             .remainingChoices.values.single().pairSeats)
         for (invalid in listOf(
-            JSONObject(valid.toString()).put("pairRoleId", "InventedCharacter"),
-            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 99))),
-            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 2))),
-            JSONObject(valid.toString()).put("pairSeats", JSONArray(listOf(2, 3.5))),
-            JSONObject(valid.toString()).put("scalarValue", "1"))) {
+            JSONObject(valid.toString()).put("roleId", "InventedCharacter"),
+            JSONObject(valid.toString()).put("seats", JSONArray(listOf(2, 99))),
+            JSONObject(valid.toString()).put("seats", JSONArray(listOf(2, 2))),
+            JSONObject(valid.toString()).put("seats", JSONArray(listOf(2, 3.5))))) {
             assertTrue(runCatching { StorytellerStrategicContinuationV2.decode(host.toString(),
-                response(host, invalid).toString(), current) }.isFailure)
+                response(invalid).toString(), current) }.isFailure)
         }
     }
 
     @Test fun staleGameStateAndMismatchedHostDomainNeverAcceptASemanticResponse() {
         val game = session()
-        val first = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
         game.updateGameState(game.state.gameState.copy(
             players = game.state.gameState.players.map {
                 if (it.seat == 3) it.copy(alive = false) else it
             }))
         val changed = JSONObject(StorytellerStrategicContinuationV2.encode(
-            game.state, prior(), open))
+            game.state, prior(), open, ruleset))
         assertEquals(false, changed.getJSONObject("state").getJSONArray("seats")
             .getJSONObject(2).getBoolean("alive"))
-        assertTrue(runCatching {
-            StorytellerStrategicContinuationV2.decode(
-                changed.toString(), response(first).toString(), open)
-        }.isFailure)
         val mutatedDomain = open.map { it.copy(currentDecisionContext =
             (it.currentDecisionContext as StorytellerProviderDecisionContextV1.ScalarInformation).copy(subjectSeats = listOf(4, 5))) }
         assertTrue(runCatching {
             StorytellerStrategicContinuationV2.decode(
-                changed.toString(), response(changed).toString(), mutatedDomain)
+                changed.toString(), response().toString(), mutatedDomain)
         }.isFailure)
     }
 

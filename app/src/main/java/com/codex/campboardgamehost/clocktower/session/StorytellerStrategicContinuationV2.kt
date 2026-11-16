@@ -1,11 +1,14 @@
 package com.codex.campboardgamehost.clocktower.session
 
+import com.codex.campboardgamehost.clocktower.catalog.ValidatedClocktowerRuleset
 import com.codex.campboardgamehost.clocktower.domain.ClocktowerSemanticHistoryMode
 import com.codex.campboardgamehost.clocktower.domain.RoleId
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderHistoryCutoffSourceV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderRevisionV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderDecisionContextV1
+import com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1
 import com.codex.campboardgamehost.clocktower.domain.StorytellerPlayerContextInputV1
+import com.codex.campboardgamehost.clocktower.epistemic.NumericMetric
 import com.codex.campboardgamehost.ClocktowerScript
 import com.codex.campboardgamehost.clocktowerRolesForScript
 import com.codex.campboardgamehost.clocktower.domain.toRecommendationScriptId
@@ -16,11 +19,13 @@ import org.json.JSONObject
  * Generic whole-game continuation, NOT a Poisoner/Drunk/FT recommender.
  *
  * Uses one frozen Host session prefix and the prior *advisory* multi-night memory.
- * The model may revise strategy and suggest which Host-open decisions to revisit.
+ * The request carries the one current Host decision with the results the Session rules
+ * allow; the model picks one and may revise its cross-night intentions.
  * It cannot submit an observation, register a witness or commit a game action.
  */
 internal object StorytellerStrategicContinuationV2 {
-    const val REQUEST_SCHEMA = "botc.whole-game-strategy-continuation-v3"
+    const val REQUEST_SCHEMA = "botc.whole-game-strategy-continuation-v4"
+    private const val MAX_REASON_LENGTH = 600
 
     internal data class OpenDecision(
         val decisionId: String,
@@ -112,20 +117,12 @@ internal object StorytellerStrategicContinuationV2 {
         }
     }
 
-    internal data class Revision(
-        val priorIndex: Int,
-        val verdict: String,
-        val reason: String,
-    )
-
     internal data class Result(
         val gameId: String,
         val gameStateRevision: Long,
         val playerInputRevision: Long,
         val exclusiveGlobalSequence: Long,
         val memoryVersion: Int,
-        val revisions: List<Revision>,
-        val affectedOpenDecisionIds: Set<String>,
         /** Atomic *unpublished* suggestions; never a Host action or observation. */
         val remainingChoices: Map<String, SemanticResult> = emptyMap(),
         val updatedMemory: HostOpeningStrategyMemoryV2,
@@ -133,11 +130,8 @@ internal object StorytellerStrategicContinuationV2 {
     )
 
     private fun str() = JSONObject().put("type", "string")
-    private fun integer() = JSONObject().put("type", "integer")
     private fun nullable(type: String) = JSONObject().put("type", JSONArray(listOf(type, "null")))
     private fun arr(item: JSONObject) = JSONObject().put("type", "array").put("items", item)
-    private fun memoryText() = str()
-        .put("pattern", "^[\\s\\S]{1,${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH}}$")
     private fun obj(vararg members: Pair<String, JSONObject>): JSONObject = JSONObject()
         .put("type", "object")
         .put("properties", JSONObject().apply { members.forEach { (k, v) -> put(k, v) } })
@@ -145,64 +139,47 @@ internal object StorytellerStrategicContinuationV2 {
         .put("additionalProperties", false)
 
     val responseSchema: JSONObject by lazy {
-        val intention = obj("trigger" to memoryText(), "approach" to memoryText(), "risk" to memoryText())
         obj(
-            "schemaVersion" to integer(),
-            "source" to obj(
-                "gameId" to str(),
-                "gameStateRevision" to integer(),
-                "playerInputRevision" to integer(),
-                "exclusiveGlobalSequence" to integer(),
-                "memoryVersion" to integer(),
+            "answer" to obj(
+                "value" to nullable("string"),
+                "roleId" to nullable("string"),
+                "seats" to arr(JSONObject().put("type", "integer")),
+                "seat" to nullable("integer"),
             ),
-            "revisions" to arr(obj(
-                "priorIndex" to integer(),
-                "verdict" to str().put("enum", JSONArray(listOf("KEEP", "REVISE", "RETIRE"))),
-                "reason" to str(),
-            )),
-            "affectedOpenDecisionIds" to arr(str()),
-            "currentResult" to obj(
-                "decisionId" to str(),
-                "semantic" to obj(
-                    "kind" to str().put("enum", JSONArray(listOf(
-                        "SCALAR_RESULT", "PAIR_RESULT", "SEAT_TARGET", "REGISTRATION_CHOICE"))),
-                    "scalarValue" to nullable("string"),
-                    "pairRoleId" to nullable("string"),
-                    "pairSeats" to arr(integer()),
-                    "seat" to nullable("integer"),
-                    "registrationStatus" to nullable("string"),
-                    "registrationRoleId" to nullable("string"),
-                ),
-            ),
-            "updatedStrategyMemory" to obj(
-                "tensions" to arr(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-                "intentions" to arr(intention).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-                "uncertainties" to arr(memoryText()).put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
-            ),
-            "strategicDirection" to str(),
+            "reason" to str(),
+            "intentions" to JSONObject()
+                .put("type", JSONArray(listOf("array", "null")))
+                .put("items", obj("trigger" to str(), "approach" to str()))
+                .put("maxItems", HostOpeningStrategyMemoryV2.MAX_ENTRIES),
         )
     }
 
     const val INSTRUCTIONS = """
-你是同一局血染钟楼的资深 AI 说书人，现在继续先前整局、多夜的战略，而不是重新从零挑一条线索。
-首先阅读最新实际/展示角色、状态、玩家水平、已记录声明及 gameLogDelta 精简游戏记录。连续会话中它是自上次接受回复后的新增事实；当没有保留的上次会话时，它包含本局全部精简记录以避免遗漏。
-历史覆盖是局部的：没有记录的行动、声明、登记或观测必须视为未知。声明不等于事实。
-gameLogDelta 按夜/天标记，仅包含有意义的正式动作及实际玩家获得的信息；酒鬼选定来自 Host 最终确认的角色而不是 AI 推荐。玩家公开声明仅是玩家发言，不代表真实身份。没有出现的内部阶段、清毒延续或重复死亡记录不是新的线索。不要从缺失记录推断未发生的行动，也不能把登记歧义升级成唯一真实登记。
-priorStrategyMemory 仅为以前的可错战略假说，优先相信已确认 Host 事实。
-从跨角色关系、善恶压力、可推理的多个世界、各夜可能的发展与玩家水平看整局；适用于所有角色。
-逐一对 priorStrategyMemory.intentions 作 KEEP / REVISE / RETIRE，并简述真实的变化理由。
-目标是继续形成多夜合理可解释的线索轨迹，不预言或承诺未来信息重复同一个数字/真假。
-事件类型和角色描述当前问题；AI 不得创建独立的投毒者、酒鬼、占卜师或其他角色推荐器。
-从整局战略评估当前唯一待裁量的决定，直接返回一条语义结果，不生成未来决定或整包线索。
-输入 currentDecision 仅描述当前问题及其实际状态。不要索要、猜测或输出 Host 的候选 ID；也不要虚构未发生的玩家行动。
-currentResult.decisionId 必须等于 currentDecision.decisionId；semantic 直接填写当前一条数字、真假、配对、座位或登记语义。Host 收到后验证结构、身份与版本。
-Host 决定哪些行动已真正发生；未来尚不可决定的项目不属于本次可采纳包，仍以条件战略记忆表达。
-不能修改既有玩家收到的线索，也不能假造未登记的意图，不能自行断定含糊的间谍/隐士登记。
-如果说书人改变了选择，只能根据被记录的决定推断其后果，不得把未明说的人类动机当成事实。
-updatedStrategyMemory 是下一次继续使用的短小、可修订战略摘要，不能冒充 Host 事实。
-其中 tensions、intentions、uncertainties 各最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 项；每段字符串非空且最多 ${HostOpeningStrategyMemoryV2.MAX_TEXT_LENGTH} 字。
-strategicDirection 用简洁中文说明为什么推荐当前 currentResult、依据哪些已确认事实及主要取舍；区分事实与假设，不复述规则或逐步分析过程。非空且最多 600 字。
-semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOICE 之一。对应填写 scalarValue（数字或真假用字符串）、pairRoleId 与两个 pairSeats（无该类角色时 pairRoleId 为 null、pairSeats 为 []）、seat、或 registrationStatus 与 registrationRoleId；其他可空字段填 null、无关 pairSeats 为 []。只返回严格 JSON，不输出候选 ID、未来线索或执行命令。
+你是同一局 Blood on the Clocktower（Trouble Brewing）的资深说书人，延续开局时的整体思路，为当前这一个待定事项给出推荐。
+Host 负责规则与合法性：currentDecision.candidates 列出的都是合法结果，你只需从中选出对整局最好的一个。
+
+目标与开局相同：让双方在符合各自经验的局面中靠交流、推理和欺骗决定胜负。
+善良方的信息应当可用，邪恶方应保有撑得住的故事，各夜线索连起来可以解释。
+
+输入：
+- state：座位、实际与展示身份、存活、中毒、经验和已记录的公开声明，以及红鲱鱼与恶魔掩护身份。
+- gameLogDelta：按夜/天标记的已确认记录。连续会话时只含上次之后的新增，否则是本局全部记录。
+  没有记录的事视为未知；玩家声明不等于事实。
+- priorStrategyMemory：此前的跨夜意向，只是可修订的设想，以已确认事实为准。
+- currentDecision：当前唯一要决定的事项。reliability 表示该信息位是否正常运作，candidates 是合法结果。
+
+回答：
+- answer 只填与本事项对应的字段，其余填 null 或 []。
+  数字或真假：value 取 candidates.values 中的一个，写成字符串，如 "1"、"true"。
+  查看某玩家的身份：value 取 candidates.roles 中的一个身份。
+  “某身份在两名玩家之一”：填 roleId 与 seats（两个座位）。candidates.truthful 的每一项给出身份和它所在的座位，
+  seats 为该座位加上除信息位本人外的任意一个座位；candidates.mayRegister 的座位可以被当作所列任一身份；
+  candidates.anyPair 为 true 时，可用 candidates.roles 中任一身份和除本人外的任意两个座位；
+  candidates.none 为 true 时，可用 roleId=null、seats=[] 表示没有这类角色。
+  选择座位：seat 取 candidates.seats 中的一个。
+- reason：一两句话说明为什么这样选，区分事实与假设，不超过 150 字。
+- intentions：跨夜意向需要调整时，给出调整后的完整列表（最多 ${HostOpeningStrategyMemoryV2.MAX_ENTRIES} 条，trigger 与 approach 各不超过 100 字）；
+  不需要调整时填 null。
 """
 
     /** Caller must pass decisions from Host's current actual decision inventory, not model text. */
@@ -210,6 +187,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         session: ClocktowerSessionState,
         prior: HostOpeningSemanticAcceptanceV2,
         openDecisions: List<OpenDecision>,
+        ruleset: ValidatedClocktowerRuleset,
         cursor: MemoryCursor = MemoryCursor.initial(prior),
         historyFromGlobalSequence: Long = cursor.exclusiveGlobalSequence,
     ): String {
@@ -234,7 +212,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         val cutoff = requireNotNull(prefix.exclusiveGlobalSequence)
         return JSONObject()
             .put("schemaId", REQUEST_SCHEMA)
-            .put("schemaVersion", 3)
+            // Host bookkeeping for binding the answer to this request; the model does not echo it.
             .put("source", JSONObject()
                 .put("gameId", session.gameId)
                 .put("gameStateRevision", session.gameStateRevision)
@@ -246,7 +224,6 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                 .put("roleIds", JSONArray(clocktowerRolesForScript(ClocktowerScript.entries.single {
                     it.toRecommendationScriptId() == session.gameState.script
                 }).map { it.enName }))
-                .put("gameSeed", session.gameSeed)
                 .put("redHerringSeat", session.redHerringSeat ?: JSONObject.NULL)
                 .put("demonBluffRoleIds", JSONArray(session.demonBluffRoleIds.map(RoleId::value)))
                 .put("seats", JSONArray().also { array ->
@@ -268,12 +245,62 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                 .put("family", currentDecision.family)
                 .put("sourceSeat", currentDecision.sourceSeat ?: JSONObject.NULL)
                 .put("abilityRoleId", currentDecision.abilityRoleId ?: JSONObject.NULL)
-                .put("decisionContext", contextMeaning(currentDecision.currentDecisionContext)))
+                .put("decisionContext", contextMeaning(currentDecision.currentDecisionContext))
+                .put("candidates", candidates(session, ruleset, currentDecision.currentDecisionContext)))
             .put("gameLogDelta", StorytellerGlobalEventProjectionV1.encode(
                 prefix, historyFromGlobalSequence, session.gameState))
-            .put("noUnobservedFutureFactMayBeAssumed", true)
             .toString()
     }
+
+    /**
+     * The results the Session rules allow for the current question, read from the same
+     * resolvers the night step uses. Null when no resolver covers the question.
+     */
+    private fun candidates(
+        session: ClocktowerSessionState,
+        ruleset: ValidatedClocktowerRuleset,
+        context: StorytellerProviderDecisionContextV1?,
+    ): Any = when (context) {
+        is StorytellerProviderDecisionContextV1.ScalarInformation -> when (context.kind) {
+            StorytellerProviderScalarKindV1.NUMBER ->
+                runCatching { NumericMetric.valueOf(context.metric) }.getOrNull()?.let { metric ->
+                    NumericInformationResolver.resolve(session, metric, context.sourceSeat)
+                        ?: NumericInformationResolver.resolveLaterNight(
+                            session, ruleset, metric, context.sourceSeat, context.subjectSeats)
+                }?.let { JSONObject().put("values", JSONArray(it.values.map(Int::toString))) }
+            StorytellerProviderScalarKindV1.BOOLEAN -> FortuneTellerInformationResolver
+                .resolve(session, context.sourceSeat, context.subjectSeats)
+                ?.let { JSONObject().put("values", JSONArray(it.values.map(Boolean::toString))) }
+            StorytellerProviderScalarKindV1.ROLE -> RoleInformationResolver.resolve(
+                session, ruleset, context.abilityRole.value, context.sourceSeat,
+                context.subjectSeats.singleOrNull(),
+            )?.let { JSONObject().put("roles", JSONArray(it.roles.map(RoleId::value))) }
+        }
+        is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> PairInformationResolver
+            .choices(session, ruleset, context.abilityRole, context.sourceSeat)?.let { choices ->
+                val json = JSONObject()
+                choices.anyPairRoles?.let {
+                    json.put("anyPair", true).put("roles", JSONArray(it.map(RoleId::value)))
+                }
+                if (choices.truthful.isNotEmpty()) json.put("truthful", JSONArray().also { items ->
+                    choices.truthful.forEach { (role, seat) ->
+                        items.put(JSONObject().put("role", role.value).put("seat", seat))
+                    }
+                })
+                if (choices.registrations.isNotEmpty()) json.put("mayRegister", JSONArray().also { items ->
+                    choices.registrations.forEach { (seat, roles) ->
+                        items.put(JSONObject().put("seat", seat)
+                            .put("roles", JSONArray(roles.map(RoleId::value))))
+                    }
+                })
+                if (choices.canShowNoOutsiders) json.put("none", true)
+                json
+            }
+        is StorytellerProviderDecisionContextV1.MayorRedirect -> JSONObject().put("seats", JSONArray(
+            (session.mayorRedirectEligibleSeats() + context.mayorSeat)
+                .filter { it in session.allSeats() }.sorted()))
+        else -> null
+    } ?: JSONObject.NULL
 
     /** A direct recommendation. It asserts no Host truth verdict or registration witness. */
     internal data class SemanticResult(
@@ -299,11 +326,11 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                     require(kind == "SCALAR_RESULT" && pairRoleId == null && pairSeats.isEmpty() &&
                         seat == null && registrationStatus == null && registrationRoleId == null)
                     require(when (context.kind) {
-                        com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.NUMBER ->
+                        StorytellerProviderScalarKindV1.NUMBER ->
                             scalarValue?.toIntOrNull()?.let { it >= 0 && it.toString() == scalarValue } == true
-                        com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.BOOLEAN ->
+                        StorytellerProviderScalarKindV1.BOOLEAN ->
                             scalarValue in setOf("true", "false")
-                        com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE ->
+                        StorytellerProviderScalarKindV1.ROLE ->
                             context.subjectSeats.size == 1 && !scalarValue.isNullOrBlank()
                     })
                 }
@@ -316,28 +343,29 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         }
 
         companion object {
-            fun fromModel(raw: JSONObject): SemanticResult {
-                require(raw.keys().asSequence().toSet() == setOf(
-                    "kind", "scalarValue", "pairRoleId", "pairSeats", "seat",
-                    "registrationStatus", "registrationRoleId"))
+            /** The current Host question decides which answer fields count; the rest are ignored. */
+            fun fromModel(raw: JSONObject, context: StorytellerProviderDecisionContextV1?): SemanticResult {
+                require(raw.keys().asSequence().toSet() == setOf("value", "roleId", "seats", "seat"))
                 fun optionalString(key: String) = if (raw.isNull(key)) null else raw.getString(key)
                 fun exactInt(value: Any): Int {
                     require(value is Number)
                     return requireNotNull(value.toString().toIntOrNull()) { "Seat must be an exact integer." }
                 }
-                val pair = raw.getJSONArray("pairSeats").let { arr ->
-                    (0 until arr.length()).map { exactInt(arr.get(it)) }
+                return when (context) {
+                    is StorytellerProviderDecisionContextV1.FirstNightPairInformation -> {
+                        val pair = raw.getJSONArray("seats").let { arr ->
+                            (0 until arr.length()).map { exactInt(arr.get(it)) }
+                        }
+                        require(pair.distinct().size == pair.size && pair.all { it > 0 })
+                        SemanticResult("PAIR_RESULT", pairRoleId = optionalString("roleId"), pairSeats = pair.sorted())
+                    }
+                    is StorytellerProviderDecisionContextV1.ScalarInformation ->
+                        SemanticResult("SCALAR_RESULT", scalarValue = optionalString("value"))
+                    is StorytellerProviderDecisionContextV1.MayorRedirect ->
+                        SemanticResult("SEAT_TARGET", seat = if (raw.isNull("seat")) null else exactInt(raw.get("seat")))
+                    else -> error("Unsupported current information response context")
                 }
-                require(pair.distinct().size == pair.size && pair.all { it > 0 })
-                return SemanticResult(
-                    raw.getString("kind"), optionalString("scalarValue"),
-                    optionalString("pairRoleId"), pair.sorted(),
-                    if (raw.isNull("seat")) null else exactInt(raw.get("seat")),
-                    optionalString("registrationStatus"), optionalString("registrationRoleId"),
-                )
             }
-
-
         }
     }
 
@@ -351,54 +379,6 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         val input = JSONObject(hostPayload)
         require(input.getString("schemaId") == REQUEST_SCHEMA)
         listOf("source", "priorStrategyMemory", "currentDecision", "state").forEach { input.getJSONObject(it) }
-        return try {
-            decodeResponse(input, modelResponse, openDecisions)
-        } catch (error: Exception) {
-            throw error as? StorytellerResponseValidationException
-                ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
-        }
-    }
-
-    private fun decodeResponse(
-        input: JSONObject,
-        modelResponse: String,
-        openDecisions: List<OpenDecision>,
-    ): Result {
-        val raw = JSONObject(modelResponse)
-        require(raw.keys().asSequence().toSet() == setOf("schemaVersion", "source",
-            "revisions", "affectedOpenDecisionIds", "currentResult",
-            "updatedStrategyMemory", "strategicDirection"))
-        require(raw.getInt("schemaVersion") == 3)
-        val expected = input.getJSONObject("source")
-        val observed = raw.getJSONObject("source")
-        require(observed.keys().asSequence().toSet() ==
-            expected.keys().asSequence().toSet())
-        for (field in listOf("gameId", "gameStateRevision",
-                "playerInputRevision", "exclusiveGlobalSequence", "memoryVersion")) {
-            require(observed.get(field) == expected.get(field)) {
-                "Stale/modified Host causal-prefix identity."
-            }
-        }
-        val oldIntentions = input.getJSONObject("priorStrategyMemory")
-            .getJSONArray("intentions").length()
-        val reports = raw.getJSONArray("revisions")
-        require(reports.length() == oldIntentions)
-        val revisions = (0 until reports.length()).map { i ->
-            val obj = reports.getJSONObject(i)
-            require(obj.keys().asSequence().toSet() ==
-                setOf("priorIndex", "verdict", "reason"))
-            val index = obj.getInt("priorIndex")
-            val verdict = obj.getString("verdict")
-            val reason = obj.getString("reason")
-            require(index in 0 until oldIntentions)
-            require(verdict in setOf("KEEP", "REVISE", "RETIRE"))
-            require(reason.isNotBlank() && reason.length <= 300)
-            Revision(index, verdict, reason)
-        }
-        require(revisions.map { it.priorIndex }.toSet() == (0 until oldIntentions).toSet())
-        val affected = raw.getJSONArray("affectedOpenDecisionIds")
-        val changed = (0 until affected.length()).map { affected.getString(it) }
-        require(changed.distinct().size == changed.size)
         require(openDecisions.size == 1)
         val pending = openDecisions.single()
         val current = input.getJSONObject("currentDecision")
@@ -410,58 +390,57 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
                 else current.getString("abilityRoleId") == pending.abilityRoleId)) {
             "Host pending identity changed."
         }
-        require(changed.all { it == pending.decisionId }) {
-            "AI cannot change a closed or invented decision."
-        }
-        val selected = raw.getJSONObject("currentResult")
-        require(selected.keys().asSequence().toSet() == setOf("decisionId", "semantic"))
-        require(selected.getString("decisionId") == pending.decisionId)
-        val semantic = SemanticResult.fromModel(selected.getJSONObject("semantic"))
         require(current.get("decisionContext").toString() == contextMeaning(pending.currentDecisionContext).toString()) {
             "Current question or observed subjects changed."
         }
+        return try {
+            decodeResponse(input, modelResponse, pending)
+        } catch (error: Exception) {
+            throw error as? StorytellerResponseValidationException
+                ?: StorytellerResponseValidationException(PersonalDirectOpenAiV1.safeFailure(error), error)
+        }
+    }
+
+    private fun decodeResponse(
+        input: JSONObject,
+        modelResponse: String,
+        pending: OpenDecision,
+    ): Result {
+        val raw = JSONObject(modelResponse)
+        require(raw.keys().asSequence().toSet() == setOf("answer", "reason", "intentions"))
+        val semantic = SemanticResult.fromModel(raw.getJSONObject("answer"), pending.currentDecisionContext)
         semantic.validate(pending.currentDecisionContext, input.getJSONObject("state").getJSONArray("seats").length())
         val roleIds = input.getJSONObject("state").getJSONArray("roleIds").let { roles ->
             (0 until roles.length()).map { roles.getString(it).filter(Char::isLetterOrDigit).lowercase() }.toSet()
         }
         val roleReference = semantic.pairRoleId ?: semantic.scalarValue?.takeIf {
             (pending.currentDecisionContext as? StorytellerProviderDecisionContextV1.ScalarInformation)?.kind ==
-                com.codex.campboardgamehost.clocktower.domain.StorytellerProviderScalarKindV1.ROLE
+                StorytellerProviderScalarKindV1.ROLE
         }
         require(roleReference == null || roleReference.filter(Char::isLetterOrDigit).lowercase() in roleIds) {
             "Unknown role reference."
         }
-        val choices = mapOf(pending.decisionId to semantic)
-        val memory = raw.getJSONObject("updatedStrategyMemory")
-        require(memory.keys().asSequence().toSet() == setOf("tensions", "intentions", "uncertainties"))
-        fun strings(key: String): List<String> {
-            val arr = memory.getJSONArray(key)
-            return (0 until arr.length()).map { arr.getString(it) }
-        }
-        val entries = memory.getJSONArray("intentions")
-        val updated = HostOpeningStrategyMemoryV2(
-            tensions = strings("tensions"),
-            intentions = (0 until entries.length()).map {
+        val prior = memoryFromJson(input.getJSONObject("priorStrategyMemory"))
+        val updated = if (raw.isNull("intentions")) prior else {
+            val entries = raw.getJSONArray("intentions")
+            prior.copy(intentions = (0 until entries.length()).map {
                 val item = entries.getJSONObject(it)
-                require(item.keys().asSequence().toSet() == setOf("trigger", "approach", "risk"))
-                HostOpeningStrategicIntentionV2(
-                    item.getString("trigger"), item.getString("approach"), item.getString("risk"))
-            },
-            uncertainties = strings("uncertainties"),
-        )
-        val direction = raw.getString("strategicDirection")
-        require(direction.isNotBlank() && direction.length <= 600)
+                require(item.keys().asSequence().toSet() == setOf("trigger", "approach"))
+                HostOpeningStrategicIntentionV2(item.getString("trigger"), item.getString("approach"))
+            })
+        }
+        val reason = raw.getString("reason")
+        require(reason.isNotBlank())
+        val source = input.getJSONObject("source")
         return Result(
-            gameId = expected.getString("gameId"),
-            gameStateRevision = expected.getLong("gameStateRevision"),
-            playerInputRevision = expected.getLong("playerInputRevision"),
-            exclusiveGlobalSequence = expected.getLong("exclusiveGlobalSequence"),
-            memoryVersion = expected.getInt("memoryVersion"),
-            revisions = revisions,
-            affectedOpenDecisionIds = changed.toSet(),
-            remainingChoices = choices,
+            gameId = source.getString("gameId"),
+            gameStateRevision = source.getLong("gameStateRevision"),
+            playerInputRevision = source.getLong("playerInputRevision"),
+            exclusiveGlobalSequence = source.getLong("exclusiveGlobalSequence"),
+            memoryVersion = source.getInt("memoryVersion"),
+            remainingChoices = mapOf(pending.decisionId to semantic),
             updatedMemory = updated,
-            strategicDirection = direction,
+            strategicDirection = reason.take(MAX_REASON_LENGTH),
         )
     }
 
@@ -475,6 +454,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         session: ClocktowerGameSession,
         prior: HostOpeningSemanticAcceptanceV2,
         openDecisions: List<OpenDecision>,
+        ruleset: ValidatedClocktowerRuleset,
         cursor: MemoryCursor = MemoryCursor.initial(prior),
         previousResponseId: String? = null,
         onStage: (String) -> Unit = {},
@@ -484,7 +464,7 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
         onStage("FROZEN_WHOLE_GAME_PREFIX")
         // A missing/invalidated provider anchor has no earlier conversation to remember.
         // Resend the compact complete game log then; never silently lose accepted facts.
-        val input = encode(frozen, prior, openDecisions, cursor,
+        val input = encode(frozen, prior, openDecisions, ruleset, cursor,
             historyFromGlobalSequence = if (previousResponseId == null) 0L
                 else cursor.exclusiveGlobalSequence)
         val receipt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -546,4 +526,14 @@ semantic.kind 为 SCALAR_RESULT / PAIR_RESULT / SEAT_TARGET / REGISTRATION_CHOIC
             }
         })
         .put("uncertainties", JSONArray(uncertainties))
+
+    private fun memoryFromJson(json: JSONObject): HostOpeningStrategyMemoryV2 {
+        fun strings(key: String) = json.getJSONArray(key).let { arr -> (0 until arr.length()).map(arr::getString) }
+        val intentions = json.getJSONArray("intentions")
+        return HostOpeningStrategyMemoryV2(strings("tensions"), (0 until intentions.length()).map {
+            val item = intentions.getJSONObject(it)
+            HostOpeningStrategicIntentionV2(
+                item.getString("trigger"), item.getString("approach"), item.optString("risk"))
+        }, strings("uncertainties"))
+    }
 }
